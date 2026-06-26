@@ -1,0 +1,20 @@
+# This repo tracks ONLY the files needed to serve the live machinedpens.info
+# site(s). Backend pipeline scripts, credentials, generated source state, and
+# internal docs are intentionally excluded.
+#
+# Strategy: ignore everything, then re-include just the published site files.
+
+# Ignore everything at the repo root by default...
+/*
+
+# ...except this file and the Autmog site folder.
+!/.gitignore
+!/Autmog_Database/
+
+# Inside the Autmog folder, ignore everything...
+/Autmog_Database/*
+
+# ...except the published site: page, data, and product images.
+!/Autmog_Database/index.html
+!/Autmog_Database/data.json
+!/Autmog_Database/images/

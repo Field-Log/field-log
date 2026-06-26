@@ -1,0 +1,1366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Machined Pen Archive</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1f2330;
+    --border: #2a2f3d;
+    --text: #e7eaf0;
+    --muted: #a3acc0;                  /* bumped from #8a93a6 for AA contrast on dark */
+    --accent: #b8825a;
+    --accent-soft: rgba(184, 130, 90, 0.18);
+    --chip: #232838;
+    --chip-on: var(--accent);
+    --chip-on-text: #1a1306;
+    --in-stock: #4ec07e;
+    --sold: #6a7385;
+    --desc: #d8dde7;                   /* bumped from #cdd3df */
+    --img-bg: #0a0b0f;
+    /* Theme-aware tag chip colors so light mode has enough contrast (was using
+       dark-only colors that washed out in light mode at ~1.7:1) */
+    --tag-size-bg:     rgba(78, 192, 126, 0.18);  --tag-size-fg:     #6cd49a;
+    --tag-material-bg: rgba(214, 158, 90, 0.18);  --tag-material-fg: #e0a978;
+    --tag-refill-bg:   rgba(96, 158, 232, 0.18);  --tag-refill-fg:   #82b4f0;
+    --tag-nose-bg:     rgba(186, 130, 220, 0.18); --tag-nose-fg:     #c79ce0;
+    --archived-fg:     #d99b6a;                   /* lighter accent for archived badge */
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f7f5;
+    --panel: #ffffff;
+    --panel-2: #f0efeb;
+    --border: #dbd9d2;
+    --text: #1d1f25;
+    --muted: #525866;                  /* bumped from #6b7280 for better contrast on light */
+    --accent: #7a4a26;                 /* slightly darker for AA on light bg */
+    --accent-soft: rgba(122, 74, 38, 0.15);
+    --chip: #ece9e0;
+    --chip-on: var(--accent);
+    --chip-on-text: #ffffff;
+    --desc: #2a2f3a;                   /* darker than before for body-text legibility */
+    --img-bg: #ebeae6;
+    /* Light-mode tag overrides — darker fills + foregrounds to hit AA on light backgrounds */
+    --tag-size-bg:     rgba(36, 130, 78, 0.14);   --tag-size-fg:     #1e6b3f;
+    --tag-material-bg: rgba(160, 96, 30, 0.14);   --tag-material-fg: #8a4a14;
+    --tag-refill-bg:   rgba(40, 96, 180, 0.14);   --tag-refill-fg:   #2a528f;
+    --tag-nose-bg:     rgba(120, 60, 160, 0.14);  --tag-nose-fg:     #6a2e8c;
+    --archived-fg:     var(--accent);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  a { color: inherit; text-decoration: none; }
+  header.top {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 22px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 18px; margin: 0; letter-spacing: 0.5px; }
+  header .home-link {
+    color: var(--muted); text-decoration: none; font-size: 12.5px;
+    padding: 4px 9px; border: 1px solid var(--border); border-radius: 5px;
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  header .home-link:hover { color: var(--accent); border-color: var(--accent); }
+  header .count { color: var(--muted); font-size: 13px; }
+  header .spacer { flex: 1; }
+  header input[type=search] {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 11px; min-width: 220px; font: inherit;
+  }
+  header select {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 11px; font: inherit;
+  }
+  main {
+    display: grid; grid-template-columns: 290px 1fr; gap: 20px;
+    padding: 18px 22px 22px; align-items: start;
+    transition: grid-template-columns 0.28s cubic-bezier(0.22, 0.65, 0.27, 1), gap 0.28s ease;
+  }
+  /* Collapsed-tray state: sidebar slides out, grid takes the full width. */
+  body.filters-closed main { grid-template-columns: 0 1fr; gap: 0; }
+  body.filters-closed aside.filters {
+    transform: translateX(-100%); opacity: 0; pointer-events: none;
+  }
+  /* Mobile media queries moved to the end of the stylesheet so they cascade
+     correctly over all the later-defined desktop rules. */
+
+  aside.filters {
+    position: sticky; top: 70px; align-self: start;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    max-height: calc(100vh - 90px); overflow-y: auto;
+    transition: transform 0.28s cubic-bezier(0.22, 0.65, 0.27, 1), opacity 0.2s ease;
+    transform-origin: left center;
+    /* CATEGORY heading sits on the same row as the close button (top-right). */
+    padding-top: 18px;
+    /* Hide the scrollbar entirely (it still scrolls). macOS users with
+       "Always show scrollbars" set otherwise see a thick system scrollbar
+       eating into the chip area; this removes it across browsers. */
+    scrollbar-width: none;          /* Firefox + modern Safari */
+    -ms-overflow-style: none;       /* legacy IE/Edge */
+  }
+  aside.filters::-webkit-scrollbar { width: 0; height: 0; display: none; } /* Safari + Chromium */
+  aside h3 {
+    font-size: 12.5px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: var(--text); margin: 22px 0 10px;
+    font-weight: 700;
+    padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    /* Reserve the full row height for the any|all pill (~23px) so chips
+       below never shift when 2+ filters get selected and the pill appears. */
+    min-height: 26px;
+  }
+  aside h3:first-child { margin-top: 0; }
+  /* any|all match-mode pill — shows next to the section header when 2+ chips
+     are selected and the group is multi-valued (e.g., Materials, Body details). */
+  .match-mode {
+    display: inline-flex; gap: 0; padding: 2px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 6px; letter-spacing: 0.2px;
+  }
+  .match-mode button {
+    background: transparent; color: var(--muted);
+    border: none; cursor: pointer; padding: 2px 8px;
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase;
+    border-radius: 4px; letter-spacing: 0.4px;
+    transition: background 0.12s, color 0.12s;
+  }
+  .match-mode button:hover { color: var(--text); }
+  .match-mode button.on {
+    background: var(--accent); color: var(--chip-on-text);
+  }
+  /* When fewer than 2 chips are selected the pill is invisible but keeps
+     reserving its row height, so the section header doesn't shift when it
+     becomes active. */
+  .match-mode.inactive { visibility: hidden; pointer-events: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    background: var(--chip); color: var(--text);
+    border: 1px solid transparent;
+    padding: 3px 8px; border-radius: 999px;
+    font-size: 11.5px; cursor: pointer; user-select: none;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip.on { background: var(--chip-on); color: var(--chip-on-text); }
+  .chip .ct { opacity: 0.6; margin-left: 3px; font-size: 10.5px; }
+  .chip.on .ct { opacity: 0.75; }
+
+  button.clear {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; cursor: pointer; font: inherit;
+    margin-top: 12px; width: 100%;
+  }
+  button.clear:hover { color: var(--text); border-color: var(--accent); }
+
+  .grid {
+    display: grid;
+    /* Cap at 5 columns; min 240px keeps cards roomy enough for 4-5 chips per row. */
+    grid-template-columns: repeat(auto-fill, minmax(max(240px, calc((100% - 4 * 18px) / 5)), 1fr));
+    gap: 18px;
+  }
+  /* Simple card — click opens the lightbox. */
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .card .img {
+    aspect-ratio: 4 / 3;
+    background: var(--img-bg) center/cover no-repeat;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .card .year-badge {
+    position: absolute; top: 8px; right: 8px;
+    background: color-mix(in srgb, var(--panel) 85%, transparent); color: var(--text);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    padding: 3px 8px; border-radius: 4px;
+    backdrop-filter: blur(6px);
+  }
+  .card .body { padding: 13px 14px 15px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .card .headline {
+    font-size: 15px; font-weight: 600; line-height: 1.3;
+    color: var(--text);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* Reserve 2 lines so cards with a 1-line headline align with 2-line ones. */
+    min-height: calc(15px * 1.3 * 2);
+  }
+  .card .subtitle {
+    display: flex; flex-direction: column; gap: 2px;
+    font-size: 12.5px; line-height: 1.45; color: var(--muted);
+    /* Reserve room for the longest expected detail (4 segments). */
+    min-height: calc(12.5px * 1.45 * 4 + 6px);
+    overflow: hidden;
+  }
+  .card .subtitle span { display: block; }
+  .card .meta { color: var(--muted); font-size: 13px; display: flex; gap: 10px; justify-content: space-between; min-height: 19px; align-items: center; }
+  .card .meta .price { color: var(--text); font-weight: 600; }
+  .card .dim { display: flex; flex-wrap: wrap; gap: 8px 12px; color: var(--muted); font-size: 12px; min-height: 17px; }
+  .card .dim span { white-space: nowrap; }
+  .card .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; min-height: 22px; padding-top: 4px; }
+  .card .tag {
+    font-size: 11px; padding: 2px 6px; border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+    background: rgba(255,255,255,0.06); color: var(--muted);
+  }
+  .card .tag.size     { background: var(--tag-size-bg);     color: var(--tag-size-fg); }
+  .card .tag.material { background: var(--tag-material-bg); color: var(--tag-material-fg); } /* warm metallic */
+  .card .tag.refill   { background: var(--tag-refill-bg);   color: var(--tag-refill-fg); }   /* ink blue */
+  .card .tag.nose     { background: var(--tag-nose-bg);     color: var(--tag-nose-fg); }     /* tip purple */
+  .card .archived-badge {
+    color: var(--archived-fg); background: var(--accent-soft);
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.5px;
+    padding: 2px 7px; border-radius: 4px;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    color: var(--muted); text-align: center; padding: 60px 20px;
+    border: 1px dashed var(--border); border-radius: 10px;
+  }
+
+  /* ---------- Settings drawer ---------- */
+  button.gear {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    width: 36px; height: 36px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 26px; line-height: 1; padding: 0;
+    transition: border-color 0.12s, color 0.12s, transform 0.4s;
+  }
+  /* In-sidebar close button: top-right of the filters panel itself. */
+  button.filter-close {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    background: var(--panel-2); color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    width: 28px; height: 28px; padding: 0; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+  }
+  button.filter-close:hover { color: var(--accent); border-color: var(--accent); background: var(--panel); }
+  /* Edge tab: surfaced only when the sidebar is collapsed. */
+  .filter-tab {
+    position: fixed; left: 0; top: 50%; transform: translateY(-50%);
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-left: none;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 6px; cursor: pointer; z-index: 20;
+    display: none;
+    writing-mode: vertical-rl; text-orientation: mixed;
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    font-weight: 600;
+    transition: background 0.15s, color 0.15s, padding-right 0.15s;
+  }
+  .filter-tab:hover { background: var(--panel-2); color: var(--accent); padding-right: 10px; }
+  body.filters-closed .filter-tab { display: inline-flex; align-items: center; gap: 6px; }
+  .filter-tab svg { writing-mode: horizontal-tb; }
+  button.gear:hover { border-color: var(--accent); }
+  button.gear.open { transform: rotate(60deg); }
+
+  .settings-scrim {
+    position: fixed; inset: 0; z-index: 80;
+    background: rgba(8, 9, 13, 0); backdrop-filter: blur(0px);
+    pointer-events: none;
+    transition: background 0.25s, backdrop-filter 0.25s;
+  }
+  .settings-scrim.open {
+    background: rgba(8, 9, 13, 0.55);
+    backdrop-filter: blur(3px);
+    pointer-events: auto;
+  }
+  .settings {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 90;
+    width: 360px; max-width: 92vw;
+    background: var(--panel); border-left: 1px solid var(--border);
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.22, 0.65, 0.27, 1);
+    display: flex; flex-direction: column;
+    box-shadow: -20px 0 50px rgba(0,0,0,0.35);
+  }
+  .settings.open { transform: translateX(0); }
+  .settings header {
+    position: static; padding: 16px 22px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); background: transparent; backdrop-filter: none;
+  }
+  .settings header h2 { font-size: 14px; margin: 0; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .settings header button {
+    background: transparent; color: var(--muted); border: none;
+    font-size: 18px; cursor: pointer; padding: 4px 8px;
+  }
+  .settings header button:hover { color: var(--text); }
+  .settings .body { padding: 22px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 22px; }
+  .settings-group { display: flex; flex-direction: column; gap: 8px; }
+  .settings-select {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 7px 10px; font: inherit; font-size: 13px;
+    cursor: pointer;
+  }
+  .settings-select:focus { border-color: var(--accent); outline: none; }
+  .settings-group .label {
+    font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted);
+  }
+  .settings-group .seg {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+    background: var(--panel-2); border: 1px solid var(--border);
+    padding: 3px; border-radius: 8px;
+  }
+  .settings-group .seg button {
+    background: transparent; color: var(--muted);
+    border: none; border-radius: 6px; padding: 8px 10px;
+    font: inherit; font-size: 12px; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .settings-group .seg button.on {
+    background: var(--accent); color: var(--chip-on-text); font-weight: 600;
+  }
+  .settings .about {
+    margin-top: auto; padding-top: 22px; border-top: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .settings .about h3 { font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .settings .about p { font-size: 12.5px; line-height: 1.5; color: var(--desc); margin: 0; }
+  .settings .about .bmc { margin-top: 4px; }
+
+  /* ---------- Page footer banner ---------- */
+  .page-footer {
+    margin: 36px auto 28px; padding: 18px 24px 0;
+    max-width: 720px; text-align: center;
+    color: var(--muted); font-size: 12.5px; line-height: 1.8;
+    border-top: 1px solid var(--border);
+  }
+  /* a11y: underline plus accent color so links are distinguishable without relying on color (WCAG 1.4.1) */
+  .page-footer a {
+    color: var(--accent); text-decoration: underline;
+    text-underline-offset: 2px; text-decoration-thickness: 1px;
+    transition: text-decoration-thickness 0.15s;
+  }
+  .page-footer a:hover { text-decoration-thickness: 2px; }
+  .page-footer .copyright-notice {
+    margin-top: 14px; padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11.5px; line-height: 1.55;
+    color: var(--muted); opacity: 0.7;
+    max-width: 640px;
+  }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(8, 9, 13, 0); backdrop-filter: blur(0px);
+    display: none; align-items: stretch; justify-content: center;
+    padding: 40px 32px;
+    perspective: 1600px;
+    transition: background 0.45s ease, backdrop-filter 0.45s ease;
+  }
+  .lightbox.open { display: flex; }
+  .lightbox.shown {
+    background: rgba(8, 9, 13, 0.85);
+    backdrop-filter: blur(8px);
+  }
+  .lb-close { opacity: 0; transition: opacity 0.3s 0.15s ease; }
+  .lightbox.shown .lb-close { opacity: 1; }
+  .lb-close {
+    position: absolute; top: 18px; right: 24px;
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 7px 16px; font: inherit; font-size: 12px;
+    cursor: pointer; letter-spacing: 0.6px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .lb-close:hover { border-color: var(--accent); color: var(--accent); }
+  .lb-inner {
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: 0;
+    width: 100%; max-width: 1280px; max-height: 100%;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform;
+  }
+  @media (max-width: 880px) {
+    /* Single-column stack + scrollable container so the price/spec block can
+       be reached on phones. align-items: flex-start lets the lb-inner grow
+       past viewport height; .lightbox scrolls. */
+    .lightbox {
+      padding: env(safe-area-inset-top, 12px) 12px env(safe-area-inset-bottom, 12px);
+      align-items: flex-start;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .lb-inner {
+      grid-template-columns: 1fr;
+      min-height: auto;
+      max-height: none;
+    }
+    /* Image area: fixed aspect ratio so it doesn't reflow between portraits
+       and landscapes in the carousel. */
+    .lb-image-wrap {
+      aspect-ratio: 4 / 3;
+      min-height: 0 !important;
+      max-height: 60vh;
+      touch-action: pan-y; /* allow vertical scroll while we capture horizontal swipes */
+    }
+    /* Close button — position relative to top edge with iOS safe-area inset. */
+    .lb-close {
+      position: fixed; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 12px;
+      opacity: 1 !important;
+      background: rgba(20, 20, 24, 0.85);
+      padding: 9px 14px; font-size: 13px;
+      z-index: 110;
+    }
+  }
+  .lb-image-wrap {
+    position: relative; background: var(--img-bg);
+    display: flex; align-items: flex-start; justify-content: center;  /* top-align to match info column */
+    min-height: 320px; padding-top: 0;
+  }
+  .lb-image-wrap img {
+    max-width: 100%; max-height: 100%; object-fit: contain;
+    width: 100%; height: 100%;
+  }
+  .lb-year {
+    position: absolute; top: 14px; left: 14px;
+    background: rgba(20, 20, 24, 0.85); color: var(--text);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.4px;
+    padding: 4px 10px; border-radius: 4px;
+    backdrop-filter: blur(6px);
+  }
+  .lb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(20, 20, 24, 0.7); color: var(--text);
+    border: none; cursor: pointer;
+    width: 38px; height: 38px; border-radius: 999px;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  .lb-nav:hover { background: var(--accent); color: var(--chip-on-text); }
+  .lb-nav.prev { left: 12px; }
+  .lb-nav.next { right: 12px; }
+  .lb-counter {
+    position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(20, 20, 24, 0.7); color: var(--muted);
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 11px; backdrop-filter: blur(6px);
+  }
+  .lb-info {
+    padding: 32px 36px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 18px;
+    min-width: 0;
+  }
+  .lb-released {
+    font-size: 11px; letter-spacing: 1px; color: var(--muted);
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .lb-released .year-badge {
+    background: rgba(20, 20, 24, 0.85); color: var(--text);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+    padding: 3px 8px; border-radius: 4px;
+  }
+  .lb-title {
+    font-size: 28px; font-weight: 700; line-height: 1.15;
+    color: var(--text); letter-spacing: -0.2px;
+  }
+  @media (max-width: 600px) {
+    .lb-title { font-size: 22px; }
+    .lb-info { padding: 20px 22px; }
+  }
+  .lb-archived {
+    display: inline-block; align-self: flex-start;
+    background: rgba(214, 158, 90, 0.18); color: var(--accent);
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .lb-spec-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    padding: 14px 16px; background: var(--panel-2);
+    border: 1px solid var(--border); border-radius: 8px;
+  }
+  .lb-spec { display: flex; flex-direction: column; gap: 2px; }
+  .lb-spec .k { font-size: 10px; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; }
+  .lb-spec .v { font-size: 14px; color: var(--text); font-weight: 600; }
+  .lb-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .lb-tags .tag {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    background: rgba(255,255,255,0.06); color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+  .lb-tags .tag.material { background: rgba(214, 158, 90, 0.18); color: #e0a978; }
+  .lb-tags .tag.refill   { background: rgba(96, 158, 232, 0.18); color: #82b4f0; }
+  .lb-tags .tag.nose     { background: rgba(186, 130, 220, 0.18); color: #c79ce0; }
+  .lb-desc {
+    font-size: 13.5px; line-height: 1.6; color: var(--desc);
+    white-space: pre-wrap; font-style: italic;
+  }
+  .lb-actions {
+    display: flex; gap: 10px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .lb-actions a {
+    flex: 1; text-align: center; padding: 11px 14px;
+    background: var(--accent); color: var(--chip-on-text);
+    border-radius: 7px; text-decoration: none;
+    font-weight: 600; font-size: 13px;
+  }
+  .lb-actions a:hover { filter: brightness(1.05); }
+
+  /* ---------- Mobile ---------- */
+  /* Below 880px: filter sidebar becomes a slide-in drawer with scrim backdrop.
+     Grid uses the full viewport width; columns shrink to 2 (480-880px) or 1 (<480px).
+     Placed at the END of the stylesheet so these rules win the cascade over all
+     desktop aside.filters / main / .grid rules defined earlier. */
+  @media (max-width: 880px) {
+    main { grid-template-columns: 1fr; gap: 0; padding: 12px; }
+    /* Sidebar becomes a fixed-position slide-in drawer, out of the grid flow. */
+    aside.filters {
+      position: fixed; top: 0; left: 0; bottom: 0;
+      width: min(86vw, 320px); height: 100vh; max-height: 100vh;
+      border-radius: 0;
+      border-top: none; border-bottom: none; border-left: none;
+      border-right: 1px solid var(--border);
+      z-index: 50; padding-top: 48px;
+      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.45);
+      overflow-y: auto;
+      transform: translateX(-100%); opacity: 0;
+    }
+    body:not(.filters-closed) aside.filters {
+      transform: translateX(0); opacity: 1; pointer-events: auto;
+    }
+    body.filters-closed main { grid-template-columns: 1fr; gap: 0; }
+    /* Scrim behind the drawer when it's open. */
+    #filterBackdrop {
+      position: fixed; inset: 0; z-index: 49;
+      background: rgba(8, 9, 13, 0); pointer-events: none;
+      transition: background 0.25s ease;
+    }
+    body:not(.filters-closed) #filterBackdrop {
+      background: rgba(8, 9, 13, 0.6); pointer-events: auto;
+    }
+    /* Filter tab — bigger tap target on touch; hidden while drawer is open. */
+    .filter-tab { padding: 20px 8px; font-size: 13px; }
+    body:not(.filters-closed) .filter-tab { display: none; }
+    /* Grid: 2 cols at 480–880px. */
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+    /* Header tightens up. Search input gets its own row at the bottom so it
+       isn't crushed by h1/count/sort/gear competing on a single row. */
+    header.top { padding: 10px 14px; gap: 10px 12px; }
+    header h1 { font-size: 16px; flex: 0 1 auto; }
+    header .count { font-size: 12px; }
+    header .spacer { display: none; }
+    header input[type=search] {
+      flex: 1 1 100%;
+      min-width: 0;
+      order: 99;
+    }
+  }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+    header h1 { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Machined Pen Archive</h1>
+  <span class="count" id="count">…</span>
+  <span class="spacer"></span>
+  <input type="search" id="q" placeholder="Search…" autocomplete="off" aria-label="Search pens by title, specs, or description">
+  <select id="sort" aria-label="Sort pens">
+    <option value="date_desc">Newest drop</option>
+    <option value="date_asc">Oldest drop</option>
+    <option value="price_asc">Price low → high</option>
+    <option value="price_desc">Price high → low</option>
+    <option value="weight_asc">Weight light → heavy</option>
+    <option value="weight_desc">Weight heavy → light</option>
+    <option value="diameter_asc">Diameter thin → thick</option>
+    <option value="diameter_desc">Diameter thick → thin</option>
+    <option value="title_asc">Title A → Z</option>
+  </select>
+  <button class="gear" id="gearBtn" aria-label="Settings" title="Settings">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+</header>
+
+<div class="settings-scrim" id="settingsScrim"></div>
+<aside class="settings" id="settings" role="dialog" aria-modal="true">
+  <header>
+    <h2>Settings</h2>
+    <button id="settingsClose" aria-label="Close">✕</button>
+  </header>
+  <div class="body">
+    <div class="settings-group">
+      <div class="label">Theme</div>
+      <div class="seg" data-setting="theme">
+        <button data-value="dark">Dark</button>
+        <button data-value="light">Light</button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="label">Dimensions</div>
+      <div class="seg" data-setting="units">
+        <button data-value="in">Inches</button>
+        <button data-value="mm">Millimeters</button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="label">Weight</div>
+      <div class="seg" data-setting="weight">
+        <button data-value="g">Grams</button>
+        <button data-value="oz">Ounces</button>
+      </div>
+    </div>
+    <div class="settings-group">
+      <div class="label">Currency</div>
+      <select id="currency" class="settings-select" aria-label="Display currency" title="Prices listed in CAD. Non-CAD prices use daily ECB rates + a ~2.5% Shopify Markets conversion fee to approximate the maker's displayed price.">
+        <option value="CAD">$ CAD (native)</option>
+        <option value="USD">$ USD</option>
+        <option value="EUR">€ EUR</option>
+        <option value="GBP">£ GBP</option>
+        <option value="AUD">$ AUD</option>
+        <option value="JPY">¥ JPY</option>
+        <option value="CHF">CHF</option>
+        <option value="NZD">$ NZD</option>
+      </select>
+    </div>
+    <div class="about">
+      <h3>About</h3>
+      <p>An unofficial archive of machined pen drops, with filters, specs, and a backup of descriptions and images. Made by a fan; not affiliated with any maker.</p>
+      <div class="bmc">
+        <script type="text/javascript"
+          src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+          data-name="bmc-button"
+          data-slug="BVGdigital"
+          data-color="#aaaaaa"
+          data-emoji=""
+          data-font="Arial"
+          data-text="Buy me a coffee"
+          data-outline-color="#000000"
+          data-font-color="#000000"
+          data-coffee-color="#FFDD00"></script>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div id="filterBackdrop" aria-hidden="true"></div>
+<button class="filter-tab" id="filterTab" aria-label="Open filters" title="Open filters">
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <line x1="4" y1="6" x2="20" y2="6"/>
+    <line x1="4" y1="12" x2="14" y2="12"/>
+    <line x1="4" y1="18" x2="10" y2="18"/>
+  </svg>
+  Filters
+</button>
+
+<main>
+  <aside class="filters" id="filters"></aside>
+  <section class="grid" id="grid"></section>
+</main>
+
+<footer class="page-footer">
+  <div>A resource for <a href="https://www.reddit.com/r/machinedpens/" target="_blank" rel="noopener">r/machinedpens</a> and the Machined Pens Discord.</div>
+  <div>Suggestions or contact: <a href="https://www.reddit.com/user/BVG_Digital/" target="_blank" rel="noopener">u/BVG_Digital</a></div>
+  <div class="copyright-notice">Product names, images, and descriptions remain the property of their respective owners. Made by a fan; not affiliated with any maker.</div>
+</footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
+  <button class="lb-close" id="lbClose">✕ Close</button>
+  <div class="lb-inner">
+    <div class="lb-image-wrap" id="lbImageWrap">
+      <img id="lbImage" alt="">
+      <button class="lb-nav prev" id="lbPrev">‹</button>
+      <button class="lb-nav next" id="lbNext">›</button>
+      <span class="lb-counter" id="lbCounter"></span>
+    </div>
+    <div class="lb-info" id="lbInfo"></div>
+  </div>
+</div>
+
+<script>
+// `andable` flag controls whether an "any | all" mode toggle is offered when
+// 2+ chips in the group are active. Only multi-valued attributes (a single
+// pen can carry several values) benefit from AND mode — single-valued axes
+// like Size, Clip, Finish would always resolve to zero matches under ALL,
+// so we hide the toggle there.
+const FILTER_GROUPS = [
+  { key: "category",     label: "Category",     multi: true, andable: false },
+  { key: "sizes",        label: "Size",         multi: true, andable: false },
+  { key: "materials",    label: "Material",     multi: true, andable: true  },
+  { key: "refills",      label: "Refill",       multi: true, andable: true  },
+  { key: "mechanisms",   label: "Mechanism",    multi: true, andable: true  },
+  { key: "clips",        label: "Clip",         multi: true, andable: false },
+  { key: "body_details", label: "Body details", multi: true, andable: true  },
+  { key: "noses",        label: "Tip / Nose",   multi: true, andable: true  },
+  { key: "finishes",     label: "Finish",       multi: true, andable: false },
+];
+
+const SETTING_DEFAULTS = { theme: "dark", units: "in", weight: "g" };
+const settings = (() => {
+  try { return { ...SETTING_DEFAULTS, ...JSON.parse(localStorage.getItem("autmog.settings") || "{}") }; }
+  catch { return { ...SETTING_DEFAULTS }; }
+})();
+function saveSettings() { localStorage.setItem("autmog.settings", JSON.stringify(settings)); }
+function applyTheme() { document.documentElement.dataset.theme = settings.theme; }
+applyTheme();
+
+const fmtDiameter = p => {
+  if (settings.units === "mm") {
+    const mm = p.diameter_mm ?? (p.diameter_in != null ? +(p.diameter_in * 25.4).toFixed(1) : null);
+    return mm != null ? `${mm} mm` : null;
+  }
+  return p.diameter_in != null ? `${p.diameter_in}"` : null;
+};
+const fmtLength = p => {
+  if (settings.units === "mm") {
+    const mm = p.length_in != null ? +(p.length_in * 25.4).toFixed(1) : null;
+    return mm != null ? `${mm} mm` : null;
+  }
+  return p.length_in != null ? `${p.length_in}"` : null;
+};
+const fmtWeight = p => {
+  if (p.weight_g == null) return null;
+  if (settings.weight === "oz") return `${+(p.weight_g / 28.3495).toFixed(2)} oz`;
+  return `${p.weight_g} g`;
+};
+
+const state = {
+  products: [],
+  q: "",
+  sort: "date_desc",
+  active: Object.fromEntries(FILTER_GROUPS.map(g => [g.key, new Set()])),
+  // any/all match mode per filter group. Only meaningful when a group has
+  // andable: true AND has 2+ active chips. Default any (OR).
+  matchMode: Object.fromEntries(FILTER_GROUPS.map(g => [g.key, "any"])),
+};
+
+// Normalize the card headline to a uniform "{size} {Clipped/Clipless} {Mechanism} Pen"
+// format so the most useful axes (size, clip status, mechanism) are scannable at a
+// glance. The original Autmog title is preserved in p.title for the lightbox and search.
+function normalizedHeadline(p) {
+  if (p.category === "Accessory") return p.title;
+  const sizes = p.sizes || [];
+  const clip  = (p.clips || [])[0];
+  const mechs = p.mechanisms || [];
+  const mechPart = mechs.join("/");
+  let sizePart = "";
+  if (sizes.length === 2) sizePart = `${sizes[0]} Grip - ${sizes[1]} Mechanism`;
+  else if (sizes.length === 1) sizePart = sizes[0];
+  const parts = [sizePart, clip, mechPart, "Pen"].filter(Boolean);
+  return parts.join(" ");
+}
+
+const splitTitle = t => {
+  // Dual-size titles like "40 Grip - 38 Mechanism Clipless …" need BOTH halves
+  // of the leading "<NN> X - <NN> Y" pattern kept in the headline; splitting on
+  // the first " - " drops the Mechanism half. Detect and keep through it.
+  const dual = t.match(/^(\d{2}\s+\w+\s+-\s+\d{2}\s+\w+)\s*(.*)$/);
+  if (dual) {
+    const head = dual[1].trim();
+    const rest = dual[2].trim();
+    if (!rest) return { head, detail: "" };
+    // After "40 Grip - 38 Mechanism" the next token is "Clipless Titanium …"
+    // — split off the first " - " from that, or use the whole rest as detail.
+    const i = rest.indexOf(" - ");
+    const detail = i < 0 ? rest : rest;
+    return { head, detail };
+  }
+  const i = t.indexOf(" - ");
+  if (i < 0) return { head: t, detail: "" };
+  return { head: t.slice(0, i).trim(), detail: t.slice(i + 3).trim() };
+};
+
+const fmtDate = iso => {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-");
+  return new Date(+y, +m - 1, +d).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+};
+// ---------- Currency conversion ----------
+// Autmog is a Canadian shop — products.json returns CAD prices regardless of
+// viewer IP. The IP-based localization on autmog.com happens at render time
+// via Shopify Markets, NOT in the API payload. So data.json's prices are CAD
+// and we convert from there. We fetch ECB rates from frankfurter.app (free,
+// no API key, daily updates) and cache them in localStorage keyed by date.
+const BASE_CURRENCY = "CAD";
+const CURRENCIES = ["CAD", "USD", "EUR", "GBP", "AUD", "JPY", "CHF", "NZD"];
+let currencyRates = { [BASE_CURRENCY]: 1 };  // populated lazily
+let currentCurrency = BASE_CURRENCY;
+
+function todayUTCDateStr() {
+  const d = new Date();
+  return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0");
+}
+
+async function loadCurrencyRates() {
+  const today = todayUTCDateStr();
+  // Cache invalidates on base-currency change (old USD-based cache → ignored).
+  const cacheKey = `autmog.fxRates.${BASE_CURRENCY}`;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+    if (cached && cached.date === today && cached.rates && typeof cached.rates === "object") {
+      currencyRates = { [BASE_CURRENCY]: 1, ...cached.rates };
+      return;
+    }
+  } catch {}
+  try {
+    // frankfurter migrated from .app → .dev in 2025; the old hostname now
+    // 301-redirects, which browser fetch() refuses to follow cross-origin.
+    const url = `https://api.frankfurter.dev/v1/latest?base=${BASE_CURRENCY}&symbols=${CURRENCIES.filter(c => c !== BASE_CURRENCY).join(",")}`;
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`fx ${r.status}`);
+    const data = await r.json();
+    if (data && data.rates) {
+      currencyRates = { [BASE_CURRENCY]: 1, ...data.rates };
+      try { localStorage.setItem(cacheKey, JSON.stringify({ date: today, rates: data.rates })); } catch {}
+    }
+  } catch (e) {
+    console.warn("FX rate fetch failed; using base currency only:", e);
+  }
+}
+
+// Shopify Markets adds ~2.5% over the mid-market FX rate (covers their
+// currency-conversion + payment-processing fee). Our raw rates come from
+// ECB via frankfurter, so applying this markup brings the displayed prices
+// in line with what Autmog actually shows on its site. The native-currency
+// display (CAD) bypasses the markup since no conversion happens.
+const SHOPIFY_MARKETS_MARKUP = 1.025;
+
+function _formatMoney(baseAmount) {
+  // baseAmount is in BASE_CURRENCY (CAD). Convert to currentCurrency via cached rate.
+  const rate = currencyRates[currentCurrency] ?? 1;
+  const markup = currentCurrency === BASE_CURRENCY ? 1 : SHOPIFY_MARKETS_MARKUP;
+  const v = baseAmount * rate * markup;
+  // JPY conventionally has 0 decimals; we round everything to whole units for compact card display.
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currentCurrency,
+      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
+    }).format(v);
+  } catch {
+    return `${currentCurrency} ${Math.round(v)}`;
+  }
+}
+
+const fmtPrice = (mn, mx) => {
+  if (mn == null) return "—";
+  if (mn === mx) return _formatMoney(mn);
+  return `${_formatMoney(mn)}–${_formatMoney(mx)}`;
+};
+
+function valuesFor(key) {
+  const counts = new Map();
+  for (const p of state.products) {
+    const v = p[key];
+    if (v == null) continue;
+    const arr = Array.isArray(v) ? v : [v];
+    for (const item of arr) counts.set(item, (counts.get(item) || 0) + 1);
+  }
+  return [...counts.entries()].sort((a, b) => {
+    if (key === "sizes") return (+a[0]) - (+b[0]);
+    return b[1] - a[1];
+  });
+}
+
+// Cache the lowercased searchable haystack per product so repeated searches don't
+// re-build strings on every keystroke (141 products × 8-field stringify is fast,
+// but cache avoids any concern).
+const _haystackCache = new WeakMap();
+function searchableHaystack(p) {
+  if (_haystackCache.has(p)) return _haystackCache.get(p);
+  const tagBits = [
+    ...(p.sizes || []),
+    ...(p.materials || []),
+    ...(p.refills || []),
+    ...(p.mechanisms || []),
+    ...(p.clips || []),
+    ...(p.body_details || []),
+    ...(p.noses || []),
+    ...(p.finishes || []),
+  ];
+  // Include price as plain digits so "$300" and "300" both match.
+  const priceBits = [];
+  if (p.price_min != null) priceBits.push(String(Math.round(p.price_min)));
+  if (p.price_max != null && p.price_max !== p.price_min) priceBits.push(String(Math.round(p.price_max)));
+  const hay = `${p.title} ${tagBits.join(" ")} ${priceBits.join(" ")} ${p.body_text || ""}`.toLowerCase();
+  _haystackCache.set(p, hay);
+  return hay;
+}
+
+function passesFilters(p) {
+  if (state.q) {
+    // Multi-token AND search: each whitespace-separated token must appear somewhere
+    // in title + tag values + price + body description.
+    const tokens = state.q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if (tokens.length) {
+      const hay = searchableHaystack(p);
+      if (!tokens.every(t => hay.includes(t))) return false;
+    }
+  }
+  for (const g of FILTER_GROUPS) {
+    const active = state.active[g.key];
+    if (active.size === 0) continue;
+    const v = p[g.key];
+    const arr = v == null ? [] : (Array.isArray(v) ? v : [v]);
+    const mode = state.matchMode[g.key];
+    if (g.andable && mode === "all" && active.size > 1) {
+      // ALL mode: every selected value must be present on this product.
+      for (const sel of active) {
+        if (!arr.includes(sel)) return false;
+      }
+    } else {
+      // ANY mode (default): at least one selected value must match.
+      if (!arr.some(x => active.has(x))) return false;
+    }
+  }
+  return true;
+}
+
+function sorted(rows) {
+  const r = rows.slice();
+  const numAsc = k => (a, b) => (a[k] ?? 1e9) - (b[k] ?? 1e9);
+  const numDesc = k => (a, b) => (b[k] ?? -1) - (a[k] ?? -1);
+  switch (state.sort) {
+    case "date_asc":      r.sort((a, b) => (a.published_at || "").localeCompare(b.published_at || "")); break;
+    case "price_asc":     r.sort(numAsc("price_min")); break;
+    case "price_desc":    r.sort(numDesc("price_min")); break;
+    case "weight_asc":    r.sort(numAsc("weight_g")); break;
+    case "weight_desc":   r.sort(numDesc("weight_g")); break;
+    case "diameter_asc":  r.sort(numAsc("diameter_in")); break;
+    case "diameter_desc": r.sort(numDesc("diameter_in")); break;
+    case "title_asc":     r.sort((a, b) => a.title.localeCompare(b.title)); break;
+    default:              r.sort((a, b) => (b.published_at || "").localeCompare(a.published_at || ""));
+  }
+  return r;
+}
+
+function renderFilters() {
+  const root = document.getElementById("filters");
+  root.innerHTML = `
+    <button class="filter-close" id="filterClose" aria-label="Close filters" title="Close filters">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="14 6 7 12 14 18"/>
+      </svg>
+    </button>`;
+  document.getElementById("filterClose").addEventListener("click", () => setFiltersOpen(false));
+  for (const g of FILTER_GROUPS) {
+    const h = document.createElement("h3");
+    h.textContent = g.label;
+    const active = state.active[g.key];
+    // any|all pill — render ALWAYS for andable groups so the row height is
+    // determined by the pill at all times (otherwise the section header
+    // shifts down when the pill appears). Hide via visibility when fewer
+    // than 2 chips are selected.
+    if (g.andable) {
+      const mode = state.matchMode[g.key];
+      const pill = document.createElement("span");
+      pill.className = "match-mode" + (active.size >= 2 ? "" : " inactive");
+      pill.innerHTML = `
+        <button data-mode="any" class="${mode === 'any' ? 'on' : ''}" title="Match ANY selected (OR)">any</button>
+        <button data-mode="all" class="${mode === 'all' ? 'on' : ''}" title="Match ALL selected (AND)">all</button>`;
+      pill.querySelectorAll("button").forEach(b => {
+        b.onclick = () => {
+          state.matchMode[g.key] = b.dataset.mode;
+          renderFilters(); renderGrid();
+        };
+      });
+      h.appendChild(pill);
+    }
+    root.appendChild(h);
+    const wrap = document.createElement("div");
+    wrap.className = "chips";
+    for (const [val, ct] of valuesFor(g.key)) {
+      const chip = document.createElement("span");
+      chip.className = "chip" + (state.active[g.key].has(val) ? " on" : "");
+      chip.innerHTML = `${val}<span class="ct">${ct}</span>`;
+      chip.onclick = () => {
+        const s = state.active[g.key];
+        s.has(val) ? s.delete(val) : s.add(val);
+        renderFilters(); renderGrid();
+      };
+      wrap.appendChild(chip);
+    }
+    root.appendChild(wrap);
+  }
+  const btn = document.createElement("button");
+  btn.className = "clear";
+  btn.textContent = "Clear all filters";
+  btn.onclick = () => {
+    for (const g of FILTER_GROUPS) { state.active[g.key].clear(); state.matchMode[g.key] = "any"; }
+    state.q = "";
+    document.getElementById("q").value = "";
+    renderFilters(); renderGrid();
+  };
+  root.appendChild(btn);
+}
+
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  const rows = sorted(state.products.filter(passesFilters));
+  document.getElementById("count").textContent =
+    `${rows.length} of ${state.products.length} items`;
+  if (!rows.length) {
+    grid.innerHTML = `<div class="empty">No items match these filters.</div>`;
+    return;
+  }
+  grid.innerHTML = rows.map(p => {
+    const { detail } = splitTitle(p.title);
+    const head = normalizedHeadline(p);
+    const yr = p.published_at ? `'${p.published_at.slice(2, 4)}` : "";
+    return `
+    <div class="card" data-id="${p.id}">
+      <div class="img" style="background-image:url('${p.image}')">
+        ${yr ? `<span class="year-badge">${yr}</span>` : ""}
+      </div>
+      <div class="body">
+        <div class="headline">${head}</div>
+        ${detail ? `<div class="subtitle">${detail.split(" - ").map(s => `<span>${s.trim()}</span>`).join("")}</div>` : ""}
+        <div class="meta">
+          <span class="price">${fmtPrice(p.price_min, p.price_max)}</span>
+          ${p.archived ? `<span class="archived-badge">ARCHIVED</span>` : ""}
+        </div>
+        <div class="dim">
+          ${fmtWeight(p) ? `<span>⚖ ${fmtWeight(p)}</span>` : ""}
+          ${fmtDiameter(p) ? `<span>⌀ ${fmtDiameter(p)}</span>` : ""}
+          ${fmtLength(p) ? `<span>↔ ${fmtLength(p)}</span>` : ""}
+        </div>
+        <div class="tags">
+          ${p.sizes && p.sizes.length ? `<span class="tag size">${p.sizes.join(" / ")}</span>` : ""}
+          ${p.materials.map(t => `<span class="tag material">${t}</span>`).join("")}
+          ${p.refills.map(t => `<span class="tag refill">${t}</span>`).join("")}
+          ${p.noses.map(t => `<span class="tag nose">${t}</span>`).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+  }).join("");
+}
+
+// ---------- Lightbox ----------
+const lb = {
+  el: document.getElementById("lightbox"),
+  img: document.getElementById("lbImage"),
+  info: document.getElementById("lbInfo"),
+  counter: document.getElementById("lbCounter"),
+  prev: document.getElementById("lbPrev"),
+  next: document.getElementById("lbNext"),
+  product: null,
+  imageIdx: 0,
+};
+
+function lbImagesFor(p) {
+  // Prefer local archive copies; if a CDN URL isn't mirrored yet, fall through.
+  const local = (p.images_local || []).map(rel => rel);
+  return local.length ? local : [p.image];
+}
+
+function lbShowImage() {
+  const imgs = lbImagesFor(lb.product);
+  lb.imageIdx = (lb.imageIdx + imgs.length) % imgs.length;
+  lb.img.src = imgs[lb.imageIdx];
+  lb.counter.textContent = imgs.length > 1 ? `${lb.imageIdx + 1} / ${imgs.length}` : "";
+  lb.prev.style.display = imgs.length > 1 ? "flex" : "none";
+  lb.next.style.display = imgs.length > 1 ? "flex" : "none";
+}
+
+// Touch swipe between carousel images on mobile.
+// Tracked on the image wrap so vertical scroll still works on the rest of the page.
+(() => {
+  const wrap = document.getElementById("lbImageWrap");
+  if (!wrap) return;
+  let startX = 0, startY = 0, swiping = false;
+  wrap.addEventListener("touchstart", e => {
+    if (e.touches.length !== 1) return;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    swiping = true;
+  }, { passive: true });
+  wrap.addEventListener("touchend", e => {
+    if (!swiping || !lb.product) return;
+    swiping = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX, dy = t.clientY - startY;
+    // Require dominant horizontal motion and a meaningful distance.
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      lb.imageIdx += dx > 0 ? -1 : 1;
+      lbShowImage();
+    }
+  }, { passive: true });
+})();
+
+let _sourceCardEl = null;
+
+const ENTER_MS = 520;
+const EXIT_MS  = 380;
+const EASE_OUT = "cubic-bezier(0.22, 0.65, 0.27, 1)";
+const EASE_IN  = "cubic-bezier(0.5, 0, 0.75, 0)";
+
+function _flipTransformFromCard(cardRect, targetRect) {
+  // Translate so source center maps to target center, then scale to source size,
+  // then prerotate around Y so the open animation lands at rotateY(0).
+  const cx = cardRect.left + cardRect.width / 2;
+  const cy = cardRect.top + cardRect.height / 2;
+  const tx = targetRect.left + targetRect.width / 2;
+  const ty = targetRect.top + targetRect.height / 2;
+  const dx = cx - tx;
+  const dy = cy - ty;
+  const sx = cardRect.width  / targetRect.width;
+  const sy = cardRect.height / targetRect.height;
+  return `translate(${dx}px, ${dy}px) scale(${sx}, ${sy}) rotateY(-180deg)`;
+}
+
+function openLightbox(p, sourceCardEl) {
+  _sourceCardEl = sourceCardEl || null;
+  lb.product = p;
+  lb.imageIdx = 0;
+  lb.info.innerHTML = `
+    <div class="lb-released">Released · ${fmtDate(p.published_at)}</div>
+    <div class="lb-title">${p.title}</div>
+    ${p.archived ? `<span class="lb-archived">Archived — no longer listed</span>` : ""}
+    <div class="lb-spec-grid">
+      <div class="lb-spec"><span class="k">Price</span><span class="v">${fmtPrice(p.price_min, p.price_max)}</span></div>
+      ${p.sizes && p.sizes.length ? `<div class="lb-spec"><span class="k">Model</span><span class="v">${p.sizes.join(" / ")}</span></div>` : ""}
+      ${fmtWeight(p) ? `<div class="lb-spec"><span class="k">Weight</span><span class="v">${fmtWeight(p)}</span></div>` : ""}
+      ${fmtDiameter(p) ? `<div class="lb-spec"><span class="k">Diameter</span><span class="v">${fmtDiameter(p)}</span></div>` : ""}
+      ${fmtLength(p) ? `<div class="lb-spec"><span class="k">Length</span><span class="v">${fmtLength(p)}</span></div>` : ""}
+    </div>
+    <div class="lb-tags">
+      ${p.materials.map(t => `<span class="tag material">${t}</span>`).join("")}
+      ${p.refills.map(t => `<span class="tag refill">${t}</span>`).join("")}
+      ${p.noses.map(t => `<span class="tag nose">${t}</span>`).join("")}
+      ${p.mechanisms.map(t => `<span class="tag">${t}</span>`).join("")}
+      ${p.clips.map(t => `<span class="tag">${t}</span>`).join("")}
+      ${(p.body_details || []).map(t => `<span class="tag">${t}</span>`).join("")}
+      ${p.finishes.map(t => `<span class="tag">${t}</span>`).join("")}
+    </div>
+    <div class="lb-desc">${(p.body_text || "(no description on file)").replace(/</g, "&lt;")}</div>
+    <div class="lb-actions">
+      <a href="${p.url}" target="_blank" rel="noopener">Visit product page →</a>
+    </div>
+  `;
+  lbShowImage();
+  document.body.style.overflow = "hidden";
+  lb.el.classList.add("open");
+
+  const inner = document.querySelector(".lb-inner");
+  inner.style.transition = "none";
+  inner.style.opacity = "0";
+  inner.style.transform = "";
+
+  // After display:flex paints, measure target rect for FLIP.
+  requestAnimationFrame(() => {
+    const targetRect = inner.getBoundingClientRect();
+    const cardRect = _sourceCardEl ? _sourceCardEl.getBoundingClientRect() : null;
+    if (cardRect) {
+      inner.style.transformOrigin = "center center";
+      inner.style.transform = _flipTransformFromCard(cardRect, targetRect);
+      inner.style.opacity = "1";
+      _sourceCardEl.style.visibility = "hidden";
+    } else {
+      inner.style.transform = "scale(0.85) rotateY(-90deg)";
+      inner.style.opacity = "0";
+    }
+
+    requestAnimationFrame(() => {
+      inner.style.transition = `transform ${ENTER_MS}ms ${EASE_OUT}, opacity ${ENTER_MS / 2}ms ease`;
+      inner.style.transform = "";
+      inner.style.opacity = "1";
+      lb.el.classList.add("shown");
+    });
+  });
+}
+
+function closeLightbox() {
+  const inner = document.querySelector(".lb-inner");
+  const finish = () => {
+    lb.el.classList.remove("open", "shown");
+    document.body.style.overflow = "";
+    lb.img.src = "";
+    lb.product = null;
+    inner.style.transition = "";
+    inner.style.transform = "";
+    inner.style.opacity = "";
+    if (_sourceCardEl) {
+      _sourceCardEl.style.visibility = "";
+      _sourceCardEl = null;
+    }
+  };
+
+  if (_sourceCardEl && _sourceCardEl.isConnected) {
+    const targetRect = inner.getBoundingClientRect();
+    const cardRect = _sourceCardEl.getBoundingClientRect();
+    inner.style.transition = `transform ${EXIT_MS}ms ${EASE_IN}, opacity ${EXIT_MS}ms ease`;
+    // Slight delay so the rotateY reads as a flip-back before the scale catches up.
+    requestAnimationFrame(() => {
+      inner.style.transform = _flipTransformFromCard(cardRect, targetRect);
+      inner.style.opacity = "0";
+    });
+    lb.el.classList.remove("shown");
+    setTimeout(finish, EXIT_MS + 20);
+  } else {
+    finish();
+  }
+}
+
+document.getElementById("grid").addEventListener("click", e => {
+  const card = e.target.closest(".card");
+  if (!card) return;
+  const id = card.dataset.id;
+  const p = state.products.find(x => String(x.id) === id);
+  if (p) openLightbox(p, card);
+});
+document.getElementById("lbClose").addEventListener("click", closeLightbox);
+lb.el.addEventListener("click", e => { if (e.target === lb.el) closeLightbox(); });
+lb.prev.addEventListener("click", e => { e.stopPropagation(); lb.imageIdx--; lbShowImage(); });
+lb.next.addEventListener("click", e => { e.stopPropagation(); lb.imageIdx++; lbShowImage(); });
+document.addEventListener("keydown", e => {
+  if (lb.el.classList.contains("open")) {
+    if (e.key === "Escape") closeLightbox();
+    else if (e.key === "ArrowLeft") { lb.imageIdx--; lbShowImage(); }
+    else if (e.key === "ArrowRight") { lb.imageIdx++; lbShowImage(); }
+    return;
+  }
+  if (settingsDrawer.classList.contains("open") && e.key === "Escape") toggleSettings(false);
+});
+
+// ---------- Filter tray toggle ----------
+// Tray collapses behind a side tab. Close button lives inside the sidebar (top-right).
+// Mobile (≤880px): default closed regardless of saved state; overlay drawer + scrim.
+// Desktop: respects localStorage preference; inline collapsible column.
+const isMobileViewport = () => window.matchMedia("(max-width: 880px)").matches;
+function setFiltersOpen(open) {
+  document.body.classList.toggle("filters-closed", !open);
+  // Only persist user preference from desktop; mobile always starts closed on next load.
+  if (!isMobileViewport()) {
+    try { localStorage.setItem("autmog.filtersClosed", open ? "0" : "1"); } catch {}
+  }
+}
+// Initial state: mobile defaults closed; desktop respects saved preference.
+if (isMobileViewport()) {
+  document.body.classList.add("filters-closed");
+} else {
+  try {
+    if (localStorage.getItem("autmog.filtersClosed") === "1") {
+      document.body.classList.add("filters-closed");
+    }
+  } catch {}
+}
+document.getElementById("filterTab").addEventListener("click", () => setFiltersOpen(true));
+// Backdrop click (mobile only — the backdrop is invisible on desktop) closes the drawer.
+document.getElementById("filterBackdrop").addEventListener("click", () => setFiltersOpen(false));
+// If viewport crosses the 880px breakpoint after load, snap to the right default
+// (e.g., rotating a phone, resizing a desktop window past the threshold).
+window.matchMedia("(max-width: 880px)").addEventListener("change", e => {
+  if (e.matches) document.body.classList.add("filters-closed");
+});
+
+// ---------- Settings drawer ----------
+const settingsDrawer = document.getElementById("settings");
+const settingsScrim = document.getElementById("settingsScrim");
+const gearBtn = document.getElementById("gearBtn");
+
+function syncSettingButtons() {
+  document.querySelectorAll(".seg").forEach(seg => {
+    const key = seg.dataset.setting;
+    seg.querySelectorAll("button").forEach(b => {
+      b.classList.toggle("on", b.dataset.value === settings[key]);
+    });
+  });
+}
+
+function toggleSettings(force) {
+  const open = force ?? !settingsDrawer.classList.contains("open");
+  settingsDrawer.classList.toggle("open", open);
+  settingsScrim.classList.toggle("open", open);
+  gearBtn.classList.toggle("open", open);
+}
+
+gearBtn.addEventListener("click", () => toggleSettings());
+document.getElementById("settingsClose").addEventListener("click", () => toggleSettings(false));
+settingsScrim.addEventListener("click", () => toggleSettings(false));
+
+document.querySelectorAll(".seg").forEach(seg => {
+  const key = seg.dataset.setting;
+  seg.addEventListener("click", e => {
+    const btn = e.target.closest("button[data-value]");
+    if (!btn) return;
+    settings[key] = btn.dataset.value;
+    saveSettings();
+    if (key === "theme") applyTheme();
+    syncSettingButtons();
+    renderGrid();
+    if (lb.product) openLightbox(lb.product, _sourceCardEl); // refresh open lightbox
+  });
+});
+
+syncSettingButtons();
+
+const debounce = (fn, ms) => {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+};
+const onSearch = debounce(v => { state.q = v; renderGrid(); }, 150);
+document.getElementById("q").addEventListener("input", e => onSearch(e.target.value));
+document.getElementById("sort").addEventListener("change", e => { state.sort = e.target.value; renderGrid(); });
+
+// Restore preferred currency, then hook the dropdown to re-render on change.
+const currencySelect = document.getElementById("currency");
+try {
+  const saved = localStorage.getItem("autmog.currency");
+  if (saved && CURRENCIES.includes(saved)) currentCurrency = saved;
+} catch {}
+currencySelect.value = currentCurrency;
+currencySelect.addEventListener("change", e => {
+  currentCurrency = e.target.value;
+  try { localStorage.setItem("autmog.currency", currentCurrency); } catch {}
+  renderGrid();
+  // Keep the lightbox in sync if it's open
+  if (lb.product) openLightbox(lb.product, _sourceCardEl);
+});
+// Load FX rates in the background. Once they're available, re-render so any
+// non-base currency display picks up the actual conversion (initial render
+// happens with the placeholder rate of 1).
+loadCurrencyRates().then(() => {
+  if (currentCurrency !== BASE_CURRENCY) renderGrid();
+});
+
+fetch("data.json", { cache: "no-store" })
+  .then(r => r.json())
+  .then(d => { state.products = d.products; renderFilters(); renderGrid(); })
+  .catch(err => {
+    document.getElementById("grid").innerHTML =
+      `<div class="empty">Could not load data.json — run a local server:<br><br>
+      <code>cd "$(dirname "$0")" &amp;&amp; python3 -m http.server 8000</code><br><br>
+      then open <code>http://localhost:8000</code></div>`;
+  });
+</script>
+</body>
+</html>
