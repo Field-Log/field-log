@@ -49,6 +49,8 @@ Use the most specific scope. If changes span multiple scopes, use the primary on
 ## Rules
 
 * Never create a commit on `main`. If the current branch is `main` then prompt the user with a suggestion for a new branch and on approval create and checkout the new branch.
+* When suggesting a branch from `main`, prefix it with the user's initials from `git config --get user.initials`, for example `roy/setup-monorepo`. Do not use the conventional commit type as the branch prefix, for example `chore/setup-monorepo`.
+* If `user.initials` is unset, tell the user they can set it with `git config --global user.initials <initials>` or for this repository only with `git config user.initials <initials>`.
 * **No `Co-Authored-By` lines** — commits are from the user only
 * **Summary line**: imperative mood, lowercase, no period, max 72 chars
 * **Body**: point-form list of changes, keep each point succinct
