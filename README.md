@@ -2,6 +2,12 @@
 
 Monorepo for the machinedpens.info apps and shared packages.
 
+## AI commands
+
+| Task | Claude | Codex | What it does |
+| --- | --- | --- | --- |
+| Commit | `/commit` | `$commit` | Uses `.agents/skills/commit/SKILL.md` to write conventional commits for this monorepo. |
+
 ## Running apps
 
 | Command | What it does |
