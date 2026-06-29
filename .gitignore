@@ -1,20 +1,35 @@
-# This repo tracks ONLY the files needed to serve the live machinedpens.info
-# site(s). Backend pipeline scripts, credentials, generated source state, and
-# internal docs are intentionally excluded.
-#
-# Strategy: ignore everything, then re-include just the published site files.
+# Dependencies
+node_modules/
+.pnpm-store/
 
-# Ignore everything at the repo root by default...
-/*
+# Build output
+dist/
+build/
+.output/
+.tanstack/
+.turbo/
+coverage/
 
-# ...except this file and the Autmog site folder.
-!/.gitignore
-!/Autmog_Database/
+# Expo / React Native
+.expo/
+.expo-shared/
+android/
+ios/
 
-# Inside the Autmog folder, ignore everything...
-/Autmog_Database/*
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# ...except the published site: page, data, and product images.
-!/Autmog_Database/index.html
-!/Autmog_Database/data.json
-!/Autmog_Database/images/
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+

@@ -1,0 +1,31 @@
+{
+  "name": "@repo/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev:web": "pnpm run dev",
+    "dev:ios": "pnpm run dev",
+    "dev:android": "pnpm run dev",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "check": "biome check .",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@hono/node-server": "latest",
+    "@repo/types": "workspace:*",
+    "hono": "latest"
+  },
+  "devDependencies": {
+    "@repo/eslint": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "tsx": "latest"
+  }
+}

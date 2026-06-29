@@ -1,0 +1,17 @@
+{
+  "name": "@repo/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "base.json",
+    "node.json",
+    "react.json",
+    "react-native.json"
+  ],
+  "exports": {
+    "./base.json": "./base.json",
+    "./node.json": "./node.json",
+    "./react.json": "./react.json",
+    "./react-native.json": "./react-native.json"
+  }
+}

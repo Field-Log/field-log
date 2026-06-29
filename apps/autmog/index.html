@@ -602,7 +602,7 @@
     <option value="diameter_desc">Diameter thick → thin</option>
     <option value="title_asc">Title A → Z</option>
   </select>
-  <button class="gear" id="gearBtn" aria-label="Settings" title="Settings">
+  <button type="button" class="gear" id="gearBtn" aria-label="Settings" title="Settings">
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="3"/>
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -614,28 +614,28 @@
 <aside class="settings" id="settings" role="dialog" aria-modal="true">
   <header>
     <h2>Settings</h2>
-    <button id="settingsClose" aria-label="Close">✕</button>
+    <button type="button" id="settingsClose" aria-label="Close">✕</button>
   </header>
   <div class="body">
     <div class="settings-group">
       <div class="label">Theme</div>
       <div class="seg" data-setting="theme">
-        <button data-value="dark">Dark</button>
-        <button data-value="light">Light</button>
+        <button type="button" data-value="dark">Dark</button>
+        <button type="button" data-value="light">Light</button>
       </div>
     </div>
     <div class="settings-group">
       <div class="label">Dimensions</div>
       <div class="seg" data-setting="units">
-        <button data-value="in">Inches</button>
-        <button data-value="mm">Millimeters</button>
+        <button type="button" data-value="in">Inches</button>
+        <button type="button" data-value="mm">Millimeters</button>
       </div>
     </div>
     <div class="settings-group">
       <div class="label">Weight</div>
       <div class="seg" data-setting="weight">
-        <button data-value="g">Grams</button>
-        <button data-value="oz">Ounces</button>
+        <button type="button" data-value="g">Grams</button>
+        <button type="button" data-value="oz">Ounces</button>
       </div>
     </div>
     <div class="settings-group">
@@ -672,7 +672,7 @@
 </aside>
 
 <div id="filterBackdrop" aria-hidden="true"></div>
-<button class="filter-tab" id="filterTab" aria-label="Open filters" title="Open filters">
+<button type="button" class="filter-tab" id="filterTab" aria-label="Open filters" title="Open filters">
   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <line x1="4" y1="6" x2="20" y2="6"/>
     <line x1="4" y1="12" x2="14" y2="12"/>
@@ -693,12 +693,12 @@
 </footer>
 
 <div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
-  <button class="lb-close" id="lbClose">✕ Close</button>
+  <button type="button" class="lb-close" id="lbClose">✕ Close</button>
   <div class="lb-inner">
     <div class="lb-image-wrap" id="lbImageWrap">
       <img id="lbImage" alt="">
-      <button class="lb-nav prev" id="lbPrev">‹</button>
-      <button class="lb-nav next" id="lbNext">›</button>
+      <button type="button" class="lb-nav prev" id="lbPrev">‹</button>
+      <button type="button" class="lb-nav next" id="lbNext">›</button>
       <span class="lb-counter" id="lbCounter"></span>
     </div>
     <div class="lb-info" id="lbInfo"></div>
@@ -816,7 +816,7 @@ let currentCurrency = BASE_CURRENCY;
 
 function todayUTCDateStr() {
   const d = new Date();
-  return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 }
 
 async function loadCurrencyRates() {
@@ -837,7 +837,7 @@ async function loadCurrencyRates() {
     const r = await fetch(url, { cache: "no-store" });
     if (!r.ok) throw new Error(`fx ${r.status}`);
     const data = await r.json();
-    if (data && data.rates) {
+    if (data?.rates) {
       currencyRates = { [BASE_CURRENCY]: 1, ...data.rates };
       try { localStorage.setItem(cacheKey, JSON.stringify({ date: today, rates: data.rates })); } catch {}
     }
@@ -966,7 +966,7 @@ function sorted(rows) {
 function renderFilters() {
   const root = document.getElementById("filters");
   root.innerHTML = `
-    <button class="filter-close" id="filterClose" aria-label="Close filters" title="Close filters">
+    <button type="button" class="filter-close" id="filterClose" aria-label="Close filters" title="Close filters">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <polyline points="14 6 7 12 14 18"/>
       </svg>
@@ -983,10 +983,10 @@ function renderFilters() {
     if (g.andable) {
       const mode = state.matchMode[g.key];
       const pill = document.createElement("span");
-      pill.className = "match-mode" + (active.size >= 2 ? "" : " inactive");
+      pill.className = `match-mode${active.size >= 2 ? "" : " inactive"}`;
       pill.innerHTML = `
-        <button data-mode="any" class="${mode === 'any' ? 'on' : ''}" title="Match ANY selected (OR)">any</button>
-        <button data-mode="all" class="${mode === 'all' ? 'on' : ''}" title="Match ALL selected (AND)">all</button>`;
+        <button type="button" data-mode="any" class="${mode === 'any' ? 'on' : ''}" title="Match ANY selected (OR)">any</button>
+        <button type="button" data-mode="all" class="${mode === 'all' ? 'on' : ''}" title="Match ALL selected (AND)">all</button>`;
       pill.querySelectorAll("button").forEach(b => {
         b.onclick = () => {
           state.matchMode[g.key] = b.dataset.mode;
@@ -1000,7 +1000,7 @@ function renderFilters() {
     wrap.className = "chips";
     for (const [val, ct] of valuesFor(g.key)) {
       const chip = document.createElement("span");
-      chip.className = "chip" + (state.active[g.key].has(val) ? " on" : "");
+      chip.className = `chip${state.active[g.key].has(val) ? " on" : ""}`;
       chip.innerHTML = `${val}<span class="ct">${ct}</span>`;
       chip.onclick = () => {
         const s = state.active[g.key];
@@ -1012,6 +1012,7 @@ function renderFilters() {
     root.appendChild(wrap);
   }
   const btn = document.createElement("button");
+  btn.type = "button";
   btn.className = "clear";
   btn.textContent = "Clear all filters";
   btn.onclick = () => {
@@ -1054,7 +1055,7 @@ function renderGrid() {
           ${fmtLength(p) ? `<span>↔ ${fmtLength(p)}</span>` : ""}
         </div>
         <div class="tags">
-          ${p.sizes && p.sizes.length ? `<span class="tag size">${p.sizes.join(" / ")}</span>` : ""}
+          ${p.sizes?.length ? `<span class="tag size">${p.sizes.join(" / ")}</span>` : ""}
           ${p.materials.map(t => `<span class="tag material">${t}</span>`).join("")}
           ${p.refills.map(t => `<span class="tag refill">${t}</span>`).join("")}
           ${p.noses.map(t => `<span class="tag nose">${t}</span>`).join("")}
@@ -1147,7 +1148,7 @@ function openLightbox(p, sourceCardEl) {
     ${p.archived ? `<span class="lb-archived">Archived — no longer listed</span>` : ""}
     <div class="lb-spec-grid">
       <div class="lb-spec"><span class="k">Price</span><span class="v">${fmtPrice(p.price_min, p.price_max)}</span></div>
-      ${p.sizes && p.sizes.length ? `<div class="lb-spec"><span class="k">Model</span><span class="v">${p.sizes.join(" / ")}</span></div>` : ""}
+      ${p.sizes?.length ? `<div class="lb-spec"><span class="k">Model</span><span class="v">${p.sizes.join(" / ")}</span></div>` : ""}
       ${fmtWeight(p) ? `<div class="lb-spec"><span class="k">Weight</span><span class="v">${fmtWeight(p)}</span></div>` : ""}
       ${fmtDiameter(p) ? `<div class="lb-spec"><span class="k">Diameter</span><span class="v">${fmtDiameter(p)}</span></div>` : ""}
       ${fmtLength(p) ? `<div class="lb-spec"><span class="k">Length</span><span class="v">${fmtLength(p)}</span></div>` : ""}
@@ -1214,7 +1215,7 @@ function closeLightbox() {
     }
   };
 
-  if (_sourceCardEl && _sourceCardEl.isConnected) {
+  if (_sourceCardEl?.isConnected) {
     const targetRect = inner.getBoundingClientRect();
     const cardRect = _sourceCardEl.getBoundingClientRect();
     inner.style.transition = `transform ${EXIT_MS}ms ${EASE_IN}, opacity ${EXIT_MS}ms ease`;
@@ -1355,7 +1356,7 @@ loadCurrencyRates().then(() => {
 fetch("data.json", { cache: "no-store" })
   .then(r => r.json())
   .then(d => { state.products = d.products; renderFilters(); renderGrid(); })
-  .catch(err => {
+  .catch(_err => {
     document.getElementById("grid").innerHTML =
       `<div class="empty">Could not load data.json — run a local server:<br><br>
       <code>cd "$(dirname "$0")" &amp;&amp; python3 -m http.server 8000</code><br><br>

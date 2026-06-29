@@ -1,0 +1,33 @@
+{
+  "name": "@repo/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "dev": "expo start",
+    "dev:ios": "pnpm run ios",
+    "dev:android": "pnpm run android",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "build": "expo export --platform all",
+    "check": "biome check .",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "expo": "latest",
+    "expo-status-bar": "latest",
+    "react": "latest",
+    "react-native": "0.85.3"
+  },
+  "devDependencies": {
+    "@repo/eslint": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "@react-native/jest-preset": "0.85.3",
+    "@types/react": "latest",
+    "jest": "^29.7.0",
+    "jest-expo": "latest"
+  }
+}
