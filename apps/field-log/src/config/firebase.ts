@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-// @ts-ignore
+// @ts-expect-error React Native persistence is available at runtime.
 import { initializeAuth, getReactNativePersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";

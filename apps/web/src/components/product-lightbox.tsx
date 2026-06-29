@@ -111,9 +111,14 @@ export function ProductLightbox({
     <div
       aria-modal="true"
       className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/85 p-3 backdrop-blur-md min-[881px]:items-stretch min-[881px]:p-10"
-      onClick={onClose}
       role="dialog"
     >
+      <button
+        aria-label="Close product details"
+        className="absolute inset-0 cursor-default"
+        onClick={onClose}
+        type="button"
+      />
       <Button
         className="fixed top-3 right-3 z-[110] rounded-full bg-card/90 backdrop-blur"
         onClick={onClose}
@@ -123,10 +128,7 @@ export function ProductLightbox({
         <X />
         Close
       </Button>
-      <div
-        className="grid w-full max-w-[1280px] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-2xl min-[881px]:grid-cols-[1.1fr_1fr]"
-        onClick={(event) => event.stopPropagation()}
-      >
+      <div className="relative z-[101] grid w-full max-w-[1280px] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-2xl min-[881px]:grid-cols-[1.1fr_1fr]">
         <div
           className="relative flex aspect-4/3 min-h-0 items-start justify-center bg-muted min-[881px]:aspect-auto min-[881px]:min-h-[320px]"
           onTouchEnd={(event) => {

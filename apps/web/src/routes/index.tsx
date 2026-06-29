@@ -67,6 +67,7 @@ function Home() {
   const [matchModes, setMatchModes] = React.useState(createDefaultMatchModes);
   const [selectedProduct, setSelectedProduct] =
     React.useState<AutmogProduct | null>(null);
+  const searchInputId = React.useId();
 
   React.useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 150);
@@ -117,12 +118,16 @@ function Home() {
             {visibleProducts.length} of {products.length} items
           </span>
           <div className="hidden flex-1 min-[881px]:block" />
-          <label className="relative order-99 w-full min-[881px]:order-none min-[881px]:w-[260px]">
+          <label
+            className="relative order-99 w-full min-[881px]:order-none min-[881px]:w-[260px]"
+            htmlFor={searchInputId}
+          >
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               aria-label="Search pens by title, specs, or description"
               autoComplete="off"
               className="pr-3 pl-9"
+              id={searchInputId}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search..."
               type="search"
