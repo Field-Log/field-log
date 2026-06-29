@@ -1,29 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
   ScrollView,
+  StyleSheet,
   Switch,
   Text,
   TextInput,
   View,
-  StyleSheet,
 } from "react-native";
+import { useAuth } from "../contexts/AuthContext";
 import {
-  getReminderSettings,
-  scheduleCarryReminder,
-  cancelCarryReminder,
-  requestNotificationPermission,
-} from "../utils/notifications";
-import * as FileSystem from "expo-file-system/legacy";
-import * as Sharing from "expo-sharing";
-import {
-  fetchCollections,
-  insertCollection,
   deleteCollection,
+  fetchCollections,
   fetchItems,
+  insertCollection,
 } from "../db/database";
+import { C } from "../theme/colors";
+import {
+  cancelCarryReminder,
+  getReminderSettings,
+  requestNotificationPermission,
+  scheduleCarryReminder,
+} from "../utils/notifications";
 
 export default function SettingsScreen() {
   const [collections, setCollections] = useState<
@@ -239,11 +240,11 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 48 },
+  container: { padding: 20, paddingBottom: 48, backgroundColor: C.bg },
   sectionHeader: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#666",
+    color: C.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.8,
     marginBottom: 14,
@@ -251,42 +252,43 @@ const styles = StyleSheet.create({
   subHeader: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#666",
+    color: C.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.8,
     marginTop: 28,
     marginBottom: 12,
   },
-  empty: { fontSize: 14, color: "#aaa", marginBottom: 8 },
+  empty: { fontSize: 14, color: C.textMuted, marginBottom: 8 },
   row: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: C.border,
     gap: 12,
   },
-  rowName: { fontSize: 15, fontWeight: "600", color: "#222" },
-  rowDesc: { fontSize: 13, color: "#888", marginTop: 2 },
+  rowName: { fontSize: 15, fontWeight: "600", color: C.text },
+  rowDesc: { fontSize: 13, color: C.textSub, marginTop: 2 },
   deleteButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#e25555",
+    borderColor: C.danger,
   },
-  deleteText: { color: "#e25555", fontSize: 13, fontWeight: "600" },
+  deleteText: { color: C.danger, fontSize: 13, fontWeight: "600" },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: C.border,
     borderRadius: 8,
     padding: 10,
     fontSize: 15,
-    backgroundColor: "#fff",
+    backgroundColor: C.bgInput,
+    color: C.text,
     marginBottom: 12,
   },
   addButton: {
-    backgroundColor: "#7c5cbf",
+    backgroundColor: C.purple,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
@@ -297,52 +299,57 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: C.border,
     marginBottom: 8,
   },
-  accountEmail: { fontSize: 15, fontWeight: "600", color: "#222" },
-  accountSub: { fontSize: 12, color: "#2a9d8f", marginTop: 2 },
+  accountEmail: { fontSize: 15, fontWeight: "600", color: C.text },
+  accountSub: { fontSize: 12, color: C.success, marginTop: 2 },
   signOutButton: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: C.border,
   },
-  signOutText: { fontSize: 13, fontWeight: "600", color: "#666" },
+  signOutText: { fontSize: 13, fontWeight: "600", color: C.textSub },
   exportButton: {
-    backgroundColor: "#333",
+    backgroundColor: C.primary,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     marginBottom: 8,
   },
-  exportButtonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
-  exportHint: { fontSize: 12, color: "#999", lineHeight: 18, marginBottom: 8 },
-  addButtonText: { color: "#fff", fontSize: 15, fontWeight: "700" },
+  exportButtonText: { color: C.text, fontSize: 15, fontWeight: "600" },
+  exportHint: {
+    fontSize: 12,
+    color: C.textMuted,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  addButtonText: { color: C.text, fontSize: 15, fontWeight: "700" },
   reminderRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: C.border,
     marginBottom: 8,
     gap: 12,
   },
-  reminderTitle: { fontSize: 15, fontWeight: "600", color: "#222" },
-  reminderSub: { fontSize: 12, color: "#888", marginTop: 2 },
+  reminderTitle: { fontSize: 15, fontWeight: "600", color: C.text },
+  reminderSub: { fontSize: 12, color: C.textSub, marginTop: 2 },
   timeRow: { marginBottom: 8 },
-  timeLabel: { fontSize: 13, color: "#666", marginBottom: 8 },
+  timeLabel: { fontSize: 13, color: C.textSub, marginBottom: 8 },
   timePickers: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   timePill: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#ccc",
-    backgroundColor: "#f5f5f5",
+    borderColor: C.border,
+    backgroundColor: C.bgMuted,
   },
-  timePillActive: { backgroundColor: "#4a90e2", borderColor: "#4a90e2" },
-  timePillText: { fontSize: 13, color: "#444", fontWeight: "500" },
-  timePillTextActive: { color: "#fff", fontWeight: "700" },
+  timePillActive: { backgroundColor: C.accent, borderColor: C.accent },
+  timePillText: { fontSize: 13, color: C.textSub, fontWeight: "500" },
+  timePillTextActive: { color: C.text, fontWeight: "700" },
 });

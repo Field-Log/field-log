@@ -1,24 +1,25 @@
-import React, { useState, useEffect, useLayoutEffect } from "react";
+import { Picker } from "@react-native-picker/picker";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
+  Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
-  Pressable,
-  StyleSheet,
-  ActivityIndicator,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import { Picker } from "@react-native-picker/picker";
-import { useNavigation, useRoute } from "@react-navigation/native";
 import {
-  ITEM_TYPE_MAP,
-  SpecField,
   formatPickerLabel,
+  ITEM_TYPE_MAP,
+  type SpecField,
 } from "../config/itemTypes";
-import { fetchItemById, updateItem, Item } from "../db/database";
+import { fetchItemById, type Item, updateItem } from "../db/database";
+import { C } from "../theme/colors";
 
 export default function EditItemScreen() {
   const navigation = useNavigation<any>();
@@ -507,35 +508,41 @@ export default function EditItemScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48 },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center" },
+  container: { padding: 16, paddingBottom: 48, backgroundColor: C.bg },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: C.bg,
+  },
   sectionHeader: {
     fontSize: 13,
     fontWeight: "700",
-    color: "#666",
+    color: C.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.8,
     marginTop: 24,
     marginBottom: 12,
   },
   fieldGroup: { marginBottom: 14 },
-  fieldLabel: { fontSize: 13, color: "#555", marginBottom: 4 },
+  fieldLabel: { fontSize: 13, color: C.textSub, marginBottom: 4 },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: C.border,
     borderRadius: 8,
     padding: 10,
     fontSize: 15,
-    backgroundColor: "#fff",
+    backgroundColor: C.bgInput,
+    color: C.text,
   },
-  inputError: { borderColor: "#e25555" },
-  errorText: { color: "#e25555", fontSize: 12, marginTop: 3 },
+  inputError: { borderColor: C.danger },
+  errorText: { color: C.danger, fontSize: 12, marginTop: 3 },
   textarea: { minHeight: 80, textAlignVertical: "top" },
   pickerWrapper: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: C.border,
     borderRadius: 8,
-    backgroundColor: "#fff",
+    backgroundColor: C.bgInput,
     overflow: "hidden",
   },
   photoRow: {
@@ -552,22 +559,22 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(0,0,0,0.7)",
     alignItems: "center",
     justifyContent: "center",
   },
-  photoDeleteText: { color: "#fff", fontSize: 14, lineHeight: 16 },
+  photoDeleteText: { color: C.text, fontSize: 14, lineHeight: 16 },
   photoAdd: {
     width: 80,
     height: 80,
     borderRadius: 8,
     borderWidth: 1.5,
-    borderColor: "#4a90e2",
+    borderColor: C.accent,
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
   },
-  photoAddText: { fontSize: 32, color: "#4a90e2", lineHeight: 36 },
+  photoAddText: { fontSize: 32, color: C.accentBright, lineHeight: 36 },
   customFieldRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -581,21 +588,21 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#e25555",
+    borderColor: C.danger,
     alignItems: "center",
     justifyContent: "center",
   },
-  removeFieldText: { color: "#e25555", fontSize: 18, lineHeight: 20 },
+  removeFieldText: { color: C.danger, fontSize: 18, lineHeight: 20 },
   addFieldButton: {
     borderWidth: 1,
-    borderColor: "#4a90e2",
+    borderColor: C.accent,
     borderRadius: 8,
     borderStyle: "dashed",
     paddingVertical: 10,
     alignItems: "center",
     marginBottom: 8,
   },
-  addFieldText: { color: "#4a90e2", fontSize: 14, fontWeight: "600" },
+  addFieldText: { color: C.accentBright, fontSize: 14, fontWeight: "600" },
   boolRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -608,25 +615,25 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: "#ccc",
+    borderColor: C.border,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: C.bgMuted,
   },
-  boolToggleOn: { borderColor: "#4a90e2", backgroundColor: "#4a90e2" },
+  boolToggleOn: { borderColor: C.accent, backgroundColor: C.accent },
   boolInner: {
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: "#ccc",
+    backgroundColor: C.textMuted,
   },
-  boolInnerOn: { backgroundColor: "#fff" },
+  boolInnerOn: { backgroundColor: C.text },
   saveButton: {
     marginTop: 32,
-    backgroundColor: "#4a90e2",
+    backgroundColor: C.accent,
     borderRadius: 10,
     paddingVertical: 16,
     alignItems: "center",
   },
-  saveButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  saveButtonText: { color: C.text, fontSize: 16, fontWeight: "700" },
 });

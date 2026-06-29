@@ -1,21 +1,22 @@
-import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
+  StyleSheet,
   Text,
   View,
-  StyleSheet,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { getItemLabel, ITEM_TYPE_MAP } from "../config/itemTypes";
 import {
-  fetchItems,
   fetchCarriedItemIdsForDate,
-  toggleCarried,
+  fetchItems,
   fetchMostCarried,
-  Item,
+  type Item,
+  toggleCarried,
 } from "../db/database";
-import { ITEM_TYPE_MAP, getItemLabel } from "../config/itemTypes";
+import { C } from "../theme/colors";
 
 function todayString() {
   return new Date().toISOString().slice(0, 10);
@@ -137,35 +138,37 @@ export default function LogScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: C.bg },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderColor: "#ddd",
+    borderColor: C.border,
     gap: 24,
+    backgroundColor: C.bg,
   },
   arrow: { padding: 8 },
-  arrowText: { fontSize: 28, color: "#333" },
-  disabled: { color: "#ccc" },
+  arrowText: { fontSize: 28, color: C.text },
+  disabled: { color: C.textMuted },
   dateLabel: {
     fontSize: 18,
     fontWeight: "600",
     minWidth: 120,
     textAlign: "center",
+    color: C.text,
   },
   list: { padding: 16 },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
-  empty: { color: "#888", fontSize: 16 },
+  empty: { color: C.textMuted, fontSize: 16 },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: C.bgCard,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: C.border,
     padding: 14,
     marginBottom: 10,
     gap: 14,
@@ -175,11 +178,11 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: "#aaa",
+    borderColor: C.textMuted,
   },
-  checked: { backgroundColor: "#4a90e2", borderColor: "#4a90e2" },
+  checked: { backgroundColor: C.accent, borderColor: C.accent },
   info: { flex: 1 },
-  name: { fontSize: 16, fontWeight: "600" },
-  type: { fontSize: 12, color: "#888", marginTop: 2 },
-  streak: { fontSize: 12, color: "#aaa", fontVariant: ["tabular-nums"] },
+  name: { fontSize: 16, fontWeight: "600", color: C.text },
+  type: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  streak: { fontSize: 12, color: C.textSub, fontVariant: ["tabular-nums"] },
 });

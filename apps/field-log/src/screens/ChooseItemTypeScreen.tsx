@@ -1,14 +1,15 @@
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
   FlatList,
   Pressable,
+  SectionList,
+  StyleSheet,
   Text,
   View,
-  StyleSheet,
-  SectionList,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { ITEM_TYPES, ItemTypeConfig } from "../config/itemTypes";
+import { ITEM_TYPES, type ItemTypeConfig } from "../config/itemTypes";
+import { C } from "../theme/colors";
 
 type Section = {
   title: string;
@@ -93,28 +94,28 @@ export default function ChooseItemTypeScreen() {
 }
 
 const styles = StyleSheet.create({
-  list: { paddingBottom: 32 },
+  list: { paddingBottom: 32, backgroundColor: C.bg },
   sectionHeader: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: C.bgMuted,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#666",
+    color: C.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: C.bgCard,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: C.border,
   },
-  rowLabel: { flex: 1, fontSize: 16, color: "#222" },
-  chevron: { fontSize: 20, color: "#aaa" },
+  rowLabel: { flex: 1, fontSize: 16, color: C.text },
+  chevron: { fontSize: 20, color: C.textMuted },
 });
