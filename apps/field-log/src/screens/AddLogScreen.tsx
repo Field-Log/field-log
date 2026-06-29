@@ -1,14 +1,15 @@
+import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
   Pressable,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
-import { useRoute, useNavigation } from "@react-navigation/native";
-import { insertLogEntry, LogEntryType } from "../db/database";
+import { insertLogEntry, type LogEntryType } from "../db/database";
+import { C } from "../theme/colors";
 
 const ENTRY_TYPES: { value: LogEntryType; label: string }[] = [
   { value: "note", label: "Note" },
@@ -90,35 +91,37 @@ export default function AddLogScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 20 },
-  fieldLabel: { fontSize: 13, color: "#555", marginBottom: 6 },
+  container: { padding: 20, backgroundColor: C.bg, flexGrow: 1 },
+  title: { fontSize: 22, fontWeight: "700", marginBottom: 20, color: C.text },
+  fieldLabel: { fontSize: 13, color: C.textSub, marginBottom: 6 },
   typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
   typePill: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#aaa",
+    borderColor: C.border,
   },
-  typePillActive: { backgroundColor: "#4a90e2", borderColor: "#4a90e2" },
-  typePillText: { fontSize: 13, color: "#333" },
-  typePillTextActive: { color: "#fff" },
+  typePillActive: { backgroundColor: C.accent, borderColor: C.accent },
+  typePillText: { fontSize: 13, color: C.textSub },
+  typePillTextActive: { color: C.text },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: C.border,
     padding: 10,
     marginBottom: 16,
     borderRadius: 8,
     fontSize: 15,
+    backgroundColor: C.bgInput,
+    color: C.text,
   },
   notes: { height: 100, textAlignVertical: "top" },
   saveButton: {
-    backgroundColor: "#4a90e2",
+    backgroundColor: C.accent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 8,
   },
-  saveButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  saveButtonText: { color: C.text, fontSize: 16, fontWeight: "600" },
 });
