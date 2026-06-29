@@ -42,12 +42,50 @@ suggest a branch, create a branch, push, fetch, or create a PR from `main`.
 
 ## Title And Body
 
-Write the PR title from the commit subjects and changed files:
+Write the PR title from the commit subjects and changed files using the same
+conventional commit subject format as `$commit`:
 
-- Use the single commit subject when the branch has one commit and it is clear.
-- For multiple commits, write a concise imperative title that summarizes the
-  branch.
+```text
+<type>(<scope>): <short summary>
+```
+
+- Use the single commit subject when the branch has one commit and it already
+  follows the conventional commit format.
+- If the single commit subject is clear but not conventional, rewrite it into
+  the conventional commit format for the PR title.
+- For multiple commits, write a concise conventional commit title that
+  summarizes the branch.
+- Use imperative mood, lowercase, no period, and keep the title at or under 72
+  characters.
+- Use one of these types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`,
+  `style`, `perf`, or `ci`.
+- Use the most specific scope from this repo when applicable:
+  - `web` for `apps/web/`
+  - `api` for `apps/api/`
+  - `mcp-server` for `apps/mcp-server/`
+  - `packages` for multiple packages or `packages/` root
+  - `database` for `packages/database/`
+  - `types` for `packages/types/`
+  - `config` for root config files
+  - `docs` for CLAUDE.md, AGENTS.md, or `resources/guides/`
+  - `skills` for `.claude/skills/`, `.agents/skills/`, or `.claude/commands/`
+  - `scripts` for `scripts/`
+- Omit the scope only for truly cross-cutting changes.
 - Do not include AI co-authorship or generated-by lines.
+
+If the user asks this skill to create, amend, or suggest commits while preparing
+the PR, use the same `$commit` body format:
+
+```text
+<type>(<scope>): <short summary>
+
+- point form detail
+- point form detail
+```
+
+Do not add `Co-Authored-By` lines.
+Keep each commit to one logical change, use point-form body details, and stage
+specific files by name.
 
 Write the PR body in this format:
 
