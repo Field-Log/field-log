@@ -45,6 +45,19 @@
           }
         }
       }
+    },
+    {
+      "includes": ["apps/field-log/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useExhaustiveDependencies": "warn"
+          },
+          "suspicious": {
+            "noArrayIndexKey": "warn"
+          }
+        }
+      }
     }
   ],
   "assist": {
