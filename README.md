@@ -8,6 +8,7 @@ Monorepo for the machinedpens.info apps and shared packages.
 | --- | --- | --- | --- |
 | Commit | `/commit` | `$commit` | Uses `.agents/skills/commit/SKILL.md` to write conventional commits for this monorepo. |
 | Create PR | `/pr-create` | `$pr-create` | Uses `.agents/skills/pr-create/SKILL.md` to create a GitHub PR from the current branch and commits. |
+| Update PR | `/pr-update` | `$pr-update` | Uses `.agents/skills/pr-update/SKILL.md` to refresh an existing PR title and description from branch commits and changes. |
 
 ## Running apps
 
