@@ -52,7 +52,7 @@ export function AppShell({
         <SidebarContent className="scrollbar-none px-2 py-3">
           {sidebarContent}
         </SidebarContent>
-        <SidebarFooter className="border-t border-sidebar-border p-3">
+        <SidebarFooter className="gap-8 border-t border-sidebar-border px-3 pt-4 pb-3">
           <ThemeToggle />
           <UserMenu />
         </SidebarFooter>

@@ -13,9 +13,9 @@ const themeOptions: Array<{
   label: string;
   value: ThemeMode;
 }> = [
+  { icon: Moon, label: "Dark", value: "dark" },
   { icon: Sun, label: "Light", value: "light" },
   { icon: Monitor, label: "System", value: "system" },
-  { icon: Moon, label: "Dark", value: "dark" },
 ];
 
 export function ThemeToggle() {
@@ -24,7 +24,7 @@ export function ThemeToggle() {
   return (
     <ToggleGroup
       aria-label="Theme"
-      className="w-full"
+      className="mx-auto h-9 w-fit gap-0.5 rounded-full border-sidebar-border bg-secondary/20 p-1"
       onValueChange={(value) => {
         if (value) setTheme(value as ThemeMode);
       }}
@@ -39,7 +39,7 @@ export function ThemeToggle() {
             <TooltipTrigger asChild>
               <ToggleGroupItem
                 aria-label={option.label}
-                className="h-8 px-0"
+                className="size-7 flex-none rounded-full p-0 text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm [&_svg]:size-4"
                 value={option.value}
               >
                 <Icon />

@@ -147,7 +147,7 @@ export function useCurrencyRates() {
 }
 
 export function useFiltersOpen() {
-  const [filtersOpen, setFiltersOpenState] = React.useState(false);
+  const [filtersOpen, setFiltersOpenState] = React.useState(true);
 
   React.useEffect(() => {
     const media = window.matchMedia("(max-width: 880px)");
