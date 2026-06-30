@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -30,6 +30,7 @@ function MainTabs() {
 
 function AppGate() {
   const { user, loading } = useAuth();
+  const userId = user?.uid;
 
   useEffect(() => {
     initDatabase();
@@ -37,12 +38,12 @@ function AppGate() {
 
   // On first sign-in, upload local items to the cloud
   useEffect(() => {
-    if (user) {
-      uploadAllItems(user.uid).catch(() => {
-        // Non-fatal — local data is always the source of truth
-      });
-    }
-  }, [user?.uid]);
+    if (!userId) return;
+
+    uploadAllItems(userId).catch(() => {
+      // Non-fatal — local data is always the source of truth
+    });
+  }, [userId]);
 
   if (loading) {
     return (

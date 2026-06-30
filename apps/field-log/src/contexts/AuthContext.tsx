@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import {
-  User,
+  type User,
   onAuthStateChanged,
   signOut as firebaseSignOut,
 } from "firebase/auth";
