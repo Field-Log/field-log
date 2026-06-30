@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web"
+    "start": "tsx ../../packages/infisical-runner/src/cli.ts field-log start -- expo start",
+    "android": "tsx ../../packages/infisical-runner/src/cli.ts field-log android -- expo start --android",
+    "ios": "tsx ../../packages/infisical-runner/src/cli.ts field-log ios -- expo start --ios",
+    "web": "tsx ../../packages/infisical-runner/src/cli.ts field-log web -- expo start --web"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

@@ -16,13 +16,16 @@
     "check": "biome check --write . && turbo run check",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "test:watch": "turbo run test:watch"
+    "test:no-infisical": "turbo run test:no-infisical",
+    "test:watch": "turbo run test:watch",
+    "test:watch:no-infisical": "turbo run test:watch:no-infisical"
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
     "@eslint/js": "latest",
     "@types/node": "latest",
     "eslint": "latest",
+    "tsx": "latest",
     "turbo": "latest",
     "typescript": "latest",
     "typescript-eslint": "latest",
