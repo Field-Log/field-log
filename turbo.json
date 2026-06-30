@@ -22,6 +22,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**", ".output/**"]
     },
+    "build:ci": {
+      "dependsOn": ["^build:ci"],
+      "outputs": ["dist/**", "build/**", ".output/**"]
+    },
     "lint": {
       "outputs": []
     },

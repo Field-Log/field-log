@@ -84,7 +84,7 @@ export function validateSecretPaths(
   command: string,
   config: CommandSecretConfig,
 ): void {
-  if (!config.client) {
+  if (config.allowServerSecrets) {
     return;
   }
 
@@ -109,7 +109,21 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
     args.push(`--path=${secretPath}`);
   }
 
-  args.push("--", ...request.commandArgs);
+  args.push("--");
+
+  if (config.envAliases?.length) {
+    args.push(
+      "tsx",
+      join(
+        request.repoRoot,
+        "packages/infisical-runner/src/env-alias-runner.ts",
+      ),
+      JSON.stringify(config.envAliases),
+      "--",
+    );
+  }
+
+  args.push(...request.commandArgs);
 
   return args;
 }

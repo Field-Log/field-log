@@ -55,13 +55,38 @@ describe("buildInfisicalRunArgs", () => {
       }),
     ).toThrow(RunnerError);
   });
+
+  it("wraps web commands with a Vite publishable key alias", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "web",
+        command: "build",
+        commandArgs: ["vite", "build"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/common",
+      "--path=/clerk",
+      "--path=/clerk/server",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      '[{"from":"CLERK_PUBLISHABLE_KEY","to":"VITE_CLERK_PUBLISHABLE_KEY"}]',
+      "--",
+      "vite",
+      "build",
+    ]);
+  });
 });
 
 describe("secret path policy", () => {
   it("deduplicates the common path", () => {
     expect(
       getSecretPaths({
-        client: true,
+        allowServerSecrets: false,
         paths: ["/common", "/clerk"],
       }),
     ).toEqual(["/common", "/clerk"]);
@@ -70,7 +95,7 @@ describe("secret path policy", () => {
   it("rejects server-only paths for client commands", () => {
     expect(() =>
       validateSecretPaths("web", "dev", {
-        client: true,
+        allowServerSecrets: false,
         paths: ["/clerk/server"],
       }),
     ).toThrow(RunnerError);

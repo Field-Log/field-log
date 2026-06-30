@@ -6,5 +6,6 @@
   - `pnpm format`
   - `pnpm test`
   - `pnpm lint`
+  - `pnpm typecheck`
 - For changes that do not include code, such as documentation-only updates, run only `pnpm format`.
 - If `pnpm lint` or `pnpm format` fail, determine whether the failure was caused by changes made during the current session. If so, fix those issues before finishing.

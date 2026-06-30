@@ -4,10 +4,14 @@ import {
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
+import type * as React from "react";
+import { NotFoundPage } from "@/components/not-found-page";
+import { AppProviders } from "@/providers/app-providers";
 import "../styles.css";
 
 export const Route = createRootRoute({
   component: RootDocument,
+  notFoundComponent: RootNotFoundDocument,
   head: () => ({
     meta: [
       {
@@ -24,7 +28,7 @@ export const Route = createRootRoute({
   }),
 });
 
-function RootDocument() {
+function RootDocument({ children }: { children?: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -44,9 +48,17 @@ function RootDocument() {
         />
       </head>
       <body>
-        <Outlet />
+        <AppProviders>{children ?? <Outlet />}</AppProviders>
         <Scripts />
       </body>
     </html>
+  );
+}
+
+function RootNotFoundDocument() {
+  return (
+    <RootDocument>
+      <NotFoundPage />
+    </RootDocument>
   );
 }
