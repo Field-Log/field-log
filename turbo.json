@@ -36,7 +36,15 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "test:ci": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
     "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:watch:no-infisical": {
       "cache": false,
       "persistent": true
     }

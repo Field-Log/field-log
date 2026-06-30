@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grill Me"
+  short_description: "Interview the user relentlessly about a plan, resolving decision trees."
+  default_prompt: "Use $grill-me to get grilled on a plan."

@@ -4,17 +4,19 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "dev": "expo start",
+    "dev": "tsx ../../packages/infisical-runner/src/cli.ts mobile dev -- expo start",
     "dev:ios": "pnpm run ios",
     "dev:android": "pnpm run android",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "tsx ../../packages/infisical-runner/src/cli.ts mobile android -- expo start --android",
+    "ios": "tsx ../../packages/infisical-runner/src/cli.ts mobile ios -- expo start --ios",
     "build": "expo export --platform all",
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "jest --passWithNoTests",
-    "test:watch": "jest --watch"
+    "test": "tsx ../../packages/infisical-runner/src/cli.ts mobile test -- jest --passWithNoTests",
+    "test:ci": "jest --passWithNoTests",
+    "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts mobile test:watch -- jest --watch",
+    "test:watch:no-infisical": "jest --watch"
   },
   "dependencies": {
     "expo": "latest",

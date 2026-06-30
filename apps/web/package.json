@@ -4,15 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "tsx ../../packages/infisical-runner/src/cli.ts web dev -- vite dev",
     "dev:web": "pnpm run dev",
     "build": "vite build",
     "start": "vite preview --outDir dist/client",
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests"
+    "test": "tsx ../../packages/infisical-runner/src/cli.ts web test -- vitest run --passWithNoTests",
+    "test:ci": "vitest run --passWithNoTests",
+    "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts web test:watch -- vitest --passWithNoTests",
+    "test:watch:no-infisical": "vitest --passWithNoTests"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.17",

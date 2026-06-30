@@ -4,11 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "dev": "tsx ../../packages/infisical-runner/src/cli.ts autmog dev -- vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
     "check": "biome check .",
-    "lint": "biome lint ."
+    "lint": "biome lint .",
+    "test": "tsx ../../packages/infisical-runner/src/cli.ts autmog test -- vitest run --passWithNoTests",
+    "test:ci": "vitest run --passWithNoTests",
+    "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts autmog test:watch -- vitest --passWithNoTests",
+    "test:watch:no-infisical": "vitest --passWithNoTests"
   },
   "devDependencies": {
     "vite": "latest"
