@@ -17,7 +17,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
-    "test:no-infisical": "vitest run --passWithNoTests",
+    "test:ci": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests",
     "test:watch:no-infisical": "vitest --passWithNoTests"
   },

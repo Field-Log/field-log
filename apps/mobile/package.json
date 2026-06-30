@@ -14,7 +14,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx ../../packages/infisical-runner/src/cli.ts mobile test -- jest --passWithNoTests",
-    "test:no-infisical": "jest --passWithNoTests",
+    "test:ci": "jest --passWithNoTests",
     "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts mobile test:watch -- jest --watch",
     "test:watch:no-infisical": "jest --watch"
   },

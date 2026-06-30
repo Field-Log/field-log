@@ -16,7 +16,7 @@
     "check": "biome check --write . && turbo run check",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "test:no-infisical": "turbo run test:no-infisical",
+    "test:ci": "turbo run test:ci",
     "test:watch": "turbo run test:watch",
     "test:watch:no-infisical": "turbo run test:watch:no-infisical"
   },

@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx ../../packages/infisical-runner/src/cli.ts web test -- vitest run --passWithNoTests",
-    "test:no-infisical": "vitest run --passWithNoTests",
+    "test:ci": "vitest run --passWithNoTests",
     "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts web test:watch -- vitest --passWithNoTests",
     "test:watch:no-infisical": "vitest --passWithNoTests"
   },

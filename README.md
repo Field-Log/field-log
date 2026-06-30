@@ -67,6 +67,6 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 | `pnpm check` | Runs Biome format/lint/import checks with fixes, then package-level checks. |
 | `pnpm typecheck` | Runs TypeScript typechecking across packages and apps. |
 | `pnpm test` | Runs app tests with Infisical Development secrets and package tests without secrets. |
-| `pnpm test:no-infisical` | Runs local/unit tests without Infisical. Use this in CI until CI secret handling is designed. |
+| `pnpm test:ci` | Runs local/unit tests without Infisical for CI. |
 | `pnpm test:watch` | Runs watch-mode app tests with Infisical Development secrets and package tests without secrets. |
 | `pnpm test:watch:no-infisical` | Runs watch-mode tests without Infisical where supported. |

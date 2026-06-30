@@ -10,7 +10,7 @@
     "check": "biome check .",
     "lint": "biome lint .",
     "test": "tsx ../../packages/infisical-runner/src/cli.ts autmog test -- vitest run --passWithNoTests",
-    "test:no-infisical": "vitest run --passWithNoTests",
+    "test:ci": "vitest run --passWithNoTests",
     "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts autmog test:watch -- vitest --passWithNoTests",
     "test:watch:no-infisical": "vitest --passWithNoTests"
   },

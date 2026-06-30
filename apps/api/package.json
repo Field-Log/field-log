@@ -16,7 +16,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx ../../packages/infisical-runner/src/cli.ts api test -- vitest run",
-    "test:no-infisical": "vitest run",
+    "test:ci": "vitest run",
     "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts api test:watch -- vitest",
     "test:watch:no-infisical": "vitest"
   },
