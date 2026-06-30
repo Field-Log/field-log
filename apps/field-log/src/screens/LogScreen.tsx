@@ -1,21 +1,24 @@
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  StyleSheet,
+  ScrollView,
   Text,
   View,
+  StyleSheet,
 } from "react-native";
-import { getItemLabel, ITEM_TYPE_MAP } from "../config/itemTypes";
+import { useFocusEffect } from "@react-navigation/native";
 import {
-  fetchCarriedItemIdsForDate,
   fetchItems,
-  fetchMostCarried,
-  type Item,
+  fetchCarriedItemIdsForDate,
   toggleCarried,
+  fetchMostCarried,
+  fetchCollections,
+  fetchItemIdsInCollection,
+  Item,
 } from "../db/database";
+import { ITEM_TYPE_MAP, getItemLabel } from "../config/itemTypes";
 import { C } from "../theme/colors";
 
 function todayString() {
@@ -29,6 +32,7 @@ function offsetDate(base: string, days: number): string {
 }
 
 type ItemRow = Item & { carried: boolean };
+type Collection = { id: string; name: string };
 
 export default function LogScreen() {
   const [date, setDate] = useState(todayString());
@@ -37,28 +41,33 @@ export default function LogScreen() {
   const [daysCarriedMap, setDaysCarriedMap] = useState<Record<string, number>>(
     {},
   );
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [activeCollection, setActiveCollection] = useState<string | null>(null);
+  const [collectionItemIds, setCollectionItemIds] = useState<Set<string>>(
+    new Set(),
+  );
   const today = todayString();
 
   const load = useCallback(async (d: string) => {
     setLoading(true);
-    const [allItems, carried, mostCarried] = await Promise.all([
+    const [allItems, carried, mostCarried, cols] = await Promise.all([
       fetchItems(),
       fetchCarriedItemIdsForDate(d),
       fetchMostCarried(),
+      fetchCollections(),
     ]);
     const map: Record<string, number> = {};
     for (const mc of mostCarried) map[mc.item_id] = mc.days_carried;
     setDaysCarriedMap(map);
+    setCollections(cols);
 
     const carriedSet = new Set(
       carried.map((c) => `${c.item_type}:${c.item_id}`),
     );
-
     const combined: ItemRow[] = allItems.map((item) => ({
       ...item,
       carried: carriedSet.has(`${item.item_type}:${item.id}`),
     }));
-
     setRows(combined);
     setLoading(false);
   }, []);
@@ -86,15 +95,37 @@ export default function LogScreen() {
     await toggleCarried(row.id, row.item_type, date);
   };
 
+  const handleCollectionPress = async (colId: string) => {
+    if (activeCollection === colId) {
+      setActiveCollection(null);
+      setCollectionItemIds(new Set());
+    } else {
+      const ids = await fetchItemIdsInCollection(colId);
+      setCollectionItemIds(new Set(ids));
+      setActiveCollection(colId);
+    }
+  };
+
+  const visibleRows = activeCollection
+    ? rows.filter((r) => collectionItemIds.has(r.id))
+    : rows;
+
   const dateLabel = date === today ? "Today" : date;
+  const carriedCount = visibleRows.filter((r) => r.carried).length;
 
   return (
     <View style={styles.container}>
+      {/* Date nav */}
       <View style={styles.header}>
         <Pressable onPress={() => handleDateChange(-1)} style={styles.arrow}>
           <Text style={styles.arrowText}>‹</Text>
         </Pressable>
-        <Text style={styles.dateLabel}>{dateLabel}</Text>
+        <View style={styles.dateMeta}>
+          <Text style={styles.dateLabel}>{dateLabel}</Text>
+          {carriedCount > 0 && (
+            <Text style={styles.carriedCount}>{carriedCount} carried</Text>
+          )}
+        </View>
         <Pressable
           onPress={() => handleDateChange(1)}
           disabled={date >= today}
@@ -106,20 +137,58 @@ export default function LogScreen() {
         </Pressable>
       </View>
 
+      {/* Collection filter */}
+      {collections.length > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterBar}
+        >
+          {collections.map((col) => (
+            <Pressable
+              key={col.id}
+              style={[
+                styles.chip,
+                activeCollection === col.id && styles.chipActive,
+              ]}
+              onPress={() => handleCollectionPress(col.id)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  activeCollection === col.id && styles.chipTextActive,
+                ]}
+              >
+                {col.name}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
       {loading ? (
         <ActivityIndicator style={{ marginTop: 32 }} />
-      ) : rows.length === 0 ? (
+      ) : visibleRows.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.empty}>No items in your library yet.</Text>
+          <Text style={styles.empty}>
+            {activeCollection
+              ? "No items in this collection."
+              : "No items in your library yet."}
+          </Text>
         </View>
       ) : (
         <FlatList
-          data={rows}
+          data={visibleRows}
           keyExtractor={(r) => `${r.item_type}-${r.id}`}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <Pressable style={styles.row} onPress={() => handleToggle(item)}>
-              <View style={[styles.checkbox, item.carried && styles.checked]} />
+            <Pressable
+              style={[styles.row, item.carried && styles.rowCarried]}
+              onPress={() => handleToggle(item)}
+            >
+              <View style={[styles.checkbox, item.carried && styles.checked]}>
+                {item.carried && <Text style={styles.checkmark}>✓</Text>}
+              </View>
               <View style={styles.info}>
                 <Text style={styles.name}>{getItemLabel(item)}</Text>
                 <Text style={styles.type}>
@@ -152,13 +221,26 @@ const styles = StyleSheet.create({
   arrow: { padding: 8 },
   arrowText: { fontSize: 28, color: C.text },
   disabled: { color: C.textMuted },
+  dateMeta: { alignItems: "center", minWidth: 120 },
   dateLabel: {
     fontSize: 18,
     fontWeight: "600",
-    minWidth: 120,
     textAlign: "center",
     color: C.text,
   },
+  carriedCount: { fontSize: 12, color: C.accentBright, marginTop: 2 },
+  filterBar: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: C.purple,
+    marginRight: 8,
+  },
+  chipActive: { backgroundColor: C.purple },
+  chipText: { color: C.purple, fontSize: 13, fontWeight: "600" },
+  chipTextActive: { color: C.text },
   list: { padding: 16 },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
   empty: { color: C.textMuted, fontSize: 16 },
@@ -173,14 +255,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 14,
   },
+  rowCarried: { borderColor: C.accent },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
     borderColor: C.textMuted,
+    alignItems: "center",
+    justifyContent: "center",
   },
   checked: { backgroundColor: C.accent, borderColor: C.accent },
+  checkmark: { color: C.text, fontSize: 14, fontWeight: "700" },
   info: { flex: 1 },
   name: { fontSize: 16, fontWeight: "600", color: C.text },
   type: { fontSize: 12, color: C.textMuted, marginTop: 2 },
