@@ -6,7 +6,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx ../../packages/infisical-runner/src/cli.ts api dev -- tsx watch src/index.ts",
     "dev:web": "pnpm run dev",
     "dev:ios": "pnpm run dev",
     "dev:android": "pnpm run dev",
@@ -15,8 +15,10 @@
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "test": "tsx ../../packages/infisical-runner/src/cli.ts api test -- vitest run",
+    "test:ci": "vitest run",
+    "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts api test:watch -- vitest",
+    "test:watch:no-infisical": "vitest"
   },
   "dependencies": {
     "@hono/node-server": "latest",

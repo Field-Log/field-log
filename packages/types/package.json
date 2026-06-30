@@ -17,7 +17,9 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests"
+    "test:ci": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:watch:no-infisical": "vitest --passWithNoTests"
   },
   "devDependencies": {
     "@repo/eslint": "workspace:*",
