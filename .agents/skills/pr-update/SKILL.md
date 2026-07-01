@@ -26,7 +26,7 @@ suggest a branch, create a branch, push, fetch, or update a PR from `main`.
 2. Inspect branch state:
    - `git status --short --branch`
 3. Look up the existing PR for the current branch:
-   - `gh pr view --head <branch> --json number,url,title,body,state,baseRefName`
+   - `gh pr list --head <branch> --json number,url,title,body,state,baseRefName`
 4. If no PR exists for the branch, stop and tell the user to create one first.
 5. Determine the base branch from `baseRefName`; default to `main` only if the
    PR lookup does not return a base.

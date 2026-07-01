@@ -35,7 +35,7 @@ suggest a branch, create a branch, push, fetch, or create a PR from `main`.
 6. Push the branch when it has no upstream or the remote is behind:
    `git push -u origin <branch>`.
 7. Check whether a PR already exists for the branch:
-   `gh pr view --head <branch> --json url,title,state`.
+   `gh pr list --head <branch> --json url,title,state`.
 8. If no PR exists, create one:
    `gh pr create --base <base> --head <branch> --title "<title>" --body "<body>"`.
 9. Return the PR URL and a concise summary of the created PR.
