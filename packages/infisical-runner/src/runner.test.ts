@@ -66,7 +66,7 @@ describe("buildInfisicalRunArgs", () => {
     ).toThrow(RunnerError);
   });
 
-  it("wraps web commands with a Vite publishable key alias", () => {
+  it("wraps web commands with Vite Clerk aliases", () => {
     expect(
       buildInfisicalRunArgs({
         app: "web",
@@ -94,7 +94,7 @@ describe("buildInfisicalRunArgs", () => {
       "--",
       "tsx",
       "/repo/packages/infisical-runner/src/env-alias-runner.ts",
-      '[{"from":"CLERK_PUBLISHABLE_KEY","to":"VITE_CLERK_PUBLISHABLE_KEY"}]',
+      '[{"from":"CLERK_PUBLISHABLE_KEY","to":"VITE_CLERK_PUBLISHABLE_KEY"},{"from":"CLERK_SIGN_IN_URL","to":"VITE_CLERK_SIGN_IN_URL"},{"from":"CLERK_SIGN_UP_URL","to":"VITE_CLERK_SIGN_UP_URL"}]',
       "--",
       "vite",
       "build",

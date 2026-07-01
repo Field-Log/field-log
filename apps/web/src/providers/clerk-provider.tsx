@@ -7,8 +7,7 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
     <TanStackClerkProvider
       appearance={{ theme: shadcn }}
       publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-in"
+      signUpUrl={import.meta.env.VITE_CLERK_SIGN_UP_URL}
     >
       {children}
     </TanStackClerkProvider>

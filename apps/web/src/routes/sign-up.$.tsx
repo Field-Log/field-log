@@ -1,8 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { SignInPage } from "@/components/sign-in-page";
 import { getAuthState } from "@/lib/auth";
+import { SignUpPage } from "@/pages/sign-up-page";
 
-export const Route = createFileRoute("/sign-in")({
+export const Route = createFileRoute("/sign-up/$")({
   beforeLoad: async () => {
     const { isAuthenticated } = await getAuthState();
 
@@ -10,5 +10,5 @@ export const Route = createFileRoute("/sign-in")({
       throw redirect({ to: "/" });
     }
   },
-  component: SignInPage,
+  component: SignUpPage,
 });

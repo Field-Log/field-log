@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArchivePage } from "@/components/archive-page";
+import { ArchivePage } from "@/pages/archive-page";
 
 export const Route = createFileRoute("/")({
   component: ArchivePage,

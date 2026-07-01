@@ -1,5 +1,5 @@
-import * as React from "react";
 import { Search } from "lucide-react";
+import * as React from "react";
 import { AppShell } from "@/components/app-shell";
 import { FilterSidebar } from "@/components/filter-sidebar";
 import { ProductCard } from "@/components/product-card";
@@ -18,11 +18,11 @@ import {
   useCurrencyRates,
   useFiltersOpen,
 } from "@/hooks/use-autmog-settings";
-import { products, type AutmogProduct } from "@/lib/autmog-data";
+import { type AutmogProduct, products } from "@/lib/autmog-data";
 import {
-  type FilterKey,
   createDefaultMatchModes,
   createEmptyFilters,
+  type FilterKey,
   type MatchMode,
   productMatches,
   type SortKey,

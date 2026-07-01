@@ -32,7 +32,9 @@ export function UserMenu() {
   if (!user) {
     return (
       <Button asChild className="w-full" variant="outline">
-        <Link to="/sign-in">Sign in</Link>
+        <Link params={{ _splat: "" }} to="/sign-in/$">
+          Sign in
+        </Link>
       </Button>
     );
   }

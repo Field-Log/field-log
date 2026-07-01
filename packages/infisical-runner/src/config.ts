@@ -13,10 +13,18 @@ export type CommandSecretConfig = {
   paths: readonly string[];
 };
 
-const viteClerkPublishableKeyAlias = [
+const viteClerkAliases = [
   {
     from: "CLERK_PUBLISHABLE_KEY",
     to: "VITE_CLERK_PUBLISHABLE_KEY",
+  },
+  {
+    from: "CLERK_SIGN_IN_URL",
+    to: "VITE_CLERK_SIGN_IN_URL",
+  },
+  {
+    from: "CLERK_SIGN_UP_URL",
+    to: "VITE_CLERK_SIGN_UP_URL",
   },
 ] as const satisfies readonly EnvironmentAlias[];
 
@@ -96,22 +104,22 @@ export const commandSecrets = {
   web: {
     build: {
       allowServerSecrets: true,
-      envAliases: viteClerkPublishableKeyAlias,
+      envAliases: viteClerkAliases,
       paths: ["/clerk", "/clerk/server"],
     },
     dev: {
       allowServerSecrets: true,
-      envAliases: viteClerkPublishableKeyAlias,
+      envAliases: viteClerkAliases,
       paths: ["/clerk", "/clerk/server"],
     },
     test: {
       allowServerSecrets: true,
-      envAliases: viteClerkPublishableKeyAlias,
+      envAliases: viteClerkAliases,
       paths: ["/clerk", "/clerk/server"],
     },
     "test:watch": {
       allowServerSecrets: true,
-      envAliases: viteClerkPublishableKeyAlias,
+      envAliases: viteClerkAliases,
       paths: ["/clerk", "/clerk/server"],
     },
   },

@@ -1,4 +1,4 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { getAuthState } from "@/lib/auth";
 
 export const Route = createFileRoute("/user")({
@@ -6,7 +6,7 @@ export const Route = createFileRoute("/user")({
     const { isAuthenticated } = await getAuthState();
 
     if (!isAuthenticated) {
-      throw redirect({ to: "/sign-in" });
+      throw redirect({ params: { _splat: "" }, to: "/sign-in/$" });
     }
   },
   component: UserLayout,

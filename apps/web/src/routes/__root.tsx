@@ -5,7 +5,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import type * as React from "react";
-import { NotFoundPage } from "@/components/not-found-page";
+import { NotFoundPage } from "@/pages/not-found-page";
 import { AppProviders } from "@/providers/app-providers";
 import "../styles.css";
 
