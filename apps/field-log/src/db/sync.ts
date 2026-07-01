@@ -1,14 +1,14 @@
 import {
   collection,
-  doc,
-  setDoc,
   deleteDoc,
+  doc,
   getDocs,
-  writeBatch,
   serverTimestamp,
+  setDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db as firestore } from "../config/firebase";
-import { fetchItems, fetchCollections, Item } from "./database";
+import { fetchCollections, fetchItems, Item } from "./database";
 
 function userCol(uid: string, colName: string) {
   return collection(firestore, "users", uid, colName);

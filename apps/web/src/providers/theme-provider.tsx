@@ -2,8 +2,8 @@ import * as React from "react";
 import {
   applyTheme,
   isThemeMode,
-  themeStorageKey,
   type ThemeMode,
+  themeStorageKey,
 } from "@/lib/theme";
 
 type ThemeProviderValue = {

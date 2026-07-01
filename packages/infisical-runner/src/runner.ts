@@ -3,10 +3,10 @@ import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  type CommandSecretConfig,
   commandSecrets,
   commonSecretPath,
   localEnvironmentSlug,
-  type CommandSecretConfig,
 } from "./config.js";
 
 export class RunnerError extends Error {

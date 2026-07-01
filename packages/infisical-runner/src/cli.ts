@@ -1,8 +1,8 @@
 import {
   getRepoRoot,
   parseCliArguments,
-  runInfisicalCommand,
   RunnerError,
+  runInfisicalCommand,
 } from "./runner.js";
 
 function printHelp(): void {

@@ -1,7 +1,7 @@
-import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import ChooseItemTypeScreen from "./ChooseItemTypeScreen";
+import React from "react";
 import AddItemScreen from "./AddItemScreen";
+import ChooseItemTypeScreen from "./ChooseItemTypeScreen";
 
 const Stack = createNativeStackNavigator();
 

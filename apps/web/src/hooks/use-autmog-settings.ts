@@ -1,9 +1,9 @@
 import * as React from "react";
 import {
   baseCurrency,
-  currencies,
   type CurrencyCode,
   type CurrencyRates,
+  currencies,
   type DimensionUnit,
   todayUTCDateString,
   type WeightUnit,

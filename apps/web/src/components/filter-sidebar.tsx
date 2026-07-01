@@ -3,8 +3,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { AutmogProduct } from "@/lib/autmog-data";
 import {
   type ActiveFilters,
-  filterGroups,
   type FilterKey,
+  filterGroups,
   type MatchMode,
   type MatchModes,
   valuesFor,

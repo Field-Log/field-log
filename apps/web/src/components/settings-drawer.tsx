@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
-  currencies,
   type CurrencyCode,
+  currencies,
   type DimensionUnit,
   type WeightUnit,
 } from "@/lib/autmog-formatters";

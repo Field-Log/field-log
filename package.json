@@ -12,7 +12,7 @@
     "build": "turbo run build",
     "build:ci": "turbo run build:ci",
     "lint": "biome lint . && turbo run lint",
-    "format": "biome format --write .",
+    "format": "biome check --write --linter-enabled=false .",
     "prepare": "git config core.hooksPath .githooks",
     "check": "biome check --write . && turbo run check",
     "typecheck": "turbo run typecheck",
