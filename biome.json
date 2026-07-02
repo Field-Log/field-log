@@ -18,7 +18,8 @@
       "!**/.expo",
       "!**/coverage",
       "!**/routeTree.gen.ts",
-      "!apps/autmog/images"
+      "!apps/autmog/images",
+      "!scrapers/**/data"
     ]
   },
   "formatter": {
