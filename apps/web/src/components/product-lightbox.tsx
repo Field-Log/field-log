@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,6 +7,7 @@ import {
   Scale,
   X,
 } from "lucide-react";
+import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AutmogProduct } from "@/lib/autmog-data";

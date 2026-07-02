@@ -10,6 +10,7 @@
     "android": "tsx ../../packages/infisical-runner/src/cli.ts mobile android -- expo start --android",
     "ios": "tsx ../../packages/infisical-runner/src/cli.ts mobile ios -- expo start --ios",
     "build": "expo export --platform all",
+    "build:ci": "expo export --platform all",
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",

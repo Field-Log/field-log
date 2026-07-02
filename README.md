@@ -8,6 +8,9 @@ Monorepo for the machinedpens.info apps and shared packages.
 
 This repo uses the Infisical project `Field Log` for local Development secrets. Deployment secrets should be delivered by Infisical App Connections into the chosen host environment instead of wrapping deployment commands with the Infisical CLI.
 
+See [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) for app-specific
+runtime variables and deployment requirements.
+
 1. Install the official Infisical CLI for your OS:
    <https://infisical.com/docs/cli/overview>
 
@@ -61,7 +64,8 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | Builds all apps and packages through Turborepo. |
+| `pnpm build` | Builds all apps and packages through Turborepo, using Infisical-backed app commands where configured. |
+| `pnpm build:ci` | Builds all apps and packages through Turborepo with environment variables already provided. |
 | `pnpm lint` | Runs Biome linting project-wide, then package-level lint tasks. |
 | `pnpm format` | Formats supported files with Biome. |
 | `pnpm check` | Runs Biome format/lint/import checks with fixes, then package-level checks. |

@@ -11,6 +11,7 @@
     "dev:ios": "pnpm run dev",
     "dev:android": "pnpm run dev",
     "build": "tsc -p tsconfig.json",
+    "build:ci": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "check": "biome check .",
     "lint": "eslint .",

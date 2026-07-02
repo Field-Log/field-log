@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "tsx ../../packages/infisical-runner/src/cli.ts web dev -- vite dev",
     "dev:web": "pnpm run dev",
-    "build": "vite build",
+    "build": "tsx ../../packages/infisical-runner/src/cli.ts web build -- vite build",
+    "build:ci": "vite build",
     "start": "vite preview --outDir dist/client",
     "check": "biome check .",
     "lint": "eslint .",
@@ -17,6 +18,8 @@
     "test:watch:no-infisical": "vitest --passWithNoTests"
   },
   "dependencies": {
+    "@clerk/tanstack-react-start": "^1.4.10",
+    "@clerk/ui": "^1.23.1",
     "@radix-ui/react-dialog": "^1.1.17",
     "@radix-ui/react-select": "^2.3.1",
     "@radix-ui/react-separator": "^1.1.10",
@@ -29,6 +32,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.22.0",
+    "radix-ui": "^1.6.0",
     "react": "latest",
     "react-dom": "latest",
     "tailwind-merge": "^3.6.0",

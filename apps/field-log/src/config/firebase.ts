@@ -1,8 +1,8 @@
-import { initializeApp, getApps } from "firebase/app";
-// @ts-expect-error React Native persistence is available at runtime.
-import { initializeAuth, getReactNativePersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getApps, initializeApp } from "firebase/app";
+// @ts-expect-error React Native persistence is available at runtime.
+import { getReactNativePersistence, initializeAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAVZNV_cv9PsuRI-1aw2oYqLLiK8GxyET8",

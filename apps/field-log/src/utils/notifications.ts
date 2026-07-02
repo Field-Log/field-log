@@ -1,5 +1,5 @@
-import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 
 const REMINDER_ID_KEY = "carry_reminder_id";
 const REMINDER_ENABLED_KEY = "carry_reminder_enabled";

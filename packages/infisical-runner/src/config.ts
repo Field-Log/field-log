@@ -2,96 +2,125 @@ export const localEnvironmentSlug = "dev";
 
 export const commonSecretPath = "/common";
 
+export type EnvironmentAlias = {
+  from: string;
+  to: string;
+};
+
 export type CommandSecretConfig = {
-  client: boolean;
+  allowServerSecrets: boolean;
+  envAliases?: readonly EnvironmentAlias[];
   paths: readonly string[];
 };
+
+const viteClerkAliases = [
+  {
+    from: "CLERK_PUBLISHABLE_KEY",
+    to: "VITE_CLERK_PUBLISHABLE_KEY",
+  },
+  {
+    from: "CLERK_SIGN_IN_URL",
+    to: "VITE_CLERK_SIGN_IN_URL",
+  },
+  {
+    from: "CLERK_SIGN_UP_URL",
+    to: "VITE_CLERK_SIGN_UP_URL",
+  },
+] as const satisfies readonly EnvironmentAlias[];
 
 export const commandSecrets = {
   api: {
     dev: {
-      client: false,
+      allowServerSecrets: true,
       paths: ["/clerk", "/clerk/server"],
     },
     test: {
-      client: false,
+      allowServerSecrets: true,
       paths: ["/clerk", "/clerk/server"],
     },
     "test:watch": {
-      client: false,
+      allowServerSecrets: true,
       paths: ["/clerk", "/clerk/server"],
     },
   },
   autmog: {
     dev: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     test: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     "test:watch": {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
   },
   "field-log": {
     start: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     dev: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     android: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     ios: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     web: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
   },
   mobile: {
     dev: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     android: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     ios: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     test: {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
     "test:watch": {
-      client: true,
+      allowServerSecrets: false,
       paths: ["/clerk"],
     },
   },
   web: {
+    build: {
+      allowServerSecrets: true,
+      envAliases: viteClerkAliases,
+      paths: ["/clerk", "/clerk/server"],
+    },
     dev: {
-      client: true,
-      paths: ["/clerk"],
+      allowServerSecrets: true,
+      envAliases: viteClerkAliases,
+      paths: ["/clerk", "/clerk/server"],
     },
     test: {
-      client: true,
-      paths: ["/clerk"],
+      allowServerSecrets: true,
+      envAliases: viteClerkAliases,
+      paths: ["/clerk", "/clerk/server"],
     },
     "test:watch": {
-      client: true,
-      paths: ["/clerk"],
+      allowServerSecrets: true,
+      envAliases: viteClerkAliases,
+      paths: ["/clerk", "/clerk/server"],
     },
   },
 } as const satisfies Record<string, Record<string, CommandSecretConfig>>;

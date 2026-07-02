@@ -1,18 +1,16 @@
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { NavigationContainer } from "@react-navigation/native";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-
+import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
+import { initDatabase } from "./src/db/database";
+import { uploadAllItems } from "./src/db/sync";
+import AddScreen from "./src/screens/AddScreen";
+import AuthScreen from "./src/screens/AuthScreen";
 import LibraryScreen from "./src/screens/LibraryScreen";
 import LogScreen from "./src/screens/LogScreen";
-import AddScreen from "./src/screens/AddScreen";
-import StatsScreen from "./src/screens/StatsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
-import AuthScreen from "./src/screens/AuthScreen";
-
-import { initDatabase } from "./src/db/database";
-import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
-import { uploadAllItems } from "./src/db/sync";
+import StatsScreen from "./src/screens/StatsScreen";
 
 const Tab = createBottomTabNavigator();
 

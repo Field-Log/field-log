@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx ../../packages/infisical-runner/src/cli.ts autmog dev -- vite --host 0.0.0.0",
     "build": "vite build",
+    "build:ci": "vite build",
     "preview": "vite preview",
     "check": "biome check .",
     "lint": "biome lint .",

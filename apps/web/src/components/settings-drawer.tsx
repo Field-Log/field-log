@@ -17,20 +17,17 @@ import {
 } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
-  currencies,
   type CurrencyCode,
+  currencies,
   type DimensionUnit,
   type WeightUnit,
 } from "@/lib/autmog-formatters";
-import type { ThemeMode } from "@/lib/theme";
 
 type SettingsDrawerProps = {
   currency: CurrencyCode;
   onCurrencyChange: (currency: CurrencyCode) => void;
-  onThemeChange: (theme: ThemeMode) => void;
   onUnitsChange: (unit: DimensionUnit) => void;
   onWeightChange: (unit: WeightUnit) => void;
-  theme: ThemeMode;
   units: DimensionUnit;
   weight: WeightUnit;
 };
@@ -38,10 +35,8 @@ type SettingsDrawerProps = {
 export function SettingsDrawer({
   currency,
   onCurrencyChange,
-  onThemeChange,
   onUnitsChange,
   onWeightChange,
-  theme,
   units,
   weight,
 }: SettingsDrawerProps) {
@@ -68,21 +63,6 @@ export function SettingsDrawer({
           </SheetDescription>
         </SheetHeader>
         <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-6 py-5">
-          <SettingGroup label="Theme">
-            <ToggleGroup
-              aria-label="Theme"
-              onValueChange={(value) => {
-                if (value) onThemeChange(value as ThemeMode);
-              }}
-              type="single"
-              value={theme}
-            >
-              <ToggleGroupItem value="light">Light</ToggleGroupItem>
-              <ToggleGroupItem value="dark">Dark</ToggleGroupItem>
-              <ToggleGroupItem value="system">System</ToggleGroupItem>
-            </ToggleGroup>
-          </SettingGroup>
-
           <SettingGroup label="Dimensions">
             <ToggleGroup
               aria-label="Dimension units"

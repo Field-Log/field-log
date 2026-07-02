@@ -1,19 +1,13 @@
 import * as React from "react";
 import {
   baseCurrency,
-  currencies,
   type CurrencyCode,
   type CurrencyRates,
+  currencies,
   type DimensionUnit,
   todayUTCDateString,
   type WeightUnit,
 } from "@/lib/autmog-formatters";
-import {
-  applyTheme,
-  isThemeMode,
-  themeStorageKey,
-  type ThemeMode,
-} from "@/lib/theme";
 
 type StoredSettings = {
   units?: DimensionUnit;
@@ -42,12 +36,6 @@ function readStoredSettings(): Required<StoredSettings> {
   }
 }
 
-function readTheme(): ThemeMode {
-  if (typeof window === "undefined") return "system";
-  const stored = window.localStorage.getItem(themeStorageKey);
-  return isThemeMode(stored) ? stored : "system";
-}
-
 function readCurrency(): CurrencyCode {
   if (typeof window === "undefined") return baseCurrency;
   const stored = window.localStorage.getItem(currencyStorageKey);
@@ -57,7 +45,6 @@ function readCurrency(): CurrencyCode {
 }
 
 export function useAutmogSettings() {
-  const [theme, setThemeState] = React.useState<ThemeMode>(readTheme);
   const [units, setUnitsState] = React.useState<DimensionUnit>(
     () => readStoredSettings().units,
   );
@@ -66,23 +53,6 @@ export function useAutmogSettings() {
   );
   const [currency, setCurrencyState] =
     React.useState<CurrencyCode>(readCurrency);
-
-  React.useEffect(() => {
-    applyTheme(theme);
-
-    if (theme !== "system") return undefined;
-
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyTheme("system");
-    media.addEventListener("change", onChange);
-    return () => media.removeEventListener("change", onChange);
-  }, [theme]);
-
-  const setTheme = React.useCallback((nextTheme: ThemeMode) => {
-    setThemeState(nextTheme);
-    window.localStorage.setItem(themeStorageKey, nextTheme);
-    applyTheme(nextTheme);
-  }, []);
 
   const setUnits = React.useCallback((nextUnits: DimensionUnit) => {
     setUnitsState(nextUnits);
@@ -110,10 +80,8 @@ export function useAutmogSettings() {
   return {
     currency,
     setCurrency,
-    setTheme,
     setUnits,
     setWeight,
-    theme,
     units,
     weight,
   };
@@ -179,7 +147,7 @@ export function useCurrencyRates() {
 }
 
 export function useFiltersOpen() {
-  const [filtersOpen, setFiltersOpenState] = React.useState(false);
+  const [filtersOpen, setFiltersOpenState] = React.useState(true);
 
   React.useEffect(() => {
     const media = window.matchMedia("(max-width: 880px)");

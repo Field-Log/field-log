@@ -3,10 +3,10 @@ import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  type CommandSecretConfig,
   commandSecrets,
   commonSecretPath,
   localEnvironmentSlug,
-  type CommandSecretConfig,
 } from "./config.js";
 
 export class RunnerError extends Error {
@@ -84,7 +84,7 @@ export function validateSecretPaths(
   command: string,
   config: CommandSecretConfig,
 ): void {
-  if (!config.client) {
+  if (config.allowServerSecrets) {
     return;
   }
 
@@ -99,17 +99,37 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
   const config = getCommandSecretConfig(request.app, request.command);
   validateSecretPaths(request.app, request.command, config);
 
-  const args = [
+  const runArgsForPath = (secretPath: string): string[] => [
     "run",
     `--project-config-dir=${request.repoRoot}`,
     `--env=${localEnvironmentSlug}`,
+    `--path=${secretPath}`,
+    "--",
   ];
 
-  for (const secretPath of getSecretPaths(config)) {
-    args.push(`--path=${secretPath}`);
+  const paths = getSecretPaths(config);
+  const innerCommand: string[] = [];
+
+  if (config.envAliases?.length) {
+    innerCommand.push(
+      "tsx",
+      join(
+        request.repoRoot,
+        "packages/infisical-runner/src/env-alias-runner.ts",
+      ),
+      JSON.stringify(config.envAliases),
+      "--",
+    );
   }
 
-  args.push("--", ...request.commandArgs);
+  innerCommand.push(...request.commandArgs);
+
+  // Infisical accepts a single secret path per `run`, so nest runs to
+  // accumulate each path's secrets before the wrapped command executes.
+  let args = [...runArgsForPath(paths[paths.length - 1]!), ...innerCommand];
+  for (let index = paths.length - 2; index >= 0; index -= 1) {
+    args = [...runArgsForPath(paths[index]!), "infisical", ...args];
+  }
 
   return args;
 }
