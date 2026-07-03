@@ -1,22 +1,22 @@
-import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
-  StyleSheet,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
-import { C } from "../theme/colors";
-import {
-  fetchMostCarried,
-  fetchItemById,
-  fetchInkStats,
-  fetchCarryDatesForItem,
-} from "../db/database";
 import { getItemLabel } from "../config/itemTypes";
+import {
+  fetchCarryDatesForItem,
+  fetchInkStats,
+  fetchItemById,
+  fetchMostCarried,
+} from "../db/database";
+import { C } from "../theme/colors";
 
 function computeCurrentStreak(sortedDates: string[]): number {
   if (sortedDates.length === 0) return 0;

@@ -1,3 +1,13 @@
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as AuthSession from "expo-auth-session/providers/google";
+import * as WebBrowser from "expo-web-browser";
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithCredential,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -10,16 +20,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  OAuthProvider,
-  signInWithCredential,
-} from "firebase/auth";
-import * as AppleAuthentication from "expo-apple-authentication";
-import * as AuthSession from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
 import { auth } from "../config/firebase";
 import { C } from "../theme/colors";
 
