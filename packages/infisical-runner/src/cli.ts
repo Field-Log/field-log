@@ -28,6 +28,7 @@ async function main(argv: readonly string[]): Promise<number> {
 
   return runInfisicalCommand({
     ...parsedArguments,
+    infisicalProjectId: process.env.INFISICAL_PROJECT_ID,
     repoRoot: getRepoRoot(),
   });
 }

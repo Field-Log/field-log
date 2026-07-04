@@ -1,0 +1,152 @@
+name: Logger Live
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  logger-live-gate:
+    name: Logger Live Gate
+    runs-on: ubuntu-latest
+    outputs:
+      logger_changed: ${{ steps.changes.outputs.logger_changed }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect logger changes
+        id: changes
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "logger_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git rev-parse --verify -q "${GITHUB_SHA}^2" >/dev/null; then
+            git diff --name-only "${GITHUB_SHA}^1" "${GITHUB_SHA}^2" > changed-files.txt
+          else
+            git diff --name-only "$BASE_SHA" "$HEAD_SHA" > changed-files.txt
+          fi
+
+          is_logger_path() {
+            case "$1" in
+              packages/logger/*) return 0 ;;
+              apps/api/src/app.ts) return 0 ;;
+              apps/api/src/logs.ts) return 0 ;;
+              apps/api/src/lib/services.ts) return 0 ;;
+              packages/services/*) return 0 ;;
+              packages/infisical-runner/*) return 0 ;;
+              .github/workflows/logger-live.yml) return 0 ;;
+              docs/logger.md) return 0 ;;
+              AGENTS.md) return 0 ;;
+              package.json) return 0 ;;
+              pnpm-lock.yaml) return 0 ;;
+              turbo.json) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          logger_changed=false
+
+          while IFS= read -r file; do
+            if is_logger_path "$file"; then
+              logger_changed=true
+              break
+            fi
+          done < changed-files.txt
+
+          echo "logger_changed=$logger_changed" >> "$GITHUB_OUTPUT"
+          echo "logger_changed=$logger_changed"
+
+  logger-live-axiom:
+    name: Logger Live Axiom
+    needs: logger-live-gate
+    if: needs.logger-live-gate.outputs.logger_changed == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Infisical CLI
+        run: npm install -g @infisical/cli
+
+      - name: Run logger live Axiom test
+        env:
+          INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
+          INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${INFISICAL_TOKEN:-}" ]]; then
+            echo "INFISICAL_TOKEN is required to run the logger live Axiom test." >&2
+            exit 1
+          fi
+
+          pnpm test:logger:axiom
+
+  logger-live-required:
+    name: Logger Live Required
+    needs: [logger-live-gate, logger-live-axiom]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Evaluate logger live status
+        shell: bash
+        env:
+          AXIOM_RESULT: ${{ needs.logger-live-axiom.result }}
+          EVENT_NAME: ${{ github.event_name }}
+          GATE_RESULT: ${{ needs.logger-live-gate.result }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || '' }}
+          LOGGER_CHANGED: ${{ needs.logger-live-gate.outputs.logger_changed }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GATE_RESULT" != "success" ]]; then
+            echo "Logger live gate failed."
+            exit 1
+          fi
+
+          if [[ "$LOGGER_CHANGED" != "true" ]]; then
+            echo "No logger-relevant changes detected."
+            exit 0
+          fi
+
+          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$HEAD_REPOSITORY" != "$REPOSITORY" ]]; then
+            echo "Skipping live logger test for forked pull request."
+            exit 0
+          fi
+
+          if [[ "$AXIOM_RESULT" != "success" ]]; then
+            echo "Logger live Axiom test did not pass: $AXIOM_RESULT"
+            exit 1
+          fi
+
+          echo "Logger live Axiom test passed."

@@ -20,6 +20,7 @@ export type ParsedCliArguments = {
 };
 
 export type InfisicalRunRequest = ParsedCliArguments & {
+  infisicalProjectId?: string;
   repoRoot: string;
 };
 
@@ -101,6 +102,9 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
 
   const runArgsForPath = (secretPath: string): string[] => [
     "run",
+    ...(request.infisicalProjectId
+      ? [`--projectId=${request.infisicalProjectId}`]
+      : []),
     `--project-config-dir=${request.repoRoot}`,
     `--env=${localEnvironmentSlug}`,
     `--path=${secretPath}`,
