@@ -76,6 +76,9 @@ jobs:
     needs: logger-live-gate
     if: needs.logger-live-gate.outputs.logger_changed == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Check out repository
@@ -93,22 +96,59 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Infisical CLI
-        run: npm install -g @infisical/cli
-
-      - name: Run logger live Axiom test
+      - name: Validate Infisical OIDC configuration
+        shell: bash
         env:
-          INFISICAL_PROJECT_ID: ${{ secrets.INFISICAL_PROJECT_ID }}
-          INFISICAL_TOKEN: ${{ secrets.INFISICAL_TOKEN }}
+          INFISICAL_LOGGER_IDENTITY_ID: ${{ vars.INFISICAL_LOGGER_IDENTITY_ID }}
+          INFISICAL_PROJECT_SLUG: ${{ vars.INFISICAL_PROJECT_SLUG }}
         run: |
           set -euo pipefail
 
-          if [[ -z "${INFISICAL_TOKEN:-}" ]]; then
-            echo "INFISICAL_TOKEN is required to run the logger live Axiom test." >&2
+          if [[ -z "${INFISICAL_LOGGER_IDENTITY_ID:-}" ]]; then
+            echo "Repository variable INFISICAL_LOGGER_IDENTITY_ID is required." >&2
             exit 1
           fi
 
-          pnpm test:logger:axiom
+          if [[ -z "${INFISICAL_PROJECT_SLUG:-}" ]]; then
+            echo "Repository variable INFISICAL_PROJECT_SLUG is required." >&2
+            exit 1
+          fi
+
+      - name: Fetch common Infisical secrets
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_LOGGER_IDENTITY_ID }}
+          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: ${{ vars.INFISICAL_ENV_SLUG || 'dev' }}
+          secret-path: /common
+
+      - name: Fetch logging Infisical secrets
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_LOGGER_IDENTITY_ID }}
+          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: ${{ vars.INFISICAL_ENV_SLUG || 'dev' }}
+          secret-path: /logging
+
+      - name: Fetch Axiom automated test secrets
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_LOGGER_IDENTITY_ID }}
+          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: ${{ vars.INFISICAL_ENV_SLUG || 'dev' }}
+          secret-path: /axiom/automated-tests
+
+      - name: Run logger live Axiom test
+        run: pnpm exec tsx packages/logger/integration/axiom-live.ts
 
   logger-live-required:
     name: Logger Live Required

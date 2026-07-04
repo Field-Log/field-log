@@ -164,6 +164,17 @@ context and operation metadata were recorded, and sensitive values were redacted
 The dedicated GitHub Actions workflow is `.github/workflows/logger-live.yml`.
 It runs the live check for same-repository pull requests that touch
 logger-relevant files and can also be run manually with `workflow_dispatch`.
+In CI, the workflow authenticates to Infisical with OIDC, fetches `/common`,
+`/logging`, and `/axiom/automated-tests`, then runs the live script directly.
+Configure these GitHub repository variables:
+
+- `INFISICAL_LOGGER_IDENTITY_ID`
+- `INFISICAL_PROJECT_SLUG`
+- optional `INFISICAL_DOMAIN`
+- optional `INFISICAL_ENV_SLUG`
+- optional `INFISICAL_OIDC_AUDIENCE`
+
+See `plans/configure-repo-for-logger.md` for the Infisical identity setup.
 
 ## Server Configuration
 
