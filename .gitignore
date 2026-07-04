@@ -9,7 +9,6 @@ build/
 .tanstack/
 .turbo/
 coverage/
-plans/
 
 # Expo / React Native
 .expo/
@@ -33,3 +32,8 @@ yarn-error.log*
 .DS_Store
 .idea/
 .vscode/
+
+# Local scratch files
+assets/
+plans/
+pr-summarys/
