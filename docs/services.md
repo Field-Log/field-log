@@ -19,6 +19,12 @@ await s.db.userSettings.upsertForClerkId(clerkId, {
   theme: "dark",
   weightUnit: "g",
 });
+
+s.logger.info("api.health.checked", {
+  attributes: {
+    route: "/health",
+  },
+});
 ```
 
 ## App Configuration
@@ -28,17 +34,36 @@ Configure services once in each server app.
 `apps/api/src/lib/services.ts`
 
 ```ts
+import {
+  createAxiomTransport,
+  createConsoleTransport,
+  normalizeConsoleTransportMode,
+  normalizeLogLevel,
+} from "@repo/logger";
 import services from "@repo/services";
 
 const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required to configure services.");
-}
+const axiomToken = process.env.AXIOM_TOKEN;
+const axiomDataset = process.env.AXIOM_DATASET;
+const environment = process.env.NODE_ENV ?? "development";
+const isDevelopment = environment === "development";
+const consoleTransport = createConsoleTransport({
+  mode: normalizeConsoleTransportMode(process.env.LOGGER),
+});
+const transports = [
+  ...(axiomToken && axiomDataset
+    ? [createAxiomTransport({ dataset: axiomDataset, token: axiomToken })]
+    : []),
+  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
+];
 
 services.configure({
-  db: {
-    databaseUrl,
+  db: databaseUrl ? { databaseUrl } : undefined,
+  logger: {
+    app: "api",
+    environment,
+    level: normalizeLogLevel(process.env.LOG_LEVEL),
+    transports,
   },
 });
 
@@ -49,17 +74,36 @@ export { services as s };
 
 ```ts
 import process from "node:process";
+import {
+  createAxiomTransport,
+  createConsoleTransport,
+  normalizeConsoleTransportMode,
+  normalizeLogLevel,
+} from "@repo/logger";
 import services from "@repo/services";
 
 const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required to configure services.");
-}
+const axiomToken = process.env.AXIOM_TOKEN;
+const axiomDataset = process.env.AXIOM_DATASET;
+const environment = process.env.NODE_ENV ?? "development";
+const isDevelopment = environment === "development";
+const consoleTransport = createConsoleTransport({
+  mode: normalizeConsoleTransportMode(process.env.LOGGER),
+});
+const transports = [
+  ...(axiomToken && axiomDataset
+    ? [createAxiomTransport({ dataset: axiomDataset, token: axiomToken })]
+    : []),
+  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
+];
 
 services.configure({
-  db: {
-    databaseUrl,
+  db: databaseUrl ? { databaseUrl } : undefined,
+  logger: {
+    app: "web",
+    environment,
+    level: normalizeLogLevel(process.env.LOG_LEVEL),
+    transports,
   },
 });
 
@@ -89,6 +133,7 @@ Only import the web services module from SSR code, server functions, loaders, or
 - `apps/mobile` must not receive `DATABASE_URL` and must not use database services directly. Mobile should call `apps/api` for persisted user or settings behavior.
 
 If code uses `@repo/services` before app-local configuration runs, it throws a clear initialization error.
+If code uses `s.db` or `s.logger` before that specific service has been configured, only that service throws. For example, an app can configure `s.logger` without `DATABASE_URL`; `s.db` will throw only if database services are actually used.
 
 ## Adding Services
 
