@@ -49,6 +49,12 @@ export function ProductLightbox({
     x: number;
     y: number;
   } | null>(null);
+  // Vertical drag-to-dismiss: `dragY` follows the finger down, `dragging`
+  // disables the snap-back transition while the gesture is live, and the axis
+  // ref locks the gesture to horizontal (image nav) or vertical (dismiss).
+  const [dragY, setDragY] = React.useState(0);
+  const [dragging, setDragging] = React.useState(false);
+  const dragAxisRef = React.useRef<"none" | "x" | "y">("none");
   const images = product?.images_local.length
     ? product.images_local
     : product
@@ -126,7 +132,7 @@ export function ProductLightbox({
   return (
     <div
       aria-modal="true"
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/85 p-3 backdrop-blur-md min-[881px]:items-stretch min-[881px]:p-10"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/85 p-3 backdrop-blur-md md:items-stretch md:p-10"
       role="dialog"
     >
       <button
@@ -144,32 +150,71 @@ export function ProductLightbox({
         <X />
         Close
       </Button>
-      <div className="relative z-[101] grid w-full max-w-[1280px] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-2xl min-[881px]:grid-cols-[1.1fr_1fr]">
+      <div
+        className="relative z-[101] grid w-full max-w-[1280px] overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-2xl md:grid-cols-[1.1fr_1fr]"
+        style={{
+          transform: dragY ? `translateY(${dragY}px)` : undefined,
+          opacity: dragY ? 1 - Math.min(dragY / 600, 0.4) : undefined,
+          transition: dragging
+            ? "none"
+            : "transform 300ms cubic-bezier(0.22, 0.65, 0.27, 1), opacity 300ms",
+        }}
+      >
         <div
-          className="relative flex aspect-4/3 min-h-0 items-start justify-center bg-muted min-[881px]:aspect-auto min-[881px]:min-h-[320px]"
+          className="relative flex aspect-4/3 min-h-0 items-start justify-center bg-muted md:aspect-auto md:min-h-[320px]"
           onTouchEnd={(event) => {
             if (!touchStart) return;
             const touch = event.changedTouches[0];
-            if (!touch) return;
+            if (!touch) {
+              setTouchStart(null);
+              return;
+            }
             const dx = touch.clientX - touchStart.x;
             const dy = touch.clientY - touchStart.y;
 
-            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+            if (dragAxisRef.current === "y") {
+              // A firm downward pull dismisses; anything shorter snaps back.
+              if (dy > 120) onClose();
+              setDragging(false);
+              setDragY(0);
+            } else if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
               onImageChange(
                 wrapIndex(imageIndex + (dx > 0 ? -1 : 1), images.length),
               );
             }
+
+            dragAxisRef.current = "none";
             setTouchStart(null);
+          }}
+          onTouchMove={(event) => {
+            if (!touchStart) return;
+            const touch = event.touches[0];
+            if (!touch) return;
+            const dx = touch.clientX - touchStart.x;
+            const dy = touch.clientY - touchStart.y;
+
+            // Commit to an axis once the finger has clearly moved.
+            if (dragAxisRef.current === "none" && Math.hypot(dx, dy) > 8) {
+              dragAxisRef.current = Math.abs(dy) > Math.abs(dx) ? "y" : "x";
+            }
+
+            // Only a downward vertical drag pulls the panel away to dismiss.
+            if (dragAxisRef.current === "y" && dy > 0) {
+              setDragging(true);
+              setDragY(dy);
+            }
           }}
           onTouchStart={(event) => {
             const touch = event.touches[0];
             if (!touch) return;
             setTouchStart({ x: touch.clientX, y: touch.clientY });
+            dragAxisRef.current = "none";
+            setDragY(0);
           }}
         >
           <img
             alt={product.title}
-            className="h-full max-h-[60vh] w-full object-contain min-[881px]:max-h-none"
+            className="h-full max-h-[60vh] w-full object-contain md:max-h-none"
             src={image}
           />
           {product.published_at ? (

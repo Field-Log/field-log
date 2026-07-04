@@ -1,6 +1,5 @@
 import * as React from "react";
-
-const MOBILE_BREAKPOINT = 768;
+import { compactMediaQuery, TWO_PANE_MIN_WIDTH } from "@/lib/breakpoints";
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(
@@ -8,12 +7,12 @@ export function useIsMobile() {
   );
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
+    const mql = window.matchMedia(compactMediaQuery);
     const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+      setIsMobile(window.innerWidth < TWO_PANE_MIN_WIDTH);
     };
     mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    setIsMobile(window.innerWidth < TWO_PANE_MIN_WIDTH);
     return () => mql.removeEventListener("change", onChange);
   }, []);
 
