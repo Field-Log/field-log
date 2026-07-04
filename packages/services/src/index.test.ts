@@ -18,7 +18,7 @@ describe("services", () => {
     );
   });
 
-  it("configures database and logger independently", () => {
+  it("configures logger independently", () => {
     const services = createServices();
 
     services.configure({
@@ -33,5 +33,35 @@ describe("services", () => {
     expect(() => services.db).toThrow(
       "Database services have not been configured",
     );
+  });
+
+  it("rejects database configuration without logger configuration", () => {
+    const services = createServices();
+
+    expect(() =>
+      services.configure({
+        db: {
+          databaseUrl: "postgres://user:pass@example.test:5432/db",
+        },
+      } as Parameters<typeof services.configure>[0]),
+    ).toThrow("Database services require logger configuration");
+  });
+
+  it("configures database when logger configuration is provided", () => {
+    const services = createServices();
+
+    services.configure({
+      db: {
+        databaseUrl: "postgres://user:pass@example.test:5432/db",
+      },
+      logger: {
+        app: "api",
+        environment: "test",
+        transports: [],
+      },
+    });
+
+    expect(services.db).toBeDefined();
+    expect(services.logger).toBeDefined();
   });
 });
