@@ -25,3 +25,26 @@ configuration:
 - `CLERK_SECRET_KEY`
 - `CLERK_SIGN_IN_URL=/sign-in`
 - `CLERK_SIGN_UP_URL=/sign-up`
+
+## GitHub Discord Notifications
+
+The `Discord Notifications` GitHub Actions workflow posts repository events to
+Discord. It authenticates to Infisical with GitHub OIDC and reads the webhook
+URL from `/github/discord`.
+
+Infisical must provide:
+
+- `DISCORD_GITHUB_WEBHOOK_URL`
+
+GitHub repository variables must provide:
+
+- `INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID`
+- `INFISICAL_PROJECT_SLUG`
+- optional `INFISICAL_ENV_SLUG`, defaults to `dev`
+- optional `INFISICAL_OIDC_AUDIENCE`, defaults to
+  `https://github.com/{repository_owner}`
+- optional `INFISICAL_DOMAIN`, defaults to `https://app.infisical.com`
+
+The Discord notifier identity should be scoped to `/github/discord`. Fork pull
+requests are skipped because GitHub does not expose OIDC-backed secret access to
+untrusted fork code paths.

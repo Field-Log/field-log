@@ -63,6 +63,12 @@ export const commandSecrets = {
       paths: ["/neon/server"],
     },
   },
+  github: {
+    "discord-notify": {
+      allowServerSecrets: true,
+      paths: ["/github/discord"],
+    },
+  },
   "field-log": {
     start: {
       allowServerSecrets: false,

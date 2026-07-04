@@ -112,6 +112,38 @@ describe("buildInfisicalRunArgs", () => {
       "build",
     ]);
   });
+
+  it("builds GitHub Discord notification args", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "github",
+        command: "discord-notify",
+        commandArgs: [
+          "pnpm",
+          "--filter",
+          "@repo/github-discord-notifier",
+          "notify",
+        ],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/common",
+      "--",
+      "infisical",
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/github/discord",
+      "--",
+      "pnpm",
+      "--filter",
+      "@repo/github-discord-notifier",
+      "notify",
+    ]);
+  });
 });
 
 describe("secret path policy", () => {
