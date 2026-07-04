@@ -5,10 +5,18 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [tanstackStart(), react(), tailwindcss()],
+  preview: {
+    port: 4005,
+    strictPort: true,
+  },
   publicDir: "publics",
   resolve: {
     alias: {
       "@": "/src",
     },
+  },
+  server: {
+    port: 4005,
+    strictPort: true,
   },
 });
