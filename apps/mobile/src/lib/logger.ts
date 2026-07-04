@@ -1,4 +1,4 @@
-import { createLogger, createProxyTransport } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
 
 const logProxyUrl = process.env.EXPO_PUBLIC_LOG_PROXY_URL;
 
@@ -12,7 +12,7 @@ const transports = logProxyUrl
   : [];
 
 export const logger = createLogger({
-  app: "expo",
+  app: loggerValues.apps.mobile,
   environment: __DEV__ ? "development" : "production",
   transports,
 });

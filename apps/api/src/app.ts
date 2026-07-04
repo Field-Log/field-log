@@ -1,4 +1,4 @@
-import type { LogData, Logger } from "@repo/logger";
+import { type LogData, type Logger, loggerValues } from "@repo/logger";
 import type { HealthResponse, ServiceInfoResponse } from "@repo/types";
 import { Hono } from "hono";
 import { parseClientLogEvents } from "./logs.js";
@@ -30,7 +30,9 @@ export function createApp(dependencies: AppDependencies = {}) {
       dependencies.clientLogKey ?? process.env.LOG_PROXY_CLIENT_KEY;
 
     if (configuredClientKey) {
-      const providedClientKey = context.req.header("x-log-client-key");
+      const providedClientKey = context.req.header(
+        loggerValues.logProxy.clientKeyHeader,
+      );
 
       if (providedClientKey !== configuredClientKey) {
         return context.json({ error: "Invalid log client key." }, 401);
@@ -62,7 +64,7 @@ export function createApp(dependencies: AppDependencies = {}) {
         clientEnvironment: event.environment,
         originalTimestamp: event.timestamp,
         receivedAt,
-        source: "log-proxy",
+        source: loggerValues.logProxy.source,
       };
 
       if (event.error) {

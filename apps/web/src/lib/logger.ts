@@ -1,4 +1,4 @@
-import { createLogger, createProxyTransport } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
 
 const logProxyUrl = import.meta.env.VITE_LOG_PROXY_URL;
 
@@ -12,7 +12,7 @@ const transports = logProxyUrl
   : [];
 
 export const logger = createLogger({
-  app: "web",
+  app: loggerValues.apps.web,
   environment: import.meta.env.MODE,
   transports,
 });

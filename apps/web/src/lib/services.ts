@@ -2,6 +2,7 @@ import process from "node:process";
 import {
   createAxiomTransport,
   createConsoleTransport,
+  loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
 } from "@repo/logger";
@@ -29,18 +30,22 @@ const transports = [
   ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
 ];
 
-services.configure({
-  db: databaseUrl
+const logger = {
+  app: loggerValues.apps.web,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(
+  databaseUrl
     ? {
-        databaseUrl,
+        db: {
+          databaseUrl,
+        },
+        logger,
       }
-    : undefined,
-  logger: {
-    app: "web",
-    environment,
-    level: normalizeLogLevel(process.env.LOG_LEVEL),
-    transports,
-  },
-});
+    : { logger },
+);
 
 export { services as s };

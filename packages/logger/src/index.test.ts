@@ -6,6 +6,8 @@ import {
   createProxyTransport,
   type LogEvent,
   type LogTransport,
+  loggerMessages,
+  loggerValues,
   normalizeConsoleTransportMode,
   redactValue,
 } from "./index.js";
@@ -19,6 +21,43 @@ function captureTransport(events: LogEvent[] = []): LogTransport {
 }
 
 describe("logger", () => {
+  it("exports reusable logger constants", () => {
+    expect(loggerMessages).toMatchObject({
+      api: {
+        healthChecked: "api.health.checked",
+        serverListening: "api.server.listening",
+      },
+      database: {
+        userSettings: {
+          getByClerkId: "database.userSettings.getByClerkId",
+          upsertForClerkId: "database.userSettings.upsertForClerkId",
+        },
+        users: {
+          ensure: "database.users.ensure",
+        },
+      },
+      mobile: {
+        screenViewed: "mobile.screen.viewed",
+      },
+      web: {
+        accountLoaded: "web.account.loaded",
+        fxRatesFetchFailed: "web.fxRates.fetch.failed",
+      },
+    });
+    expect(loggerValues).toMatchObject({
+      apps: {
+        api: "api",
+        mobile: "expo",
+        web: "web",
+      },
+      logProxy: {
+        clientKeyHeader: "x-log-client-key",
+        maxBatchSize: 25,
+        source: "log-proxy",
+      },
+    });
+  });
+
   it("filters events below the configured level", async () => {
     const events: LogEvent[] = [];
     const logger = createLogger({
@@ -297,7 +336,7 @@ describe("transports", () => {
       }),
       headers: {
         "Content-Type": "application/json",
-        "x-log-client-key": "public-key",
+        [loggerValues.logProxy.clientKeyHeader]: "public-key",
       },
       method: "POST",
     });

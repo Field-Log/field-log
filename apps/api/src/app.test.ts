@@ -1,4 +1,9 @@
-import { createLogger, createNoopLogger, type LogEvent } from "@repo/logger";
+import {
+  createLogger,
+  createNoopLogger,
+  type LogEvent,
+  loggerValues,
+} from "@repo/logger";
 import { describe, expect, it } from "vitest";
 import app, { createApp } from "./app.js";
 
@@ -56,7 +61,7 @@ describe("api", () => {
     expect(events[0]?.attributes).toMatchObject({
       clientApp: "web",
       route: "/",
-      source: "log-proxy",
+      source: loggerValues.logProxy.source,
       token: "[REDACTED]",
     });
   });
@@ -83,17 +88,46 @@ describe("api", () => {
 
     const response = await testApp.request("/logs", {
       body: JSON.stringify({
-        events: Array.from({ length: 26 }, () => ({
-          app: "web",
-          environment: "test",
-          level: "info",
-          message: "client.event",
-        })),
+        events: Array.from(
+          { length: loggerValues.logProxy.maxBatchSize + 1 },
+          () => ({
+            app: "web",
+            environment: "test",
+            level: "info",
+            message: "client.event",
+          }),
+        ),
       }),
       method: "POST",
     });
 
     expect(response.status).toBe(400);
+  });
+
+  it("accepts configured client keys from the centralized header", async () => {
+    const testApp = createApp({
+      clientLogKey: "expected",
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/logs", {
+      body: JSON.stringify({
+        events: [
+          {
+            app: "web",
+            environment: "test",
+            level: "info",
+            message: "client.event",
+          },
+        ],
+      }),
+      headers: {
+        [loggerValues.logProxy.clientKeyHeader]: "expected",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
   });
 
   it("rejects invalid client keys when configured", async () => {
@@ -110,7 +144,7 @@ describe("api", () => {
         message: "client.event",
       }),
       headers: {
-        "x-log-client-key": "wrong",
+        [loggerValues.logProxy.clientKeyHeader]: "wrong",
       },
       method: "POST",
     });

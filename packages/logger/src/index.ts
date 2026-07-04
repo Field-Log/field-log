@@ -1,3 +1,7 @@
+import { loggerValues } from "./constants/logger.js";
+
+export { loggerMessages, loggerValues } from "./constants/logger.js";
+
 export const logLevelWeights = {
   trace: 10,
   debug: 20,
@@ -394,7 +398,7 @@ export function createProxyTransport(
       };
 
       if (config.clientKey) {
-        headers["x-log-client-key"] = config.clientKey;
+        headers[loggerValues.logProxy.clientKeyHeader] = config.clientKey;
       }
 
       const response = await fetcher(config.url, {
