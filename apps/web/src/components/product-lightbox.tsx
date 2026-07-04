@@ -26,7 +26,9 @@ import { cn } from "@/lib/utils";
 
 type ProductLightboxProps = {
   currency: CurrencyCode;
+  imageIndex: number;
   onClose: () => void;
+  onImageChange: (nextIndex: number) => void;
   product: AutmogProduct | null;
   rates: CurrencyRates;
   units: DimensionUnit;
@@ -35,13 +37,14 @@ type ProductLightboxProps = {
 
 export function ProductLightbox({
   currency,
+  imageIndex,
   onClose,
+  onImageChange,
   product,
   rates,
   units,
   weight,
 }: ProductLightboxProps) {
-  const [imageIndex, setImageIndex] = React.useState(0);
   const [touchStart, setTouchStart] = React.useState<{
     x: number;
     y: number;
@@ -53,9 +56,21 @@ export function ProductLightbox({
       : [];
   const image = images[imageIndex] ?? images[0] ?? "";
 
-  React.useEffect(() => {
-    setImageIndex(0);
-  }, [product?.id]);
+  // Keep the latest values in a ref so the keyboard listener can subscribe
+  // once per open. Re-subscribing on every index change would re-run the
+  // scroll-lock effect and leak the locked body overflow when closing.
+  const stateRef = React.useRef({
+    imageIndex,
+    length: images.length,
+    onClose,
+    onImageChange,
+  });
+  stateRef.current = {
+    imageIndex,
+    length: images.length,
+    onClose,
+    onImageChange,
+  };
 
   React.useEffect(() => {
     if (!product) return undefined;
@@ -64,12 +79,13 @@ export function ProductLightbox({
     document.body.style.overflow = "hidden";
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      const s = stateRef.current;
+      if (event.key === "Escape") s.onClose();
       if (event.key === "ArrowLeft") {
-        setImageIndex((current) => wrapIndex(current - 1, images.length));
+        s.onImageChange(wrapIndex(s.imageIndex - 1, s.length));
       }
       if (event.key === "ArrowRight") {
-        setImageIndex((current) => wrapIndex(current + 1, images.length));
+        s.onImageChange(wrapIndex(s.imageIndex + 1, s.length));
       }
     };
 
@@ -78,7 +94,7 @@ export function ProductLightbox({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [images.length, onClose, product]);
+  }, [product]);
 
   if (!product) return null;
 
@@ -139,8 +155,8 @@ export function ProductLightbox({
             const dy = touch.clientY - touchStart.y;
 
             if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-              setImageIndex((current) =>
-                wrapIndex(current + (dx > 0 ? -1 : 1), images.length),
+              onImageChange(
+                wrapIndex(imageIndex + (dx > 0 ? -1 : 1), images.length),
               );
             }
             setTouchStart(null);
@@ -167,9 +183,7 @@ export function ProductLightbox({
                 aria-label="Previous image"
                 className="absolute top-1/2 left-3 rounded-full bg-card/75 backdrop-blur"
                 onClick={() =>
-                  setImageIndex((current) =>
-                    wrapIndex(current - 1, images.length),
-                  )
+                  onImageChange(wrapIndex(imageIndex - 1, images.length))
                 }
                 size="icon"
                 type="button"
@@ -181,9 +195,7 @@ export function ProductLightbox({
                 aria-label="Next image"
                 className="absolute top-1/2 right-3 rounded-full bg-card/75 backdrop-blur"
                 onClick={() =>
-                  setImageIndex((current) =>
-                    wrapIndex(current + 1, images.length),
-                  )
+                  onImageChange(wrapIndex(imageIndex + 1, images.length))
                 }
                 size="icon"
                 type="button"
