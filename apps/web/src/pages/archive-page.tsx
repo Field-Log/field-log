@@ -1,3 +1,4 @@
+import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import * as React from "react";
 import { AppShell } from "@/components/app-shell";
@@ -28,6 +29,7 @@ import {
   type SortKey,
   sortProducts,
 } from "@/lib/autmog-filters";
+import { decodePenParam, penParam } from "@/lib/pen-links";
 
 const sortOptions: Array<{ label: string; value: SortKey }> = [
   { label: "Newest drop", value: "date_desc" },
@@ -41,19 +43,55 @@ const sortOptions: Array<{ label: string; value: SortKey }> = [
   { label: "Title A to Z", value: "title_asc" },
 ];
 
+// Browse state is cached at module scope so navigating into a pen route
+// (which remounts this page) does not reset the active filters/search/sort.
+// The real implementation would keep the grid mounted via a shared layout
+// route; this keeps the spike small.
+const browseState = {
+  query: "",
+  sort: "date_desc" as SortKey,
+  active: createEmptyFilters(),
+  matchModes: createDefaultMatchModes(),
+};
+
 export function ArchivePage() {
+  const navigate = useNavigate();
+  // `/` and `/pen/$penId` both render this page, so the open pen is read from
+  // the URL rather than local state — that is what makes each pen shareable.
+  const { penId } = useParams({ strict: false });
+  const { img } = useSearch({ strict: false }) as { img?: number };
+
   const { currency, setCurrency, setUnits, setWeight, units, weight } =
     useAutmogSettings();
   const rates = useCurrencyRates();
   const [filtersOpen, setFiltersOpen] = useFiltersOpen();
-  const [query, setQuery] = React.useState("");
-  const [debouncedQuery, setDebouncedQuery] = React.useState("");
-  const [sort, setSort] = React.useState<SortKey>("date_desc");
-  const [active, setActive] = React.useState(createEmptyFilters);
-  const [matchModes, setMatchModes] = React.useState(createDefaultMatchModes);
-  const [selectedProduct, setSelectedProduct] =
-    React.useState<AutmogProduct | null>(null);
+  const [query, setQuery] = React.useState(browseState.query);
+  const [debouncedQuery, setDebouncedQuery] = React.useState(browseState.query);
+  const [sort, setSort] = React.useState<SortKey>(browseState.sort);
+  const [active, setActive] = React.useState(() => browseState.active);
+  const [matchModes, setMatchModes] = React.useState(
+    () => browseState.matchModes,
+  );
   const searchInputId = React.useId();
+
+  const selectedProduct = React.useMemo<AutmogProduct | null>(
+    () => (penId ? decodePenParam(penId) : null),
+    [penId],
+  );
+  const imageIndex = img && img > 1 ? img - 1 : 0;
+
+  React.useEffect(() => {
+    browseState.query = query;
+  }, [query]);
+  React.useEffect(() => {
+    browseState.sort = sort;
+  }, [sort]);
+  React.useEffect(() => {
+    browseState.active = active;
+  }, [active]);
+  React.useEffect(() => {
+    browseState.matchModes = matchModes;
+  }, [matchModes]);
 
   React.useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query), 150);
@@ -159,7 +197,12 @@ export function ArchivePage() {
             <ProductCard
               currency={currency}
               key={product.id}
-              onOpen={(nextProduct) => setSelectedProduct(nextProduct)}
+              onOpen={(nextProduct) =>
+                navigate({
+                  to: "/pen/$penId",
+                  params: { penId: penParam(nextProduct) },
+                })
+              }
               product={product}
               rates={rates}
               units={units}
@@ -175,7 +218,17 @@ export function ArchivePage() {
 
       <ProductLightbox
         currency={currency}
-        onClose={() => setSelectedProduct(null)}
+        imageIndex={imageIndex}
+        onClose={() => navigate({ to: "/" })}
+        onImageChange={(nextIndex) => {
+          if (!selectedProduct) return;
+          navigate({
+            to: "/pen/$penId",
+            params: { penId: penParam(selectedProduct) },
+            search: nextIndex > 0 ? { img: nextIndex + 1 } : {},
+            replace: true,
+          });
+        }}
         product={selectedProduct}
         rates={rates}
         units={units}
