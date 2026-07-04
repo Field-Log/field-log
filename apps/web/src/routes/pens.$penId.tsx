@@ -6,7 +6,7 @@ import { ArchivePage } from "@/pages/archive-page";
 
 const SITE_NAME = "Machined Pen Archive";
 
-export const Route = createFileRoute("/pen/$penId")({
+export const Route = createFileRoute("/pens/$penId")({
   // `?img=<n>` is 1-based and targets a gallery image; the primary image
   // (n = 1) is left out of the URL to keep shared links clean.
   validateSearch: (search: Record<string, unknown>): { img?: number } => {
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/pen/$penId")({
     const canonical = penParam(product);
     if (params.penId !== canonical) {
       throw redirect({
-        to: "/pen/$penId",
+        to: "/pens/$penId",
         params: { penId: canonical },
         search: deps.img ? { img: deps.img } : {},
       });
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/pen/$penId")({
       imageUrl: absoluteUrl(imagePath),
       imageAlt: product.title,
       pageUrl: absoluteUrl(
-        `/pen/${canonical}${imgNum > 1 ? `?img=${imgNum}` : ""}`,
+        `/pens/${canonical}${imgNum > 1 ? `?img=${imgNum}` : ""}`,
       ),
     };
   },

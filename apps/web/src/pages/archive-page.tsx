@@ -56,7 +56,7 @@ const browseState = {
 
 export function ArchivePage() {
   const navigate = useNavigate();
-  // `/` and `/pen/$penId` both render this page, so the open pen is read from
+  // `/` and `/pens/$penId` both render this page, so the open pen is read from
   // the URL rather than local state — that is what makes each pen shareable.
   const { penId } = useParams({ strict: false });
   const { img } = useSearch({ strict: false }) as { img?: number };
@@ -199,7 +199,7 @@ export function ArchivePage() {
               key={product.id}
               onOpen={(nextProduct) =>
                 navigate({
-                  to: "/pen/$penId",
+                  to: "/pens/$penId",
                   params: { penId: penParam(nextProduct) },
                 })
               }
@@ -223,7 +223,7 @@ export function ArchivePage() {
         onImageChange={(nextIndex) => {
           if (!selectedProduct) return;
           navigate({
-            to: "/pen/$penId",
+            to: "/pens/$penId",
             params: { penId: penParam(selectedProduct) },
             search: nextIndex > 0 ? { img: nextIndex + 1 } : {},
             replace: true,
