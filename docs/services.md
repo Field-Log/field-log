@@ -37,6 +37,7 @@ Configure services once in each server app.
 import {
   createAxiomTransport,
   createConsoleTransport,
+  loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
 } from "@repo/logger";
@@ -57,15 +58,14 @@ const transports = [
   ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
 ];
 
-services.configure({
-  db: databaseUrl ? { databaseUrl } : undefined,
-  logger: {
-    app: "api",
-    environment,
-    level: normalizeLogLevel(process.env.LOG_LEVEL),
-    transports,
-  },
-});
+const logger = {
+  app: loggerValues.apps.api,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(databaseUrl ? { db: { databaseUrl }, logger } : { logger });
 
 export { services as s };
 ```
@@ -77,6 +77,7 @@ import process from "node:process";
 import {
   createAxiomTransport,
   createConsoleTransport,
+  loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
 } from "@repo/logger";
@@ -97,15 +98,14 @@ const transports = [
   ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
 ];
 
-services.configure({
-  db: databaseUrl ? { databaseUrl } : undefined,
-  logger: {
-    app: "web",
-    environment,
-    level: normalizeLogLevel(process.env.LOG_LEVEL),
-    transports,
-  },
-});
+const logger = {
+  app: loggerValues.apps.web,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(databaseUrl ? { db: { databaseUrl }, logger } : { logger });
 
 export { services as s };
 ```
@@ -133,7 +133,9 @@ Only import the web services module from SSR code, server functions, loaders, or
 - `apps/mobile` must not receive `DATABASE_URL` and must not use database services directly. Mobile should call `apps/api` for persisted user or settings behavior.
 
 If code uses `@repo/services` before app-local configuration runs, it throws a clear initialization error.
-If code uses `s.db` or `s.logger` before that specific service has been configured, only that service throws. For example, an app can configure `s.logger` without `DATABASE_URL`; `s.db` will throw only if database services are actually used.
+Apps may configure `s.logger` without `DATABASE_URL`; `s.db` will throw only if database services are actually used. If `db` is configured, `logger` must be configured in the same call so database service methods can emit operation logs through `s.logger`.
+
+Database service methods log stable operation names from `loggerMessages.database`. User identifiers are logged as deterministic hashes, not raw IDs.
 
 ## Adding Services
 

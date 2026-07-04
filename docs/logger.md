@@ -133,6 +133,17 @@ even when Axiom is configured. The default terminal shape is compact:
 Set `LOGGER=verbose` to print the full redacted event, including full context,
 attributes, errors, and raw payloads that were explicitly logged.
 
+## Logger Messages And Values
+
+Reusable logger messages and protocol values live in `@repo/logger`:
+
+```ts
+import { loggerMessages, loggerValues } from "@repo/logger";
+```
+
+Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
+Use `loggerValues` for logger app identifiers and log proxy protocol values.
+
 ## Live Axiom Test
 
 The live logger test is explicit and is not part of `pnpm test` or
@@ -187,6 +198,7 @@ API configuration:
 import {
   createAxiomTransport,
   createConsoleTransport,
+  loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
 } from "@repo/logger";
@@ -213,20 +225,20 @@ const transports = [
   ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
 ];
 
-services.configure({
-  db: databaseUrl ? { databaseUrl } : undefined,
-  logger: {
-    app: "api",
-    environment,
-    level: normalizeLogLevel(process.env.LOG_LEVEL),
-    transports,
-  },
-});
+const logger = {
+  app: loggerValues.apps.api,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(databaseUrl ? { db: { databaseUrl }, logger } : { logger });
 
 export { services as s };
 ```
 
-Server-side web configuration uses the same pattern with `app: "web"`.
+Server-side web configuration uses the same pattern with
+`app: loggerValues.apps.web`.
 
 ## API Usage
 
@@ -234,9 +246,10 @@ Use the configured service instance in API code:
 
 ```ts
 import { s } from "./lib/services.js";
+import { loggerMessages } from "@repo/logger";
 
 app.get("/health", (context) => {
-  s.logger.info("api.health.checked", {
+  s.logger.info(loggerMessages.api.healthChecked, {
     attributes: {
       route: "/health",
     },
@@ -253,7 +266,7 @@ Wrap timed work with `operation`:
 
 ```ts
 const settings = await s.logger.operation(
-  "db.userSettings.getByClerkId",
+  loggerMessages.database.userSettings.getByClerkId,
   async () => {
     return await s.db.userSettings.getByClerkId(clerkId);
   },
@@ -272,10 +285,11 @@ loaders:
 
 ```ts
 import { createServerFn } from "@tanstack/react-start";
+import { loggerMessages } from "@repo/logger";
 import { s } from "@/lib/services";
 
 export const getAccount = createServerFn().handler(async () => {
-  s.logger.info("web.account.loaded", {
+  s.logger.info(loggerMessages.web.accountLoaded, {
     attributes: {
       route: "/user/account",
     },
@@ -296,10 +310,11 @@ Browser code imports the app-local logger from `apps/web/src/lib/logger.ts`:
 
 ```ts
 import { logger } from "@/lib/logger";
+import { loggerMessages } from "@repo/logger";
 
-logger.info("web.product.opened", {
+logger.warn(loggerMessages.web.fxRatesFetchFailed, {
   attributes: {
-    productId,
+    baseCurrency,
   },
 });
 ```
@@ -307,7 +322,7 @@ logger.info("web.product.opened", {
 The app-local module owns the browser proxy configuration:
 
 ```ts
-import { createLogger, createProxyTransport } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
 
 const logProxyUrl = import.meta.env.VITE_LOG_PROXY_URL;
 
@@ -321,7 +336,7 @@ const transports = logProxyUrl
   : [];
 
 export const logger = createLogger({
-  app: "web",
+  app: loggerValues.apps.web,
   environment: import.meta.env.MODE,
   transports,
 });
@@ -333,8 +348,9 @@ Expo code imports the app-local logger from `apps/mobile/src/lib/logger.ts`:
 
 ```ts
 import { logger } from "./src/lib/logger";
+import { loggerMessages } from "@repo/logger";
 
-logger.info("expo.screen.viewed", {
+logger.info(loggerMessages.mobile.screenViewed, {
   attributes: {
     screen: "Library",
   },
@@ -344,7 +360,7 @@ logger.info("expo.screen.viewed", {
 The Expo app-local module owns the proxy configuration:
 
 ```ts
-import { createLogger, createProxyTransport } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
 
 const logProxyUrl = process.env.EXPO_PUBLIC_LOG_PROXY_URL;
 
@@ -358,7 +374,7 @@ const transports = logProxyUrl
   : [];
 
 export const logger = createLogger({
-  app: "expo",
+  app: loggerValues.apps.mobile,
   environment: __DEV__ ? "development" : "production",
   transports,
 });
