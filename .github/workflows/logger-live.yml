@@ -74,7 +74,7 @@ jobs:
   logger-live-axiom:
     name: Logger Live Axiom
     needs: logger-live-gate
-    if: needs.logger-live-gate.outputs.logger_changed == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+    if: needs.logger-live-gate.outputs.logger_changed == 'true' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -163,9 +163,8 @@ jobs:
           AXIOM_RESULT: ${{ needs.logger-live-axiom.result }}
           EVENT_NAME: ${{ github.event_name }}
           GATE_RESULT: ${{ needs.logger-live-gate.result }}
-          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || '' }}
+          HEAD_REPOSITORY_FORK: ${{ github.event.pull_request.head.repo.fork || false }}
           LOGGER_CHANGED: ${{ needs.logger-live-gate.outputs.logger_changed }}
-          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
 
@@ -179,7 +178,7 @@ jobs:
             exit 0
           fi
 
-          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$HEAD_REPOSITORY" != "$REPOSITORY" ]]; then
+          if [[ "$EVENT_NAME" != "workflow_dispatch" && "$HEAD_REPOSITORY_FORK" == "true" ]]; then
             echo "Skipping live logger test for forked pull request."
             exit 0
           fi
