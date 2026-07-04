@@ -1,24 +1,24 @@
-import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
-  StyleSheet,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { getItemLabel, ITEM_TYPE_MAP } from "../config/itemTypes";
 import {
-  fetchItems,
   fetchCarriedItemIdsForDate,
-  toggleCarried,
-  fetchMostCarried,
   fetchCollections,
   fetchItemIdsInCollection,
+  fetchItems,
+  fetchMostCarried,
   Item,
+  toggleCarried,
 } from "../db/database";
-import { ITEM_TYPE_MAP, getItemLabel } from "../config/itemTypes";
 import { C } from "../theme/colors";
 
 function todayString() {

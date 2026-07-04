@@ -1,43 +1,43 @@
-import React, { useState, useCallback } from "react";
 import {
-  Alert,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
+import {
   ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
-  StyleSheet,
 } from "react-native";
 import {
-  useRoute,
-  useNavigation,
-  useFocusEffect,
-} from "@react-navigation/native";
+  formatPickerLabel,
+  getItemLabel,
+  ITEM_TYPE_MAP,
+} from "../config/itemTypes";
 import {
-  fetchItemById,
-  deleteItem,
-  toggleCarried,
-  fetchLogEntriesForItem,
-  fetchCollectionsForItem,
-  fetchCollections,
   addItemToCollection,
-  removeItemFromCollection,
-  fetchTagsForItem,
-  fetchAllTags,
   addTagToItem,
-  removeTagFromItem,
-  upsertTag,
+  deleteItem,
+  fetchAllTags,
   fetchCarryDatesForItem,
+  fetchCollections,
+  fetchCollectionsForItem,
+  fetchItemById,
+  fetchLogEntriesForItem,
+  fetchTagsForItem,
   Item,
   LogEntryType,
+  removeItemFromCollection,
+  removeTagFromItem,
+  toggleCarried,
+  upsertTag,
 } from "../db/database";
-import {
-  ITEM_TYPE_MAP,
-  getItemLabel,
-  formatPickerLabel,
-} from "../config/itemTypes";
 import { C } from "../theme/colors";
 
 const ENTRY_TYPE_LABELS: Record<LogEntryType, string> = {

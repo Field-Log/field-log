@@ -1,30 +1,30 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
   ScrollView,
+  StyleSheet,
   Switch,
   Text,
   TextInput,
   View,
-  StyleSheet,
 } from "react-native";
+import { useAuth } from "../contexts/AuthContext";
 import {
-  getReminderSettings,
-  scheduleCarryReminder,
-  cancelCarryReminder,
-  requestNotificationPermission,
-} from "../utils/notifications";
-import { C } from "../theme/colors";
-import * as FileSystem from "expo-file-system/legacy";
-import * as Sharing from "expo-sharing";
-import {
-  fetchCollections,
-  insertCollection,
   deleteCollection,
+  fetchCollections,
   fetchItems,
+  insertCollection,
 } from "../db/database";
+import { C } from "../theme/colors";
+import {
+  cancelCarryReminder,
+  getReminderSettings,
+  requestNotificationPermission,
+  scheduleCarryReminder,
+} from "../utils/notifications";
 
 export default function SettingsScreen() {
   const [collections, setCollections] = useState<

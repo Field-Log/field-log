@@ -11,6 +11,8 @@
     "dev:android": "turbo run dev:android --filter=@repo/api --filter=@repo/mobile",
     "build": "turbo run build",
     "build:ci": "turbo run build:ci",
+    "db:generate": "pnpm --filter @repo/database db:generate",
+    "db:migrate": "pnpm --filter @repo/database db:migrate",
     "lint": "biome lint . && turbo run lint",
     "format": "biome check --write --linter-enabled=false .",
     "prepare": "git config core.hooksPath .githooks",

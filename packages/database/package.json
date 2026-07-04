@@ -1,0 +1,36 @@
+{
+  "name": "@repo/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "build:ci": "tsc -p tsconfig.json",
+    "check": "biome check .",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "tsx ../infisical-runner/src/cli.ts database db:migrate -- drizzle-kit migrate --config=drizzle.config.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:ci": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:watch:no-infisical": "vitest --passWithNoTests"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "latest",
+    "drizzle-orm": "latest"
+  },
+  "devDependencies": {
+    "@repo/eslint": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "drizzle-kit": "latest"
+  }
+}

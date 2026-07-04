@@ -32,15 +32,15 @@ export const commandSecrets = {
   api: {
     dev: {
       allowServerSecrets: true,
-      paths: ["/clerk", "/clerk/server"],
+      paths: ["/clerk", "/clerk/server", "/neon/server"],
     },
     test: {
       allowServerSecrets: true,
-      paths: ["/clerk", "/clerk/server"],
+      paths: ["/clerk", "/clerk/server", "/neon/server"],
     },
     "test:watch": {
       allowServerSecrets: true,
-      paths: ["/clerk", "/clerk/server"],
+      paths: ["/clerk", "/clerk/server", "/neon/server"],
     },
   },
   autmog: {
@@ -55,6 +55,12 @@ export const commandSecrets = {
     "test:watch": {
       allowServerSecrets: false,
       paths: ["/clerk"],
+    },
+  },
+  database: {
+    "db:migrate": {
+      allowServerSecrets: true,
+      paths: ["/neon/server"],
     },
   },
   "field-log": {
@@ -105,22 +111,22 @@ export const commandSecrets = {
     build: {
       allowServerSecrets: true,
       envAliases: viteClerkAliases,
-      paths: ["/clerk", "/clerk/server"],
+      paths: ["/clerk", "/clerk/server", "/neon/server"],
     },
     dev: {
       allowServerSecrets: true,
       envAliases: viteClerkAliases,
-      paths: ["/clerk", "/clerk/server"],
+      paths: ["/clerk", "/clerk/server", "/neon/server"],
     },
     test: {
       allowServerSecrets: true,
       envAliases: viteClerkAliases,
-      paths: ["/clerk", "/clerk/server"],
+      paths: ["/clerk", "/clerk/server", "/neon/server"],
     },
     "test:watch": {
       allowServerSecrets: true,
       envAliases: viteClerkAliases,
-      paths: ["/clerk", "/clerk/server"],
+      paths: ["/clerk", "/clerk/server", "/neon/server"],
     },
   },
 } as const satisfies Record<string, Record<string, CommandSecretConfig>>;
