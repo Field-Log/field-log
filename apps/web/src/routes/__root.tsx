@@ -5,6 +5,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import type * as React from "react";
+import { SITE_NAME } from "@/lib/constants";
 import { NotFoundPage } from "@/pages/not-found-page";
 import { AppProviders } from "@/providers/app-providers";
 import "../styles.css";
@@ -22,7 +23,7 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "Machined Pen Archive",
+        title: SITE_NAME,
       },
     ],
   }),

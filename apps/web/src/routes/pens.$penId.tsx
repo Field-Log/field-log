@@ -1,10 +1,9 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import type { AutmogProduct } from "@/lib/autmog-data";
+import { SITE_NAME } from "@/lib/constants";
 import { decodePenParam, penParam } from "@/lib/pen-links";
 import { absoluteUrl } from "@/lib/site-url";
 import { ArchivePage } from "@/pages/archive-page";
-
-const SITE_NAME = "Machined Pen Archive";
 
 export const Route = createFileRoute("/pens/$penId")({
   // `?img=<n>` is 1-based and targets a gallery image; the primary image
