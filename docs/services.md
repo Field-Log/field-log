@@ -28,17 +28,12 @@ Configure services once in each server app.
 `apps/api/src/lib/services.ts`
 
 ```ts
+import { apiEnv } from "../env.js";
 import services from "@repo/services";
-
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required to configure services.");
-}
 
 services.configure({
   db: {
-    databaseUrl,
+    databaseUrl: apiEnv.DATABASE_URL,
   },
 });
 
@@ -48,18 +43,12 @@ export { services as s };
 `apps/web/src/lib/services.ts`
 
 ```ts
-import process from "node:process";
 import services from "@repo/services";
-
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required to configure services.");
-}
+import { serverEnv } from "@/env/server";
 
 services.configure({
   db: {
-    databaseUrl,
+    databaseUrl: serverEnv.DATABASE_URL,
   },
 });
 

@@ -14,21 +14,23 @@
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsx ../../packages/infisical-runner/src/cli.ts mobile test -- jest --passWithNoTests",
-    "test:ci": "jest --passWithNoTests",
-    "test:watch": "tsx ../../packages/infisical-runner/src/cli.ts mobile test:watch -- jest --watch",
-    "test:watch:no-infisical": "jest --watch"
+    "test": "tsx src/env.assert.ts && tsx ../../packages/infisical-runner/src/cli.ts mobile test -- jest --passWithNoTests",
+    "test:ci": "tsx src/env.assert.ts && jest --passWithNoTests",
+    "test:watch": "tsx src/env.assert.ts && tsx ../../packages/infisical-runner/src/cli.ts mobile test:watch -- jest --watch",
+    "test:watch:no-infisical": "tsx src/env.assert.ts && jest --watch"
   },
   "dependencies": {
+    "@t3-oss/env-core": "^0.13.11",
     "expo": "latest",
     "expo-status-bar": "latest",
     "react": "latest",
-    "react-native": "0.85.3"
+    "react-native": "0.85.3",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@react-native/jest-preset": "0.85.3",
     "@repo/eslint": "workspace:*",
     "@repo/tsconfig": "workspace:*",
-    "@react-native/jest-preset": "0.85.3",
     "@types/react": "latest",
     "jest": "^29.7.0",
     "jest-expo": "latest"

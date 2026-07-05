@@ -1,12 +1,11 @@
 import { serve } from "@hono/node-server";
 import app from "./app.js";
-
-const port = Number.parseInt(process.env.PORT ?? "3000", 10);
+import { apiEnv } from "./env.js";
 
 serve(
   {
     fetch: app.fetch,
-    port,
+    port: apiEnv.PORT,
   },
   (info) => {
     console.log(`API listening on http://localhost:${info.port}`);

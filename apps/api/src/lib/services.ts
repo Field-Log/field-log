@@ -1,14 +1,9 @@
 import services from "@repo/services";
-
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required to configure services.");
-}
+import { apiEnv } from "../env.js";
 
 services.configure({
   db: {
-    databaseUrl,
+    databaseUrl: apiEnv.DATABASE_URL,
   },
 });
 
