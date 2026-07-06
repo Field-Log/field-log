@@ -1,5 +1,6 @@
 import { ClerkLoaded, ClerkLoading, SignUp } from "@clerk/tanstack-react-start";
 import { AuthPageSkeleton } from "@/components/skeletons/auth-page-skeleton";
+import { clientEnv } from "@/env/client";
 
 export function SignUpPage() {
   return (
@@ -8,7 +9,7 @@ export function SignUpPage() {
         <AuthPageSkeleton />
       </ClerkLoading>
       <ClerkLoaded>
-        <SignUp signInUrl={import.meta.env.VITE_CLERK_SIGN_IN_URL} />
+        <SignUp signInUrl={clientEnv.VITE_CLERK_SIGN_IN_URL} />
       </ClerkLoaded>
     </main>
   );

@@ -17,10 +17,10 @@
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "test:ci": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests",
-    "test:watch:no-infisical": "vitest --passWithNoTests"
+    "test": "vitest run --passWithNoTests --exclude \"dist/**\"",
+    "test:ci": "vitest run --passWithNoTests --exclude \"dist/**\"",
+    "test:watch": "vitest --passWithNoTests --exclude \"dist/**\"",
+    "test:watch:no-infisical": "vitest --passWithNoTests --exclude \"dist/**\""
   },
   "devDependencies": {
     "@repo/eslint": "workspace:*",

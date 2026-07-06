@@ -26,7 +26,9 @@
     "@repo/logger": "workspace:*",
     "@repo/services": "workspace:*",
     "@repo/types": "workspace:*",
-    "hono": "latest"
+    "@t3-oss/env-core": "^0.13.11",
+    "hono": "latest",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/eslint": "workspace:*",

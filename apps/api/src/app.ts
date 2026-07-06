@@ -26,8 +26,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   });
 
   app.post("/logs", async (context) => {
-    const configuredClientKey =
-      dependencies.clientLogKey ?? process.env.LOG_PROXY_CLIENT_KEY;
+    const configuredClientKey = dependencies.clientLogKey;
 
     if (configuredClientKey) {
       const providedClientKey = context.req.header(

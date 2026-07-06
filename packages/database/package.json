@@ -19,14 +19,16 @@
     "db:migrate": "tsx ../infisical-runner/src/cli.ts database db:migrate -- drizzle-kit migrate --config=drizzle.config.ts",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run --passWithNoTests",
-    "test:ci": "vitest run --passWithNoTests",
-    "test:watch": "vitest --passWithNoTests",
-    "test:watch:no-infisical": "vitest --passWithNoTests"
+    "test": "vitest run --passWithNoTests --exclude \"dist/**\"",
+    "test:ci": "vitest run --passWithNoTests --exclude \"dist/**\"",
+    "test:watch": "vitest --passWithNoTests --exclude \"dist/**\"",
+    "test:watch:no-infisical": "vitest --passWithNoTests --exclude \"dist/**\""
   },
   "dependencies": {
     "@neondatabase/serverless": "latest",
-    "drizzle-orm": "latest"
+    "@t3-oss/env-core": "^0.13.11",
+    "drizzle-orm": "latest",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/eslint": "workspace:*",

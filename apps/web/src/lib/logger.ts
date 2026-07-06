@@ -1,11 +1,12 @@
 import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
+import { clientEnv } from "@/env/client";
 
-const logProxyUrl = import.meta.env.VITE_LOG_PROXY_URL;
+const logProxyUrl = clientEnv.VITE_LOG_PROXY_URL;
 
 const transports = logProxyUrl
   ? [
       createProxyTransport({
-        clientKey: import.meta.env.VITE_LOG_PROXY_CLIENT_KEY,
+        clientKey: clientEnv.VITE_LOG_PROXY_CLIENT_KEY,
         url: logProxyUrl,
       }),
     ]
