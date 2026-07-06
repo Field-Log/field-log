@@ -15,6 +15,7 @@ import { Route as UserCollectionsRouteImport } from './routes/user.collections'
 import { Route as UserAccountRouteImport } from './routes/user.account'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
+import { Route as PensPenIdRouteImport } from './routes/pens.$penId'
 
 const UserRoute = UserRouteImport.update({
   id: '/user',
@@ -46,10 +47,16 @@ const SignInSplatRoute = SignInSplatRouteImport.update({
   path: '/sign-in/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PensPenIdRoute = PensPenIdRouteImport.update({
+  id: '/pens/$penId',
+  path: '/pens/$penId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/user': typeof UserRouteWithChildren
+  '/pens/$penId': typeof PensPenIdRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/user/account': typeof UserAccountRoute
@@ -58,6 +65,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/user': typeof UserRouteWithChildren
+  '/pens/$penId': typeof PensPenIdRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/user/account': typeof UserAccountRoute
@@ -67,6 +75,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/user': typeof UserRouteWithChildren
+  '/pens/$penId': typeof PensPenIdRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/user/account': typeof UserAccountRoute
@@ -77,6 +86,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/user'
+    | '/pens/$penId'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/user/account'
@@ -85,6 +95,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/user'
+    | '/pens/$penId'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/user/account'
@@ -93,6 +104,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/user'
+    | '/pens/$penId'
     | '/sign-in/$'
     | '/sign-up/$'
     | '/user/account'
@@ -102,6 +114,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   UserRoute: typeof UserRouteWithChildren
+  PensPenIdRoute: typeof PensPenIdRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignUpSplatRoute: typeof SignUpSplatRoute
 }
@@ -150,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pens/$penId': {
+      id: '/pens/$penId'
+      path: '/pens/$penId'
+      fullPath: '/pens/$penId'
+      preLoaderRoute: typeof PensPenIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -168,6 +188,7 @@ const UserRouteWithChildren = UserRoute._addFileChildren(UserRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   UserRoute: UserRouteWithChildren,
+  PensPenIdRoute: PensPenIdRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignUpSplatRoute: SignUpSplatRoute,
 }

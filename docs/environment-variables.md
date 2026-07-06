@@ -35,3 +35,39 @@ configuration:
 - `CLERK_SECRET_KEY`
 - `CLERK_SIGN_IN_URL=/sign-in`
 - `CLERK_SIGN_UP_URL=/sign-up`
+
+### Site Origin (Open Graph / canonical URLs)
+
+Server-rendered shareable URLs (`og:url`, `og:image`, `<link rel="canonical">`)
+need an absolute origin. It resolves in this order:
+
+- `SITE_URL` — explicit override for any environment, e.g.
+  `https://field-log.com`.
+- `VERCEL_PROJECT_PRODUCTION_URL` — the Vercel production domain (provided
+  automatically on Vercel); used for preview and production deployments so links
+  canonicalize to production.
+- Local development — neither is set, so URLs are emitted relative to the current
+  host. Nothing is hardcoded, so a changed dev port cannot produce wrong URLs.
+
+## GitHub Discord Notifications
+
+The `Discord Notifications` GitHub Actions workflow posts repository events to
+Discord. It authenticates to Infisical with GitHub OIDC and reads the webhook
+URL from `/github/discord`.
+
+Infisical must provide:
+
+- `DISCORD_GITHUB_WEBHOOK_URL`
+
+GitHub repository variables must provide:
+
+- `INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID`
+- `INFISICAL_PROJECT_SLUG`
+- optional `INFISICAL_ENV_SLUG`, defaults to `dev`
+- optional `INFISICAL_OIDC_AUDIENCE`, defaults to
+  `https://github.com/{repository_owner}`
+- optional `INFISICAL_DOMAIN`, defaults to `https://app.infisical.com`
+
+The Discord notifier identity should be scoped to `/github/discord`. Fork pull
+requests are skipped because GitHub does not expose OIDC-backed secret access to
+untrusted fork code paths.
