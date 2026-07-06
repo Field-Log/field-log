@@ -35,6 +35,19 @@ configuration:
 - `CLERK_SIGN_IN_URL=/sign-in`
 - `CLERK_SIGN_UP_URL=/sign-up`
 
+### Site Origin (Open Graph / canonical URLs)
+
+Server-rendered shareable URLs (`og:url`, `og:image`, `<link rel="canonical">`)
+need an absolute origin. It resolves in this order:
+
+- `SITE_URL` — explicit override for any environment, e.g.
+  `https://field-log.com`.
+- `VERCEL_PROJECT_PRODUCTION_URL` — the Vercel production domain (provided
+  automatically on Vercel); used for preview and production deployments so links
+  canonicalize to production.
+- Local development — neither is set, so URLs are emitted relative to the current
+  host. Nothing is hardcoded, so a changed dev port cannot produce wrong URLs.
+
 ## Mobile App
 
 `apps/mobile` validates JavaScript-visible Expo values with

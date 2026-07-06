@@ -29,6 +29,7 @@ import {
   type SortKey,
   sortProducts,
 } from "@/lib/autmog-filters";
+import { SITE_NAME } from "@/lib/constants";
 import { decodePenParam, penParam } from "@/lib/pen-links";
 
 const sortOptions: Array<{ label: string; value: SortKey }> = [
@@ -189,7 +190,7 @@ export function ArchivePage() {
         />
       }
       sidebarOpen={filtersOpen}
-      title="Machined Pen Archive"
+      title={SITE_NAME}
     >
       <section className="grid grid-cols-1 gap-[18px] p-3 min-[481px]:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] min-[881px]:grid-cols-[repeat(auto-fill,minmax(max(240px,calc((100%_-_4_*_18px)_/_5)),1fr))] min-[881px]:p-[18px_22px_22px]">
         {visibleProducts.length > 0 ? (
