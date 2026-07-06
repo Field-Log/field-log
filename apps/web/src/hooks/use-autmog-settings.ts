@@ -1,3 +1,4 @@
+import { loggerMessages } from "@repo/logger";
 import * as React from "react";
 import {
   baseCurrency,
@@ -9,6 +10,7 @@ import {
   type WeightUnit,
 } from "@/lib/autmog-formatters";
 import { compactMediaQuery } from "@/lib/breakpoints";
+import { logger } from "@/lib/logger";
 
 type StoredSettings = {
   units?: DimensionUnit;
@@ -110,6 +112,37 @@ export function useCurrencyRates() {
         }
       } catch {
         // Ignore malformed cache entries and fetch fresh rates.
+      }
+
+      const symbols = currencies
+        .filter((currency) => currency !== baseCurrency)
+        .join(",");
+
+      try {
+        const response = await fetch(
+          `https://api.frankfurter.dev/v1/latest?base=${baseCurrency}&symbols=${symbols}`,
+          { cache: "no-store" },
+        );
+
+        if (!response.ok) throw new Error(`FX ${response.status}`);
+
+        const data = (await response.json()) as { rates?: CurrencyRates };
+        if (!cancelled && data.rates) {
+          const nextRates = { [baseCurrency]: 1, ...data.rates };
+          setRates(nextRates);
+          window.localStorage.setItem(
+            rateStorageKey,
+            JSON.stringify({ date: today, rates: data.rates }),
+          );
+        }
+      } catch (error) {
+        logger.warn(loggerMessages.web.fxRatesFetchFailed, {
+          attributes: {
+            baseCurrency,
+            symbols,
+          },
+          error,
+        });
       }
     }
 

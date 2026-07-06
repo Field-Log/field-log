@@ -1,5 +1,5 @@
 {
-  "name": "@repo/services",
+  "name": "@repo/logger",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,17 +15,17 @@
     "build": "tsc -p tsconfig.json",
     "build:ci": "tsc -p tsconfig.json",
     "check": "biome check .",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "dev:web": "pnpm run dev",
+    "dev:ios": "pnpm run dev",
+    "dev:android": "pnpm run dev",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
+    "test:axiom": "tsx ../infisical-runner/src/cli.ts logger test:axiom -- tsx integration/axiom-live.ts",
     "test:ci": "vitest run --passWithNoTests",
     "test:watch": "vitest --passWithNoTests",
     "test:watch:no-infisical": "vitest --passWithNoTests"
-  },
-  "dependencies": {
-    "@repo/database": "workspace:*",
-    "@repo/logger": "workspace:*",
-    "drizzle-orm": "latest"
   },
   "devDependencies": {
     "@repo/eslint": "workspace:*",

@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@hono/node-server": "latest",
+    "@repo/logger": "workspace:*",
     "@repo/services": "workspace:*",
     "@repo/types": "workspace:*",
     "hono": "latest"

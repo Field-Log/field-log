@@ -20,6 +20,7 @@
     "test:watch:no-infisical": "jest --watch"
   },
   "dependencies": {
+    "@repo/logger": "workspace:*",
     "expo": "latest",
     "expo-status-bar": "latest",
     "react": "latest",
