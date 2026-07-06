@@ -127,7 +127,7 @@ export function useCurrencyRates() {
         if (!response.ok) throw new Error(`FX ${response.status}`);
 
         const data = (await response.json()) as { rates?: CurrencyRates };
-        if (!cancelled && data.rates) {
+        if (data.rates) {
           const nextRates = { [baseCurrency]: 1, ...data.rates };
           setRates(nextRates);
           window.localStorage.setItem(
@@ -166,7 +166,15 @@ export function useCurrencyRates() {
         );
       }
     } catch (error) {
-      console.warn("FX rate fetch failed; using CAD pricing only.", error);
+      logger.warn(loggerMessages.web.fxRatesFetchFailed, {
+        attributes: {
+          baseCurrency,
+          symbols: currencies
+            .filter((currency) => currency !== baseCurrency)
+            .join(","),
+        },
+        error,
+      });
     }
   }, []);
 
