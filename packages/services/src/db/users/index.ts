@@ -1,5 +1,7 @@
 import type { Database, User } from "@repo/database";
 import { schema } from "@repo/database";
+import { type Logger, loggerMessages } from "@repo/logger";
+import { hashLogIdentifier } from "../../logging.js";
 
 export type EnsureUserInput = {
   clerkId: string;
@@ -15,25 +17,35 @@ function assertClerkId(clerkId: string): void {
   }
 }
 
-export function createUsersService(db: Database): UsersService {
+export function createUsersService(db: Database, logger: Logger): UsersService {
   return {
     async ensure({ clerkId }) {
-      assertClerkId(clerkId);
+      return await logger.operation(
+        loggerMessages.database.users.ensure,
+        async () => {
+          assertClerkId(clerkId);
 
-      const [user] = await db
-        .insert(schema.users)
-        .values({ clerkId })
-        .onConflictDoUpdate({
-          set: { clerkId },
-          target: schema.users.clerkId,
-        })
-        .returning();
+          const [user] = await db
+            .insert(schema.users)
+            .values({ clerkId })
+            .onConflictDoUpdate({
+              set: { clerkId },
+              target: schema.users.clerkId,
+            })
+            .returning();
 
-      if (!user) {
-        throw new Error("Failed to ensure user.");
-      }
+          if (!user) {
+            throw new Error("Failed to ensure user.");
+          }
 
-      return user;
+          return user;
+        },
+        {
+          attributes: {
+            clerkIdHash: hashLogIdentifier(clerkId),
+          },
+        },
+      );
     },
   };
 }
