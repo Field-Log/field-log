@@ -19,6 +19,12 @@ await s.db.userSettings.upsertForClerkId(clerkId, {
   theme: "dark",
   weightUnit: "g",
 });
+
+s.logger.info("api.health.checked", {
+  attributes: {
+    route: "/health",
+  },
+});
 ```
 
 ## App Configuration
@@ -28,13 +34,48 @@ Configure services once in each server app.
 `apps/api/src/lib/services.ts`
 
 ```ts
-import { apiEnv } from "../env.js";
+import {
+  createAxiomTransport,
+  createConsoleTransport,
+  loggerValues,
+  normalizeConsoleTransportMode,
+  normalizeLogLevel,
+} from "@repo/logger";
 import services from "@repo/services";
+import { apiEnv } from "../env.js";
+
+const environment = process.env.NODE_ENV ?? "development";
+const isDevelopment = environment === "development";
+const consoleTransport = createConsoleTransport({
+  mode: normalizeConsoleTransportMode(apiEnv.LOGGER),
+});
+const transports = [
+  ...(apiEnv.AXIOM_TOKEN && apiEnv.AXIOM_DATASET
+    ? [
+        createAxiomTransport({
+          dataset: apiEnv.AXIOM_DATASET,
+          edgeDomain: apiEnv.AXIOM_EDGE_DOMAIN,
+          token: apiEnv.AXIOM_TOKEN,
+        }),
+      ]
+    : []),
+  ...(isDevelopment || !(apiEnv.AXIOM_TOKEN && apiEnv.AXIOM_DATASET)
+    ? [consoleTransport]
+    : []),
+];
+
+const logger = {
+  app: loggerValues.apps.api,
+  environment,
+  level: normalizeLogLevel(apiEnv.LOG_LEVEL),
+  transports,
+};
 
 services.configure({
   db: {
     databaseUrl: apiEnv.DATABASE_URL,
   },
+  logger,
 });
 
 export { services as s };
@@ -43,13 +84,49 @@ export { services as s };
 `apps/web/src/lib/services.ts`
 
 ```ts
+import process from "node:process";
+import {
+  createAxiomTransport,
+  createConsoleTransport,
+  loggerValues,
+  normalizeConsoleTransportMode,
+  normalizeLogLevel,
+} from "@repo/logger";
 import services from "@repo/services";
 import { serverEnv } from "@/env/server";
+
+const environment = process.env.NODE_ENV ?? "development";
+const isDevelopment = environment === "development";
+const consoleTransport = createConsoleTransport({
+  mode: normalizeConsoleTransportMode(serverEnv.LOGGER),
+});
+const transports = [
+  ...(serverEnv.AXIOM_TOKEN && serverEnv.AXIOM_DATASET
+    ? [
+        createAxiomTransport({
+          dataset: serverEnv.AXIOM_DATASET,
+          edgeDomain: serverEnv.AXIOM_EDGE_DOMAIN,
+          token: serverEnv.AXIOM_TOKEN,
+        }),
+      ]
+    : []),
+  ...(isDevelopment || !(serverEnv.AXIOM_TOKEN && serverEnv.AXIOM_DATASET)
+    ? [consoleTransport]
+    : []),
+];
+
+const logger = {
+  app: loggerValues.apps.web,
+  environment,
+  level: normalizeLogLevel(serverEnv.LOG_LEVEL),
+  transports,
+};
 
 services.configure({
   db: {
     databaseUrl: serverEnv.DATABASE_URL,
   },
+  logger,
 });
 
 export { services as s };
@@ -78,6 +155,9 @@ Only import the web services module from SSR code, server functions, loaders, or
 - `apps/mobile` must not receive `DATABASE_URL` and must not use database services directly. Mobile should call `apps/api` for persisted user or settings behavior.
 
 If code uses `@repo/services` before app-local configuration runs, it throws a clear initialization error.
+Apps may configure `s.logger` without `DATABASE_URL`; `s.db` will throw only if database services are actually used. If `db` is configured, `logger` must be configured in the same call so database service methods can emit operation logs through `s.logger`.
+
+Database service methods log stable operation names from `loggerMessages.database`. User identifiers are logged as deterministic hashes, not raw IDs.
 
 ## Adding Services
 

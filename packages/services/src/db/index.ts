@@ -1,4 +1,5 @@
 import type { Database } from "@repo/database";
+import type { Logger } from "@repo/logger";
 import {
   createUserSettingsService,
   type UserSettingsService,
@@ -10,11 +11,11 @@ export type DbServices = {
   users: UsersService;
 };
 
-export function createDbServices(db: Database): DbServices {
-  const users = createUsersService(db);
+export function createDbServices(db: Database, logger: Logger): DbServices {
+  const users = createUsersService(db, logger);
 
   return {
-    userSettings: createUserSettingsService(db, users),
+    userSettings: createUserSettingsService(db, users, logger),
     users,
   };
 }

@@ -7,7 +7,9 @@ import type {
   WeightUnit,
 } from "@repo/database";
 import { schema } from "@repo/database";
+import { type Logger, loggerMessages } from "@repo/logger";
 import { eq } from "drizzle-orm";
+import { hashLogIdentifier } from "../../logging.js";
 import type { UsersService } from "../users/index.js";
 
 export type UpsertUserSettingsInput = {
@@ -28,47 +30,70 @@ export type UserSettingsService = {
 export function createUserSettingsService(
   db: Database,
   usersService: UsersService,
+  logger: Logger,
 ): UserSettingsService {
   return {
     async getByClerkId(clerkId) {
-      const [row] = await db
-        .select({
-          currencyCode: schema.userSettings.currencyCode,
-          dimensionUnit: schema.userSettings.dimensionUnit,
-          theme: schema.userSettings.theme,
-          userId: schema.userSettings.userId,
-          weightUnit: schema.userSettings.weightUnit,
-        })
-        .from(schema.userSettings)
-        .innerJoin(
-          schema.users,
-          eq(schema.userSettings.userId, schema.users.id),
-        )
-        .where(eq(schema.users.clerkId, clerkId))
-        .limit(1);
+      return await logger.operation(
+        loggerMessages.database.userSettings.getByClerkId,
+        async () => {
+          const [row] = await db
+            .select({
+              currencyCode: schema.userSettings.currencyCode,
+              dimensionUnit: schema.userSettings.dimensionUnit,
+              theme: schema.userSettings.theme,
+              userId: schema.userSettings.userId,
+              weightUnit: schema.userSettings.weightUnit,
+            })
+            .from(schema.userSettings)
+            .innerJoin(
+              schema.users,
+              eq(schema.userSettings.userId, schema.users.id),
+            )
+            .where(eq(schema.users.clerkId, clerkId))
+            .limit(1);
 
-      return row ?? null;
+          return row ?? null;
+        },
+        {
+          attributes: {
+            clerkIdHash: hashLogIdentifier(clerkId),
+          },
+        },
+      );
     },
     async upsertForClerkId(clerkId, settings) {
-      const user = await usersService.ensure({ clerkId });
+      return await logger.operation(
+        loggerMessages.database.userSettings.upsertForClerkId,
+        async () => {
+          const user = await usersService.ensure({ clerkId });
 
-      const [userSettings] = await db
-        .insert(schema.userSettings)
-        .values({
-          ...settings,
-          userId: user.id,
-        })
-        .onConflictDoUpdate({
-          set: settings,
-          target: schema.userSettings.userId,
-        })
-        .returning();
+          const [userSettings] = await db
+            .insert(schema.userSettings)
+            .values({
+              ...settings,
+              userId: user.id,
+            })
+            .onConflictDoUpdate({
+              set: settings,
+              target: schema.userSettings.userId,
+            })
+            .returning();
 
-      if (!userSettings) {
-        throw new Error("Failed to upsert user settings.");
-      }
+          if (!userSettings) {
+            throw new Error("Failed to upsert user settings.");
+          }
 
-      return userSettings;
+          return userSettings;
+        },
+        {
+          attributes: {
+            clerkIdHash: hashLogIdentifier(clerkId),
+            settingKeys: Object.keys(settings),
+            settings,
+          },
+        },
+      );
     },
   };
 }

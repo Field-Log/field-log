@@ -21,8 +21,21 @@ Do not expose `CLERK_SECRET_KEY` to client-side code.
 The web app validates client variables separately from server variables:
 
 - client: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`,
-  `VITE_CLERK_SIGN_UP_URL`
-- server: `DATABASE_URL`, `CLERK_SECRET_KEY`
+  `VITE_CLERK_SIGN_UP_URL`, optional `VITE_LOG_PROXY_URL`, optional
+  `VITE_LOG_PROXY_CLIENT_KEY`
+- server: `DATABASE_URL`, `CLERK_SECRET_KEY`, optional `AXIOM_TOKEN`, optional
+  `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`, optional `LOG_LEVEL`, optional
+  `LOGGER`
+
+## Local Ports
+
+Local development uses stable app ports:
+
+- Web: `http://localhost:4005`
+- API: `http://localhost:4006`
+
+Logging environment variables, Axiom setup, and client proxy configuration are
+documented in [logger.md](./logger.md).
 
 ### Production
 
@@ -57,6 +70,8 @@ JavaScript should use Expo's `EXPO_PUBLIC_` prefix and must not contain secrets.
 Current mobile variables:
 
 - optional `EXPO_PUBLIC_API_BASE_URL`
+- optional `EXPO_PUBLIC_LOG_PROXY_URL`
+- optional `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`
 
 Server-only values such as `DATABASE_URL` and `CLERK_SECRET_KEY` should stay
 behind `apps/api` or web server code.

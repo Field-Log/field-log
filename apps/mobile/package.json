@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",
+    "@repo/logger": "workspace:*",
     "expo": "latest",
     "expo-status-bar": "latest",
     "react": "latest",

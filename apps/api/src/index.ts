@@ -1,6 +1,12 @@
 import { serve } from "@hono/node-server";
-import app from "./app.js";
+import { loggerMessages } from "@repo/logger";
+import { createApp } from "./app.js";
 import { apiEnv } from "./env.js";
+import { s } from "./lib/services.js";
+
+const app = createApp({
+  clientLogKey: apiEnv.LOG_PROXY_CLIENT_KEY,
+});
 
 serve(
   {
@@ -8,6 +14,11 @@ serve(
     port: apiEnv.PORT,
   },
   (info) => {
-    console.log(`API listening on http://localhost:${info.port}`);
+    s.logger.info(loggerMessages.api.serverListening, {
+      attributes: {
+        port: info.port,
+        url: `http://localhost:${info.port}`,
+      },
+    });
   },
 );

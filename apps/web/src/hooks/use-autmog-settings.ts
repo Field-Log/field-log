@@ -1,3 +1,4 @@
+import { loggerMessages } from "@repo/logger";
 import * as React from "react";
 import {
   baseCurrency,
@@ -8,6 +9,7 @@ import {
   todayUTCDateString,
   type WeightUnit,
 } from "@/lib/autmog-formatters";
+import { logger } from "@/lib/logger";
 
 type StoredSettings = {
   units?: DimensionUnit;
@@ -111,10 +113,11 @@ export function useCurrencyRates() {
         // Ignore malformed cache entries and fetch fresh rates.
       }
 
+      const symbols = currencies
+        .filter((currency) => currency !== baseCurrency)
+        .join(",");
+
       try {
-        const symbols = currencies
-          .filter((currency) => currency !== baseCurrency)
-          .join(",");
         const response = await fetch(
           `https://api.frankfurter.dev/v1/latest?base=${baseCurrency}&symbols=${symbols}`,
           { cache: "no-store" },
@@ -132,7 +135,13 @@ export function useCurrencyRates() {
           );
         }
       } catch (error) {
-        console.warn("FX rate fetch failed; using CAD pricing only.", error);
+        logger.warn(loggerMessages.web.fxRatesFetchFailed, {
+          attributes: {
+            baseCurrency,
+            symbols,
+          },
+          error,
+        });
       }
     }
 
