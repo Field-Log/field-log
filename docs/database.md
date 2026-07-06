@@ -40,9 +40,10 @@ The database package exports:
 
 ```ts
 import { createDb } from "@repo/database";
+import { serverEnv } from "@/env/server";
 
 const db = createDb({
-  databaseUrl: process.env.DATABASE_URL!,
+  databaseUrl: serverEnv.DATABASE_URL,
 });
 ```
 

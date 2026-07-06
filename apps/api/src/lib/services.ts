@@ -6,45 +6,41 @@ import {
   normalizeLogLevel,
 } from "@repo/logger";
 import services from "@repo/services";
+import { apiEnv } from "../env.js";
 
-const databaseUrl = process.env.DATABASE_URL;
-const axiomToken = process.env.AXIOM_TOKEN;
-const axiomDataset = process.env.AXIOM_DATASET;
 const environment = process.env.NODE_ENV ?? "development";
 const isDevelopment = environment === "development";
 const consoleTransport = createConsoleTransport({
-  mode: normalizeConsoleTransportMode(process.env.LOGGER),
+  mode: normalizeConsoleTransportMode(apiEnv.LOGGER),
 });
 
 const transports = [
-  ...(axiomToken && axiomDataset
+  ...(apiEnv.AXIOM_TOKEN && apiEnv.AXIOM_DATASET
     ? [
         createAxiomTransport({
-          dataset: axiomDataset,
-          edgeDomain: process.env.AXIOM_EDGE_DOMAIN,
-          token: axiomToken,
+          dataset: apiEnv.AXIOM_DATASET,
+          edgeDomain: apiEnv.AXIOM_EDGE_DOMAIN,
+          token: apiEnv.AXIOM_TOKEN,
         }),
       ]
     : []),
-  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
+  ...(isDevelopment || !(apiEnv.AXIOM_TOKEN && apiEnv.AXIOM_DATASET)
+    ? [consoleTransport]
+    : []),
 ];
 
 const logger = {
   app: loggerValues.apps.api,
   environment,
-  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  level: normalizeLogLevel(apiEnv.LOG_LEVEL),
   transports,
 };
 
-services.configure(
-  databaseUrl
-    ? {
-        db: {
-          databaseUrl,
-        },
-        logger,
-      }
-    : { logger },
-);
+services.configure({
+  db: {
+    databaseUrl: apiEnv.DATABASE_URL,
+  },
+  logger,
+});
 
 export { services as s };
