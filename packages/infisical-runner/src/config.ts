@@ -1,6 +1,8 @@
 export const localEnvironmentSlug = "dev";
 
 export const commonSecretPath = "/common";
+const loggingSecretPath = "/logging";
+const axiomServerSecretPath = "/axiom/server";
 
 export type EnvironmentAlias = {
   from: string;
@@ -50,8 +52,9 @@ const expoLoggingAliases = [
   },
 ] as const satisfies readonly EnvironmentAlias[];
 
-// Keep /logging before /axiom/* when both are used. Axiom paths can provide
-// LOG_LEVEL, and nested Infisical CLI runs also read that variable.
+// LOG_PROXY_* values belong to /logging only. Keep /logging before /axiom/*
+// when both are used because Axiom paths can provide LOG_LEVEL, and nested
+// Infisical CLI runs also read that variable.
 export const commandSecrets = {
   api: {
     dev: {
@@ -60,8 +63,8 @@ export const commandSecrets = {
         "/clerk",
         "/clerk/server",
         "/neon/server",
-        "/logging",
-        "/axiom/server",
+        loggingSecretPath,
+        axiomServerSecretPath,
       ],
     },
     test: {
@@ -103,50 +106,50 @@ export const commandSecrets = {
     start: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
     dev: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
     android: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
     ios: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
     web: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
   },
   logger: {
     "test:axiom": {
       allowServerSecrets: true,
-      paths: ["/logging", "/axiom/automated-tests"],
+      paths: [loggingSecretPath, "/axiom/automated-tests"],
     },
   },
   mobile: {
     dev: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
     android: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
     ios: {
       allowServerSecrets: false,
       envAliases: expoLoggingAliases,
-      paths: ["/clerk", "/logging"],
+      paths: ["/clerk", loggingSecretPath],
     },
     test: {
       allowServerSecrets: false,
@@ -165,8 +168,8 @@ export const commandSecrets = {
         "/clerk",
         "/clerk/server",
         "/neon/server",
-        "/logging",
-        "/axiom/server",
+        loggingSecretPath,
+        axiomServerSecretPath,
       ],
     },
     dev: {
@@ -176,8 +179,8 @@ export const commandSecrets = {
         "/clerk",
         "/clerk/server",
         "/neon/server",
-        "/logging",
-        "/axiom/server",
+        loggingSecretPath,
+        axiomServerSecretPath,
       ],
     },
     test: {
