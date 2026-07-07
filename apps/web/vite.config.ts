@@ -2,12 +2,15 @@ import process from "node:process";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
 import { createWebClientEnv } from "./src/env/client.schema";
 import { createWebServerEnv } from "./src/env/server.schema";
 
 export default defineConfig(({ mode }) => {
-  if (mode !== "test") {
+  const isTest = mode === "test";
+
+  if (!isTest) {
     createWebClientEnv({
       VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: process.env.VITE_CLERK_SIGN_IN_URL,
@@ -27,7 +30,12 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [tanstackStart(), react(), tailwindcss()],
+    plugins: [
+      tanstackStart(),
+      ...(isTest ? [] : [nitro()]),
+      react(),
+      tailwindcss(),
+    ],
     preview: {
       port: 4005,
       strictPort: true,
