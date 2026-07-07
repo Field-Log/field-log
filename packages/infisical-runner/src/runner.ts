@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 import {
   type CommandSecretConfig,
   commandSecrets,
-  commonSecretPath,
   localEnvironmentSlug,
 } from "./config.js";
 
@@ -77,7 +76,7 @@ export function isServerSecretPath(secretPath: string): boolean {
 }
 
 export function getSecretPaths(config: CommandSecretConfig): string[] {
-  return [...new Set([commonSecretPath, ...config.paths])];
+  return [...new Set(config.paths)];
 }
 
 export function validateSecretPaths(
@@ -112,25 +111,13 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
   ];
 
   const paths = getSecretPaths(config);
-  const innerCommand: string[] = [];
-
-  if (config.envAliases?.length) {
-    innerCommand.push(
-      "tsx",
-      join(
-        request.repoRoot,
-        "packages/infisical-runner/src/env-alias-runner.ts",
-      ),
-      JSON.stringify(config.envAliases),
-      "--",
-    );
-  }
-
-  innerCommand.push(...request.commandArgs);
 
   // Infisical accepts a single secret path per `run`, so nest runs to
   // accumulate each path's secrets before the wrapped command executes.
-  let args = [...runArgsForPath(paths[paths.length - 1]!), ...innerCommand];
+  let args = [
+    ...runArgsForPath(paths[paths.length - 1]!),
+    ...request.commandArgs,
+  ];
   for (let index = paths.length - 2; index >= 0; index -= 1) {
     args = [...runArgsForPath(paths[index]!), "infisical", ...args];
   }

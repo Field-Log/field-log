@@ -47,7 +47,8 @@ const db = createDb({
 });
 ```
 
-`DATABASE_URL` is stored in Infisical at `/neon/server`.
+`DATABASE_URL` is stored in Infisical at `/apps/api` for API and migration
+commands. The web app keeps its deploy copy in `/apps/web`.
 
 ## Migrations
 
@@ -65,6 +66,7 @@ Apply generated migrations:
 pnpm db:migrate
 ```
 
-`pnpm db:migrate` runs through the Infisical runner so `DATABASE_URL` is loaded from `/neon/server`.
+`pnpm db:migrate` runs through the Infisical runner so `DATABASE_URL` is loaded
+from `/apps/api`.
 
 Generated migration files are committed under `packages/database/drizzle/`. Schema source of truth remains in `packages/database/src/schema/`.
