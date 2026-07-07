@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { FirebaseApp } from "firebase/app";
 import { getApps, initializeApp } from "firebase/app";
 // @ts-expect-error React Native persistence is available at runtime.
 import { getReactNativePersistence, initializeAuth } from "firebase/auth";
@@ -14,8 +15,8 @@ const firebaseConfig = {
   appId: fieldLogEnv.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const existingApp = getApps()[0];
+const app: FirebaseApp = existingApp ?? initializeApp(firebaseConfig);
 
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage),

@@ -1,3 +1,4 @@
+import { loggerMessages } from "@repo/logger";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as AuthSession from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";
@@ -22,6 +23,7 @@ import {
 } from "react-native";
 import { fieldLogEnv } from "../config/env";
 import { auth } from "../config/firebase";
+import { logger } from "../lib/logger";
 import { C } from "../theme/colors";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -45,7 +47,13 @@ export default function AuthScreen() {
       const credential = GoogleAuthProvider.credential(id_token);
       setLoading(true);
       signInWithCredential(auth, credential)
-        .catch((e) => Alert.alert("Google sign-in failed", e.message))
+        .catch((error: unknown) => {
+          logger.warn(loggerMessages.mobile.authSignInFailed, {
+            attributes: { provider: "google" },
+            error,
+          });
+          Alert.alert("Google sign-in failed", getErrorMessage(error));
+        })
         .finally(() => setLoading(false));
     }
   }, [googleResponse]);
@@ -60,14 +68,22 @@ export default function AuthScreen() {
         ],
       });
       const provider = new OAuthProvider("apple.com");
+      const idToken = appleCredential.identityToken;
+      if (!idToken) {
+        throw new Error("Apple sign-in did not return an identity token.");
+      }
       const credential = provider.credential({
-        idToken: appleCredential.identityToken!,
+        idToken,
         rawNonce: appleCredential.authorizationCode ?? undefined,
       });
       await signInWithCredential(auth, credential);
-    } catch (e: any) {
-      if (e.code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert("Apple sign-in failed", e.message);
+    } catch (error: unknown) {
+      if (!isErrorWithCode(error, "ERR_REQUEST_CANCELED")) {
+        logger.warn(loggerMessages.mobile.authSignInFailed, {
+          attributes: { provider: "apple" },
+          error,
+        });
+        Alert.alert("Apple sign-in failed", getErrorMessage(error));
       }
     } finally {
       setLoading(false);
@@ -83,8 +99,18 @@ export default function AuthScreen() {
       } else {
         await signInWithEmailAndPassword(auth, email.trim(), password);
       }
-    } catch (e: any) {
-      Alert.alert(isSignUp ? "Sign up failed" : "Sign in failed", e.message);
+    } catch (error: unknown) {
+      logger.warn(loggerMessages.mobile.authSignInFailed, {
+        attributes: {
+          mode: isSignUp ? "sign_up" : "sign_in",
+          provider: "email",
+        },
+        error,
+      });
+      Alert.alert(
+        isSignUp ? "Sign up failed" : "Sign in failed",
+        getErrorMessage(error),
+      );
     } finally {
       setLoading(false);
     }
@@ -179,6 +205,19 @@ export default function AuthScreen() {
         </Pressable>
       </View>
     </View>
+  );
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function isErrorWithCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === code
   );
 }
 

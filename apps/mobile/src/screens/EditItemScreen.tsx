@@ -1,8 +1,9 @@
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -17,23 +18,43 @@ import {
   ITEM_TYPE_MAP,
   type SpecField,
 } from "../config/itemTypes";
-import { insertItem } from "../db/database";
+import {
+  fetchItemById,
+  type Item,
+  type SpecValue,
+  updateItem,
+} from "../db/database";
+import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
 import { C } from "../theme/colors";
 
-export default function AddItemScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
-  const { item_type } = route.params as { item_type: string };
-  const isCustom = item_type === "__custom__";
-  const config = ITEM_TYPE_MAP[item_type];
+type StoredCustomField = { label: string; value: string };
+type CustomFieldDraft = StoredCustomField & { id: string };
 
-  const [customTypeName, setCustomTypeName] = useState("");
+function createCustomFieldDraft(
+  field: StoredCustomField = { label: "", value: "" },
+): CustomFieldDraft {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    ...field,
+  };
+}
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      title: isCustom ? "Custom item" : (config?.label ?? "Add Item"),
-    });
-  }, [navigation, config, isCustom]);
+function isStoredCustomField(value: SpecValue): value is StoredCustomField {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof value.label === "string" &&
+    typeof value.value === "string"
+  );
+}
+
+export default function EditItemScreen() {
+  const navigation = useNavigation<FieldLogNavigation>();
+  const route = useRoute<FieldLogRoute<"EditItem">>();
+  const { itemId } = route.params;
+
+  const [item, setItem] = useState<Item | null>(null);
 
   // Core fields
   const [manufacturer, setManufacturer] = useState("");
@@ -53,16 +74,11 @@ export default function AddItemScreen() {
   const [dimensions, setDimensions] = useState("");
   const [storageLocation, setStorageLocation] = useState("");
   const [notes, setNotes] = useState("");
-
-  // Spec fields (keyed by field.key)
-  const [specValues, setSpecValues] = useState<Record<string, any>>({});
+  const [specValues, setSpecValues] = useState<Record<string, SpecValue>>({});
   const [errors, setErrors] = useState<{
     manufacturer?: string;
     model?: string;
-    customTypeName?: string;
   }>({});
-
-  // Photos
   const [gallery, setGallery] = useState<string[]>([]);
 
   const pickPhoto = async () => {
@@ -75,18 +91,16 @@ export default function AddItemScreen() {
       mediaTypes: ["images"],
       quality: 0.8,
     });
-    if (!result.canceled) setGallery((prev) => [...prev, result.assets[0].uri]);
+    const firstAsset = result.canceled ? undefined : result.assets[0];
+    if (firstAsset) setGallery((prev) => [...prev, firstAsset.uri]);
   };
 
   const removePhoto = (uri: string) =>
     setGallery((prev) => prev.filter((u) => u !== uri));
 
-  // Custom fields (for custom item types)
-  const [customFields, setCustomFields] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDraft[]>([]);
   const addCustomField = () =>
-    setCustomFields((prev) => [...prev, { label: "", value: "" }]);
+    setCustomFields((prev) => [...prev, createCustomFieldDraft()]);
   const updateCustomField = (i: number, key: "label" | "value", val: string) =>
     setCustomFields((prev) =>
       prev.map((f, idx) => (idx === i ? { ...f, [key]: val } : f)),
@@ -94,7 +108,69 @@ export default function AddItemScreen() {
   const removeCustomField = (i: number) =>
     setCustomFields((prev) => prev.filter((_, idx) => idx !== i));
 
-  const setSpec = (key: string, value: any) => {
+  useEffect(() => {
+    fetchItemById(itemId).then((i) => {
+      if (!i) return;
+      setItem(i);
+      setManufacturer(i.manufacturer ?? "");
+      setModel(i.model ?? "");
+      setNickname(i.nickname ?? "");
+      setVariant(i.variant ?? "");
+      setSerialNumber(i.serial_number ?? "");
+      setStatus(i.status ?? "own");
+      setPurchaseDate(i.purchase_date ?? "");
+      setPurchasePrice(
+        i.purchase_price != null ? String(i.purchase_price) : "",
+      );
+      setSeller(i.seller ?? "");
+      setWarranty(i.warranty ?? "");
+      setMaterial(i.material ?? "");
+      setFinish(i.finish ?? "");
+      setColor(i.color ?? "");
+      setWeightG(i.weight_g != null ? String(i.weight_g) : "");
+      setDimensions(i.dimensions ?? "");
+      setStorageLocation(i.storage_location ?? "");
+      setNotes(i.notes ?? "");
+      // Pre-fill spec values
+      const sv: Record<string, SpecValue> = {};
+      const cfg = ITEM_TYPE_MAP[i.item_type];
+      if (cfg) {
+        for (const section of cfg.specSections) {
+          for (const field of section.fields) {
+            const v = i.specs[field.key];
+            if (v !== undefined && v !== null) {
+              if (field.input === "boolean") {
+                sv[field.key] = !!v;
+              } else {
+                sv[field.key] = String(v);
+              }
+            }
+          }
+        }
+      }
+      setSpecValues(sv);
+      const customFieldsValue = i.specs.custom_fields;
+      if (!ITEM_TYPE_MAP[i.item_type] && Array.isArray(customFieldsValue)) {
+        setCustomFields(
+          customFieldsValue
+            .filter(isStoredCustomField)
+            .map((field) => createCustomFieldDraft(field)),
+        );
+      }
+      setGallery(i.gallery ?? []);
+    });
+  }, [itemId]);
+
+  const config = item ? ITEM_TYPE_MAP[item.item_type] : null;
+  const isCustom = item ? !config : false;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: config?.label ? `Edit ${config.label}` : "Edit Item",
+    });
+  }, [navigation, config]);
+
+  const setSpec = (key: string, value: SpecValue) => {
     setSpecValues((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -103,16 +179,13 @@ export default function AddItemScreen() {
     if (!manufacturer.trim())
       newErrors.manufacturer = "Manufacturer is required";
     if (!model.trim()) newErrors.model = "Model is required";
-    if (isCustom && !customTypeName.trim())
-      newErrors.customTypeName = "Item type name is required";
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
     setErrors({});
 
-    // Build specs object
-    const specs: Record<string, any> = {};
+    const specs: Record<string, SpecValue> = {};
     if (config) {
       for (const section of config.specSections) {
         for (const field of section.fields) {
@@ -121,7 +194,7 @@ export default function AddItemScreen() {
           if (field.input === "boolean") {
             specs[field.key] = val ? 1 : 0;
           } else if (field.input === "number") {
-            const n = parseFloat(val);
+            const n = parseFloat(String(val));
             if (!isNaN(n)) specs[field.key] = n;
           } else {
             specs[field.key] = val;
@@ -130,18 +203,16 @@ export default function AddItemScreen() {
       }
     }
 
-    const id = Date.now().toString();
-    // Include custom fields in specs
     if (isCustom) {
-      const filled = customFields.filter((f) => f.label.trim());
+      const filled = customFields
+        .filter((f) => f.label.trim())
+        .map(({ label, value }) => ({ label, value }));
       if (filled.length > 0) specs.custom_fields = filled;
     }
 
-    const storedType = isCustom ? customTypeName.trim() : item_type;
-    await insertItem({
-      id,
-      item_type: storedType,
-      name: null,
+    await updateItem(itemId, {
+      cover_photo: gallery[0] ?? null,
+      gallery,
       manufacturer: manufacturer.trim() || null,
       model: model.trim() || null,
       variant: variant.trim() || null,
@@ -150,7 +221,6 @@ export default function AddItemScreen() {
       status,
       purchase_date: purchaseDate.trim() || null,
       purchase_price: purchasePrice ? parseFloat(purchasePrice) : null,
-      current_value: null,
       seller: seller.trim() || null,
       warranty: warranty.trim() || null,
       material: material.trim() || null,
@@ -159,15 +229,11 @@ export default function AddItemScreen() {
       weight_g: weightG ? parseFloat(weightG) : null,
       dimensions: dimensions.trim() || null,
       storage_location: storageLocation.trim() || null,
-      is_favorite: 0,
-      is_carried: 0,
-      cover_photo: gallery[0] ?? null,
-      gallery,
       notes: notes.trim() || null,
       specs,
     });
 
-    navigation.getParent()?.navigate("Library", { screen: "LibraryList" });
+    navigation.goBack();
   };
 
   const renderField = (field: SpecField) => {
@@ -195,7 +261,7 @@ export default function AddItemScreen() {
           <Text style={styles.fieldLabel}>{label}</Text>
           <View style={styles.pickerWrapper}>
             <Picker
-              selectedValue={val ?? field.options[0]}
+              selectedValue={val ?? ""}
               onValueChange={(v) => setSpec(field.key, v)}
             >
               <Picker.Item label="—" value="" />
@@ -218,7 +284,9 @@ export default function AddItemScreen() {
           <Text style={styles.fieldLabel}>{label}</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
-            value={val ?? ""}
+            value={
+              typeof val === "string" ? val : val != null ? String(val) : ""
+            }
             onChangeText={(t) => setSpec(field.key, t)}
             placeholder={field.placeholder}
             multiline
@@ -243,35 +311,19 @@ export default function AddItemScreen() {
     );
   };
 
+  if (!item) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
-      {/* Custom type name */}
-      {isCustom && (
-        <>
-          <Text style={styles.sectionHeader}>Item type</Text>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Type name *</Text>
-            <TextInput
-              style={[
-                styles.input,
-                errors.customTypeName ? styles.inputError : null,
-              ]}
-              value={customTypeName}
-              onChangeText={setCustomTypeName}
-              placeholder="e.g. Zippo, Paracord, Patch"
-              autoFocus
-            />
-            {errors.customTypeName ? (
-              <Text style={styles.errorText}>{errors.customTypeName}</Text>
-            ) : null}
-          </View>
-        </>
-      )}
-
-      {/* Photos */}
       <Text style={styles.sectionHeader}>Photos</Text>
       <View style={styles.photoRow}>
         {gallery.map((uri) => (
@@ -287,7 +339,6 @@ export default function AddItemScreen() {
         </Pressable>
       </View>
 
-      {/* Required */}
       <Text style={styles.sectionHeader}>Required</Text>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Manufacturer</Text>
@@ -295,7 +346,6 @@ export default function AddItemScreen() {
           style={[styles.input, errors.manufacturer ? styles.inputError : null]}
           value={manufacturer}
           onChangeText={setManufacturer}
-          placeholder="e.g. Lamy, Spyderco"
         />
         {errors.manufacturer ? (
           <Text style={styles.errorText}>{errors.manufacturer}</Text>
@@ -307,14 +357,12 @@ export default function AddItemScreen() {
           style={[styles.input, errors.model ? styles.inputError : null]}
           value={model}
           onChangeText={setModel}
-          placeholder="e.g. Safari, Para 3"
         />
         {errors.model ? (
           <Text style={styles.errorText}>{errors.model}</Text>
         ) : null}
       </View>
 
-      {/* Identity */}
       <Text style={styles.sectionHeader}>Identity</Text>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Nickname</Text>
@@ -341,7 +389,6 @@ export default function AddItemScreen() {
         />
       </View>
 
-      {/* Ownership */}
       <Text style={styles.sectionHeader}>Ownership</Text>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Status</Text>
@@ -390,7 +437,6 @@ export default function AddItemScreen() {
         />
       </View>
 
-      {/* Physical */}
       <Text style={styles.sectionHeader}>Physical</Text>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Material</Text>
@@ -430,7 +476,6 @@ export default function AddItemScreen() {
         />
       </View>
 
-      {/* Organization */}
       <Text style={styles.sectionHeader}>Organization</Text>
       <View style={styles.fieldGroup}>
         <Text style={styles.fieldLabel}>Storage Location</Text>
@@ -452,7 +497,6 @@ export default function AddItemScreen() {
         />
       </View>
 
-      {/* Type-specific spec sections */}
       {config?.specSections.map((section) => (
         <View key={section.title}>
           <Text style={styles.sectionHeader}>{section.title}</Text>
@@ -465,7 +509,7 @@ export default function AddItemScreen() {
         <>
           <Text style={styles.sectionHeader}>Custom Fields</Text>
           {customFields.map((field, i) => (
-            <View key={i} style={styles.customFieldRow}>
+            <View key={field.id} style={styles.customFieldRow}>
               <TextInput
                 style={[styles.input, styles.customFieldLabel]}
                 value={field.label}
@@ -493,7 +537,7 @@ export default function AddItemScreen() {
       )}
 
       <Pressable style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save</Text>
+        <Text style={styles.saveButtonText}>Save Changes</Text>
       </Pressable>
     </ScrollView>
   );
@@ -501,6 +545,12 @@ export default function AddItemScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 48, backgroundColor: C.bg },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: C.bg,
+  },
   sectionHeader: {
     fontSize: 13,
     fontWeight: "700",

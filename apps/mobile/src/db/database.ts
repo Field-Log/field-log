@@ -30,6 +30,14 @@ const db = {
   },
 };
 
+export type SpecValue =
+  | boolean
+  | null
+  | number
+  | string
+  | SpecValue[]
+  | { [key: string]: SpecValue };
+
 export type LogEntryType =
   | "carried"
   | "maintenance"
@@ -63,7 +71,7 @@ export type Item = {
   cover_photo: string | null;
   gallery: string[];
   notes: string | null;
-  specs: Record<string, any>;
+  specs: Record<string, SpecValue>;
   created_at: string;
   updated_at: string;
 };
@@ -73,7 +81,29 @@ export type ItemInsert = Omit<
   "created_at" | "updated_at" | "gallery" | "specs"
 > & {
   gallery?: string[];
-  specs?: Record<string, any>;
+  specs?: Record<string, SpecValue>;
+};
+
+type ItemRow = Omit<Item, "gallery" | "specs"> & {
+  gallery: string | null;
+  specs: string | null;
+};
+
+type CollectionRow = {
+  description: string | null;
+  id: string;
+  name: string;
+};
+
+type IdNameRow = {
+  id: string;
+  name: string;
+};
+
+type MostCarriedRow = {
+  days_carried: number;
+  item_id: string;
+  item_type: string;
 };
 
 const SCHEMA_VERSION = "2";
@@ -174,11 +204,29 @@ export async function initDatabase(): Promise<void> {
    ITEM FUNCTIONS
    ============================================================ */
 
-function parseItem(row: any): Item {
+function parseJsonRecord(value: string | null): Record<string, SpecValue> {
+  if (!value) return {};
+
+  const parsed = JSON.parse(value) as unknown;
+  return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+    ? (parsed as Record<string, SpecValue>)
+    : {};
+}
+
+function parseStringArray(value: string | null): string[] {
+  if (!value) return [];
+
+  const parsed = JSON.parse(value) as unknown;
+  return Array.isArray(parsed)
+    ? parsed.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function parseItem(row: ItemRow): Item {
   return {
     ...row,
-    gallery: row.gallery ? JSON.parse(row.gallery) : [],
-    specs: row.specs ? JSON.parse(row.specs) : {},
+    gallery: parseStringArray(row.gallery),
+    specs: parseJsonRecord(row.specs),
   };
 }
 
@@ -259,22 +307,23 @@ export async function fetchItems(filters?: {
   item_type?: string;
 }): Promise<Item[]> {
   let query = `SELECT * FROM items`;
-  const params: any[] = [];
+  const params: string[] = [];
   if (filters?.item_type) {
     query += ` WHERE item_type = ?`;
     params.push(filters.item_type);
   }
   query += ` ORDER BY manufacturer, model;`;
-  const rows = (await db.getAllAsync(query, params)) as any[];
+  const rows = await db.getAllAsync<ItemRow>(query, params);
   return rows.map(parseItem);
 }
 
 export async function fetchItemById(id: string): Promise<Item | undefined> {
-  const rows = (await db.getAllAsync(
+  const rows = await db.getAllAsync<ItemRow>(
     `SELECT * FROM items WHERE id = ? LIMIT 1;`,
     [id],
-  )) as any[];
-  return rows.length > 0 ? parseItem(rows[0]) : undefined;
+  );
+  const first = rows[0];
+  return first ? parseItem(first) : undefined;
 }
 
 /* ============================================================
@@ -297,9 +346,9 @@ export async function insertCollection(
 export async function fetchCollections(): Promise<
   { id: string; name: string; description: string | null }[]
 > {
-  return (await db.getAllAsync(
+  return await db.getAllAsync<CollectionRow>(
     `SELECT id, name, description FROM collections ORDER BY name;`,
-  )) as any[];
+  );
 }
 
 export async function addItemToCollection(
@@ -325,12 +374,12 @@ export async function removeItemFromCollection(
 export async function fetchCollectionsForItem(
   itemId: string,
 ): Promise<{ id: string; name: string }[]> {
-  return (await db.getAllAsync(
+  return await db.getAllAsync<IdNameRow>(
     `SELECT c.id, c.name FROM collections c
      JOIN item_collections ic ON ic.collection_id = c.id
      WHERE ic.item_id = ? ORDER BY c.name;`,
     [itemId],
-  )) as any[];
+  );
 }
 
 export async function fetchItemIdsInCollection(
@@ -355,11 +404,12 @@ export async function deleteCollection(id: string): Promise<void> {
    ============================================================ */
 
 export async function upsertTag(name: string): Promise<string> {
-  const existing = (await db.getAllAsync(
+  const existing = await db.getAllAsync<{ id: string }>(
     `SELECT id FROM tags WHERE name = ? LIMIT 1;`,
     [name],
-  )) as any[];
-  if (existing.length > 0) return (existing[0] as any).id;
+  );
+  const first = existing[0];
+  if (first) return first.id;
   const id = Date.now().toString();
   const now = new Date().toISOString();
   await db.runAsync(
@@ -392,18 +442,18 @@ export async function removeTagFromItem(
 export async function fetchTagsForItem(
   itemId: string,
 ): Promise<{ id: string; name: string }[]> {
-  return (await db.getAllAsync(
+  return await db.getAllAsync<IdNameRow>(
     `SELECT t.id, t.name FROM tags t
      JOIN item_tags it ON it.tag_id = t.id
      WHERE it.item_id = ? ORDER BY t.name;`,
     [itemId],
-  )) as any[];
+  );
 }
 
 export async function fetchAllTags(): Promise<{ id: string; name: string }[]> {
-  return (await db.getAllAsync(
+  return await db.getAllAsync<IdNameRow>(
     `SELECT id, name FROM tags ORDER BY name;`,
-  )) as any[];
+  );
 }
 
 export async function fetchItemIdsForTag(tagId: string): Promise<string[]> {
@@ -465,8 +515,10 @@ export async function toggleCarried(
   )) as { id: string }[];
 
   if (existing.length > 0) {
+    const carriedEntry = existing[0];
+    if (!carriedEntry) return true;
     await db.runAsync(`DELETE FROM log_entries WHERE id = ?;`, [
-      existing[0].id,
+      carriedEntry.id,
     ]);
     return false;
   } else {
@@ -503,13 +555,20 @@ export async function fetchLogEntriesForItem(
     created_at: string;
   }[]
 > {
-  return (await db.getAllAsync(
+  return await db.getAllAsync<{
+    condition: string | null;
+    created_at: string;
+    entry_date: string;
+    entry_type: LogEntryType;
+    id: string;
+    notes: string | null;
+  }>(
     `SELECT id, entry_type, entry_date, notes, condition, created_at
      FROM log_entries
      WHERE item_id = ? AND item_type = ? AND entry_type != 'carried'
      ORDER BY entry_date DESC, created_at DESC;`,
     [itemId, itemType],
-  )) as any[];
+  );
 }
 
 export async function fetchInkStats(): Promise<
@@ -538,22 +597,22 @@ export async function fetchMostCarried(options?: {
   sinceDate?: string;
 }): Promise<{ item_id: string; item_type: string; days_carried: number }[]> {
   if (options?.sinceDate) {
-    return (await db.getAllAsync(
+    return await db.getAllAsync<MostCarriedRow>(
       `SELECT item_id, item_type, COUNT(DISTINCT entry_date) as days_carried
        FROM log_entries
        WHERE entry_type = 'carried' AND entry_date >= ?
        GROUP BY item_id, item_type
        ORDER BY days_carried DESC;`,
       [options.sinceDate],
-    )) as any[];
+    );
   }
-  return (await db.getAllAsync(
+  return await db.getAllAsync<MostCarriedRow>(
     `SELECT item_id, item_type, COUNT(DISTINCT entry_date) as days_carried
      FROM log_entries
      WHERE entry_type = 'carried'
      GROUP BY item_id, item_type
      ORDER BY days_carried DESC;`,
-  )) as any[];
+  );
 }
 
 export default db;

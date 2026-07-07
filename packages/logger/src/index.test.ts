@@ -37,7 +37,11 @@ describe("logger", () => {
         },
       },
       mobile: {
+        authSignInFailed: "mobile.auth.signIn.failed",
+        databaseInitFailed: "mobile.database.init.failed",
+        exportFailed: "mobile.export.failed",
         screenViewed: "mobile.screen.viewed",
+        syncUploadFailed: "mobile.sync.upload.failed",
       },
       web: {
         accountLoaded: "web.account.loaded",

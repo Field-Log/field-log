@@ -8,4 +8,17 @@ export default [
       "no-console": "error",
     },
   },
+  {
+    files: ["metro.config.js"],
+    languageOptions: {
+      globals: {
+        __dirname: "readonly",
+        module: "readonly",
+        require: "readonly",
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
+    },
+  },
 ];

@@ -35,5 +35,7 @@ yarn-error.log*
 
 # Local scratch files
 assets/
+!apps/mobile/assets/
+!apps/mobile/assets/**
 plans/
 pr-summarys/

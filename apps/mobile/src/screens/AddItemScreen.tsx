@@ -17,13 +17,28 @@ import {
   ITEM_TYPE_MAP,
   type SpecField,
 } from "../config/itemTypes";
-import { insertItem } from "../db/database";
+import { insertItem, type SpecValue } from "../db/database";
+import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
 import { C } from "../theme/colors";
 
+type CustomFieldDraft = {
+  id: string;
+  label: string;
+  value: string;
+};
+
+function createCustomFieldDraft(): CustomFieldDraft {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    label: "",
+    value: "",
+  };
+}
+
 export default function AddItemScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
-  const { item_type } = route.params as { item_type: string };
+  const navigation = useNavigation<FieldLogNavigation>();
+  const route = useRoute<FieldLogRoute<"AddItem">>();
+  const { item_type } = route.params;
   const isCustom = item_type === "__custom__";
   const config = ITEM_TYPE_MAP[item_type];
 
@@ -55,7 +70,7 @@ export default function AddItemScreen() {
   const [notes, setNotes] = useState("");
 
   // Spec fields (keyed by field.key)
-  const [specValues, setSpecValues] = useState<Record<string, any>>({});
+  const [specValues, setSpecValues] = useState<Record<string, SpecValue>>({});
   const [errors, setErrors] = useState<{
     manufacturer?: string;
     model?: string;
@@ -75,18 +90,17 @@ export default function AddItemScreen() {
       mediaTypes: ["images"],
       quality: 0.8,
     });
-    if (!result.canceled) setGallery((prev) => [...prev, result.assets[0].uri]);
+    const firstAsset = result.canceled ? undefined : result.assets[0];
+    if (firstAsset) setGallery((prev) => [...prev, firstAsset.uri]);
   };
 
   const removePhoto = (uri: string) =>
     setGallery((prev) => prev.filter((u) => u !== uri));
 
   // Custom fields (for custom item types)
-  const [customFields, setCustomFields] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDraft[]>([]);
   const addCustomField = () =>
-    setCustomFields((prev) => [...prev, { label: "", value: "" }]);
+    setCustomFields((prev) => [...prev, createCustomFieldDraft()]);
   const updateCustomField = (i: number, key: "label" | "value", val: string) =>
     setCustomFields((prev) =>
       prev.map((f, idx) => (idx === i ? { ...f, [key]: val } : f)),
@@ -94,7 +108,7 @@ export default function AddItemScreen() {
   const removeCustomField = (i: number) =>
     setCustomFields((prev) => prev.filter((_, idx) => idx !== i));
 
-  const setSpec = (key: string, value: any) => {
+  const setSpec = (key: string, value: SpecValue) => {
     setSpecValues((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -112,7 +126,7 @@ export default function AddItemScreen() {
     setErrors({});
 
     // Build specs object
-    const specs: Record<string, any> = {};
+    const specs: Record<string, SpecValue> = {};
     if (config) {
       for (const section of config.specSections) {
         for (const field of section.fields) {
@@ -121,7 +135,7 @@ export default function AddItemScreen() {
           if (field.input === "boolean") {
             specs[field.key] = val ? 1 : 0;
           } else if (field.input === "number") {
-            const n = parseFloat(val);
+            const n = parseFloat(String(val));
             if (!isNaN(n)) specs[field.key] = n;
           } else {
             specs[field.key] = val;
@@ -133,7 +147,9 @@ export default function AddItemScreen() {
     const id = Date.now().toString();
     // Include custom fields in specs
     if (isCustom) {
-      const filled = customFields.filter((f) => f.label.trim());
+      const filled = customFields
+        .filter((f) => f.label.trim())
+        .map(({ label, value }) => ({ label, value }));
       if (filled.length > 0) specs.custom_fields = filled;
     }
 
@@ -218,7 +234,9 @@ export default function AddItemScreen() {
           <Text style={styles.fieldLabel}>{label}</Text>
           <TextInput
             style={[styles.input, styles.textarea]}
-            value={val ?? ""}
+            value={
+              typeof val === "string" ? val : val != null ? String(val) : ""
+            }
             onChangeText={(t) => setSpec(field.key, t)}
             placeholder={field.placeholder}
             multiline
@@ -465,7 +483,7 @@ export default function AddItemScreen() {
         <>
           <Text style={styles.sectionHeader}>Custom Fields</Text>
           {customFields.map((field, i) => (
-            <View key={i} style={styles.customFieldRow}>
+            <View key={field.id} style={styles.customFieldRow}>
               <TextInput
                 style={[styles.input, styles.customFieldLabel]}
                 value={field.label}

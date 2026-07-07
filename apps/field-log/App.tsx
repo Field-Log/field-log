@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { initDatabase } from "./src/db/database";
@@ -28,10 +28,11 @@ function MainTabs() {
 
 function AppGate() {
   const { user, loading } = useAuth();
+  const [databaseReady, setDatabaseReady] = useState(false);
   const userId = user?.uid;
 
   useEffect(() => {
-    initDatabase();
+    void initDatabase().then(() => setDatabaseReady(true));
   }, []);
 
   // On first sign-in, upload local items to the cloud
@@ -43,7 +44,7 @@ function AppGate() {
     });
   }, [userId]);
 
-  if (loading) {
+  if (loading || !databaseReady) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" />
