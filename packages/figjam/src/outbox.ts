@@ -19,20 +19,12 @@ export async function listPayloads(outboxDir: string): Promise<
   const payloads = await Promise.all(
     fileNames
       .filter((fileName) => fileName.endsWith(".json"))
-      .map(async (fileName) => {
-        const filePath = join(outboxDir, fileName);
-        const contents = await readFile(filePath, "utf8");
-        return {
-          fileName,
-          filePath,
-          payload: validatePayload(JSON.parse(contents) as unknown),
-        };
-      }),
+      .map((fileName) => readPayloadFile(outboxDir, fileName)),
   );
 
-  return payloads.sort((left, right) =>
-    left.fileName.localeCompare(right.fileName),
-  );
+  return payloads
+    .filter((payload) => payload !== undefined)
+    .sort((left, right) => left.fileName.localeCompare(right.fileName));
 }
 
 export function serveOutbox(options: {
@@ -68,6 +60,11 @@ export function serveOutbox(options: {
 
       if (request.method === "GET" && url.pathname.startsWith("/payloads/")) {
         const fileName = basename(decodeURIComponent(url.pathname.slice(10)));
+        if (!fileName) {
+          writeJson(response, 404, { error: "Payload not found." });
+          return;
+        }
+
         const filePath = join(options.outboxDir, fileName);
         const payload = validatePayload(
           JSON.parse(await readFile(filePath, "utf8")) as unknown,
@@ -120,6 +117,30 @@ export function serveOutbox(options: {
         });
       }),
   };
+}
+
+async function readPayloadFile(
+  outboxDir: string,
+  fileName: string,
+): Promise<
+  | {
+      fileName: string;
+      filePath: string;
+      payload: FigjamPayload;
+    }
+  | undefined
+> {
+  try {
+    const filePath = join(outboxDir, fileName);
+    const contents = await readFile(filePath, "utf8");
+    return {
+      fileName,
+      filePath,
+      payload: validatePayload(JSON.parse(contents) as unknown),
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 async function readRequestJson(request: IncomingMessage): Promise<unknown> {

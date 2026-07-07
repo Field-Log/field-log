@@ -240,13 +240,31 @@ switch to the page where the generated section should be created.
 Read or refresh a FigJam/Figma snapshot through Infisical:
 
 ```sh
-infisical run --env=dev --path=/figma/figjam -- pnpm figjam read
+infisical run --env=dev --path=/local/figma -- pnpm figjam read
+```
+
+Summarize a cached snapshot:
+
+```sh
+infisical run --env=dev --path=/local/figma -- pnpm figjam summarize
+```
+
+Validate an agent-generated payload:
+
+```sh
+infisical run --env=dev --path=/local/figma -- pnpm figjam validate-payload <payload.json>
 ```
 
 Write and validate an agent-generated payload into `.figjam/outbox`:
 
 ```sh
-infisical run --env=dev --path=/figma/figjam -- pnpm figjam write-payload <payload.json>
+infisical run --env=dev --path=/local/figma -- pnpm figjam write-payload <payload.json>
+```
+
+Post a comment:
+
+```sh
+infisical run --env=dev --path=/local/figma -- pnpm figjam comment --message "Comment text"
 ```
 
 Serve the outbox for the desktop plugin:
@@ -254,5 +272,8 @@ Serve the outbox for the desktop plugin:
 ```sh
 pnpm figjam serve-outbox
 ```
+
+This tooling is local-only. Do not run it with preview or production Infisical
+environments.
 
 Never print, persist, or commit `FIGMA_ACCESS_TOKEN`.

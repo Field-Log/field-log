@@ -209,7 +209,7 @@ function printHelp(): void {
       "  pnpm figjam comment [fileKey] --message <text>",
       "",
       "Run through Infisical for local secrets:",
-      "  infisical run --env=dev --path=/figma/figjam -- pnpm figjam read",
+      "  infisical run --env=dev --path=/local/figma -- pnpm figjam read",
     ].join("\n"),
   );
 }

@@ -67,7 +67,7 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 | --- | --- |
 | `pnpm build` | Builds all apps and packages through Turborepo, using Infisical-backed app commands where configured. |
 | `pnpm build:ci` | Builds all apps and packages through Turborepo with environment variables already provided. |
-| `pnpm figjam read` | Reads the configured FigJam/Figma file into `.figjam/cache`; run through `infisical run --env=dev --path=/figma/figjam -- pnpm figjam read`. |
+| `pnpm figjam read` | Reads the configured FigJam/Figma file into `.figjam/cache`; run through `infisical run --env=dev --path=/local/figma -- pnpm figjam read`. |
 | `pnpm figjam serve-outbox` | Serves validated `.figjam/outbox` payloads to the private local FigJam plugin bridge. |
 | `pnpm lint` | Runs Biome linting project-wide, then package-level lint tasks. |
 | `pnpm format` | Formats supported files with Biome. |

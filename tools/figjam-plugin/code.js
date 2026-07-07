@@ -11,8 +11,7 @@ figma.ui.onmessage = async (message) => {
       figma.ui.postMessage({ result, type: "apply-result" });
       figma.notify(`Applied ${result.createdCount} FigJam operations.`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown plugin error.";
+      const errorMessage = getErrorMessage(error);
       figma.ui.postMessage({ error: errorMessage, type: "apply-result" });
       figma.notify(errorMessage, { error: true });
     }
@@ -27,6 +26,8 @@ async function applyPayload(payload) {
       `Payload targets ${payload.fileKey}, but this file is ${figma.fileKey}.`,
     );
   }
+
+  await loadPayloadFonts();
 
   const createdById = new Map();
   let createdCount = 0;
@@ -87,6 +88,7 @@ function createSticky(operation) {
   const sticky = figma.createSticky();
   sticky.x = operation.x;
   sticky.y = operation.y;
+  applyStickyColor(sticky, operation.color);
   if (sticky.text) {
     sticky.text.characters = operation.text;
   }
@@ -165,7 +167,6 @@ function createConnector(operation, createdById) {
 }
 
 async function createStamp(operation) {
-  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
   const text = figma.createText();
   text.characters = operation.text;
   text.fontSize = 14;
@@ -200,8 +201,6 @@ function resize(node, width, height) {
 }
 
 async function createShapeText(operation) {
-  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-
   const text = figma.createText();
   const padding = operation.textPadding ?? 10;
   const fontSize = operation.fontSize ?? 12;
@@ -225,6 +224,56 @@ async function createShapeText(operation) {
   }
 
   return text;
+}
+
+async function loadPayloadFonts() {
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  await figma.loadFontAsync({ family: "Inter", style: "Medium" });
+}
+
+function getErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return "Unknown plugin error.";
+}
+
+function applyStickyColor(sticky, color) {
+  const paint = stickyColorPaint(color);
+  if (!paint || !("fills" in sticky)) {
+    return;
+  }
+
+  sticky.fills = [paint];
+}
+
+function stickyColorPaint(color) {
+  switch (color) {
+    case "blue":
+      return solidPaint("#a5d8ff");
+    case "green":
+      return solidPaint("#b2f2bb");
+    case "pink":
+      return solidPaint("#ffc9de");
+    case "yellow":
+      return solidPaint("#ffec99");
+    default:
+      return undefined;
+  }
 }
 
 function applyRectStyle(rect, operation) {

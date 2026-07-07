@@ -26,11 +26,14 @@ Run commands through Infisical so the token stays out of shell history and repo
 files:
 
 ```sh
-infisical run --env=dev --path=/figma/figjam -- pnpm figjam read
-infisical run --env=dev --path=/figma/figjam -- pnpm figjam read <fileKey>
-infisical run --env=dev --path=/figma/figjam -- pnpm figjam write-payload <payload.json>
+infisical run --env=dev --path=/local/figma -- pnpm figjam read
+infisical run --env=dev --path=/local/figma -- pnpm figjam read <fileKey>
+infisical run --env=dev --path=/local/figma -- pnpm figjam write-payload <payload.json>
 pnpm figjam serve-outbox
 ```
+
+This tooling is local-only. Do not run it with preview or production Infisical
+environments.
 
 ## Read Workflow
 

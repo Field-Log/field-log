@@ -21,6 +21,8 @@ export class FigmaApiError extends Error {
 export function getFigmaConfigFromEnv(
   env: NodeJS.ProcessEnv = process.env,
 ): FigmaApiConfig {
+  assertLocalOnlyEnvironment(env);
+
   const accessToken = requiredEnv(env, "FIGMA_ACCESS_TOKEN");
   const defaultFileKey = requiredEnv(env, "FIGMA_FIGJAM_FILE_KEY");
   const allowedFileKeys = parseAllowedFileKeys(
@@ -112,7 +114,6 @@ async function figmaPost(
 
 async function parseFigmaResponse(response: Response): Promise<unknown> {
   const text = await response.text();
-  const body = text ? (JSON.parse(text) as unknown) : undefined;
 
   if (!response.ok) {
     const retryAfter = response.headers.get("Retry-After");
@@ -123,7 +124,7 @@ async function parseFigmaResponse(response: Response): Promise<unknown> {
     );
   }
 
-  return body;
+  return text ? (JSON.parse(text) as unknown) : undefined;
 }
 
 function parseComments(input: unknown): FigmaComment[] {
@@ -150,4 +151,25 @@ function requiredEnv(env: NodeJS.ProcessEnv, name: string): string {
   }
 
   return value;
+}
+
+function assertLocalOnlyEnvironment(env: NodeJS.ProcessEnv): void {
+  const environmentValues = [
+    env.INFISICAL_ENV,
+    env.INFISICAL_ENV_SLUG,
+    env.INFISICAL_ENVIRONMENT,
+    env.NODE_ENV,
+    env.VERCEL_ENV,
+  ].filter(Boolean);
+
+  if (
+    environmentValues.some(
+      (value) =>
+        value === "preview" || value === "prod" || value === "production",
+    )
+  ) {
+    throw new FigmaApiError(
+      "FigJam tooling must only run locally with Infisical env dev.",
+    );
+  }
 }
