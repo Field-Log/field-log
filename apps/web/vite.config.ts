@@ -40,7 +40,6 @@ export default defineConfig(({ mode }) => {
       port: 4005,
       strictPort: true,
     },
-    publicDir: "publics",
     resolve: {
       alias: {
         "@": "/src",

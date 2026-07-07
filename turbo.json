@@ -36,6 +36,7 @@
         "LOGGER",
         "LOG_LEVEL",
         "LOG_PROXY_CLIENT_KEY",
+        "LOG_PROXY_URL",
         "PORT",
         "SITE_URL",
         "VITE_CLERK_PUBLISHABLE_KEY",
@@ -44,7 +45,7 @@
         "VITE_LOG_PROXY_CLIENT_KEY",
         "VITE_LOG_PROXY_URL"
       ],
-      "outputs": ["dist/**", "build/**", ".output/**"]
+      "outputs": ["dist/**", "build/**", ".output/**", ".vercel/output/**"]
     },
     "build:ci": {
       "dependsOn": ["^build:ci"],
@@ -60,6 +61,7 @@
         "LOGGER",
         "LOG_LEVEL",
         "LOG_PROXY_CLIENT_KEY",
+        "LOG_PROXY_URL",
         "PORT",
         "SITE_URL",
         "VITE_CLERK_PUBLISHABLE_KEY",
@@ -68,7 +70,7 @@
         "VITE_LOG_PROXY_CLIENT_KEY",
         "VITE_LOG_PROXY_URL"
       ],
-      "outputs": ["dist/**", "build/**", ".output/**"]
+      "outputs": ["dist/**", "build/**", ".output/**", ".vercel/output/**"]
     },
     "lint": {
       "outputs": []
