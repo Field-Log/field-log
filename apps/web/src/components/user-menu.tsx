@@ -31,10 +31,13 @@ export function UserMenu() {
 
   if (!user) {
     return (
-      <Button asChild className="w-full" variant="outline">
-        <Link params={{ _splat: "" }} to="/sign-in/$">
-          Sign in
-        </Link>
+      <Button
+        className="w-full"
+        nativeButton={false}
+        render={<Link params={{ _splat: "" }} to="/sign-in/$" />}
+        variant="outline"
+      >
+        Sign in
       </Button>
     );
   }
@@ -43,26 +46,26 @@ export function UserMenu() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          className="h-12 w-full justify-start gap-3 px-3"
-          type="button"
-          variant="outline"
-        >
-          <Avatar>
-            <AvatarImage alt={username} src={user.imageUrl} />
-            <AvatarFallback>{initialsFor(username)}</AvatarFallback>
-          </Avatar>
-          <span className="min-w-0 flex-1 text-left">
-            <span className="block truncate text-sm font-medium">
-              {username}
-            </span>
-            <span className="block truncate text-xs text-muted-foreground">
-              Account
-            </span>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            className="h-12 w-full justify-start gap-3 px-3"
+            type="button"
+            variant="outline"
+          />
+        }
+      >
+        <Avatar>
+          <AvatarImage alt={username} src={user.imageUrl} />
+          <AvatarFallback>{initialsFor(username)}</AvatarFallback>
+        </Avatar>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-sm font-medium">{username}</span>
+          <span className="block truncate text-xs text-muted-foreground">
+            Account
           </span>
-          <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
-        </Button>
+        </span>
+        <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64" side="top">
         <DropdownMenuLabel className="flex items-center gap-3">
@@ -80,22 +83,17 @@ export function UserMenu() {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to="/user/account">
-            <User />
-            Account
-          </Link>
+        <DropdownMenuItem render={<Link to="/user/account" />}>
+          <User />
+          Account
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/user/collections">
-            <Folder />
-            Collections
-          </Link>
+        <DropdownMenuItem render={<Link to="/user/collections" />}>
+          <Folder />
+          Collections
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onSelect={(event) => {
-            event.preventDefault();
+          onClick={() => {
             void clerk.signOut({ redirectUrl: "/" });
           }}
         >

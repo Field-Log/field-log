@@ -153,6 +153,7 @@ export function ArchivePage() {
             />
           </label>
           <Select
+            items={sortOptions}
             onValueChange={(value) => setSort(value as SortKey)}
             value={sort}
           >

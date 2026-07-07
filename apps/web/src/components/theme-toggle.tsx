@@ -36,14 +36,16 @@ export function ThemeToggle() {
 
         return (
           <Tooltip key={option.value}>
-            <TooltipTrigger asChild>
-              <ToggleGroupItem
-                aria-label={option.label}
-                className="size-7 flex-none rounded-full p-0 text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm [&_svg]:size-4"
-                value={option.value}
-              >
-                <Icon />
-              </ToggleGroupItem>
+            <TooltipTrigger
+              render={
+                <ToggleGroupItem
+                  aria-label={option.label}
+                  className="size-7 flex-none rounded-full p-0 text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[pressed]:bg-background data-[pressed]:text-foreground data-[pressed]:shadow-sm [&_svg]:size-4"
+                  value={option.value}
+                />
+              }
+            >
+              <Icon />
             </TooltipTrigger>
             <TooltipContent side="top">{option.label}</TooltipContent>
           </Tooltip>

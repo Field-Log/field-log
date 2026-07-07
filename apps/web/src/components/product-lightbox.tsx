@@ -268,11 +268,13 @@ export function ProductLightbox({
           </p>
 
           <div className="border-t border-border pt-3">
-            <Button asChild className="w-full">
-              <a href={product.url} rel="noopener" target="_blank">
-                Visit product page
-                <ExternalLink />
-              </a>
+            <Button
+              className="w-full"
+              nativeButton={false}
+              render={<a href={product.url} rel="noopener" target="_blank" />}
+            >
+              Visit product page
+              <ExternalLink />
             </Button>
           </div>
         </div>
