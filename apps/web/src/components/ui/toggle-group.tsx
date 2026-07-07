@@ -8,31 +8,70 @@ const toggleGroupItemVariants = cva(
   "inline-flex h-8 flex-1 items-center justify-center rounded-md px-3 text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 data-[pressed]:bg-primary data-[pressed]:text-primary-foreground",
 );
 
-function ToggleGroup({
-  className,
-  onValueChange,
-  type,
-  value,
-  ...props
-}: Omit<
+type ToggleGroupBaseProps = Omit<
   React.ComponentProps<typeof ToggleGroupPrimitive>,
-  "multiple" | "onValueChange" | "value"
-> & {
+  "defaultValue" | "multiple" | "onValueChange" | "value"
+>;
+
+type ToggleGroupSingleProps = ToggleGroupBaseProps & {
+  defaultValue?: string;
   onValueChange?: (value: string) => void;
-  type?: "single" | "multiple";
+  type?: "single";
   value?: string;
-}) {
+};
+
+type ToggleGroupMultipleProps = ToggleGroupBaseProps & {
+  defaultValue?: string[];
+  onValueChange?: (value: string[]) => void;
+  type: "multiple";
+  value?: string[];
+};
+
+type ToggleGroupProps = ToggleGroupSingleProps | ToggleGroupMultipleProps;
+
+function ToggleGroup(props: ToggleGroupProps) {
+  const { className } = props;
+  const classes = cn(
+    "inline-flex w-full items-center gap-1 rounded-lg border border-input bg-secondary p-1",
+    className,
+  );
+
+  if (props.type === "multiple") {
+    const { className: _className, type: _type, ...toggleGroupProps } = props;
+    void _className;
+    void _type;
+
+    return (
+      <ToggleGroupPrimitive
+        className={classes}
+        data-slot="toggle-group"
+        multiple
+        {...toggleGroupProps}
+      />
+    );
+  }
+
+  const {
+    className: _className,
+    defaultValue,
+    onValueChange,
+    type: _type,
+    value,
+    ...toggleGroupProps
+  } = props;
+  void _className;
+  void _type;
+  const controlledValue = "value" in props ? (value ? [value] : []) : undefined;
+
   return (
     <ToggleGroupPrimitive
-      className={cn(
-        "inline-flex w-full items-center gap-1 rounded-lg border border-input bg-secondary p-1",
-        className,
-      )}
+      className={classes}
       data-slot="toggle-group"
-      multiple={type === "multiple"}
+      defaultValue={defaultValue ? [defaultValue] : undefined}
+      multiple={false}
       onValueChange={(nextValue) => onValueChange?.(nextValue[0] ?? "")}
-      value={value ? [value] : []}
-      {...props}
+      value={controlledValue}
+      {...toggleGroupProps}
     />
   );
 }
