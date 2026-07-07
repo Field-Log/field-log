@@ -4,8 +4,8 @@ import {
   loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
-} from "@repo/logger";
-import services from "@repo/services";
+} from "@package/logger";
+import services from "@package/services";
 import { apiEnv } from "../env.js";
 
 const environment = process.env.NODE_ENV ?? "development";

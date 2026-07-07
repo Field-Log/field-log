@@ -80,4 +80,4 @@ jobs:
           secret-path: /tools/github-discord-notifier
 
       - name: Send Discord notification
-        run: pnpm --filter @repo/github-discord-notifier notify
+        run: pnpm --filter @package/github-discord-notifier notify

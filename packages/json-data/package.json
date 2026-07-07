@@ -1,5 +1,5 @@
 {
-  "name": "@repo/json-data",
+  "name": "@package/json-data",
   "version": "0.0.0",
   "private": true,
   "type": "module",
