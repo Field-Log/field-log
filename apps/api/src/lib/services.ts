@@ -43,35 +43,4 @@ services.configure({
   logger,
 });
 
-const transports = [
-  ...(axiomToken && axiomDataset
-    ? [
-        createAxiomTransport({
-          dataset: axiomDataset,
-          edgeDomain: process.env.AXIOM_EDGE_DOMAIN,
-          token: axiomToken,
-        }),
-      ]
-    : []),
-  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
-];
-
-const logger = {
-  app: loggerValues.apps.api,
-  environment,
-  level: normalizeLogLevel(process.env.LOG_LEVEL),
-  transports,
-};
-
-services.configure(
-  databaseUrl
-    ? {
-        db: {
-          databaseUrl,
-        },
-        logger,
-      }
-    : { logger },
-);
-
 export { services as s };
