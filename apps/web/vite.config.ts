@@ -7,10 +7,39 @@ import { defineConfig } from "vite";
 import { createWebClientEnv } from "./src/env/client.schema";
 import { createWebServerEnv } from "./src/env/server.schema";
 
+type MutableEnv = Record<string, string | undefined>;
+
+function envValue(env: MutableEnv, key: string) {
+  const value = env[key];
+
+  return value === "" ? undefined : value;
+}
+
+export function applyWebClientEnvAliases(env: MutableEnv = process.env) {
+  const logProxyClientKey = envValue(env, "LOG_PROXY_CLIENT_KEY");
+  const logProxyUrl = envValue(env, "LOG_PROXY_URL");
+
+  if (
+    envValue(env, "VITE_LOG_PROXY_CLIENT_KEY") === undefined &&
+    logProxyClientKey !== undefined
+  ) {
+    env.VITE_LOG_PROXY_CLIENT_KEY = logProxyClientKey;
+  }
+
+  if (
+    envValue(env, "VITE_LOG_PROXY_URL") === undefined &&
+    logProxyUrl !== undefined
+  ) {
+    env.VITE_LOG_PROXY_URL = logProxyUrl;
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const isTest = mode === "test";
 
   if (!isTest) {
+    applyWebClientEnvAliases();
+
     createWebClientEnv({
       VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: process.env.VITE_CLERK_SIGN_IN_URL,
