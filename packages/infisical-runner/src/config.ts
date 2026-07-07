@@ -9,34 +9,14 @@ const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
 
 export type CommandSecretConfig = {
   allowServerSecrets: boolean;
+  envAliases?: readonly EnvironmentAlias[];
   paths: readonly string[];
 };
 
-const viteClerkAliases = [
-  {
-    from: "CLERK_PUBLISHABLE_KEY",
-    to: "VITE_CLERK_PUBLISHABLE_KEY",
-  },
-  {
-    from: "CLERK_SIGN_IN_URL",
-    to: "VITE_CLERK_SIGN_IN_URL",
-  },
-  {
-    from: "CLERK_SIGN_UP_URL",
-    to: "VITE_CLERK_SIGN_UP_URL",
-  },
-] as const satisfies readonly EnvironmentAlias[];
-
-const viteLoggingAliases = [
-  {
-    from: "LOG_PROXY_URL",
-    to: "VITE_LOG_PROXY_URL",
-  },
-  {
-    from: "LOG_PROXY_CLIENT_KEY",
-    to: "VITE_LOG_PROXY_CLIENT_KEY",
-  },
-] as const satisfies readonly EnvironmentAlias[];
+export type EnvironmentAlias = {
+  from: string;
+  to: string;
+};
 
 const expoLoggingAliases = [
   {
@@ -89,9 +69,6 @@ const fieldLogExpoAliases = [
   ...expoLoggingAliases,
 ] as const satisfies readonly EnvironmentAlias[];
 
-// LOG_PROXY_* values belong to /logging only. Keep /logging before /axiom/*
-// when both are used because Axiom paths can provide LOG_LEVEL, and nested
-// Infisical CLI runs also read that variable.
 export const commandSecrets = {
   api: {
     dev: {
@@ -136,22 +113,27 @@ export const commandSecrets = {
   "field-log": {
     start: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     dev: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     android: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     ios: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     web: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
   },
@@ -165,26 +147,36 @@ export const commandSecrets = {
     start: {
       allowServerSecrets: false,
       envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     dev: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     android: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     ios: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
+      paths: [mobileSecretPath],
+    },
+    web: {
+      allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     test: {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
     "test:watch": {
       allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
     },
   },

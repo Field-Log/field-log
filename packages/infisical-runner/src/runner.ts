@@ -111,13 +111,25 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
   ];
 
   const paths = getSecretPaths(config);
+  const innerCommand: string[] = [];
+
+  if (config.envAliases?.length) {
+    innerCommand.push(
+      "tsx",
+      join(
+        request.repoRoot,
+        "packages/infisical-runner/src/env-alias-runner.ts",
+      ),
+      JSON.stringify(config.envAliases),
+      "--",
+    );
+  }
+
+  innerCommand.push(...request.commandArgs);
 
   // Infisical accepts a single secret path per `run`, so nest runs to
   // accumulate each path's secrets before the wrapped command executes.
-  let args = [
-    ...runArgsForPath(paths[paths.length - 1]!),
-    ...request.commandArgs,
-  ];
+  let args = [...runArgsForPath(paths[paths.length - 1]!), ...innerCommand];
   for (let index = paths.length - 2; index >= 0; index -= 1) {
     args = [...runArgsForPath(paths[index]!), "infisical", ...args];
   }
