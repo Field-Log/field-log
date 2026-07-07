@@ -1,4 +1,4 @@
-import { isLogLevel, type LogEvent, loggerValues } from "@repo/logger";
+import { isLogLevel, type LogEvent, loggerValues } from "@package/logger";
 
 export const maxClientLogBatchSize = loggerValues.logProxy.maxBatchSize;
 

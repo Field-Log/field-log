@@ -1,6 +1,6 @@
 # Logger
 
-`@repo/logger` is the shared logging package for server and client code. Server
+`@package/logger` is the shared logging package for server and client code. Server
 apps send directly to Axiom. Browser and Expo clients send to the API log proxy
 so provider credentials are never bundled into client builds.
 
@@ -26,16 +26,19 @@ app.
 
 ## Infisical
 
-`/axiom/server` provides server-only Axiom settings:
+Server targets that send directly to Axiom keep their Axiom settings in their
+own runtime folders:
+
+- `/apps/api`
+- `/apps/web`
+
+Each server runtime folder may provide:
 
 - `AXIOM_TOKEN`
 - `AXIOM_DATASET`
 - `AXIOM_EDGE_DOMAIN`, optional
 - `LOG_LEVEL`, optional
 - `LOGGER`, optional
-
-Do not put `LOG_PROXY_URL` or `LOG_PROXY_CLIENT_KEY` in `/axiom/server`; proxy
-configuration belongs to `/logging`.
 
 `AXIOM_TOKEN` must have ingest access for the configured dataset.
 `LOGGER=verbose` makes development terminal logs print the full event. Omit it
@@ -57,45 +60,43 @@ LOG_LEVEL=info
 Omit `AXIOM_EDGE_DOMAIN` unless Axiom has given the project a custom edge
 domain.
 
-`/logging` provides client-safe proxy settings:
+Client runtime folders provide their platform-specific public proxy settings:
 
-- `LOG_PROXY_URL`
-- `LOG_PROXY_CLIENT_KEY`, optional
+- `/apps/web`: `VITE_LOG_PROXY_URL`, `VITE_LOG_PROXY_CLIENT_KEY`, optional
+- `/apps/mobile`: `EXPO_PUBLIC_LOG_PROXY_URL`,
+  `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional
+- `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
 
-`LOG_PROXY_URL` has a single Infisical owner: `/logging/LOG_PROXY_URL`.
+Use the exact variable names consumed by each runtime. The Infisical runner no
+longer aliases `LOG_PROXY_*` values into Vite or Expo names.
 
 Local development:
 
 ```dotenv
-LOG_PROXY_URL=http://localhost:4006/logs
+# /apps/web
+VITE_LOG_PROXY_URL=http://localhost:4006/logs
+
+# /apps/mobile
+EXPO_PUBLIC_LOG_PROXY_URL=http://localhost:4006/logs
 ```
 
 Production:
 
 ```dotenv
-LOG_PROXY_URL=https://<api-domain>/logs
+# /apps/web
+VITE_LOG_PROXY_URL=https://<api-domain>/logs
+
+# /apps/mobile
+EXPO_PUBLIC_LOG_PROXY_URL=https://<api-domain>/logs
 ```
 
 `LOG_PROXY_CLIENT_KEY` is an anti-noise check for `POST /logs`, not a security
-boundary. If it is configured, the API and client builds must receive the same
-value.
-
-The Infisical runner aliases client-safe logging values for builds:
-
-- Web: `VITE_LOG_PROXY_URL`, `VITE_LOG_PROXY_CLIENT_KEY`
-- Expo: `EXPO_PUBLIC_LOG_PROXY_URL`, `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`
-
-Production environments should provide the public build variables directly when
-they are not using the Infisical alias runner:
-
-- `VITE_LOG_PROXY_URL`
-- `VITE_LOG_PROXY_CLIENT_KEY`, optional
-- `EXPO_PUBLIC_LOG_PROXY_URL`
-- `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional
+boundary. If it is configured, `/apps/api` and each public client runtime folder
+must receive matching values under the names that runtime consumes.
 
 ## Package Build
 
-`@repo/logger` exports from `dist`:
+`@package/logger` exports from `dist`:
 
 ```json
 {
@@ -105,7 +106,7 @@ they are not using the Infisical alias runner:
 ```
 
 `pnpm build`, `pnpm test`, and `pnpm typecheck` build workspace dependencies
-through Turbo. Local dev commands also include `@repo/logger` and run its watch
+through Turbo. Local dev commands also include `@package/logger` and run its watch
 build, so logger source changes update `packages/logger/dist` while the apps are
 running.
 
@@ -140,10 +141,10 @@ attributes, errors, and raw payloads that were explicitly logged.
 
 ## Logger Messages And Values
 
-Reusable logger messages and protocol values live in `@repo/logger`:
+Reusable logger messages and protocol values live in `@package/logger`:
 
 ```ts
-import { loggerMessages, loggerValues } from "@repo/logger";
+import { loggerMessages, loggerValues } from "@package/logger";
 ```
 
 Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
@@ -160,17 +161,14 @@ Run it only when intentionally validating the real Axiom integration:
 pnpm test:logger:axiom
 ```
 
-The command loads secrets through the Infisical runner. `/axiom/automated-tests`
+The command loads secrets through the Infisical runner. `/tools/logger-axiom-test`
 must provide:
 
 - `AXIOM_TOKEN`
 - `AXIOM_DATASET=testing`
 - `LOG_LEVEL`, currently `trace`
-- optional `AXIOM_EDGE_DOMAIN`
-
-`/logging` must provide:
-
 - `LOG_PROXY_CLIENT_KEY`
+- optional `AXIOM_EDGE_DOMAIN`
 
 The test hard-fails unless `AXIOM_DATASET` is `testing` and `LOG_LEVEL` is
 `trace`. It emits direct logger events and in-process client proxy events, then
@@ -180,8 +178,8 @@ context and operation metadata were recorded, and sensitive values were redacted
 The dedicated GitHub Actions workflow is `.github/workflows/logger-live.yml`.
 It runs the live check for same-repository pull requests that touch
 logger-relevant files and can also be run manually with `workflow_dispatch`.
-In CI, the workflow authenticates to Infisical with OIDC, fetches `/common`,
-`/logging`, and `/axiom/automated-tests`, then runs the live script directly.
+In CI, the workflow authenticates to Infisical with OIDC, fetches
+`/tools/logger-axiom-test`, then runs the live script directly.
 Configure these GitHub repository variables:
 
 - `INFISICAL_LOGGER_IDENTITY_ID`
@@ -206,8 +204,8 @@ import {
   loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
-} from "@repo/logger";
-import services from "@repo/services";
+} from "@package/logger";
+import services from "@package/services";
 
 const databaseUrl = process.env.DATABASE_URL;
 const axiomToken = process.env.AXIOM_TOKEN;
@@ -251,7 +249,7 @@ Use the configured service instance in API code:
 
 ```ts
 import { s } from "./lib/services.js";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 
 app.get("/health", (context) => {
   s.logger.info(loggerMessages.api.healthChecked, {
@@ -290,7 +288,7 @@ loaders:
 
 ```ts
 import { createServerFn } from "@tanstack/react-start";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 import { s } from "@/lib/services";
 
 export const getAccount = createServerFn().handler(async () => {
@@ -306,7 +304,7 @@ export const getAccount = createServerFn().handler(async () => {
 });
 ```
 
-Do not import `@repo/services` or `apps/web/src/lib/services.ts` from client
+Do not import `@package/services` or `apps/web/src/lib/services.ts` from client
 components.
 
 ## Browser Client Usage
@@ -315,7 +313,7 @@ Browser code imports the app-local logger from `apps/web/src/lib/logger.ts`:
 
 ```ts
 import { logger } from "@/lib/logger";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 
 logger.warn(loggerMessages.web.fxRatesFetchFailed, {
   attributes: {
@@ -327,7 +325,7 @@ logger.warn(loggerMessages.web.fxRatesFetchFailed, {
 The app-local module owns the browser proxy configuration:
 
 ```ts
-import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const logProxyUrl = import.meta.env.VITE_LOG_PROXY_URL;
 
@@ -353,7 +351,7 @@ Expo code imports the app-local logger from `apps/mobile/src/lib/logger.ts`:
 
 ```ts
 import { logger } from "./src/lib/logger";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 
 logger.info(loggerMessages.mobile.screenViewed, {
   attributes: {
@@ -365,7 +363,7 @@ logger.info(loggerMessages.mobile.screenViewed, {
 The Expo app-local module owns the proxy configuration:
 
 ```ts
-import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const logProxyUrl = process.env.EXPO_PUBLIC_LOG_PROXY_URL;
 
@@ -404,7 +402,7 @@ payloads.
 Prefer summary-first payload logging:
 
 ```ts
-import { summarizeApiPayload } from "@repo/logger";
+import { summarizeApiPayload } from "@package/logger";
 
 s.logger.info("api.integration.response", {
   attributes: summarizeApiPayload(responseBody),

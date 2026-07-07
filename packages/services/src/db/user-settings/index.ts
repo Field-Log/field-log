@@ -5,9 +5,9 @@ import type {
   ThemeMode,
   UserSettings,
   WeightUnit,
-} from "@repo/database";
-import { schema } from "@repo/database";
-import { type Logger, loggerMessages } from "@repo/logger";
+} from "@package/database";
+import { schema } from "@package/database";
+import { type Logger, loggerMessages } from "@package/logger";
 import { eq } from "drizzle-orm";
 import { hashLogIdentifier } from "../../logging.js";
 import type { UsersService } from "../users/index.js";

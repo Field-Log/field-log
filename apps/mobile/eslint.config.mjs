@@ -1,4 +1,4 @@
-import reactNativeConfig from "@repo/eslint/react-native";
+import reactNativeConfig from "@package/eslint/react-native";
 
 export default [
   ...reactNativeConfig,

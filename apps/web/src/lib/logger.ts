@@ -1,4 +1,8 @@
-import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
+import {
+  createLogger,
+  createProxyTransport,
+  loggerValues,
+} from "@package/logger";
 import { clientEnv } from "@/env/client";
 
 const logProxyUrl = clientEnv.VITE_LOG_PROXY_URL;

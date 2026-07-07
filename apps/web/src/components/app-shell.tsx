@@ -12,8 +12,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { UserMenu } from "@/components/user-menu";
+import { cn } from "@/lib/utils";
 
 type AppShellProps = {
+  bottomBar?: React.ReactNode;
   children: React.ReactNode;
   defaultSidebarOpen?: boolean;
   headerActions?: React.ReactNode;
@@ -25,6 +27,7 @@ type AppShellProps = {
 };
 
 export function AppShell({
+  bottomBar,
   children,
   defaultSidebarOpen = true,
   headerActions,
@@ -34,6 +37,11 @@ export function AppShell({
   sidebarOpen,
   title,
 }: AppShellProps) {
+  // When a bottom bar is supplied (the archive on compact screens), the header
+  // hamburger and inline controls move into the bottom toolbar, and account
+  // moves to a top-bar avatar. Pages without a bottom bar keep the original
+  // compact header (hamburger opens the sidebar) unchanged.
+  const hasBottomBar = Boolean(bottomBar);
   return (
     <SidebarProvider
       defaultOpen={defaultSidebarOpen}
@@ -59,23 +67,42 @@ export function AppShell({
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <div className="flex min-h-svh flex-col bg-background text-foreground">
-          <header className="sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-background/90 px-3.5 py-2.5 backdrop-blur min-[881px]:px-5 min-[881px]:py-3.5">
-            <SidebarTrigger aria-label="Toggle sidebar" />
-            <h1 className="m-0 text-[16px] font-bold tracking-[0.5px] min-[881px]:text-lg">
+        <div
+          className={cn(
+            "flex min-h-svh flex-col bg-background text-foreground",
+            hasBottomBar &&
+              "max-md:pb-[calc(3.5rem+env(safe-area-inset-bottom))]",
+          )}
+        >
+          <header className="sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-background/90 px-3.5 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 backdrop-blur md:px-5 md:pt-[max(0.875rem,env(safe-area-inset-top))] md:pb-3.5">
+            <SidebarTrigger
+              aria-label="Toggle sidebar"
+              className={cn(hasBottomBar && "hidden md:inline-flex")}
+            />
+            <h1 className="m-0 text-[16px] font-bold tracking-[0.5px] md:text-lg">
               {title}
             </h1>
             {meta ? (
-              <span className="text-xs text-muted-foreground min-[881px]:text-sm">
+              <span className="text-xs text-muted-foreground md:text-sm">
                 {meta}
               </span>
             ) : null}
-            <div className="hidden flex-1 min-[881px]:block" />
-            {headerActions}
+            <div className="hidden flex-1 md:block" />
+            {hasBottomBar ? (
+              <div className="ml-auto md:hidden">
+                <UserMenu compact />
+              </div>
+            ) : null}
+            <div
+              className={hasBottomBar ? "contents max-md:hidden" : "contents"}
+            >
+              {headerActions}
+            </div>
           </header>
           <div className="flex-1">{children}</div>
           <PageFooter />
         </div>
+        {bottomBar}
       </SidebarInset>
     </SidebarProvider>
   );

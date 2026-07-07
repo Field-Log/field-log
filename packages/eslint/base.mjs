@@ -9,6 +9,7 @@ export default [
       "**/dist/**",
       "**/build/**",
       "**/.output/**",
+      "**/.vercel/**",
       "**/.tanstack/**",
       "**/.expo/**",
       "**/coverage/**",

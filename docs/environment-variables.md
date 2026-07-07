@@ -7,16 +7,12 @@ package boundary that consumes them.
 
 The TanStack Start web app in `apps/web` uses Clerk for authentication.
 
-### Local Development
+### Infisical
 
-Local commands should load Clerk values through Infisical:
-
-- `/clerk` provides `CLERK_PUBLISHABLE_KEY`, `CLERK_SIGN_IN_URL`, and `CLERK_SIGN_UP_URL`
-- `/clerk/server` provides `CLERK_SECRET_KEY`
-
-The app exposes the public Clerk values to Vite as `VITE_CLERK_PUBLISHABLE_KEY`,
-`VITE_CLERK_SIGN_IN_URL`, and `VITE_CLERK_SIGN_UP_URL`.
-Do not expose `CLERK_SECRET_KEY` to client-side code.
+Infisical is organized by deployment/runtime target. The web app loads all local
+and deployment variables from `/apps/web`; this is also the catch-all source
+path for Vercel secret syncs. Store the exact runtime variable names in this
+folder rather than service-specific or locally aliased names.
 
 The web app validates client variables separately from server variables:
 
@@ -26,6 +22,9 @@ The web app validates client variables separately from server variables:
 - server: `DATABASE_URL`, `CLERK_SECRET_KEY`, optional `AXIOM_TOKEN`, optional
   `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`, optional `LOG_LEVEL`, optional
   `LOGGER`
+
+Do not expose `CLERK_SECRET_KEY`, `DATABASE_URL`, or Axiom ingest credentials to
+client-side code.
 
 ## Local Ports
 
@@ -61,14 +60,21 @@ infisical run --env=dev --path=/figma/figjam -- pnpm figjam read
 
 ### Production
 
-Deployment environments should provide these values directly, normally through
-Infisical App Connections or the hosting platform's environment variable
-configuration:
+Deployment environments should receive these values directly from `/apps/web`,
+normally through Infisical App Connections or the hosting platform's
+environment variable configuration:
 
 - `VITE_CLERK_PUBLISHABLE_KEY`
+- `VITE_CLERK_SIGN_IN_URL=/sign-in`
+- `VITE_CLERK_SIGN_UP_URL=/sign-up`
 - `CLERK_SECRET_KEY`
-- `CLERK_SIGN_IN_URL=/sign-in`
-- `CLERK_SIGN_UP_URL=/sign-up`
+- `DATABASE_URL`
+- optional `AXIOM_TOKEN`
+- optional `AXIOM_DATASET`
+- optional `AXIOM_EDGE_DOMAIN`
+- optional `LOG_LEVEL`
+- optional `LOGGER`
+- optional `SITE_URL`
 
 ### Site Origin (Open Graph / canonical URLs)
 
@@ -95,8 +101,21 @@ Current mobile variables:
 - optional `EXPO_PUBLIC_LOG_PROXY_URL`
 - optional `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`
 
+Mobile commands load these values from `/apps/mobile`.
 Server-only values such as `DATABASE_URL` and `CLERK_SECRET_KEY` should stay
 behind `apps/api` or web server code.
+
+## API App
+
+The API app loads server-only runtime values from `/apps/api`:
+
+- `DATABASE_URL`
+- optional `AXIOM_TOKEN`
+- optional `AXIOM_DATASET`
+- optional `AXIOM_EDGE_DOMAIN`
+- optional `LOG_LEVEL`
+- optional `LOGGER`
+- optional `LOG_PROXY_CLIENT_KEY`
 
 ## Database Package
 
@@ -108,7 +127,7 @@ that do not need database credentials can still run.
 
 The `Discord Notifications` GitHub Actions workflow posts repository events to
 Discord. It authenticates to Infisical with GitHub OIDC and reads the webhook
-URL from `/github/discord`.
+URL from `/tools/github-discord-notifier`.
 
 Infisical must provide:
 
@@ -135,6 +154,6 @@ GitHub repository variables must provide the Infisical OIDC configuration:
   `https://github.com/{repository_owner}`
 - optional `INFISICAL_DOMAIN`, defaults to `https://app.infisical.com`
 
-The Discord notifier identity should be scoped to `/github/discord`. Fork pull
-requests are skipped because GitHub does not expose OIDC-backed secret access to
-untrusted fork code paths.
+The Discord notifier identity should be scoped to
+`/tools/github-discord-notifier`. Fork pull requests are skipped because GitHub
+does not expose OIDC-backed secret access to untrusted fork code paths.
