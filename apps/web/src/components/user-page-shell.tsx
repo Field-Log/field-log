@@ -10,7 +10,7 @@ export function UserPageShell({
 }) {
   return (
     <AppShell sidebarContent={null} title={title}>
-      <section className="mx-auto w-full max-w-5xl px-4 py-6 min-[881px]:px-6">
+      <section className="mx-auto w-full max-w-5xl px-4 py-6 md:px-6">
         {children}
       </section>
     </AppShell>

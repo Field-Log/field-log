@@ -3,9 +3,12 @@ import { Search } from "lucide-react";
 import * as React from "react";
 import { AppShell } from "@/components/app-shell";
 import { FilterSidebar } from "@/components/filter-sidebar";
+import { MobileToolbar } from "@/components/mobile-toolbar";
 import { ProductCard } from "@/components/product-card";
 import { ProductLightbox } from "@/components/product-lightbox";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import { SettingsDrawer } from "@/components/settings-drawer";
+import { ProductGridSkeleton } from "@/components/skeletons/product-grid-skeleton";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -64,8 +67,9 @@ export function ArchivePage() {
 
   const { currency, setCurrency, setUnits, setWeight, units, weight } =
     useAutmogSettings();
-  const rates = useCurrencyRates();
+  const { rates, refreshRates } = useCurrencyRates();
   const [filtersOpen, setFiltersOpen] = useFiltersOpen();
+  const [refreshing, setRefreshing] = React.useState(false);
   const [query, setQuery] = React.useState(browseState.query);
   const [debouncedQuery, setDebouncedQuery] = React.useState(browseState.query);
   const [sort, setSort] = React.useState<SortKey>(browseState.sort);
@@ -106,6 +110,11 @@ export function ArchivePage() {
     return sortProducts(filtered, sort);
   }, [active, debouncedQuery, matchModes, sort]);
 
+  const filterCount = React.useMemo(
+    () => Object.values(active).reduce((sum, values) => sum + values.size, 0),
+    [active],
+  );
+
   const toggleFilter = React.useCallback((key: FilterKey, value: string) => {
     setActive((current) => {
       const nextValues = new Set(current[key]);
@@ -132,12 +141,44 @@ export function ArchivePage() {
     setQuery("");
   }, []);
 
+  const handleRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Re-fetch FX rates, holding the indicator for a beat so the refresh reads
+    // as deliberate even when the network round-trip is instant.
+    void Promise.all([
+      refreshRates(),
+      new Promise((resolve) => window.setTimeout(resolve, 700)),
+    ]).finally(() => setRefreshing(false));
+  }, [refreshRates]);
+
   return (
     <AppShell
+      bottomBar={
+        <MobileToolbar
+          active={active}
+          currency={currency}
+          filterCount={filterCount}
+          matchModes={matchModes}
+          onClearFilters={clearFilters}
+          onCurrencyChange={setCurrency}
+          onMatchModeChange={setMatchMode}
+          onQueryChange={setQuery}
+          onSortChange={setSort}
+          onToggleFilter={toggleFilter}
+          onUnitsChange={setUnits}
+          onWeightChange={setWeight}
+          products={products}
+          query={query}
+          sort={sort}
+          sortOptions={sortOptions}
+          units={units}
+          weight={weight}
+        />
+      }
       headerActions={
         <>
           <label
-            className="relative order-99 w-full min-[881px]:order-none min-[881px]:w-[260px]"
+            className="relative order-99 w-full md:order-none md:w-[260px]"
             htmlFor={searchInputId}
           >
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -193,30 +234,34 @@ export function ArchivePage() {
       sidebarOpen={filtersOpen}
       title={SITE_NAME}
     >
-      <section className="grid grid-cols-1 gap-[18px] p-3 min-[481px]:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] min-[881px]:grid-cols-[repeat(auto-fill,minmax(max(240px,calc((100%_-_4_*_18px)_/_5)),1fr))] min-[881px]:p-[18px_22px_22px]">
-        {visibleProducts.length > 0 ? (
-          visibleProducts.map((product) => (
-            <ProductCard
-              currency={currency}
-              key={product.id}
-              onOpen={(nextProduct) =>
-                navigate({
-                  to: "/pens/$penId",
-                  params: { penId: penParam(nextProduct) },
-                })
-              }
-              product={product}
-              rates={rates}
-              units={units}
-              weight={weight}
-            />
-          ))
-        ) : (
-          <div className="col-span-full rounded-lg border border-dashed border-border p-16 text-center text-muted-foreground">
-            No items match these filters.
-          </div>
-        )}
-      </section>
+      <PullToRefresh onRefresh={handleRefresh} refreshing={refreshing}>
+        <section className="grid grid-cols-1 gap-[18px] p-3 min-[481px]:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] md:grid-cols-[repeat(auto-fill,minmax(max(240px,calc((100%_-_4_*_18px)_/_5)),1fr))] md:p-[18px_22px_22px]">
+          {refreshing ? (
+            <ProductGridSkeleton count={12} />
+          ) : visibleProducts.length > 0 ? (
+            visibleProducts.map((product) => (
+              <ProductCard
+                currency={currency}
+                key={product.id}
+                onOpen={(nextProduct) =>
+                  navigate({
+                    to: "/pens/$penId",
+                    params: { penId: penParam(nextProduct) },
+                  })
+                }
+                product={product}
+                rates={rates}
+                units={units}
+                weight={weight}
+              />
+            ))
+          ) : (
+            <div className="col-span-full rounded-lg border border-dashed border-border p-16 text-center text-muted-foreground">
+              No items match these filters.
+            </div>
+          )}
+        </section>
+      </PullToRefresh>
 
       <ProductLightbox
         currency={currency}

@@ -9,6 +9,7 @@ import {
   todayUTCDateString,
   type WeightUnit,
 } from "@/lib/autmog-formatters";
+import { compactMediaQuery } from "@/lib/breakpoints";
 import { logger } from "@/lib/logger";
 
 type StoredSettings = {
@@ -94,12 +95,12 @@ export function useCurrencyRates() {
     [baseCurrency]: 1,
   });
 
-  React.useEffect(() => {
-    let cancelled = false;
+  // `force` skips the once-a-day cache so pull-to-refresh always re-hits the FX
+  // API; the normal mount path still short-circuits on a same-day cache hit.
+  const loadRates = React.useCallback(async (force = false) => {
+    const today = todayUTCDateString();
 
-    async function loadRates() {
-      const today = todayUTCDateString();
-
+    if (!force) {
       try {
         const cached = JSON.parse(
           window.localStorage.getItem(rateStorageKey) ?? "null",
@@ -126,7 +127,7 @@ export function useCurrencyRates() {
         if (!response.ok) throw new Error(`FX ${response.status}`);
 
         const data = (await response.json()) as { rates?: CurrencyRates };
-        if (!cancelled && data.rates) {
+        if (data.rates) {
           const nextRates = { [baseCurrency]: 1, ...data.rates };
           setRates(nextRates);
           window.localStorage.setItem(
@@ -145,21 +146,52 @@ export function useCurrencyRates() {
       }
     }
 
-    void loadRates();
+    try {
+      const symbols = currencies
+        .filter((currency) => currency !== baseCurrency)
+        .join(",");
+      const response = await fetch(
+        `https://api.frankfurter.dev/v1/latest?base=${baseCurrency}&symbols=${symbols}`,
+        { cache: "no-store" },
+      );
 
-    return () => {
-      cancelled = true;
-    };
+      if (!response.ok) throw new Error(`FX ${response.status}`);
+
+      const data = (await response.json()) as { rates?: CurrencyRates };
+      if (data.rates) {
+        setRates({ [baseCurrency]: 1, ...data.rates });
+        window.localStorage.setItem(
+          rateStorageKey,
+          JSON.stringify({ date: today, rates: data.rates }),
+        );
+      }
+    } catch (error) {
+      logger.warn(loggerMessages.web.fxRatesFetchFailed, {
+        attributes: {
+          baseCurrency,
+          symbols: currencies
+            .filter((currency) => currency !== baseCurrency)
+            .join(","),
+        },
+        error,
+      });
+    }
   }, []);
 
-  return rates;
+  React.useEffect(() => {
+    void loadRates();
+  }, [loadRates]);
+
+  const refreshRates = React.useCallback(() => loadRates(true), [loadRates]);
+
+  return { rates, refreshRates };
 }
 
 export function useFiltersOpen() {
   const [filtersOpen, setFiltersOpenState] = React.useState(true);
 
   React.useEffect(() => {
-    const media = window.matchMedia("(max-width: 880px)");
+    const media = window.matchMedia(compactMediaQuery);
     const sync = () => {
       if (media.matches) {
         setFiltersOpenState(false);
@@ -179,7 +211,7 @@ export function useFiltersOpen() {
   const setFiltersOpen = React.useCallback((open: boolean) => {
     setFiltersOpenState(open);
 
-    if (!window.matchMedia("(max-width: 880px)").matches) {
+    if (!window.matchMedia(compactMediaQuery).matches) {
       window.localStorage.setItem(filtersClosedStorageKey, open ? "0" : "1");
     }
   }, []);

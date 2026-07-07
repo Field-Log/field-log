@@ -13,12 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function UserMenu() {
+export function UserMenu({ compact = false }: { compact?: boolean }) {
   const clerk = useClerk();
   const { isLoaded, user } = useUser();
 
   if (!isLoaded) {
-    return (
+    return compact ? (
+      <Skeleton className="size-9 rounded-full" />
+    ) : (
       <div className="flex h-12 items-center gap-3 rounded-md border border-sidebar-border bg-sidebar px-3">
         <Skeleton className="size-8 rounded-full" />
         <div className="flex flex-1 flex-col gap-1.5">
@@ -30,7 +32,18 @@ export function UserMenu() {
   }
 
   if (!user) {
-    return (
+    return compact ? (
+      <Button
+        aria-label="Sign in"
+        className="rounded-full"
+        nativeButton={false}
+        render={<Link params={{ _splat: "" }} to="/sign-in/$" />}
+        size="icon"
+        variant="outline"
+      >
+        <User />
+      </Button>
+    ) : (
       <Button
         className="w-full"
         nativeButton={false}
@@ -48,26 +61,46 @@ export function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button
-            className="h-12 w-full justify-start gap-3 px-3"
-            type="button"
-            variant="outline"
-          />
+          compact ? (
+            <Button
+              aria-label="Account menu"
+              className="rounded-full p-0"
+              size="icon"
+              type="button"
+              variant="outline"
+            />
+          ) : (
+            <Button
+              className="h-12 w-full justify-start gap-3 px-3"
+              type="button"
+              variant="outline"
+            />
+          )
         }
       >
-        <Avatar>
+        <Avatar size={compact ? "sm" : undefined}>
           <AvatarImage alt={username} src={user.imageUrl} />
           <AvatarFallback>{initialsFor(username)}</AvatarFallback>
         </Avatar>
-        <span className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-sm font-medium">{username}</span>
-          <span className="block truncate text-xs text-muted-foreground">
-            Account
-          </span>
-        </span>
-        <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
+        {compact ? null : (
+          <>
+            <span className="min-w-0 flex-1 text-left">
+              <span className="block truncate text-sm font-medium">
+                {username}
+              </span>
+              <span className="block truncate text-xs text-muted-foreground">
+                Account
+              </span>
+            </span>
+            <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
+          </>
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64" side="top">
+      <DropdownMenuContent
+        align="end"
+        className="w-64"
+        side={compact ? "bottom" : "top"}
+      >
         <DropdownMenuLabel className="flex items-center gap-3">
           <Avatar size="sm">
             <AvatarImage alt={username} src={user.imageUrl} />
