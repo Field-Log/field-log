@@ -1,5 +1,5 @@
 {
-  "name": "@repo/mobile",
+  "name": "@app/mobile",
   "version": "0.0.0",
   "private": true,
   "main": "index.js",
@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "^0.13.11",
-    "@repo/logger": "workspace:*",
+    "@package/logger": "workspace:*",
     "expo": "latest",
     "expo-status-bar": "latest",
     "react": "latest",
@@ -30,8 +30,8 @@
   },
   "devDependencies": {
     "@react-native/jest-preset": "0.85.3",
-    "@repo/eslint": "workspace:*",
-    "@repo/tsconfig": "workspace:*",
+    "@package/eslint": "workspace:*",
+    "@package/tsconfig": "workspace:*",
     "@types/react": "latest",
     "jest": "^29.7.0",
     "jest-expo": "latest"

@@ -1,5 +1,5 @@
-import type { Database } from "@repo/database";
-import type { Logger } from "@repo/logger";
+import type { Database } from "@package/database";
+import type { Logger } from "@package/logger";
 import {
   createUserSettingsService,
   type UserSettingsService,
