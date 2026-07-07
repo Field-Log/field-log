@@ -97,7 +97,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build logger live dependencies
-        run: pnpm exec turbo run build --filter=@repo/api
+        run: pnpm exec turbo run build --filter=@app/api
 
       - name: Validate Infisical OIDC configuration
         shell: bash
