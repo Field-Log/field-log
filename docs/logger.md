@@ -34,6 +34,9 @@ app.
 - `LOG_LEVEL`, optional
 - `LOGGER`, optional
 
+Do not put `LOG_PROXY_URL` or `LOG_PROXY_CLIENT_KEY` in `/axiom/server`; proxy
+configuration belongs to `/logging`.
+
 `AXIOM_TOKEN` must have ingest access for the configured dataset.
 `LOGGER=verbose` makes development terminal logs print the full event. Omit it
 for compact terminal logs.
@@ -58,6 +61,8 @@ domain.
 
 - `LOG_PROXY_URL`
 - `LOG_PROXY_CLIENT_KEY`, optional
+
+`LOG_PROXY_URL` has a single Infisical owner: `/logging/LOG_PROXY_URL`.
 
 Local development:
 

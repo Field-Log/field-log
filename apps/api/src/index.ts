@@ -1,15 +1,17 @@
 import { serve } from "@hono/node-server";
 import { loggerMessages } from "@repo/logger";
-import app from "./app.js";
+import { createApp } from "./app.js";
+import { apiEnv } from "./env.js";
 import { s } from "./lib/services.js";
 
-const defaultPort = 4006;
-const port = Number.parseInt(process.env.PORT ?? String(defaultPort), 10);
+const app = createApp({
+  clientLogKey: apiEnv.LOG_PROXY_CLIENT_KEY,
+});
 
 serve(
   {
     fetch: app.fetch,
-    port,
+    port: apiEnv.PORT,
   },
   (info) => {
     s.logger.info(loggerMessages.api.serverListening, {
