@@ -41,13 +41,13 @@ importers:
       '@hono/node-server':
         specifier: latest
         version: 2.0.8(hono@4.12.28)
-      '@repo/logger':
+      '@package/logger':
         specifier: workspace:*
         version: link:../../packages/logger
-      '@repo/services':
+      '@package/services':
         specifier: workspace:*
         version: link:../../packages/services
-      '@repo/types':
+      '@package/types':
         specifier: workspace:*
         version: link:../../packages/types
       '@t3-oss/env-core':
@@ -60,10 +60,10 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../../packages/eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       tsx:
@@ -154,7 +154,7 @@ importers:
 
   apps/mobile:
     dependencies:
-      '@repo/logger':
+      '@package/logger':
         specifier: workspace:*
         version: link:../../packages/logger
       '@t3-oss/env-core':
@@ -176,15 +176,15 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@package/eslint':
+        specifier: workspace:*
+        version: link:../../packages/eslint
+      '@package/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@react-native/jest-preset':
         specifier: 0.85.3
         version: 0.85.3(@babel/core@7.29.7)(react@19.2.7)
-      '@repo/eslint':
-        specifier: workspace:*
-        version: link:../../packages/eslint
-      '@repo/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       '@types/react':
         specifier: latest
         version: 19.2.17
@@ -203,6 +203,12 @@ importers:
       '@clerk/ui':
         specifier: ^1.24.2
         version: 1.24.2(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6))(@types/react@19.2.17)(bs58@6.0.0)(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react-native@0.85.3(@babel/core@7.29.7)(@react-native/jest-preset@0.85.3(@babel/core@7.29.7)(react@19.2.7))(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
+      '@package/logger':
+        specifier: workspace:*
+        version: link:../../packages/logger
+      '@package/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@radix-ui/react-dialog':
         specifier: ^1.1.19
         version: 1.1.19(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -221,12 +227,6 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: ^1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@repo/logger':
-        specifier: workspace:*
-        version: link:../../packages/logger
-      '@repo/services':
-        specifier: workspace:*
-        version: link:../../packages/services
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@6.0.3)(zod@4.4.3)
@@ -273,10 +273,10 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../../packages/eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@types/react':
@@ -307,10 +307,10 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
       drizzle-kit:
@@ -338,19 +338,19 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
 
   packages/infisical-runner:
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
 
@@ -358,29 +358,29 @@ importers:
 
   packages/logger:
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
 
   packages/services:
     dependencies:
-      '@repo/database':
+      '@package/database':
         specifier: workspace:*
         version: link:../database
-      '@repo/logger':
+      '@package/logger':
         specifier: workspace:*
         version: link:../logger
       drizzle-orm:
         specifier: latest
         version: 0.45.2(@neondatabase/serverless@1.1.0)(expo-sqlite@16.0.10(expo@56.0.12)(react-native@0.85.3(@babel/core@7.29.7)(@react-native/jest-preset@0.85.3(@babel/core@7.29.7)(react@19.2.7))(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@6.0.6))(react@19.2.7))
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
 
@@ -388,10 +388,10 @@ importers:
 
   packages/types:
     devDependencies:
-      '@repo/eslint':
+      '@package/eslint':
         specifier: workspace:*
         version: link:../eslint
-      '@repo/tsconfig':
+      '@package/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
 

@@ -1,6 +1,6 @@
 # Database Package
 
-`@repo/database` owns the Drizzle connection factory, schema definitions, and generated SQL migrations for the Neon Postgres database.
+`@package/database` owns the Drizzle connection factory, schema definitions, and generated SQL migrations for the Neon Postgres database.
 
 ## Folder Structure
 
@@ -34,12 +34,12 @@ packages/database/
 
 ## Runtime Connection
 
-App code should not create Drizzle clients directly unless it needs a low-level database operation. Normal app usage should go through `@repo/services`.
+App code should not create Drizzle clients directly unless it needs a low-level database operation. Normal app usage should go through `@package/services`.
 
 The database package exports:
 
 ```ts
-import { createDb } from "@repo/database";
+import { createDb } from "@package/database";
 import { serverEnv } from "@/env/server";
 
 const db = createDb({

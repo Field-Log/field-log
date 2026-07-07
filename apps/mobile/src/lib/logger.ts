@@ -1,4 +1,8 @@
-import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
+import {
+  createLogger,
+  createProxyTransport,
+  loggerValues,
+} from "@package/logger";
 import { mobileEnv } from "../env";
 
 const logProxyUrl = mobileEnv.EXPO_PUBLIC_LOG_PROXY_URL;

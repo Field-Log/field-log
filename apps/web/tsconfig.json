@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/tsconfig/react.json",
+  "extends": "@package/tsconfig/react.json",
   "compilerOptions": {
     "noEmit": true,
     "paths": {

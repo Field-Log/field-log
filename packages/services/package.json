@@ -1,5 +1,5 @@
 {
-  "name": "@repo/services",
+  "name": "@package/services",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -23,12 +23,12 @@
     "test:watch:no-infisical": "vitest --passWithNoTests --exclude \"dist/**\""
   },
   "dependencies": {
-    "@repo/database": "workspace:*",
-    "@repo/logger": "workspace:*",
+    "@package/database": "workspace:*",
+    "@package/logger": "workspace:*",
     "drizzle-orm": "latest"
   },
   "devDependencies": {
-    "@repo/eslint": "workspace:*",
-    "@repo/tsconfig": "workspace:*"
+    "@package/eslint": "workspace:*",
+    "@package/tsconfig": "workspace:*"
   }
 }

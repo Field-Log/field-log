@@ -1,4 +1,4 @@
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 import * as React from "react";
 import {
   baseCurrency,

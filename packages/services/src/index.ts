@@ -1,6 +1,6 @@
-import type { DatabaseConfig } from "@repo/database";
-import { createDb } from "@repo/database";
-import { createLogger, type Logger, type LoggerConfig } from "@repo/logger";
+import type { DatabaseConfig } from "@package/database";
+import { createDb } from "@package/database";
+import { createLogger, type Logger, type LoggerConfig } from "@package/logger";
 import { createDbServices, type DbServices } from "./db/index.js";
 
 export type ServicesConfig =

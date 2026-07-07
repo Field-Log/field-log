@@ -3,7 +3,7 @@ import {
   createNoopLogger,
   type LogEvent,
   loggerValues,
-} from "@repo/logger";
+} from "@package/logger";
 import { describe, expect, it } from "vitest";
 import app, { createApp } from "./app.js";
 

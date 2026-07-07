@@ -1,5 +1,5 @@
 {
-  "name": "@repo/types",
+  "name": "@package/types",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -23,7 +23,7 @@
     "test:watch:no-infisical": "vitest --passWithNoTests --exclude \"dist/**\""
   },
   "devDependencies": {
-    "@repo/eslint": "workspace:*",
-    "@repo/tsconfig": "workspace:*"
+    "@package/eslint": "workspace:*",
+    "@package/tsconfig": "workspace:*"
   }
 }

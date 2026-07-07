@@ -168,7 +168,7 @@ describe("buildInfisicalRunArgs", () => {
         commandArgs: [
           "pnpm",
           "--filter",
-          "@repo/github-discord-notifier",
+          "@package/github-discord-notifier",
           "notify",
         ],
         repoRoot: "/repo",
@@ -187,7 +187,7 @@ describe("buildInfisicalRunArgs", () => {
       "--",
       "pnpm",
       "--filter",
-      "@repo/github-discord-notifier",
+      "@package/github-discord-notifier",
       "notify",
     ]);
   });

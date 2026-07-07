@@ -1,6 +1,6 @@
 # Logger
 
-`@repo/logger` is the shared logging package for server and client code. Server
+`@package/logger` is the shared logging package for server and client code. Server
 apps send directly to Axiom. Browser and Expo clients send to the API log proxy
 so provider credentials are never bundled into client builds.
 
@@ -95,7 +95,7 @@ they are not using the Infisical alias runner:
 
 ## Package Build
 
-`@repo/logger` exports from `dist`:
+`@package/logger` exports from `dist`:
 
 ```json
 {
@@ -105,7 +105,7 @@ they are not using the Infisical alias runner:
 ```
 
 `pnpm build`, `pnpm test`, and `pnpm typecheck` build workspace dependencies
-through Turbo. Local dev commands also include `@repo/logger` and run its watch
+through Turbo. Local dev commands also include `@package/logger` and run its watch
 build, so logger source changes update `packages/logger/dist` while the apps are
 running.
 
@@ -140,10 +140,10 @@ attributes, errors, and raw payloads that were explicitly logged.
 
 ## Logger Messages And Values
 
-Reusable logger messages and protocol values live in `@repo/logger`:
+Reusable logger messages and protocol values live in `@package/logger`:
 
 ```ts
-import { loggerMessages, loggerValues } from "@repo/logger";
+import { loggerMessages, loggerValues } from "@package/logger";
 ```
 
 Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
@@ -206,8 +206,8 @@ import {
   loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
-} from "@repo/logger";
-import services from "@repo/services";
+} from "@package/logger";
+import services from "@package/services";
 
 const databaseUrl = process.env.DATABASE_URL;
 const axiomToken = process.env.AXIOM_TOKEN;
@@ -251,7 +251,7 @@ Use the configured service instance in API code:
 
 ```ts
 import { s } from "./lib/services.js";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 
 app.get("/health", (context) => {
   s.logger.info(loggerMessages.api.healthChecked, {
@@ -290,7 +290,7 @@ loaders:
 
 ```ts
 import { createServerFn } from "@tanstack/react-start";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 import { s } from "@/lib/services";
 
 export const getAccount = createServerFn().handler(async () => {
@@ -306,7 +306,7 @@ export const getAccount = createServerFn().handler(async () => {
 });
 ```
 
-Do not import `@repo/services` or `apps/web/src/lib/services.ts` from client
+Do not import `@package/services` or `apps/web/src/lib/services.ts` from client
 components.
 
 ## Browser Client Usage
@@ -315,7 +315,7 @@ Browser code imports the app-local logger from `apps/web/src/lib/logger.ts`:
 
 ```ts
 import { logger } from "@/lib/logger";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 
 logger.warn(loggerMessages.web.fxRatesFetchFailed, {
   attributes: {
@@ -327,7 +327,7 @@ logger.warn(loggerMessages.web.fxRatesFetchFailed, {
 The app-local module owns the browser proxy configuration:
 
 ```ts
-import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const logProxyUrl = import.meta.env.VITE_LOG_PROXY_URL;
 
@@ -353,7 +353,7 @@ Expo code imports the app-local logger from `apps/mobile/src/lib/logger.ts`:
 
 ```ts
 import { logger } from "./src/lib/logger";
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 
 logger.info(loggerMessages.mobile.screenViewed, {
   attributes: {
@@ -365,7 +365,7 @@ logger.info(loggerMessages.mobile.screenViewed, {
 The Expo app-local module owns the proxy configuration:
 
 ```ts
-import { createLogger, createProxyTransport, loggerValues } from "@repo/logger";
+import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const logProxyUrl = process.env.EXPO_PUBLIC_LOG_PROXY_URL;
 
@@ -404,7 +404,7 @@ payloads.
 Prefer summary-first payload logging:
 
 ```ts
-import { summarizeApiPayload } from "@repo/logger";
+import { summarizeApiPayload } from "@package/logger";
 
 s.logger.info("api.integration.response", {
   attributes: summarizeApiPayload(responseBody),
