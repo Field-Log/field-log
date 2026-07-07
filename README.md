@@ -29,7 +29,7 @@ runtime variables and deployment requirements.
 4. Test local Infisical access:
 
    ```sh
-   infisical run --env=dev --path=/common -- node -e "console.log(process.env.TEST)"
+   infisical run --env=dev --path=/local/smoke -- node -e "console.log(process.env.TEST)"
    ```
 
    You should see:

@@ -1,18 +1,14 @@
 export const localEnvironmentSlug = "dev";
 
-export const commonSecretPath = "/common";
-const loggingSecretPath = "/logging";
-const mobileAppSecretPath = "/apps/mobile";
-const axiomServerSecretPath = "/axiom/server";
-
-export type EnvironmentAlias = {
-  from: string;
-  to: string;
-};
+const apiSecretPath = "/apps/api";
+const autmogSecretPath = "/apps/autmog";
+const mobileSecretPath = "/apps/mobile";
+const webSecretPath = "/apps/web";
+const githubDiscordNotifierSecretPath = "/tools/github-discord-notifier";
+const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
 
 export type CommandSecretConfig = {
   allowServerSecrets: boolean;
-  envAliases?: readonly EnvironmentAlias[];
   paths: readonly string[];
 };
 
@@ -100,80 +96,69 @@ export const commandSecrets = {
   api: {
     dev: {
       allowServerSecrets: true,
-      paths: [
-        "/clerk",
-        "/clerk/server",
-        "/neon/server",
-        loggingSecretPath,
-        axiomServerSecretPath,
-      ],
+      paths: [apiSecretPath],
     },
     test: {
       allowServerSecrets: true,
-      paths: ["/clerk", "/clerk/server", "/neon/server"],
+      paths: [apiSecretPath],
     },
     "test:watch": {
       allowServerSecrets: true,
-      paths: ["/clerk", "/clerk/server", "/neon/server"],
+      paths: [apiSecretPath],
     },
   },
   autmog: {
     dev: {
       allowServerSecrets: false,
-      paths: ["/clerk"],
+      paths: [autmogSecretPath],
     },
     test: {
       allowServerSecrets: false,
-      paths: ["/clerk"],
+      paths: [autmogSecretPath],
     },
     "test:watch": {
       allowServerSecrets: false,
-      paths: ["/clerk"],
+      paths: [autmogSecretPath],
     },
   },
   database: {
     "db:migrate": {
       allowServerSecrets: true,
-      paths: ["/neon/server"],
+      paths: [apiSecretPath],
     },
   },
   github: {
     "discord-notify": {
       allowServerSecrets: true,
-      paths: ["/github/discord"],
+      paths: [githubDiscordNotifierSecretPath],
     },
   },
   "field-log": {
     start: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     dev: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     android: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     ios: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     web: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
   },
   logger: {
     "test:axiom": {
       allowServerSecrets: true,
-      paths: [loggingSecretPath, "/axiom/automated-tests"],
+      paths: [loggerAxiomTestSecretPath],
     },
   },
   mobile: {
@@ -184,65 +169,41 @@ export const commandSecrets = {
     },
     dev: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     android: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     ios: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
-    },
-    web: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: ["/clerk", mobileAppSecretPath, loggingSecretPath],
+      paths: [mobileSecretPath],
     },
     test: {
       allowServerSecrets: false,
-      paths: ["/clerk"],
+      paths: [mobileSecretPath],
     },
     "test:watch": {
       allowServerSecrets: false,
-      paths: ["/clerk"],
+      paths: [mobileSecretPath],
     },
   },
   web: {
     build: {
       allowServerSecrets: true,
-      envAliases: [...viteClerkAliases, ...viteLoggingAliases],
-      paths: [
-        "/clerk",
-        "/clerk/server",
-        "/neon/server",
-        loggingSecretPath,
-        axiomServerSecretPath,
-      ],
+      paths: [webSecretPath],
     },
     dev: {
       allowServerSecrets: true,
-      envAliases: [...viteClerkAliases, ...viteLoggingAliases],
-      paths: [
-        "/clerk",
-        "/clerk/server",
-        "/neon/server",
-        loggingSecretPath,
-        axiomServerSecretPath,
-      ],
+      paths: [webSecretPath],
     },
     test: {
       allowServerSecrets: true,
-      envAliases: viteClerkAliases,
-      paths: ["/clerk", "/clerk/server", "/neon/server"],
+      paths: [webSecretPath],
     },
     "test:watch": {
       allowServerSecrets: true,
-      envAliases: viteClerkAliases,
-      paths: ["/clerk", "/clerk/server", "/neon/server"],
+      paths: [webSecretPath],
     },
   },
 } as const satisfies Record<string, Record<string, CommandSecretConfig>>;
