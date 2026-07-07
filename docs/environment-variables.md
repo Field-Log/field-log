@@ -25,6 +25,28 @@ Local development uses stable app ports:
 Logging environment variables, Axiom setup, and client proxy configuration are
 documented in [logger.md](./logger.md).
 
+## FigJam / Figma Agent Bridge
+
+Codex and Claude use the FigJam bridge through the dedicated Figma/FigJam
+integration account. Store these values in Infisical at `/figma/figjam`:
+
+- `FIGMA_ACCESS_TOKEN`: Personal Access Token for the dedicated account.
+- `FIGMA_FIGJAM_FILE_KEY`: Primary FigJam planning board file key.
+- `FIGMA_FIGJAM_ALLOWED_FILE_KEYS`: Comma-separated allowlist containing the
+  primary FigJam planning board key and the separate Figma design file key used
+  for web and mobile UI designs.
+- `FIGMA_FIGJAM_TEAM_ID`: Optional. Only needed if team/project discovery is
+  implemented.
+- `FIGMA_FIGJAM_PROJECT_ID`: Optional. Only needed if project file discovery is
+  implemented.
+
+Do not expose `FIGMA_ACCESS_TOKEN` to client-side code. Run local commands
+through Infisical:
+
+```sh
+infisical run --env=dev --path=/figma/figjam -- pnpm figjam read
+```
+
 ### Production
 
 Deployment environments should provide these values directly, normally through

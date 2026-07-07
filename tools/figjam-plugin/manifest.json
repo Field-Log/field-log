@@ -1,0 +1,13 @@
+{
+  "name": "Field Log FigJam Bridge",
+  "id": "field-log-figjam-bridge",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "documentAccess": "dynamic-page",
+  "editorType": ["figma", "figjam"],
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:4873"]
+  }
+}
