@@ -14,8 +14,8 @@ export function NotFoundPage() {
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           This page does not exist or is no longer available.
         </p>
-        <Button asChild className="mt-6">
-          <Link to="/">Return to archive</Link>
+        <Button className="mt-6" nativeButton={false} render={<Link to="/" />}>
+          Return to archive
         </Button>
       </section>
     </main>

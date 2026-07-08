@@ -125,6 +125,10 @@ export function SettingsPanel({
 
       <SettingGroup label="Currency">
         <Select
+          items={currencies.map((code) => ({
+            label: currencyLabel(code),
+            value: code,
+          }))}
           onValueChange={(value) => onCurrencyChange(value as CurrencyCode)}
           value={currency}
         >
