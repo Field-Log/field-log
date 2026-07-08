@@ -1,6 +1,6 @@
 # Database Package
 
-`@repo/database` owns the Drizzle connection factory, schema definitions, and generated SQL migrations for the Neon Postgres database.
+`@package/database` owns the Drizzle connection factory, schema definitions, and generated SQL migrations for the Neon Postgres database.
 
 ## Folder Structure
 
@@ -34,12 +34,12 @@ packages/database/
 
 ## Runtime Connection
 
-App code should not create Drizzle clients directly unless it needs a low-level database operation. Normal app usage should go through `@repo/services`.
+App code should not create Drizzle clients directly unless it needs a low-level database operation. Normal app usage should go through `@package/services`.
 
 The database package exports:
 
 ```ts
-import { createDb } from "@repo/database";
+import { createDb } from "@package/database";
 import { serverEnv } from "@/env/server";
 
 const db = createDb({
@@ -47,7 +47,8 @@ const db = createDb({
 });
 ```
 
-`DATABASE_URL` is stored in Infisical at `/neon/server`.
+`DATABASE_URL` is stored in Infisical at `/apps/api` for API and migration
+commands. The web app keeps its deploy copy in `/apps/web`.
 
 ## Migrations
 
@@ -65,6 +66,7 @@ Apply generated migrations:
 pnpm db:migrate
 ```
 
-`pnpm db:migrate` runs through the Infisical runner so `DATABASE_URL` is loaded from `/neon/server`.
+`pnpm db:migrate` runs through the Infisical runner so `DATABASE_URL` is loaded
+from `/apps/api`.
 
 Generated migration files are committed under `packages/database/drizzle/`. Schema source of truth remains in `packages/database/src/schema/`.

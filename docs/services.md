@@ -1,6 +1,6 @@
 # Services Package
 
-`@repo/services` exposes app-facing service methods. It is the normal way for app code to use the database.
+`@package/services` exposes app-facing service methods. It is the normal way for app code to use the database.
 
 The package is environment-neutral. It does not read `process.env` itself. Each server app configures it once with app-local credentials.
 
@@ -40,8 +40,8 @@ import {
   loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
-} from "@repo/logger";
-import services from "@repo/services";
+} from "@package/logger";
+import services from "@package/services";
 import { apiEnv } from "../env.js";
 
 const environment = process.env.NODE_ENV ?? "development";
@@ -77,6 +77,21 @@ services.configure({
   },
   logger,
 });
+const transports = [
+  ...(axiomToken && axiomDataset
+    ? [createAxiomTransport({ dataset: axiomDataset, token: axiomToken })]
+    : []),
+  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
+];
+
+const logger = {
+  app: loggerValues.apps.api,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(databaseUrl ? { db: { databaseUrl }, logger } : { logger });
 
 export { services as s };
 ```
@@ -91,8 +106,8 @@ import {
   loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
-} from "@repo/logger";
-import services from "@repo/services";
+} from "@package/logger";
+import services from "@package/services";
 import { serverEnv } from "@/env/server";
 
 const environment = process.env.NODE_ENV ?? "development";
@@ -128,6 +143,21 @@ services.configure({
   },
   logger,
 });
+const transports = [
+  ...(axiomToken && axiomDataset
+    ? [createAxiomTransport({ dataset: axiomDataset, token: axiomToken })]
+    : []),
+  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
+];
+
+const logger = {
+  app: loggerValues.apps.web,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(databaseUrl ? { db: { databaseUrl }, logger } : { logger });
 
 export { services as s };
 ```
@@ -154,7 +184,7 @@ Only import the web services module from SSR code, server functions, loaders, or
 - `apps/web` can use services from SSR/server-side tasks.
 - `apps/mobile` must not receive `DATABASE_URL` and must not use database services directly. Mobile should call `apps/api` for persisted user or settings behavior.
 
-If code uses `@repo/services` before app-local configuration runs, it throws a clear initialization error.
+If code uses `@package/services` before app-local configuration runs, it throws a clear initialization error.
 Apps may configure `s.logger` without `DATABASE_URL`; `s.db` will throw only if database services are actually used. If `db` is configured, `logger` must be configured in the same call so database service methods can emit operation logs through `s.logger`.
 
 Database service methods log stable operation names from `loggerMessages.database`. User identifiers are logged as deterministic hashes, not raw IDs.

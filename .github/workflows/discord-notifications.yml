@@ -77,7 +77,7 @@ jobs:
           domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
           project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
           env-slug: ${{ vars.INFISICAL_ENV_SLUG || 'dev' }}
-          secret-path: /github/discord
+          secret-path: /tools/github-discord-notifier
 
       - name: Send Discord notification
-        run: pnpm --filter @repo/github-discord-notifier notify
+        run: pnpm --filter @package/github-discord-notifier notify

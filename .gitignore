@@ -6,6 +6,7 @@ node_modules/
 dist/
 build/
 .output/
+.vercel/
 .tanstack/
 .turbo/
 coverage/
@@ -34,6 +35,10 @@ yarn-error.log*
 .vscode/
 
 # Local scratch files
+.figjam/cache/
+.figjam/inbox/
+.figjam/outbox/
+.figjam/payload-input/
 assets/
 plans/
 pr-summarys/

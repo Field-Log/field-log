@@ -1,10 +1,10 @@
-import type { Database, User, UserSettings } from "@repo/database";
+import type { Database, User, UserSettings } from "@package/database";
 import {
   createLogger,
   type LogEvent,
   type LogTransport,
   loggerMessages,
-} from "@repo/logger";
+} from "@package/logger";
 import { describe, expect, it, vi } from "vitest";
 import { hashLogIdentifier } from "../logging.js";
 import { createUserSettingsService } from "./user-settings/index.js";

@@ -49,7 +49,9 @@ function RootDocument({ children }: { children?: React.ReactNode }) {
         />
       </head>
       <body>
-        <AppProviders>{children ?? <Outlet />}</AppProviders>
+        <div className="root">
+          <AppProviders>{children ?? <Outlet />}</AppProviders>
+        </div>
         <Scripts />
       </body>
     </html>

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turbo.build/schema.json",
+  "$schema": "https://v2-10-4.turborepo.dev/schema.json",
   "globalDependencies": [".env", ".env.*"],
   "tasks": {
     "dev": {
@@ -24,11 +24,53 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "build/**", ".output/**"]
+      "env": [
+        "AXIOM_DATASET",
+        "AXIOM_EDGE_DOMAIN",
+        "AXIOM_TOKEN",
+        "CLERK_SECRET_KEY",
+        "DATABASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY",
+        "EXPO_PUBLIC_LOG_PROXY_URL",
+        "LOGGER",
+        "LOG_LEVEL",
+        "LOG_PROXY_CLIENT_KEY",
+        "LOG_PROXY_URL",
+        "PORT",
+        "SITE_URL",
+        "VITE_CLERK_PUBLISHABLE_KEY",
+        "VITE_CLERK_SIGN_IN_URL",
+        "VITE_CLERK_SIGN_UP_URL",
+        "VITE_LOG_PROXY_CLIENT_KEY",
+        "VITE_LOG_PROXY_URL"
+      ],
+      "outputs": ["dist/**", "build/**", ".output/**", ".vercel/output/**"]
     },
     "build:ci": {
       "dependsOn": ["^build:ci"],
-      "outputs": ["dist/**", "build/**", ".output/**"]
+      "env": [
+        "AXIOM_DATASET",
+        "AXIOM_EDGE_DOMAIN",
+        "AXIOM_TOKEN",
+        "CLERK_SECRET_KEY",
+        "DATABASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY",
+        "EXPO_PUBLIC_LOG_PROXY_URL",
+        "LOGGER",
+        "LOG_LEVEL",
+        "LOG_PROXY_CLIENT_KEY",
+        "LOG_PROXY_URL",
+        "PORT",
+        "SITE_URL",
+        "VITE_CLERK_PUBLISHABLE_KEY",
+        "VITE_CLERK_SIGN_IN_URL",
+        "VITE_CLERK_SIGN_UP_URL",
+        "VITE_LOG_PROXY_CLIENT_KEY",
+        "VITE_LOG_PROXY_URL"
+      ],
+      "outputs": ["dist/**", "build/**", ".output/**", ".vercel/output/**"]
     },
     "lint": {
       "outputs": []

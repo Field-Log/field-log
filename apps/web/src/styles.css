@@ -153,6 +153,10 @@ body {
   font: 15px / 1.5 var(--font-sans);
 }
 
+.root {
+  isolation: isolate;
+}
+
 /* Prefer the dynamic viewport height where supported so the shell fills the
    screen as the mobile browser chrome expands and collapses. */
 @supports (min-height: 100dvh) {

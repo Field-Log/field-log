@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { applyWebClientEnvAliases } from "../../vite.config";
 import { createWebClientEnv } from "./client.schema";
 import { createWebServerEnv } from "./server.schema";
 
@@ -57,6 +58,42 @@ describe("web client env", () => {
         VITE_LOG_PROXY_URL: "not a url",
       }),
     ).toThrow("Invalid environment variables");
+  });
+});
+
+describe("web client env aliases", () => {
+  it("maps unprefixed log proxy variables to their Vite client names", () => {
+    const runtimeEnv: Record<string, string | undefined> = {
+      LOG_PROXY_CLIENT_KEY: "client-key",
+      LOG_PROXY_URL: "https://api.example.com/logs",
+    };
+
+    applyWebClientEnvAliases(runtimeEnv);
+
+    const env = createWebClientEnv({
+      VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
+      VITE_CLERK_SIGN_IN_URL: "/sign-in",
+      VITE_CLERK_SIGN_UP_URL: "/sign-up",
+      VITE_LOG_PROXY_CLIENT_KEY: runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY,
+      VITE_LOG_PROXY_URL: runtimeEnv.VITE_LOG_PROXY_URL,
+    });
+
+    expect(env.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
+    expect(env.VITE_LOG_PROXY_URL).toBe("https://api.example.com/logs");
+  });
+
+  it("keeps explicit Vite log proxy variables over unprefixed aliases", () => {
+    const runtimeEnv: Record<string, string | undefined> = {
+      LOG_PROXY_CLIENT_KEY: "fallback-client-key",
+      LOG_PROXY_URL: "https://api.example.com/fallback-logs",
+      VITE_LOG_PROXY_CLIENT_KEY: "client-key",
+      VITE_LOG_PROXY_URL: "https://api.example.com/logs",
+    };
+
+    applyWebClientEnvAliases(runtimeEnv);
+
+    expect(runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
+    expect(runtimeEnv.VITE_LOG_PROXY_URL).toBe("https://api.example.com/logs");
   });
 });
 

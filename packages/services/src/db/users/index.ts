@@ -1,6 +1,6 @@
-import type { Database, User } from "@repo/database";
-import { schema } from "@repo/database";
-import { type Logger, loggerMessages } from "@repo/logger";
+import type { Database, User } from "@package/database";
+import { schema } from "@package/database";
+import { type Logger, loggerMessages } from "@package/logger";
 import { hashLogIdentifier } from "../../logging.js";
 
 export type EnsureUserInput = {

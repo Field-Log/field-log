@@ -24,7 +24,7 @@ describe("parseCliArguments", () => {
 });
 
 describe("buildInfisicalRunArgs", () => {
-  it("builds Infisical args with common and app command paths", () => {
+  it("builds Infisical args with the API target path", () => {
     expect(
       buildInfisicalRunArgs({
         app: "api",
@@ -36,25 +36,7 @@ describe("buildInfisicalRunArgs", () => {
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
-      "--path=/common",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/clerk",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/clerk/server",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/neon/server",
+      "--path=/apps/api",
       "--",
       "vitest",
       "run",
@@ -91,12 +73,6 @@ describe("buildInfisicalRunArgs", () => {
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
-      "--path=/common",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
       "--path=/tools/cloudflare",
       "--",
       "pnpm",
@@ -108,7 +84,7 @@ describe("buildInfisicalRunArgs", () => {
     ]);
   });
 
-  it("wraps web commands with Vite Clerk aliases", () => {
+  it("builds web commands from the web target path", () => {
     expect(
       buildInfisicalRunArgs({
         app: "web",
@@ -120,41 +96,7 @@ describe("buildInfisicalRunArgs", () => {
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
-      "--path=/common",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/clerk",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/clerk/server",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/neon/server",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/logging",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/axiom/server",
-      "--",
-      "tsx",
-      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
-      '[{"from":"CLERK_PUBLISHABLE_KEY","to":"VITE_CLERK_PUBLISHABLE_KEY"},{"from":"CLERK_SIGN_IN_URL","to":"VITE_CLERK_SIGN_IN_URL"},{"from":"CLERK_SIGN_UP_URL","to":"VITE_CLERK_SIGN_UP_URL"},{"from":"LOG_PROXY_URL","to":"VITE_LOG_PROXY_URL"},{"from":"LOG_PROXY_CLIENT_KEY","to":"VITE_LOG_PROXY_CLIENT_KEY"}]',
+      "--path=/apps/web",
       "--",
       "vite",
       "build",
@@ -175,21 +117,7 @@ describe("buildInfisicalRunArgs", () => {
       "--projectId=project-1",
       "--project-config-dir=/repo",
       "--env=dev",
-      "--path=/common",
-      "--",
-      "infisical",
-      "run",
-      "--projectId=project-1",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/logging",
-      "--",
-      "infisical",
-      "run",
-      "--projectId=project-1",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/axiom/automated-tests",
+      "--path=/tools/logger-axiom-test",
       "--",
       "tsx",
       "packages/logger/integration/axiom-live.ts",
@@ -204,7 +132,7 @@ describe("buildInfisicalRunArgs", () => {
         commandArgs: [
           "pnpm",
           "--filter",
-          "@repo/github-discord-notifier",
+          "@package/github-discord-notifier",
           "notify",
         ],
         repoRoot: "/repo",
@@ -213,37 +141,31 @@ describe("buildInfisicalRunArgs", () => {
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
-      "--path=/common",
-      "--",
-      "infisical",
-      "run",
-      "--project-config-dir=/repo",
-      "--env=dev",
-      "--path=/github/discord",
+      "--path=/tools/github-discord-notifier",
       "--",
       "pnpm",
       "--filter",
-      "@repo/github-discord-notifier",
+      "@package/github-discord-notifier",
       "notify",
     ]);
   });
 });
 
 describe("secret path policy", () => {
-  it("deduplicates the common path", () => {
+  it("deduplicates configured paths", () => {
     expect(
       getSecretPaths({
         allowServerSecrets: false,
-        paths: ["/common", "/clerk"],
+        paths: ["/apps/web", "/apps/web"],
       }),
-    ).toEqual(["/common", "/clerk"]);
+    ).toEqual(["/apps/web"]);
   });
 
   it("rejects server-only paths for client commands", () => {
     expect(() =>
       validateSecretPaths("web", "dev", {
         allowServerSecrets: false,
-        paths: ["/clerk/server"],
+        paths: ["/apps/server/only"],
       }),
     ).toThrow(RunnerError);
   });
