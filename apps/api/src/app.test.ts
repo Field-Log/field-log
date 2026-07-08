@@ -130,6 +130,32 @@ describe("api", () => {
     expect(response.status).toBe(200);
   });
 
+  it("accepts request-time client keys from runtime config", async () => {
+    const testApp = createApp({
+      getRuntimeConfig() {
+        return {
+          clientLogKey: "runtime-key",
+          logger: createNoopLogger(),
+        };
+      },
+    });
+
+    const response = await testApp.request("/logs", {
+      body: JSON.stringify({
+        app: "web",
+        environment: "test",
+        level: "info",
+        message: "client.event",
+      }),
+      headers: {
+        [loggerValues.logProxy.clientKeyHeader]: "runtime-key",
+      },
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
+  });
+
   it("rejects invalid client keys when configured", async () => {
     const testApp = createApp({
       clientLogKey: "expected",

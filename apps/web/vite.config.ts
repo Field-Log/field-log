@@ -9,6 +9,7 @@ import { createWebServerEnv } from "./src/env/server.schema";
 export default defineConfig(({ mode }) => {
   if (mode !== "test") {
     createWebClientEnv({
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
       VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: process.env.VITE_CLERK_SIGN_IN_URL,
       VITE_CLERK_SIGN_UP_URL: process.env.VITE_CLERK_SIGN_UP_URL,

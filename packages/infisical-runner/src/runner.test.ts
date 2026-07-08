@@ -72,6 +72,42 @@ describe("buildInfisicalRunArgs", () => {
     ).toThrow(RunnerError);
   });
 
+  it("builds API deploy args with Cloudflare tool credentials", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "api",
+        command: "deploy",
+        commandArgs: [
+          "pnpm",
+          "dlx",
+          "wrangler",
+          "deploy",
+          "--config",
+          "wrangler.jsonc",
+        ],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/common",
+      "--",
+      "infisical",
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/tools/cloudflare",
+      "--",
+      "pnpm",
+      "dlx",
+      "wrangler",
+      "deploy",
+      "--config",
+      "wrangler.jsonc",
+    ]);
+  });
+
   it("wraps web commands with Vite Clerk aliases", () => {
     expect(
       buildInfisicalRunArgs({

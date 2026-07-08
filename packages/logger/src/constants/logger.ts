@@ -1,5 +1,6 @@
 export const loggerMessages = {
   api: {
+    cronHourly: "api.cron.hourly",
     healthChecked: "api.health.checked",
     serverListening: "api.server.listening",
   },

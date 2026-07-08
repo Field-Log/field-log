@@ -3,6 +3,7 @@ export const localEnvironmentSlug = "dev";
 export const commonSecretPath = "/common";
 const loggingSecretPath = "/logging";
 const axiomServerSecretPath = "/axiom/server";
+const cloudflareToolsSecretPath = "/tools/cloudflare";
 
 export type EnvironmentAlias = {
   from: string;
@@ -59,13 +60,19 @@ export const commandSecrets = {
   api: {
     dev: {
       allowServerSecrets: true,
-      paths: [
-        "/clerk",
-        "/clerk/server",
-        "/neon/server",
-        loggingSecretPath,
-        axiomServerSecretPath,
-      ],
+      paths: ["/apps/api"],
+    },
+    deploy: {
+      allowServerSecrets: true,
+      paths: [cloudflareToolsSecretPath],
+    },
+    "deploy:preview": {
+      allowServerSecrets: true,
+      paths: [cloudflareToolsSecretPath],
+    },
+    "deploy:staging": {
+      allowServerSecrets: true,
+      paths: [cloudflareToolsSecretPath],
     },
     test: {
       allowServerSecrets: true,

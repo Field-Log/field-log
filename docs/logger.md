@@ -24,6 +24,9 @@ Keep the app name on each event with `app: "api"`, `app: "web"`, or
 per-app datasets only if access, retention, or cost controls need to differ by
 app.
 
+The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
+Use that event to confirm scheduled Worker execution and Axiom ingestion.
+
 ## Infisical
 
 `/axiom/server` provides server-only Axiom settings:
@@ -88,6 +91,7 @@ The Infisical runner aliases client-safe logging values for builds:
 Production environments should provide the public build variables directly when
 they are not using the Infisical alias runner:
 
+- `VITE_API_BASE_URL`, optional
 - `VITE_LOG_PROXY_URL`
 - `VITE_LOG_PROXY_CLIENT_KEY`, optional
 - `EXPO_PUBLIC_LOG_PROXY_URL`

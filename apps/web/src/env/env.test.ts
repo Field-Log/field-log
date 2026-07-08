@@ -13,6 +13,7 @@ afterEach(() => {
 describe("web client env", () => {
   it("validates required Vite client variables", () => {
     const env = createWebClientEnv({
+      VITE_API_BASE_URL: "https://api.preview.example.com",
       VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
       VITE_CLERK_SIGN_IN_URL: "/sign-in",
       VITE_CLERK_SIGN_UP_URL: "/sign-up",
@@ -20,6 +21,7 @@ describe("web client env", () => {
       VITE_LOG_PROXY_URL: "https://api.example.com/logs",
     });
 
+    expect(env.VITE_API_BASE_URL).toBe("https://api.preview.example.com");
     expect(env.VITE_CLERK_PUBLISHABLE_KEY).toBe("pk_test_example");
     expect(env.VITE_CLERK_SIGN_IN_URL).toBe("/sign-in");
     expect(env.VITE_CLERK_SIGN_UP_URL).toBe("/sign-up");
@@ -38,6 +40,15 @@ describe("web client env", () => {
   });
 
   it("rejects malformed client log proxy URLs", () => {
+    expect(() =>
+      createWebClientEnv({
+        VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        VITE_CLERK_SIGN_IN_URL: "/sign-in",
+        VITE_CLERK_SIGN_UP_URL: "/sign-up",
+        VITE_API_BASE_URL: "not a url",
+      }),
+    ).toThrow("Invalid environment variables");
+
     expect(() =>
       createWebClientEnv({
         VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",

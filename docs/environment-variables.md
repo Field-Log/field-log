@@ -21,8 +21,8 @@ Do not expose `CLERK_SECRET_KEY` to client-side code.
 The web app validates client variables separately from server variables:
 
 - client: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`,
-  `VITE_CLERK_SIGN_UP_URL`, optional `VITE_LOG_PROXY_URL`, optional
-  `VITE_LOG_PROXY_CLIENT_KEY`
+  `VITE_CLERK_SIGN_UP_URL`, optional `VITE_API_BASE_URL`, optional
+  `VITE_LOG_PROXY_URL`, optional `VITE_LOG_PROXY_CLIENT_KEY`
 - server: `DATABASE_URL`, `CLERK_SECRET_KEY`, optional `AXIOM_TOKEN`, optional
   `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`, optional `LOG_LEVEL`, optional
   `LOGGER`
@@ -36,6 +36,30 @@ Local development uses stable app ports:
 
 Logging environment variables, Axiom setup, and client proxy configuration are
 documented in [logger.md](./logger.md).
+
+## API App
+
+`apps/api` loads local development secrets from Infisical environment `dev` at
+`/apps/api`.
+
+Required API values:
+
+- `DATABASE_URL`
+
+Optional API values:
+
+- `APP_ENV`
+- `AXIOM_TOKEN`
+- `AXIOM_DATASET`
+- `AXIOM_EDGE_DOMAIN`
+- `LOG_LEVEL`
+- `LOGGER`
+- `LOG_PROXY_CLIENT_KEY`
+- `PORT`, local Node server only
+
+Cloudflare Worker production and preview secrets are synchronized from
+Infisical `/apps/api` into Cloudflare Workers. See
+[cloudflare-api.md](./cloudflare-api.md).
 
 ### Production
 
