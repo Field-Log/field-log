@@ -77,6 +77,21 @@ services.configure({
   },
   logger,
 });
+const transports = [
+  ...(axiomToken && axiomDataset
+    ? [createAxiomTransport({ dataset: axiomDataset, token: axiomToken })]
+    : []),
+  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
+];
+
+const logger = {
+  app: loggerValues.apps.api,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(databaseUrl ? { db: { databaseUrl }, logger } : { logger });
 
 export { services as s };
 ```
@@ -128,6 +143,21 @@ services.configure({
   },
   logger,
 });
+const transports = [
+  ...(axiomToken && axiomDataset
+    ? [createAxiomTransport({ dataset: axiomDataset, token: axiomToken })]
+    : []),
+  ...(isDevelopment || !(axiomToken && axiomDataset) ? [consoleTransport] : []),
+];
+
+const logger = {
+  app: loggerValues.apps.web,
+  environment,
+  level: normalizeLogLevel(process.env.LOG_LEVEL),
+  transports,
+};
+
+services.configure(databaseUrl ? { db: { databaseUrl }, logger } : { logger });
 
 export { services as s };
 ```

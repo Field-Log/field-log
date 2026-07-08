@@ -314,6 +314,15 @@ importers:
         specifier: '>=8.0.0'
         version: 8.62.0(eslint@10.6.0(jiti@2.7.0))(typescript@6.0.3)
 
+  packages/figjam:
+    devDependencies:
+      '@repo/eslint':
+        specifier: workspace:*
+        version: link:../eslint
+      '@repo/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+
   packages/github-discord-notifier:
     dependencies:
       '@t3-oss/env-core':
