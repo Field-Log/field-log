@@ -102,6 +102,16 @@ jobs:
             exit 1
           fi
 
+          workers_subdomain="${CLOUDFLARE_WORKERS_SUBDOMAIN#https://}"
+          workers_subdomain="${workers_subdomain#http://}"
+          workers_subdomain="${workers_subdomain%%/*}"
+          workers_subdomain="${workers_subdomain%.workers.dev}"
+
+          if [[ -z "$workers_subdomain" || "$workers_subdomain" == *.* ]]; then
+            echo "CLOUDFLARE_WORKERS_SUBDOMAIN must be the workers.dev account subdomain, for example 23242 or 23242.workers.dev." >&2
+            exit 1
+          fi
+
           set +e
           upload_output="$(pnpm dlx wrangler versions upload \
             --config apps/api/wrangler.jsonc \
@@ -128,7 +138,7 @@ jobs:
               --preview-alias "$PREVIEW_ALIAS"
           fi
 
-          preview_url="https://${PREVIEW_ALIAS}-${API_PREVIEW_WORKER_NAME}.${CLOUDFLARE_WORKERS_SUBDOMAIN}.workers.dev"
+          preview_url="https://${PREVIEW_ALIAS}-${API_PREVIEW_WORKER_NAME}.${workers_subdomain}.workers.dev"
           echo "preview_alias=$PREVIEW_ALIAS" >> "$GITHUB_OUTPUT"
           echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
 
