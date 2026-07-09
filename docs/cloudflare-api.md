@@ -296,7 +296,8 @@ Pull requests:
 - If `field-log-api-preview` does not exist yet, bootstraps it with
   `wrangler deploy --env preview`, then retries the aliased version upload.
 - Smoke-tests the preview health endpoint.
-- Posts or updates a pull request comment with the preview and health URLs.
+- Posts or updates a pull request comment with the preview and health URLs
+  using the installed `Field Log API Preview` GitHub App.
 - Marks the preview comment inactive when the pull request closes.
 
 Merges to `main`:
@@ -309,11 +310,20 @@ Merges to `main`:
 
 Configure these GitHub repository variables:
 
+- `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID`
 - `INFISICAL_CLOUDFLARE_IDENTITY_ID`
 - `INFISICAL_PROJECT_SLUG`
 - optional `INFISICAL_DOMAIN`, defaults to `https://app.infisical.com`
 - optional `INFISICAL_OIDC_AUDIENCE`, defaults to
   `https://github.com/{repository_owner}`
+
+Configure these GitHub repository secrets:
+
+- `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY`
+
+The `Field Log API Preview` GitHub App must be installed on this repository
+with `Issues: Read and write`, because pull request comments use GitHub issue
+comments.
 
 The Infisical identity must read:
 

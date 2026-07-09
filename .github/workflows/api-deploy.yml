@@ -151,12 +151,41 @@ jobs:
 
           curl --fail --retry 5 --retry-delay 3 "$PREVIEW_URL/health"
 
+      - name: Validate PR comment app configuration
+        shell: bash
+        env:
+          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_CLIENT_ID:-}" ]]; then
+            echo "Repository variable FIELD_LOG_API_PREVIEW_APP_CLIENT_ID is required." >&2
+            exit 1
+          fi
+
+          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY:-}" ]]; then
+            echo "Repository secret FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY is required." >&2
+            exit 1
+          fi
+
+      - name: Create PR comment app token
+        id: preview-comment-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-issues: write
+
       - name: Comment on pull request
         uses: actions/github-script@v8
         env:
           PREVIEW_ALIAS: ${{ steps.deploy.outputs.preview_alias }}
           PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
         with:
+          github-token: ${{ steps.preview-comment-token.outputs.token }}
           script: |
             const marker = process.env.API_PREVIEW_COMMENT_MARKER;
             const previewUrl = process.env.PREVIEW_URL;
@@ -208,9 +237,38 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Validate PR comment app configuration
+        shell: bash
+        env:
+          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_CLIENT_ID:-}" ]]; then
+            echo "Repository variable FIELD_LOG_API_PREVIEW_APP_CLIENT_ID is required." >&2
+            exit 1
+          fi
+
+          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY:-}" ]]; then
+            echo "Repository secret FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY is required." >&2
+            exit 1
+          fi
+
+      - name: Create PR comment app token
+        id: preview-comment-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-issues: write
+
       - name: Mark preview comment closed
         uses: actions/github-script@v8
         with:
+          github-token: ${{ steps.preview-comment-token.outputs.token }}
           script: |
             const marker = process.env.API_PREVIEW_COMMENT_MARKER;
             const alias = `pr-${context.issue.number}`;
