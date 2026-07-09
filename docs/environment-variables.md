@@ -23,6 +23,10 @@ The web app validates client variables separately from server variables:
   `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`, optional `LOG_LEVEL`, optional
   `LOGGER`
 
+Preview builds may also receive `API_PREVIEW_WORKER_HOST`, a build-only helper
+used to derive PR-specific `VITE_API_BASE_URL` and `VITE_LOG_PROXY_URL` values
+from Vercel's `VERCEL_GIT_PULL_REQUEST_ID`.
+
 Do not expose `CLERK_SECRET_KEY`, `DATABASE_URL`, or Axiom ingest credentials to
 client-side code.
 
@@ -96,6 +100,7 @@ environment variable configuration:
 - `VITE_CLERK_SIGN_UP_URL=/sign-up`
 - `CLERK_SECRET_KEY`
 - `DATABASE_URL`
+- preview only: `API_PREVIEW_WORKER_HOST=field-log-api-preview.23242.workers.dev`
 - optional `AXIOM_TOKEN`
 - optional `AXIOM_DATASET`
 - optional `AXIOM_EDGE_DOMAIN`

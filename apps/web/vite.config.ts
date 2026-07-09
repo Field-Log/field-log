@@ -1,4 +1,10 @@
 import process from "node:process";
+import {
+  createConsoleTransport,
+  createLogger,
+  loggerMessages,
+  loggerValues,
+} from "@package/logger";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -8,6 +14,12 @@ import { createWebClientEnv } from "./src/env/client.schema";
 import { createWebServerEnv } from "./src/env/server.schema";
 
 type MutableEnv = Record<string, string | undefined>;
+
+const buildLogger = createLogger({
+  app: loggerValues.apps.web,
+  environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "build",
+  transports: [createConsoleTransport({ mode: "verbose" })],
+});
 
 function envValue(env: MutableEnv, key: string) {
   const value = env[key];
@@ -34,11 +46,51 @@ export function applyWebClientEnvAliases(env: MutableEnv = process.env) {
   }
 }
 
+function normalizePreviewWorkerHost(value: string | undefined) {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const host = value.replace(/^https?:\/\//, "").split("/")[0];
+
+  return host === "" ? undefined : host;
+}
+
+export function applyVercelPreviewApiEnv(env: MutableEnv = process.env) {
+  if (envValue(env, "VERCEL_ENV") !== "preview") {
+    return;
+  }
+
+  const pullRequestId = envValue(env, "VERCEL_GIT_PULL_REQUEST_ID");
+  const workerHost = normalizePreviewWorkerHost(
+    envValue(env, "API_PREVIEW_WORKER_HOST"),
+  );
+
+  if (pullRequestId === undefined || workerHost === undefined) {
+    return;
+  }
+
+  const apiBaseUrl = `https://pr-${pullRequestId}-${workerHost}`;
+
+  env.VITE_API_BASE_URL = apiBaseUrl;
+  env.VITE_LOG_PROXY_URL = `${apiBaseUrl}/logs`;
+
+  buildLogger.info(loggerMessages.web.previewApiDerived, {
+    attributes: {
+      apiBaseUrl,
+      logProxyUrl: env.VITE_LOG_PROXY_URL,
+      pullRequestId,
+      workerHost,
+    },
+  });
+}
+
 export default defineConfig(({ mode }) => {
   const isTest = mode === "test";
 
   if (!isTest) {
     applyWebClientEnvAliases();
+    applyVercelPreviewApiEnv();
 
     createWebClientEnv({
       VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,

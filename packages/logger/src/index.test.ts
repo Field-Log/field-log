@@ -42,6 +42,7 @@ describe("logger", () => {
       web: {
         accountLoaded: "web.account.loaded",
         fxRatesFetchFailed: "web.fxRates.fetch.failed",
+        previewApiDerived: "web.previewApi.derived",
       },
     });
     expect(loggerValues).toMatchObject({

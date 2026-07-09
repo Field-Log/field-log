@@ -347,22 +347,29 @@ credentials to untrusted fork code.
 ## Vercel Preview Handoff
 
 The API preview workflow comments with the Cloudflare preview URL. It does not
-write `/apps/web` values in Infisical.
+write per-PR `/apps/web` values in Infisical.
 
-To make a matching Vercel preview consume a PR-specific API URL:
+Configure the Vercel web project to expose System Environment Variables so
+`VERCEL_ENV` and `VERCEL_GIT_PULL_REQUEST_ID` are available during preview
+builds.
 
-1. Deploy the API preview with alias `pr-123`.
-2. Write these values to Infisical environment `preview`, path `/apps/web`:
+Store this stable value in the web preview environment:
 
-   ```dotenv
-   VITE_API_BASE_URL=https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev
-   VITE_LOG_PROXY_URL=https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev/logs
-   ```
+```dotenv
+API_PREVIEW_WORKER_HOST=field-log-api-preview.23242.workers.dev
+```
 
-3. Retrigger the matching Vercel preview deployment.
+During Vercel PR previews, `apps/web` derives the API URLs from the PR number:
 
-Automating that handoff requires a write-capable Infisical identity or token
-scoped to environment `preview`, path `/apps/web`.
+```dotenv
+VITE_API_BASE_URL=https://pr-123-field-log-api-preview.23242.workers.dev
+VITE_LOG_PROXY_URL=https://pr-123-field-log-api-preview.23242.workers.dev/logs
+```
+
+This avoids shared Infisical `preview /apps/web` values that only support one PR
+at a time. If a Vercel branch preview was created before the pull request
+existed, redeploy that Vercel preview after the pull request exists so
+`VERCEL_GIT_PULL_REQUEST_ID` is populated.
 
 ## Smoke Tests
 
@@ -431,5 +438,6 @@ Staging:
 Preview:
 
 1. Re-upload the last known good commit with the same PR preview alias.
-2. Update `/apps/web` in Infisical `preview` if the preview URL changes.
-3. Retrigger the Vercel preview build if needed.
+2. Confirm the Vercel preview has System Environment Variables enabled.
+3. Retrigger the Vercel preview build if needed so it recomputes the API URL
+   from the PR number.
