@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildInfisicalRunArgs,
+  getInfisicalAuthCheckError,
   getSecretPaths,
   parseCliArguments,
   RunnerError,
@@ -52,6 +53,36 @@ describe("buildInfisicalRunArgs", () => {
         repoRoot: "/repo",
       }),
     ).toThrow(RunnerError);
+  });
+
+  it("builds API deploy args with Cloudflare tool credentials", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "api",
+        command: "deploy",
+        commandArgs: [
+          "pnpm",
+          "dlx",
+          "wrangler",
+          "deploy",
+          "--config",
+          "wrangler.jsonc",
+        ],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/tools/cloudflare",
+      "--",
+      "pnpm",
+      "dlx",
+      "wrangler",
+      "deploy",
+      "--config",
+      "wrangler.jsonc",
+    ]);
   });
 
   it("builds web commands from the web target path", () => {
@@ -142,6 +173,18 @@ describe("buildInfisicalRunArgs", () => {
       "start",
       "--web",
     ]);
+  });
+});
+
+describe("infisical auth checks", () => {
+  it("surfaces signed-out CLI errors with login instructions", () => {
+    const error = getInfisicalAuthCheckError(
+      "error: we couldn't find your logged in details, try running [infisical login] then try again",
+    );
+
+    expect(error).toBeInstanceOf(RunnerError);
+    expect(error.message).toContain("Infisical CLI is not signed in.");
+    expect(error.message).toContain("infisical login");
   });
 });
 

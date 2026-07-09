@@ -12,6 +12,7 @@ describe("api env", () => {
 
   it("validates required API environment variables", () => {
     const env = createApiEnv({
+      APP_ENV: "preview",
       AXIOM_DATASET: "development",
       AXIOM_EDGE_DOMAIN: "api.axiom.co",
       AXIOM_TOKEN: "xaat-example",
@@ -22,6 +23,7 @@ describe("api env", () => {
       PORT: "4000",
     });
 
+    expect(env.APP_ENV).toBe("preview");
     expect(env.AXIOM_DATASET).toBe("development");
     expect(env.AXIOM_EDGE_DOMAIN).toBe("api.axiom.co");
     expect(env.AXIOM_TOKEN).toBe("xaat-example");

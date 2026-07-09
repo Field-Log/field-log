@@ -1,7 +1,7 @@
 export const localEnvironmentSlug = "dev";
 
 const apiSecretPath = "/apps/api";
-const autmogSecretPath = "/apps/autmog";
+const cloudflareToolsSecretPath = "/tools/cloudflare";
 const mobileSecretPath = "/apps/mobile";
 const webSecretPath = "/apps/web";
 const githubDiscordNotifierSecretPath = "/tools/github-discord-notifier";
@@ -75,6 +75,18 @@ export const commandSecrets = {
       allowServerSecrets: true,
       paths: [apiSecretPath],
     },
+    deploy: {
+      allowServerSecrets: true,
+      paths: [cloudflareToolsSecretPath],
+    },
+    "deploy:preview": {
+      allowServerSecrets: true,
+      paths: [cloudflareToolsSecretPath],
+    },
+    "deploy:staging": {
+      allowServerSecrets: true,
+      paths: [cloudflareToolsSecretPath],
+    },
     test: {
       allowServerSecrets: true,
       paths: [apiSecretPath],
@@ -82,20 +94,6 @@ export const commandSecrets = {
     "test:watch": {
       allowServerSecrets: true,
       paths: [apiSecretPath],
-    },
-  },
-  autmog: {
-    dev: {
-      allowServerSecrets: false,
-      paths: [autmogSecretPath],
-    },
-    test: {
-      allowServerSecrets: false,
-      paths: [autmogSecretPath],
-    },
-    "test:watch": {
-      allowServerSecrets: false,
-      paths: [autmogSecretPath],
     },
   },
   database: {

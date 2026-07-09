@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export type ApiRuntimeEnv = {
+  APP_ENV?: string;
   AXIOM_DATASET?: string;
   AXIOM_EDGE_DOMAIN?: string;
   AXIOM_TOKEN?: string;
@@ -17,6 +18,7 @@ export function createApiEnv(runtimeEnv: ApiRuntimeEnv) {
     emptyStringAsUndefined: true,
     isServer: true,
     runtimeEnvStrict: {
+      APP_ENV: runtimeEnv.APP_ENV,
       AXIOM_DATASET: runtimeEnv.AXIOM_DATASET,
       AXIOM_EDGE_DOMAIN: runtimeEnv.AXIOM_EDGE_DOMAIN,
       AXIOM_TOKEN: runtimeEnv.AXIOM_TOKEN,
@@ -27,6 +29,7 @@ export function createApiEnv(runtimeEnv: ApiRuntimeEnv) {
       PORT: runtimeEnv.PORT,
     },
     server: {
+      APP_ENV: z.string().min(1).optional(),
       AXIOM_DATASET: z.string().min(1).optional(),
       AXIOM_EDGE_DOMAIN: z.string().min(1).optional(),
       AXIOM_TOKEN: z.string().min(1).optional(),

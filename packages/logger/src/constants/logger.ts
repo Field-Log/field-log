@@ -1,5 +1,6 @@
 export const loggerMessages = {
   api: {
+    cronHourly: "api.cron.hourly",
     healthChecked: "api.health.checked",
     serverListening: "api.server.listening",
   },
@@ -23,6 +24,7 @@ export const loggerMessages = {
   web: {
     accountLoaded: "web.account.loaded",
     fxRatesFetchFailed: "web.fxRates.fetch.failed",
+    previewApiDerived: "web.previewApi.derived",
   },
 } as const;
 

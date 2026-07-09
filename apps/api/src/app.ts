@@ -1,10 +1,18 @@
 import { type LogData, type Logger, loggerValues } from "@package/logger";
 import type { HealthResponse, ServiceInfoResponse } from "@package/types";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import { parseClientLogEvents } from "./logs.js";
+
+export type AppRuntimeConfig = {
+  clientLogKey?: string;
+  logger?: Logger;
+};
 
 export type AppDependencies = {
   clientLogKey?: string;
+  getRuntimeConfig?: (
+    context: Context,
+  ) => AppRuntimeConfig | Promise<AppRuntimeConfig>;
   logger?: Logger;
 };
 
@@ -26,7 +34,8 @@ export function createApp(dependencies: AppDependencies = {}) {
   });
 
   app.post("/logs", async (context) => {
-    const configuredClientKey = dependencies.clientLogKey;
+    const runtimeConfig = await getRuntimeConfig(context, dependencies);
+    const configuredClientKey = runtimeConfig.clientLogKey;
 
     if (configuredClientKey) {
       const providedClientKey = context.req.header(
@@ -52,7 +61,7 @@ export function createApp(dependencies: AppDependencies = {}) {
       return context.json({ error: events.error }, 400);
     }
 
-    const logger = dependencies.logger ?? (await getConfiguredLogger());
+    const logger = runtimeConfig.logger ?? (await getConfiguredLogger());
     const receivedAt = new Date().toISOString();
     const userAgent = context.req.header("user-agent");
 
@@ -95,6 +104,18 @@ export function createApp(dependencies: AppDependencies = {}) {
   });
 
   return app;
+}
+
+async function getRuntimeConfig(
+  context: Context,
+  dependencies: AppDependencies,
+): Promise<AppRuntimeConfig> {
+  const runtimeConfig = await dependencies.getRuntimeConfig?.(context);
+
+  return {
+    clientLogKey: runtimeConfig?.clientLogKey ?? dependencies.clientLogKey,
+    logger: runtimeConfig?.logger ?? dependencies.logger,
+  };
 }
 
 const app = createApp();

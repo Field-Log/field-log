@@ -24,6 +24,9 @@ Keep the app name on each event with `app: "api"`, `app: "web"`, or
 per-app datasets only if access, retention, or cost controls need to differ by
 app.
 
+The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
+Use that event to confirm scheduled Worker execution and Axiom ingestion.
+
 ## Infisical
 
 Server targets that send directly to Axiom keep their Axiom settings in their
@@ -149,6 +152,20 @@ import { loggerMessages, loggerValues } from "@package/logger";
 
 Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
 Use `loggerValues` for logger app identifiers and log proxy protocol values.
+
+## Biome Audit
+
+Root `biome.json` enforces the mechanical logger audit rules:
+
+- `console.*` is rejected in `apps/api/src`, `apps/mobile/src`,
+  `apps/web/src`, `packages/services/src`, and `packages/database/src`.
+- `@package/logger` imports are rejected in `packages/database/src` so the
+  database package stays storage-only. Log database behavior from
+  `packages/services`.
+
+The remaining audit is semantic: reuse existing `loggerMessages` and
+`loggerValues` where possible, add new constants only when needed, and avoid
+logging raw identifiers or sensitive values.
 
 ## Live Axiom Test
 
