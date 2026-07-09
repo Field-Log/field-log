@@ -82,7 +82,7 @@ function normalizePreviewWorkerHost(value: string | undefined) {
 
 export async function applyVercelPreviewApiEnv(
   env: MutableEnv = process.env,
-  logger: Logger = createWebBuildLogger(env),
+  logger?: Logger,
 ) {
   if (envValue(env, "VERCEL_ENV") !== "preview") {
     return;
@@ -102,7 +102,9 @@ export async function applyVercelPreviewApiEnv(
   env.VITE_API_BASE_URL = apiBaseUrl;
   env.VITE_LOG_PROXY_URL = `${apiBaseUrl}/logs`;
 
-  logger.info(loggerMessages.web.previewApiDerived, {
+  const buildLogger = logger ?? createWebBuildLogger(env);
+
+  buildLogger.info(loggerMessages.web.previewApiDerived, {
     attributes: {
       apiBaseUrl,
       logProxyUrl: env.VITE_LOG_PROXY_URL,
@@ -113,7 +115,7 @@ export async function applyVercelPreviewApiEnv(
       mode: "verbose",
     },
   });
-  await logger.flush();
+  await buildLogger.flush();
 }
 
 export default defineConfig(async ({ mode }) => {

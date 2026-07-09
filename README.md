@@ -1,6 +1,6 @@
-# field-log.app 
+# field-log.app
 
-Monorepo for the fleid-log.app apps and shared packages.
+Monorepo for the field-log.app apps and shared packages.
 
 ## Getting started
 
@@ -111,6 +111,10 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 
 
 ## Running tools
+
+Local `pnpm test` requires `infisical login` because it checks Infisical CLI auth
+before running app tests. Use `pnpm test:ci` for the CI-style test run without
+Infisical.
 
 | Command | What it does |
 | --- | --- |
