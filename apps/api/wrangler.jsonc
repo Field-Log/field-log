@@ -22,6 +22,7 @@
     "preview": {
       "name": "field-log-api-preview",
       "preview_urls": true,
+      "routes": [],
       "workers_dev": false,
       "vars": {
         "APP_ENV": "preview"

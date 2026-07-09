@@ -72,6 +72,8 @@ Important settings:
   dependencies currently import Node built-ins.
 - `workers_dev`: disabled for production and staging.
 - `preview_urls`: enabled so PR preview aliases can be used.
+- `env.preview.routes`: empty so preview uploads do not inherit or reassign
+  the production custom domain.
 - `triggers.crons`: `0 * * * *`, hourly at minute zero UTC.
 - top-level `vars.APP_ENV`: `production`
 - `env.preview.vars.APP_ENV`: `preview`
@@ -252,7 +254,10 @@ development, preview CI, and production CI.
 
 ## Manual Deployments
 
-Local manual deploy commands load `/tools/cloudflare` from Infisical `dev`.
+Local manual deploy commands first build `@app/api` and its workspace
+dependencies, then load `/tools/cloudflare` from Infisical `dev`. The build
+step is required because Wrangler resolves workspace package exports from
+`dist/`.
 
 Production:
 
@@ -283,6 +288,7 @@ Pull requests:
   `synchronize`.
 - Runs only when changes include `apps/api/**`, `packages/**`, workspace config,
   or the workflow itself.
+- Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `preview`, path `/tools/cloudflare`.
 - Uploads a preview Worker version with alias `pr-<number>`.
 - Smoke-tests the preview health endpoint.
@@ -292,6 +298,7 @@ Pull requests:
 Merges to `main`:
 
 - Runs on pushes to `main` when API-relevant paths changed.
+- Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `prod`, path `/tools/cloudflare`.
 - Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/health`.

@@ -57,6 +57,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build Worker dependencies
+        run: pnpm exec turbo run build --filter=@app/api
+
       - name: Validate Infisical OIDC configuration
         shell: bash
         env:
@@ -229,6 +232,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build Worker dependencies
+        run: pnpm exec turbo run build --filter=@app/api
 
       - name: Validate Infisical OIDC configuration
         shell: bash
