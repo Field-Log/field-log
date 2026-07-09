@@ -1,6 +1,6 @@
-# machinedpens.info
+# field-log.app 
 
-Monorepo for the machinedpens.info apps and shared packages.
+Monorepo for the fleid-log.app apps and shared packages.
 
 ## Getting started
 
