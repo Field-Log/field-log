@@ -150,6 +150,20 @@ import { loggerMessages, loggerValues } from "@package/logger";
 Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
 Use `loggerValues` for logger app identifiers and log proxy protocol values.
 
+## Biome Audit
+
+Root `biome.json` enforces the mechanical logger audit rules:
+
+- `console.*` is rejected in `apps/api/src`, `apps/mobile/src`,
+  `apps/web/src`, `packages/services/src`, and `packages/database/src`.
+- `@package/logger` imports are rejected in `packages/database/src` so the
+  database package stays storage-only. Log database behavior from
+  `packages/services`.
+
+The remaining audit is semantic: reuse existing `loggerMessages` and
+`loggerValues` where possible, add new constants only when needed, and avoid
+logging raw identifiers or sensitive values.
+
 ## Live Axiom Test
 
 The live logger test is explicit and is not part of `pnpm test` or

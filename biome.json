@@ -59,6 +59,40 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "apps/api/src/**/*.{js,jsx,ts,tsx}",
+        "apps/mobile/src/**/*.{js,jsx,ts,tsx}",
+        "apps/web/src/**/*.{js,jsx,ts,tsx}",
+        "packages/database/src/**/*.{js,jsx,ts,tsx}",
+        "packages/services/src/**/*.{js,jsx,ts,tsx}"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["packages/database/src/**/*.{js,jsx,ts,tsx}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@package/logger": "Keep packages/database storage-only. Log database behavior from packages/services instead.",
+                  "@repo/logger": "Keep packages/database storage-only. Log database behavior from packages/services instead."
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "assist": {
