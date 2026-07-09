@@ -1,21 +1,34 @@
 # Cloudflare API Deployment
 
-`apps/api` deploys to Cloudflare Workers. The same Hono routes run in local
-Node development and in the Worker runtime.
+`apps/api` runs on Cloudflare Workers in production, staging, PR previews, and
+local API development. Local development uses `wrangler dev` by default so
+fetch handling, Worker bindings, and scheduled events are exercised in the same
+runtime family as deploys.
+
+Reference docs:
+
+- Cloudflare Wrangler commands:
+  <https://developers.cloudflare.com/workers/wrangler/commands/>
+- Cloudflare Wrangler system environment variables:
+  <https://developers.cloudflare.com/workers/wrangler/system-environment-variables/>
+- Infisical Cloudflare Connection:
+  <https://infisical.com/docs/integrations/app-connections/cloudflare>
+- Infisical Cloudflare Workers Sync:
+  <https://infisical.com/docs/integrations/secret-syncs/cloudflare-workers>
 
 ## Cloudflare Services
 
 Configure these Cloudflare services:
 
-- Workers: hosts the API Worker.
+- Workers: hosts the API Worker scripts.
 - Cron Triggers: invokes the hourly API scheduled handler.
-- Custom Domains: routes owned hostnames to the Worker.
-- Worker Secrets: receives production, staging, and preview secrets from
-  Infisical Cloudflare Workers Sync.
+- Custom Domains: routes owned hostnames to the production and staging Workers.
+- Workers Preview URLs: hosts per-PR preview aliases for `field-log-api-preview`.
+- Worker Secrets: receives API runtime secrets from Infisical Cloudflare Workers
+  Sync.
 
-Cloudflare should own the `field-log.app` zone before configuring custom
-domains. The Worker custom domain setup creates the required DNS record and
-certificate for each hostname.
+Cloudflare must manage the `field-log.app` DNS zone before custom domains can
+serve `api.field-log.app` or `api.staging.field-log.app`.
 
 ## Worker Names And Domains
 
@@ -23,25 +36,25 @@ Production:
 
 - Worker: `field-log-api`
 - Domain: `api.field-log.app`
-- Infisical environment: `prod`
-- Infisical path: `/apps/api`
+- Infisical app secrets: environment `prod`, path `/apps/api`
+- Infisical deploy credentials: environment `prod`, path `/tools/cloudflare`
 
 Staging:
 
 - Worker: `field-log-api-staging`
 - Domain: `api.staging.field-log.app`
-- Infisical environment: `prod`
-- Infisical path: `/apps/api`
+- Infisical app secrets: environment `prod`, path `/apps/api`
+- Manual deploy credentials: environment `dev`, path `/tools/cloudflare`
 
 Previews:
 
 - Worker: `field-log-api-preview`
 - Domain: Cloudflare preview URL with a PR alias
-- Infisical environment: `preview`
-- Infisical path: `/apps/api`
+- Infisical app secrets: environment `preview`, path `/apps/api`
+- Infisical deploy credentials: environment `preview`, path `/tools/cloudflare`
 
-Preview deployments use Cloudflare preview URLs instead of
-`api.preview.field-log.app`. A typical PR alias URL looks like:
+Preview deployments use Cloudflare preview URLs rather than
+`api.preview.field-log.app`. A PR alias URL uses this shape:
 
 ```txt
 https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev
@@ -57,47 +70,52 @@ Important settings:
 - `main`: `src/worker.ts`
 - `compatibility_flags`: includes `nodejs_compat` because workspace
   dependencies currently import Node built-ins.
-- `workers_dev`: disabled for stable production and staging deployments.
+- `workers_dev`: disabled for production and staging.
 - `preview_urls`: enabled so PR preview aliases can be used.
 - `triggers.crons`: `0 * * * *`, hourly at minute zero UTC.
+- top-level `vars.APP_ENV`: `production`
+- `env.preview.vars.APP_ENV`: `preview`
+- `env.staging.vars.APP_ENV`: `staging`
 
-The required Worker bindings are secrets unless noted:
-
-- `DATABASE_URL`
-- `AXIOM_TOKEN`
-- `AXIOM_DATASET`
-- `AXIOM_EDGE_DOMAIN`, optional
-- `LOG_LEVEL`, optional
-- `LOGGER`, optional
-- `LOG_PROXY_CLIENT_KEY`, optional
-- `APP_ENV`, non-secret Wrangler var
-
-`APP_ENV` is set in Wrangler config:
-
-- production: `production`
-- staging: `staging`
-- preview: `preview`
+Local `wrangler dev` overrides `APP_ENV` to `development` from the package
+script with `--var APP_ENV:development`.
 
 ## Local Development
 
-Node dev remains the default API workflow:
+Default API development uses Wrangler:
 
 ```sh
-pnpm --filter @repo/api dev
+pnpm --filter @app/api dev
 ```
 
-Worker runtime dev is available when validating Cloudflare behavior:
+From `apps/api`, that command runs:
 
 ```sh
-pnpm --filter @repo/api dev:worker
+infisical run --env=dev --path=/apps/api -- \
+  pnpm dlx wrangler dev \
+    --config wrangler.jsonc \
+    --port 4006 \
+    --test-scheduled \
+    --var APP_ENV:development
 ```
 
-Both commands load API development secrets from Infisical environment `dev` at
-path `/apps/api`.
+Use `http://localhost:4006` for the local API. To invoke the scheduled handler
+locally, run the dev server and request:
 
-## Infisical Secret Layout
+```sh
+curl http://localhost:4006/__scheduled
+```
 
-Use `/apps/api` as the single API secret path in each Infisical environment.
+The old Node Hono server is still available for non-Worker debugging:
+
+```sh
+pnpm --filter @app/api dev:node
+```
+
+## API Runtime Secrets
+
+Use `/apps/api` as the single API runtime secret path in each Infisical
+environment.
 
 Development (`dev`):
 
@@ -135,39 +153,79 @@ LOGGER=
 LOG_PROXY_CLIENT_KEY=
 ```
 
+Do not store `APP_ENV` in `/apps/api` for Worker deploys. Wrangler owns it as a
+non-secret variable.
+
+## Cloudflare Initial Setup
+
+1. Confirm the `field-log.app` zone exists in Cloudflare and is active.
+2. Create the Worker scripts once by deploying them or by letting the first
+   Wrangler deploy create them:
+
+   ```sh
+   pnpm deploy
+   pnpm deploy:staging
+   pnpm deploy:preview -- --preview-alias pr-smoke
+   ```
+
+3. In Cloudflare Dashboard, confirm the Workers appear under
+   `Workers & Pages`.
+4. Confirm custom domain triggers exist:
+   - `field-log-api`: `api.field-log.app`
+   - `field-log-api-staging`: `api.staging.field-log.app`
+5. Confirm preview URLs are enabled for `field-log-api-preview`.
+
 ## Infisical Cloudflare Connection
 
-Create a Cloudflare API token with these permissions:
+Create a Cloudflare API token for the Infisical App Connection. Infisical's
+Cloudflare Workers sync documentation requires these permissions:
 
 - `Account - Workers Scripts - Edit`
 - `Account - Account Settings - Read`
 
+In Cloudflare:
+
+1. Open the Cloudflare Dashboard.
+2. Open the user profile menu.
+3. Go to `API Tokens`.
+4. Create a token with the permissions above, scoped to the Cloudflare account
+   that owns `field-log.app`.
+5. Copy the token once; Cloudflare will not show it again.
+6. Copy the account ID from Account Home.
+
 In Infisical:
 
-1. Go to the project integrations area.
-2. Add a Cloudflare App Connection.
-3. Enter the Cloudflare account ID and API token.
-4. Verify the connection.
+1. Open the `Field Log` project.
+2. Go to `Integrations`.
+3. Open `App Connections`.
+4. Add a `Cloudflare` connection.
+5. Enter the Cloudflare account ID and API token.
+6. Verify the connection.
 
-## Cloudflare Workers Secret Sync
+## Infisical Cloudflare Workers Syncs
 
-Create Infisical Cloudflare Workers Syncs from `/apps/api`:
+Create these Cloudflare Workers Secret Syncs from `/apps/api`:
 
-- `prod` -> `field-log-api`
-- `prod` -> `field-log-api-staging`
-- `preview` -> `field-log-api-preview`
+| Infisical environment | Source path | Destination Worker |
+| --- | --- | --- |
+| `prod` | `/apps/api` | `field-log-api` |
+| `prod` | `/apps/api` | `field-log-api-staging` |
+| `preview` | `/apps/api` | `field-log-api-preview` |
 
-The initial sync should overwrite the destination because Cloudflare has no
-source-of-truth secrets. After sync, Worker secrets should only be managed from
-Infisical.
+Use these sync options:
 
-Do not store `APP_ENV` in Infisical for these Workers; Wrangler owns it as a
-non-secret environment variable.
+- Initial sync behavior: overwrite destination secrets.
+- Key schema: `{{secretKey}}`.
+- Auto-sync: enabled.
+- Disable secret deletion: disabled, because Infisical is the source of truth.
 
-## Deployments
+After the first sync, manage Worker secrets in Infisical only.
 
-The API deploy scripts load Wrangler credentials from Infisical environment
-`dev` at `/tools/cloudflare`:
+## Deploy Credentials In Infisical
+
+Store Wrangler deploy credentials in `/tools/cloudflare`.
+
+Required keys:
 
 ```dotenv
 CLOUDFLARE_API_TOKEN=
@@ -175,53 +233,49 @@ CLOUDFLARE_ACCOUNT_ID=
 CLOUDFLARE_WORKERS_SUBDOMAIN=
 ```
 
+`CLOUDFLARE_API_TOKEN` lets Wrangler deploy without an interactive
+`wrangler login`. `CLOUDFLARE_ACCOUNT_ID` selects the Cloudflare account.
+`CLOUDFLARE_WORKERS_SUBDOMAIN` is the account workers.dev subdomain, for
+example `23242`, and is used to construct PR preview URLs.
+
+Create `/tools/cloudflare` in these Infisical environments:
+
+| Infisical environment | Used by | Values |
+| --- | --- | --- |
+| `dev` | Local `pnpm deploy`, `pnpm deploy:staging`, and `pnpm deploy:preview` | Cloudflare deploy token, account ID, workers.dev subdomain |
+| `preview` | GitHub PR preview workflow | Cloudflare deploy token, account ID, workers.dev subdomain |
+| `prod` | GitHub production workflow on `main` | Cloudflare deploy token, account ID, workers.dev subdomain |
+
+The token values can be the same or different across environments. Prefer
+separate tokens when you want separate revocation and audit trails for local
+development, preview CI, and production CI.
+
+## Manual Deployments
+
+Local manual deploy commands load `/tools/cloudflare` from Infisical `dev`.
+
 Production:
 
 ```sh
-pnpm run deploy
+pnpm deploy
 ```
 
 Staging:
 
 ```sh
-pnpm run deploy:staging
+pnpm deploy:staging
 ```
 
 Preview upload with a PR alias:
 
 ```sh
-pnpm run deploy:preview -- --preview-alias pr-123
+pnpm deploy:preview -- --preview-alias pr-123
 ```
-
-Manual deploy order for PR previews:
-
-1. Deploy or upload the API preview with a unique PR alias.
-2. Resolve the Cloudflare preview URL.
-3. If the Vercel preview must consume that exact API URL, write the API preview
-   URL into Infisical environment `preview`, path
-   `/apps/web`.
-4. Build or retrigger the matching Vercel preview so it reads the updated
-   values.
-
-Use these `/apps/web` preview values:
-
-```dotenv
-VITE_API_BASE_URL=https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev
-VITE_LOG_PROXY_URL=https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev/logs
-```
-
-If Vercel starts before Infisical has the PR-specific URL, retrigger that Vercel
-preview deployment after updating Infisical.
-
-The GitHub workflow currently deploys the Worker preview and comments with the
-preview URL. It does not write `/apps/web` values in Infisical because the
-existing GitHub OIDC setup is read-only. Automating that handoff requires a
-write-capable Infisical identity or token scoped to environment `preview`, path
-`/apps/web`.
 
 ## GitHub Deployments
 
-The `API Deploy` workflow deploys Cloudflare Workers from GitHub Actions.
+The `API Deploy` workflow deploys Workers from GitHub Actions with Infisical
+OIDC.
 
 Pull requests:
 
@@ -229,14 +283,17 @@ Pull requests:
   `synchronize`.
 - Runs only when changes include `apps/api/**`, `packages/**`, workspace config,
   or the workflow itself.
+- Reads Infisical environment `preview`, path `/tools/cloudflare`.
 - Uploads a preview Worker version with alias `pr-<number>`.
+- Smoke-tests the preview health endpoint.
 - Posts or updates a pull request comment with the preview and health URLs.
 - Marks the preview comment inactive when the pull request closes.
 
 Merges to `main`:
 
 - Runs on pushes to `main` when API-relevant paths changed.
-- Deploys the top-level production Worker environment to `api.field-log.app`.
+- Reads Infisical environment `prod`, path `/tools/cloudflare`.
+- Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/health`.
 
 Configure these GitHub repository variables:
@@ -247,15 +304,37 @@ Configure these GitHub repository variables:
 - optional `INFISICAL_OIDC_AUDIENCE`, defaults to
   `https://github.com/{repository_owner}`
 
-The Infisical Cloudflare identity must be allowed to read environment `dev`,
-path `/tools/cloudflare`.
+The Infisical identity must read:
+
+- environment `preview`, path `/tools/cloudflare`
+- environment `prod`, path `/tools/cloudflare`
 
 Fork pull requests are skipped because GitHub must not expose deployment
 credentials to untrusted fork code.
 
+## Vercel Preview Handoff
+
+The API preview workflow comments with the Cloudflare preview URL. It does not
+write `/apps/web` values in Infisical.
+
+To make a matching Vercel preview consume a PR-specific API URL:
+
+1. Deploy the API preview with alias `pr-123`.
+2. Write these values to Infisical environment `preview`, path `/apps/web`:
+
+   ```dotenv
+   VITE_API_BASE_URL=https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev
+   VITE_LOG_PROXY_URL=https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev/logs
+   ```
+
+3. Retrigger the matching Vercel preview deployment.
+
+Automating that handoff requires a write-capable Infisical identity or token
+scoped to environment `preview`, path `/apps/web`.
+
 ## Smoke Tests
 
-Run these checks after every production, staging, or preview deploy.
+Run these checks after production, staging, or preview deploys.
 
 Health:
 

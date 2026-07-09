@@ -2,14 +2,31 @@
 
 Monorepo for the machinedpens.info apps and shared packages.
 
-## Getting started 
+## Getting started
+
+### Prerequisites
+
+- Node.js 22
+- Corepack, enabled with `corepack enable`
+- pnpm 10.33.2, provided by the repo `packageManager` setting
+- Infisical CLI access to the `Field Log` project
+
+Install dependencies after cloning:
+
+```sh
+corepack enable
+pnpm install
+```
 
 ### Installing and configuring Infisical
 
-This repo uses the Infisical project `Field Log` for local Development secrets. Deployment secrets should be delivered by Infisical App Connections into the chosen host environment instead of wrapping deployment commands with the Infisical CLI.
+This repo uses the Infisical project `Field Log` for local Development secrets.
+Production and preview host secrets are synced from Infisical into the hosting
+platform where possible.
 
-See [Environment Variables](docs/ENVIRONMENT_VARIABLES.md) for app-specific
-runtime variables and deployment requirements.
+See [Environment Variables](docs/environment-variables.md) for app-specific
+runtime variables and [Cloudflare API Deployment](docs/cloudflare-api.md) for
+Worker deployment setup.
 
 1. Install the official Infisical CLI for your OS:
    <https://infisical.com/docs/cli/overview>
@@ -26,7 +43,15 @@ runtime variables and deployment requirements.
    infisical login
    ```
 
-4. Test local Infisical access:
+4. Initialize or verify the repo project config:
+
+   ```sh
+   infisical init
+   ```
+
+   Choose the `Field Log` project if prompted.
+
+5. Test local Infisical access:
 
    ```sh
    infisical run --env=dev --path=/local/smoke -- node -e "console.log(process.env.TEST)"
@@ -38,6 +63,30 @@ runtime variables and deployment requirements.
    Infisical working
    ```
 
+6. Confirm the app secret folders you need exist in Infisical:
+
+   - `/apps/api` in `dev`, `preview`, and `prod`
+   - `/apps/web` in `dev`, `preview`, and `prod`
+   - `/apps/mobile` in `dev`
+   - `/apps/autmog` in `dev`, if running the Autmog archive
+   - `/tools/cloudflare` in `dev`, `preview`, and `prod`, if deploying the API
+   - `/tools/logger-axiom-test` in `dev`, if running the live Axiom logger test
+
+### Cloudflare API setup
+
+`apps/api` runs as a Cloudflare Worker. Local API development uses
+`wrangler dev` through Infisical so the local runtime matches the deployed
+Worker runtime.
+
+Before deploying the API, configure:
+
+- the `field-log.app` zone in Cloudflare
+- Worker custom domains for `api.field-log.app` and
+  `api.staging.field-log.app`
+- Infisical Cloudflare App Connection and Cloudflare Workers Secret Syncs
+- `/tools/cloudflare` deploy credentials in Infisical
+
+The full setup is documented in [docs/cloudflare-api.md](docs/cloudflare-api.md).
 
 ## AI commands
 
@@ -55,10 +104,11 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Starts every app dev server: API, Autmog archive, Expo mobile, and TanStack Start web. |
-| `pnpm dev:web` | Starts the Hono API and the TanStack Start web app. |
-| `pnpm dev:ios` | Starts the Hono API and launches the Expo app for iOS. |
-| `pnpm dev:android` | Starts the Hono API and launches the Expo app for Android. |
+| `pnpm dev` | Starts every app dev server: Cloudflare Worker API, Autmog archive, Expo mobile, and TanStack Start web. |
+| `pnpm dev:web` | Starts the Cloudflare Worker API and the TanStack Start web app. |
+| `pnpm dev:ios` | Starts the Cloudflare Worker API and launches the Expo app for iOS. |
+| `pnpm dev:android` | Starts the Cloudflare Worker API and launches the Expo app for Android. |
+| `pnpm --filter @app/api dev:node` | Starts the legacy local Node Hono server for API debugging outside the Worker runtime. |
 
 
 ## Running tools

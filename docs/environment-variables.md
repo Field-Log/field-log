@@ -31,7 +31,7 @@ client-side code.
 Local development uses stable app ports:
 
 - Web: `http://localhost:4005`
-- API: `http://localhost:4006`
+- API Worker: `http://localhost:4006`
 
 Logging environment variables, Axiom setup, and client proxy configuration are
 documented in [logger.md](./logger.md).
@@ -39,7 +39,9 @@ documented in [logger.md](./logger.md).
 ## API App
 
 `apps/api` loads local development secrets from Infisical environment `dev` at
-`/apps/api`.
+`/apps/api`. The default API dev command runs `wrangler dev` on port `4006` so
+local development uses the Cloudflare Worker runtime. `dev:node` is available
+for debugging the legacy local Node Hono server.
 
 Required API values:
 
@@ -129,18 +131,6 @@ Current mobile variables:
 Mobile commands load these values from `/apps/mobile`.
 Server-only values such as `DATABASE_URL` and `CLERK_SECRET_KEY` should stay
 behind `apps/api` or web server code.
-
-## API App
-
-The API app loads server-only runtime values from `/apps/api`:
-
-- `DATABASE_URL`
-- optional `AXIOM_TOKEN`
-- optional `AXIOM_DATASET`
-- optional `AXIOM_EDGE_DOMAIN`
-- optional `LOG_LEVEL`
-- optional `LOGGER`
-- optional `LOG_PROXY_CLIENT_KEY`
 
 ## Database Package
 
