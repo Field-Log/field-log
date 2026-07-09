@@ -83,7 +83,7 @@ jobs:
           oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
           domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
           project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-          env-slug: dev
+          env-slug: preview
           secret-path: /tools/cloudflare
 
       - name: Deploy PR preview Worker
@@ -256,7 +256,7 @@ jobs:
           oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
           domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
           project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-          env-slug: dev
+          env-slug: prod
           secret-path: /tools/cloudflare
 
       - name: Deploy production Worker
