@@ -102,10 +102,31 @@ jobs:
             exit 1
           fi
 
-          pnpm dlx wrangler versions upload \
+          set +e
+          upload_output="$(pnpm dlx wrangler versions upload \
             --config apps/api/wrangler.jsonc \
             --env preview \
-            --preview-alias "$PREVIEW_ALIAS"
+            --preview-alias "$PREVIEW_ALIAS" 2>&1)"
+          upload_status=$?
+          set -e
+
+          printf '%s\n' "$upload_output"
+
+          if [[ "$upload_status" -ne 0 ]]; then
+            if [[ "$upload_output" != *"does not yet exist"* ]]; then
+              exit "$upload_status"
+            fi
+
+            echo "Preview Worker does not exist yet; creating it with wrangler deploy."
+            pnpm dlx wrangler deploy \
+              --config apps/api/wrangler.jsonc \
+              --env preview
+
+            pnpm dlx wrangler versions upload \
+              --config apps/api/wrangler.jsonc \
+              --env preview \
+              --preview-alias "$PREVIEW_ALIAS"
+          fi
 
           preview_url="https://${PREVIEW_ALIAS}-${API_PREVIEW_WORKER_NAME}.${CLOUDFLARE_WORKERS_SUBDOMAIN}.workers.dev"
           echo "preview_alias=$PREVIEW_ALIAS" >> "$GITHUB_OUTPUT"

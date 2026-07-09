@@ -291,6 +291,8 @@ Pull requests:
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `preview`, path `/tools/cloudflare`.
 - Uploads a preview Worker version with alias `pr-<number>`.
+- If `field-log-api-preview` does not exist yet, bootstraps it with
+  `wrangler deploy --env preview`, then retries the aliased version upload.
 - Smoke-tests the preview health endpoint.
 - Posts or updates a pull request comment with the preview and health URLs.
 - Marks the preview comment inactive when the pull request closes.
