@@ -1,3 +1,4 @@
+import type { Logger } from "@package/logger";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyVercelPreviewApiEnv,
@@ -104,14 +105,14 @@ describe("web client env aliases", () => {
 });
 
 describe("Vercel preview API env", () => {
-  it("derives PR-specific API and log proxy URLs for Vercel previews", () => {
+  it("derives PR-specific API and log proxy URLs for Vercel previews", async () => {
     const runtimeEnv: Record<string, string | undefined> = {
       API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
       VERCEL_ENV: "preview",
       VERCEL_GIT_PULL_REQUEST_ID: "27",
     };
 
-    applyVercelPreviewApiEnv(runtimeEnv);
+    await applyVercelPreviewApiEnv(runtimeEnv);
 
     expect(runtimeEnv.VITE_API_BASE_URL).toBe(
       "https://pr-27-field-log-api-preview.23242.workers.dev",
@@ -127,7 +128,7 @@ describe("Vercel preview API env", () => {
     );
   });
 
-  it("normalizes preview Worker hosts that include a protocol or path", () => {
+  it("normalizes preview Worker hosts that include a protocol or path", async () => {
     const runtimeEnv: Record<string, string | undefined> = {
       API_PREVIEW_WORKER_HOST:
         "https://field-log-api-preview.23242.workers.dev/",
@@ -135,14 +136,14 @@ describe("Vercel preview API env", () => {
       VERCEL_GIT_PULL_REQUEST_ID: "123",
     };
 
-    applyVercelPreviewApiEnv(runtimeEnv);
+    await applyVercelPreviewApiEnv(runtimeEnv);
 
     expect(runtimeEnv.VITE_API_BASE_URL).toBe(
       "https://pr-123-field-log-api-preview.23242.workers.dev",
     );
   });
 
-  it("overrides shared preview API values only for Vercel PR previews", () => {
+  it("overrides shared preview API values only for Vercel PR previews", async () => {
     const runtimeEnv: Record<string, string | undefined> = {
       API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
       VERCEL_ENV: "preview",
@@ -151,7 +152,7 @@ describe("Vercel preview API env", () => {
       VITE_LOG_PROXY_URL: "https://api.preview.field-log.app/logs",
     };
 
-    applyVercelPreviewApiEnv(runtimeEnv);
+    await applyVercelPreviewApiEnv(runtimeEnv);
 
     expect(runtimeEnv.VITE_API_BASE_URL).toBe(
       "https://pr-42-field-log-api-preview.23242.workers.dev",
@@ -161,7 +162,43 @@ describe("Vercel preview API env", () => {
     );
   });
 
-  it("leaves non-preview and non-PR deployments unchanged", () => {
+  it("flushes the deployment log event", async () => {
+    const runtimeEnv: Record<string, string | undefined> = {
+      API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
+      VERCEL_ENV: "preview",
+      VERCEL_GIT_PULL_REQUEST_ID: "27",
+    };
+    const logger: Logger = {
+      child: vi.fn(() => logger),
+      debug: vi.fn(),
+      error: vi.fn(),
+      fatal: vi.fn(),
+      flush: vi.fn().mockResolvedValue(undefined),
+      info: vi.fn(),
+      operation: vi.fn(async (_name, action) => action()),
+      trace: vi.fn(),
+      verbose: vi.fn(),
+      warn: vi.fn(),
+    };
+
+    await applyVercelPreviewApiEnv(runtimeEnv, logger);
+
+    expect(logger.info).toHaveBeenCalledWith(
+      "web.previewApi.derived",
+      expect.objectContaining({
+        attributes: expect.objectContaining({
+          pullRequestId: "27",
+          workerHost: "field-log-api-preview.23242.workers.dev",
+        }),
+        console: {
+          mode: "verbose",
+        },
+      }),
+    );
+    expect(logger.flush).toHaveBeenCalledOnce();
+  });
+
+  it("leaves non-preview and non-PR deployments unchanged", async () => {
     const productionEnv: Record<string, string | undefined> = {
       API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
       VERCEL_ENV: "production",
@@ -174,8 +211,8 @@ describe("Vercel preview API env", () => {
       VITE_API_BASE_URL: "https://api.preview.field-log.app",
     };
 
-    applyVercelPreviewApiEnv(productionEnv);
-    applyVercelPreviewApiEnv(branchPreviewEnv);
+    await applyVercelPreviewApiEnv(productionEnv);
+    await applyVercelPreviewApiEnv(branchPreviewEnv);
 
     expect(productionEnv.VITE_API_BASE_URL).toBe("https://api.field-log.app");
     expect(branchPreviewEnv.VITE_API_BASE_URL).toBe(

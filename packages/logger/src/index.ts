@@ -28,6 +28,7 @@ export type SerializedError = {
 export type LogEvent = {
   app: string;
   attributes?: LogContext;
+  console?: ConsoleLogOptions;
   context?: LogContext;
   environment: string;
   error?: SerializedError;
@@ -37,8 +38,13 @@ export type LogEvent = {
   timestamp: string;
 };
 
+export type ConsoleLogOptions = {
+  mode?: ConsoleTransportMode;
+};
+
 export type LogData = {
   attributes?: LogContext;
+  console?: ConsoleLogOptions;
   context?: LogContext;
   error?: unknown;
   includeRawPayload?: boolean;
@@ -244,6 +250,10 @@ export function createLogger(config: LoggerConfig): Logger {
       event.rawPayload = redactValue(data.rawPayload, redactKeys);
     }
 
+    if (data?.console) {
+      event.console = data.console;
+    }
+
     for (const transport of transports) {
       const task = Promise.resolve(transport.log(event)).catch(() => undefined);
       pending.add(task);
@@ -332,13 +342,15 @@ export function createConsoleTransport(
 
   return {
     log(event) {
+      const eventMode = event.console?.mode ?? mode;
+      const eventForOutput = omitConsoleOptions(event);
       const output =
-        mode === "verbose"
+        eventMode === "verbose"
           ? {
-              ...event,
+              ...eventForOutput,
               levelWeight: logLevelWeights[event.level],
             }
-          : compactConsoleEvent(event);
+          : compactConsoleEvent(eventForOutput);
       const line = JSON.stringify(output);
 
       if (event.level === "fatal" || event.level === "error") {
@@ -363,12 +375,13 @@ export function createAxiomTransport(
     async log(event) {
       const fetcher = config.fetch ?? getGlobalFetch();
       const domain = config.edgeDomain ?? "api.axiom.co";
+      const eventForIngest = omitConsoleOptions(event);
       const response = await fetcher(
         `https://${domain}/v1/datasets/${encodeURIComponent(
           config.dataset,
         )}/ingest`,
         {
-          body: JSON.stringify([event]),
+          body: JSON.stringify([eventForIngest]),
           headers: {
             Authorization: `Bearer ${config.token}`,
             "Content-Type": "application/json",
@@ -403,7 +416,7 @@ export function createProxyTransport(
 
       const response = await fetcher(config.url, {
         body: JSON.stringify({
-          events: [event],
+          events: [omitConsoleOptions(event)],
         }),
         headers,
         method: "POST",
@@ -417,6 +430,13 @@ export function createProxyTransport(
       }
     },
   };
+}
+
+function omitConsoleOptions(event: LogEvent): Omit<LogEvent, "console"> {
+  const { console: consoleOptions, ...eventForTransport } = event;
+  void consoleOptions;
+
+  return eventForTransport;
 }
 
 function createRedactSet(extraKeys: readonly string[]): Set<string> {

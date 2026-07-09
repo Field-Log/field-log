@@ -1,9 +1,13 @@
 import process from "node:process";
 import {
+  createAxiomTransport,
   createConsoleTransport,
   createLogger,
+  type Logger,
   loggerMessages,
   loggerValues,
+  normalizeConsoleTransportMode,
+  normalizeLogLevel,
 } from "@package/logger";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
@@ -15,16 +19,36 @@ import { createWebServerEnv } from "./src/env/server.schema";
 
 type MutableEnv = Record<string, string | undefined>;
 
-const buildLogger = createLogger({
-  app: loggerValues.apps.web,
-  environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "build",
-  transports: [createConsoleTransport({ mode: "verbose" })],
-});
-
 function envValue(env: MutableEnv, key: string) {
   const value = env[key];
 
   return value === "" ? undefined : value;
+}
+
+function createWebBuildLogger(env: MutableEnv): Logger {
+  const axiomDataset = envValue(env, "AXIOM_DATASET");
+  const axiomToken = envValue(env, "AXIOM_TOKEN");
+
+  return createLogger({
+    app: loggerValues.apps.web,
+    environment:
+      envValue(env, "VERCEL_ENV") ?? envValue(env, "NODE_ENV") ?? "build",
+    level: normalizeLogLevel(envValue(env, "LOG_LEVEL")),
+    transports: [
+      ...(axiomDataset !== undefined && axiomToken !== undefined
+        ? [
+            createAxiomTransport({
+              dataset: axiomDataset,
+              edgeDomain: envValue(env, "AXIOM_EDGE_DOMAIN"),
+              token: axiomToken,
+            }),
+          ]
+        : []),
+      createConsoleTransport({
+        mode: normalizeConsoleTransportMode(envValue(env, "LOGGER")),
+      }),
+    ],
+  });
 }
 
 export function applyWebClientEnvAliases(env: MutableEnv = process.env) {
@@ -56,7 +80,10 @@ function normalizePreviewWorkerHost(value: string | undefined) {
   return host === "" ? undefined : host;
 }
 
-export function applyVercelPreviewApiEnv(env: MutableEnv = process.env) {
+export async function applyVercelPreviewApiEnv(
+  env: MutableEnv = process.env,
+  logger: Logger = createWebBuildLogger(env),
+) {
   if (envValue(env, "VERCEL_ENV") !== "preview") {
     return;
   }
@@ -75,22 +102,26 @@ export function applyVercelPreviewApiEnv(env: MutableEnv = process.env) {
   env.VITE_API_BASE_URL = apiBaseUrl;
   env.VITE_LOG_PROXY_URL = `${apiBaseUrl}/logs`;
 
-  buildLogger.info(loggerMessages.web.previewApiDerived, {
+  logger.info(loggerMessages.web.previewApiDerived, {
     attributes: {
       apiBaseUrl,
       logProxyUrl: env.VITE_LOG_PROXY_URL,
       pullRequestId,
       workerHost,
     },
+    console: {
+      mode: "verbose",
+    },
   });
+  await logger.flush();
 }
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(async ({ mode }) => {
   const isTest = mode === "test";
 
   if (!isTest) {
     applyWebClientEnvAliases();
-    applyVercelPreviewApiEnv();
+    await applyVercelPreviewApiEnv();
 
     createWebClientEnv({
       VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
