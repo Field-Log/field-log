@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildInfisicalRunArgs,
+  getInfisicalAuthCheckError,
   getSecretPaths,
   parseCliArguments,
   RunnerError,
@@ -148,6 +149,18 @@ describe("buildInfisicalRunArgs", () => {
       "@package/github-discord-notifier",
       "notify",
     ]);
+  });
+});
+
+describe("infisical auth checks", () => {
+  it("surfaces signed-out CLI errors with login instructions", () => {
+    const error = getInfisicalAuthCheckError(
+      "error: we couldn't find your logged in details, try running [infisical login] then try again",
+    );
+
+    expect(error).toBeInstanceOf(RunnerError);
+    expect(error.message).toContain("Infisical CLI is not signed in.");
+    expect(error.message).toContain("infisical login");
   });
 });
 

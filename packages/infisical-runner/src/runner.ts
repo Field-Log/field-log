@@ -169,11 +169,65 @@ export function assertInfisicalProjectConfig(repoRoot: string): void {
   );
 }
 
+export function getInfisicalAuthCheckError(output: string): RunnerError {
+  if (
+    output.includes("couldn't find your logged in details") ||
+    output.includes("infisical login")
+  ) {
+    return new RunnerError(
+      [
+        "Infisical CLI is not signed in.",
+        "",
+        "Run this from the monorepo root, then retry the command:",
+        "  infisical login",
+      ].join("\n"),
+    );
+  }
+
+  return new RunnerError(
+    [
+      "Infisical CLI authentication check failed.",
+      "",
+      output.trim() || "No output was returned by the Infisical CLI.",
+    ].join("\n"),
+  );
+}
+
+export function assertInfisicalAuthenticated(repoRoot: string): void {
+  const result = spawnSync(
+    "infisical",
+    [
+      "secrets",
+      "folders",
+      "get",
+      `--env=${localEnvironmentSlug}`,
+      "--path=/",
+      "--output=json",
+    ],
+    {
+      cwd: repoRoot,
+      encoding: "utf8",
+    },
+  );
+
+  if (result.status === 0) {
+    return;
+  }
+
+  const output = [result.stdout, result.stderr]
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+
+  throw getInfisicalAuthCheckError(output);
+}
+
 export async function runInfisicalCommand(
   request: InfisicalRunRequest,
 ): Promise<number> {
   assertInfisicalCliAvailable();
   assertInfisicalProjectConfig(request.repoRoot);
+  assertInfisicalAuthenticated(request.repoRoot);
 
   const args = buildInfisicalRunArgs(request);
   const child = spawn("infisical", args, {

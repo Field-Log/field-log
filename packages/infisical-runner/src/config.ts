@@ -1,7 +1,6 @@
 export const localEnvironmentSlug = "dev";
 
 const apiSecretPath = "/apps/api";
-const autmogSecretPath = "/apps/autmog";
 const cloudflareToolsSecretPath = "/tools/cloudflare";
 const mobileSecretPath = "/apps/mobile";
 const webSecretPath = "/apps/web";
@@ -38,20 +37,6 @@ export const commandSecrets = {
     "test:watch": {
       allowServerSecrets: true,
       paths: [apiSecretPath],
-    },
-  },
-  autmog: {
-    dev: {
-      allowServerSecrets: false,
-      paths: [autmogSecretPath],
-    },
-    test: {
-      allowServerSecrets: false,
-      paths: [autmogSecretPath],
-    },
-    "test:watch": {
-      allowServerSecrets: false,
-      paths: [autmogSecretPath],
     },
   },
   database: {

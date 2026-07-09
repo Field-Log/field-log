@@ -68,7 +68,6 @@ Worker deployment setup.
    - `/apps/api` in `dev`, `preview`, and `prod`
    - `/apps/web` in `dev`, `preview`, and `prod`
    - `/apps/mobile` in `dev`
-   - `/apps/autmog` in `dev`, if running the Autmog archive
    - `/tools/cloudflare` in `dev`, `preview`, and `prod`, if deploying the API
    - `/tools/logger-axiom-test` in `dev`, if running the live Axiom logger test
 
@@ -123,7 +122,7 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 | `pnpm format` | Formats supported files with Biome. |
 | `pnpm check` | Runs Biome format/lint/import checks with fixes, then package-level checks. |
 | `pnpm typecheck` | Runs TypeScript typechecking across packages and apps. |
-| `pnpm test` | Runs app tests with Infisical Development secrets and package tests without secrets. |
+| `pnpm test` | Checks local Infisical CLI auth, then runs app tests with Infisical Development secrets and package tests without secrets. |
 | `pnpm test:ci` | Runs local/unit tests without Infisical for CI. |
 | `pnpm test:watch` | Runs watch-mode app tests with Infisical Development secrets and package tests without secrets. |
 | `pnpm test:watch:no-infisical` | Runs watch-mode tests without Infisical where supported. |
