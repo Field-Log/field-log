@@ -27,7 +27,7 @@ permissions:
   contents: read
 
 env:
-  API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview -->"
+  API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
   API_PREVIEW_WORKER_NAME: field-log-api-preview
 
 jobs:

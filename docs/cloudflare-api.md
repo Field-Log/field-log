@@ -325,6 +325,10 @@ The `Field Log API Preview` GitHub App must be installed on this repository
 with `Issues: Read and write`, because pull request comments use GitHub issue
 comments.
 
+The GitHub App uses its own pull request comment marker. If the workflow
+previously commented as `github-actions[bot]`, delete that old comment manually
+after the app creates its replacement.
+
 The Infisical identity must read:
 
 - environment `preview`, path `/tools/cloudflare`
