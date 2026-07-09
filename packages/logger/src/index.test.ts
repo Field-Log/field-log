@@ -42,6 +42,7 @@ describe("logger", () => {
       web: {
         accountLoaded: "web.account.loaded",
         fxRatesFetchFailed: "web.fxRates.fetch.failed",
+        previewApiDerived: "web.previewApi.derived",
       },
     });
     expect(loggerValues).toMatchObject({
@@ -257,6 +258,44 @@ describe("transports", () => {
     });
   });
 
+  it("allows individual events to override compact console mode", async () => {
+    const writer = {
+      error: vi.fn(),
+      log: vi.fn(),
+      warn: vi.fn(),
+    };
+    const transport = createConsoleTransport({ writer });
+
+    await transport.log({
+      app: "web",
+      attributes: {
+        apiBaseUrl: "https://pr-27-field-log-api-preview.example.test",
+        pullRequestId: "27",
+      },
+      console: {
+        mode: "verbose",
+      },
+      environment: "preview",
+      level: "info",
+      message: "web.previewApi.derived",
+      timestamp: "2026-01-01T00:00:00.000Z",
+    });
+
+    expect(writer.log).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(writer.log.mock.calls[0]?.[0]))).toEqual({
+      app: "web",
+      attributes: {
+        apiBaseUrl: "https://pr-27-field-log-api-preview.example.test",
+        pullRequestId: "27",
+      },
+      environment: "preview",
+      level: "info",
+      levelWeight: 40,
+      message: "web.previewApi.derived",
+      timestamp: "2026-01-01T00:00:00.000Z",
+    });
+  });
+
   it("normalizes console transport mode from LOGGER values", () => {
     expect(normalizeConsoleTransportMode("verbose")).toBe("verbose");
     expect(normalizeConsoleTransportMode("compact")).toBe("compact");
@@ -276,6 +315,9 @@ describe("transports", () => {
 
     await transport.log({
       app: "api",
+      console: {
+        mode: "verbose",
+      },
       environment: "test",
       level: "info",
       message: "hello",
@@ -316,6 +358,9 @@ describe("transports", () => {
 
     await transport.log({
       app: "web",
+      console: {
+        mode: "verbose",
+      },
       environment: "test",
       level: "info",
       message: "clicked",

@@ -24,6 +24,9 @@ Keep the app name on each event with `app: "api"`, `app: "web"`, or
 per-app datasets only if access, retention, or cost controls need to differ by
 app.
 
+The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
+Use that event to confirm scheduled Worker execution and Axiom ingestion.
+
 ## Infisical
 
 Server targets that send directly to Axiom keep their Axiom settings in their

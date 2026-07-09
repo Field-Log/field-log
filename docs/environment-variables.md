@@ -17,11 +17,15 @@ folder rather than service-specific or locally aliased names.
 The web app validates client variables separately from server variables:
 
 - client: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_SIGN_IN_URL`,
-  `VITE_CLERK_SIGN_UP_URL`, optional `VITE_LOG_PROXY_URL`, optional
-  `VITE_LOG_PROXY_CLIENT_KEY`
+  `VITE_CLERK_SIGN_UP_URL`, optional `VITE_API_BASE_URL`, optional
+  `VITE_LOG_PROXY_URL`, optional `VITE_LOG_PROXY_CLIENT_KEY`
 - server: `DATABASE_URL`, `CLERK_SECRET_KEY`, optional `AXIOM_TOKEN`, optional
   `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`, optional `LOG_LEVEL`, optional
   `LOGGER`
+
+Preview builds may also receive `API_PREVIEW_WORKER_HOST`, a build-only helper
+used to derive PR-specific `VITE_API_BASE_URL` and `VITE_LOG_PROXY_URL` values
+from Vercel's `VERCEL_GIT_PULL_REQUEST_ID`.
 
 Do not expose `CLERK_SECRET_KEY`, `DATABASE_URL`, or Axiom ingest credentials to
 client-side code.
@@ -31,10 +35,36 @@ client-side code.
 Local development uses stable app ports:
 
 - Web: `http://localhost:4005`
-- API: `http://localhost:4006`
+- API Worker: `http://localhost:4006`
 
 Logging environment variables, Axiom setup, and client proxy configuration are
 documented in [logger.md](./logger.md).
+
+## API App
+
+`apps/api` loads local development secrets from Infisical environment `dev` at
+`/apps/api`. The default API dev command runs `wrangler dev` on port `4006` so
+local development uses the Cloudflare Worker runtime. `dev:node` is available
+for debugging the legacy local Node Hono server.
+
+Required API values:
+
+- `DATABASE_URL`
+
+Optional API values:
+
+- `APP_ENV`
+- `AXIOM_TOKEN`
+- `AXIOM_DATASET`
+- `AXIOM_EDGE_DOMAIN`
+- `LOG_LEVEL`
+- `LOGGER`
+- `LOG_PROXY_CLIENT_KEY`
+- `PORT`, local Node server only
+
+Cloudflare Worker production and preview secrets are synchronized from
+Infisical `/apps/api` into Cloudflare Workers. See
+[cloudflare-api.md](./cloudflare-api.md).
 
 ## FigJam / Figma Agent Bridge
 
@@ -70,6 +100,7 @@ environment variable configuration:
 - `VITE_CLERK_SIGN_UP_URL=/sign-up`
 - `CLERK_SECRET_KEY`
 - `DATABASE_URL`
+- preview only: `API_PREVIEW_WORKER_HOST=field-log-api-preview.23242.workers.dev`
 - optional `AXIOM_TOKEN`
 - optional `AXIOM_DATASET`
 - optional `AXIOM_EDGE_DOMAIN`
@@ -105,18 +136,6 @@ Current mobile variables:
 Mobile commands load these values from `/apps/mobile`.
 Server-only values such as `DATABASE_URL` and `CLERK_SECRET_KEY` should stay
 behind `apps/api` or web server code.
-
-## API App
-
-The API app loads server-only runtime values from `/apps/api`:
-
-- `DATABASE_URL`
-- optional `AXIOM_TOKEN`
-- optional `AXIOM_DATASET`
-- optional `AXIOM_EDGE_DOMAIN`
-- optional `LOG_LEVEL`
-- optional `LOGGER`
-- optional `LOG_PROXY_CLIENT_KEY`
 
 ## Database Package
 
