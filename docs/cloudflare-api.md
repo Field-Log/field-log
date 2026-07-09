@@ -322,8 +322,15 @@ Configure these GitHub repository secrets:
 - `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY`
 
 The `Field Log API Preview` GitHub App must be installed on this repository
-with `Issues: Read and write`, because pull request comments use GitHub issue
-comments.
+with these repository permissions:
+
+- `Issues: Read and write`
+- `Pull requests: Read and write`
+
+Pull request comments use GitHub issue comments, but GitHub may accept either
+the Issues or Pull requests write permission for pull request comment endpoints.
+After changing app permissions, approve the updated installation permissions in
+the GitHub App installation settings for `Field-Log/field-log`.
 
 The GitHub App uses its own pull request comment marker. If the workflow
 previously commented as `github-actions[bot]`, delete that old comment manually
