@@ -1,7 +1,7 @@
+import { loggerMessages } from "@package/logger";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
-import { loggerMessages } from "@repo/logger";
-import { useEffect, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { initDatabase } from "./src/db/database";
@@ -66,7 +66,7 @@ function AppGate() {
   return user ? <MainTabs /> : <AuthScreen />;
 }
 
-export default function App() {
+export default function App(): ReactElement {
   return (
     <AuthProvider>
       <NavigationContainer>

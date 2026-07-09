@@ -1,4 +1,4 @@
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as AuthSession from "expo-auth-session/providers/google";
 import * as WebBrowser from "expo-web-browser";

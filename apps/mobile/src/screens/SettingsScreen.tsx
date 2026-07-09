@@ -1,4 +1,4 @@
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import React, { useCallback, useEffect, useState } from "react";

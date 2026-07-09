@@ -7,8 +7,13 @@
   "scripts": {
     "dev": "turbo run dev --filter='./apps/*' --filter=@package/logger",
     "dev:web": "turbo run dev:web --filter=@app/api --filter=@app/web --filter=@package/logger",
-    "dev:ios": "turbo run dev:ios --filter=@app/api --filter=@app/mobile --filter=@package/logger",
-    "dev:android": "turbo run dev:android --filter=@app/api --filter=@app/mobile --filter=@package/logger",
+    "dev:expo": "node scripts/dev-mobile-with-api.mjs expo",
+    "dev:ios": "node scripts/dev-mobile-with-api.mjs ios",
+    "dev:android": "node scripts/dev-mobile-with-api.mjs android",
+    "mobile:eas:android": "pnpm --dir apps/mobile exec eas build --platform android --profile development",
+    "mobile:eas:ios-simulator": "pnpm --dir apps/mobile exec eas build --platform ios --profile development-simulator",
+    "mobile:run:android": "pnpm --dir apps/mobile exec expo run:android",
+    "mobile:run:ios": "pnpm --dir apps/mobile exec expo run:ios",
     "build": "turbo run build",
     "build:ci": "turbo run build:ci",
     "db:generate": "pnpm --filter @package/database db:generate",
@@ -34,5 +39,10 @@
     "typescript": "latest",
     "typescript-eslint": "latest",
     "vitest": "latest"
+  },
+  "pnpm": {
+    "overrides": {
+      "utf-8-validate": "5.0.10"
+    }
   }
 }

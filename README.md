@@ -2,7 +2,7 @@
 
 Monorepo for the machinedpens.info apps and shared packages.
 
-## Getting started 
+## Getting started
 
 ### Installing and configuring Infisical
 
@@ -38,6 +38,67 @@ runtime variables and deployment requirements.
    Infisical working
    ```
 
+### Set up the repo after Infisical
+
+After cloning the repo and confirming Infisical access, install dependencies from
+the repo root:
+
+```sh
+corepack enable
+pnpm install
+```
+
+Run the baseline checks before starting app work:
+
+```sh
+pnpm format
+pnpm lint
+pnpm typecheck
+```
+
+### Developing mobile apps with Expo
+
+If you are working on the mobile app, install a development build before using
+the mobile dev commands. The mobile app uses `expo-dev-client`, so Expo Go is not
+the target runtime.
+
+To build and install locally, use the native toolchain on your machine:
+
+```sh
+pnpm mobile:run:ios
+pnpm mobile:run:android
+```
+
+Local iOS builds require Xcode on macOS. Local Android builds require Android
+Studio and an Android SDK/emulator.
+
+To build with EAS instead, install and authenticate the EAS CLI, then use the
+development profiles from the repo root:
+
+```sh
+pnpm mobile:eas:android
+pnpm mobile:eas:ios-simulator
+```
+
+The `development` Android profile can be installed on an Android device or
+emulator. The `development-simulator` iOS profile is for iOS Simulator. For a
+physical iPhone, create an iOS development build with the `development` profile
+and Apple signing credentials.
+
+Once the mobile development build is installed, start local development from the
+repo root:
+
+```sh
+pnpm dev:expo
+```
+
+This starts the Hono API and the Expo dev-client Metro server. Use `pnpm dev:ios`
+or `pnpm dev:android` when you want the command to launch a specific installed
+mobile target. For web-only work, use:
+
+```sh
+pnpm dev:web
+```
 
 ## AI commands
 
@@ -58,6 +119,7 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 | `pnpm dev:web` | Starts the Hono API and the TanStack Start web app. |
 | `pnpm dev:ios` | Starts the Hono API and launches the Expo app for iOS. |
 | `pnpm dev:android` | Starts the Hono API and launches the Expo app for Android. |
+| `pnpm dev:expo` | Starts the Hono API and the interactive Expo dev-client Metro server. |
 
 
 ## Running tools
@@ -66,6 +128,10 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 | --- | --- |
 | `pnpm build` | Builds all apps and packages through Turborepo, using Infisical-backed app commands where configured. |
 | `pnpm build:ci` | Builds all apps and packages through Turborepo with environment variables already provided. |
+| `pnpm mobile:run:ios` | Builds and installs the mobile development build on iOS with the local native toolchain. |
+| `pnpm mobile:run:android` | Builds and installs the mobile development build on Android with the local native toolchain. |
+| `pnpm mobile:eas:android` | Starts an EAS Android development build using the `development` profile. |
+| `pnpm mobile:eas:ios-simulator` | Starts an EAS iOS Simulator development build using the `development-simulator` profile. |
 | `pnpm lint` | Runs Biome linting project-wide, then package-level lint tasks. |
 | `pnpm format` | Formats supported files with Biome. |
 | `pnpm check` | Runs Biome format/lint/import checks with fixes, then package-level checks. |
