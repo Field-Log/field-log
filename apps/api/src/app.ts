@@ -1,6 +1,6 @@
 import { type LogData, type Logger, loggerValues } from "@package/logger";
 import type { HealthResponse, ServiceInfoResponse } from "@package/types";
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 import { parseClientLogEvents } from "./logs.js";
 
 export type AppRuntimeConfig = {

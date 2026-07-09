@@ -4,9 +4,9 @@ import {
   loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
-} from "@repo/logger";
-import type { Services } from "@repo/services";
-import { createServices } from "@repo/services";
+} from "@package/logger";
+import type { Services } from "@package/services";
+import { createServices } from "@package/services";
 import { type ApiRuntimeEnv, createApiEnv } from "../env.schema.js";
 
 export type ApiServicesRuntime = {

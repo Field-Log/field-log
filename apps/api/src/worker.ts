@@ -1,4 +1,4 @@
-import { loggerMessages } from "@repo/logger";
+import { loggerMessages } from "@package/logger";
 import { createApp } from "./app.js";
 import type { ApiRuntimeEnv } from "./env.schema.js";
 import { createApiServices } from "./lib/create-services.js";
