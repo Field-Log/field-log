@@ -48,6 +48,14 @@ Worker deployment setup.
    Infisical working
    ```
 
+5. Confirm the app secret folders you need exist in Infisical:
+
+   - `/apps/api` in `dev`, `preview`, and `prod`
+   - `/apps/web` in `dev`, `preview`, and `prod`
+   - `/apps/mobile` in `dev`
+   - `/tools/cloudflare` in `dev`, `preview`, and `prod`, if deploying the API
+   - `/tools/logger-axiom-test` in `dev`, if running the live Axiom logger test
+
 ### Install deps and set up the repo after Infisical
 
 After cloning the repo and confirming Infisical access, install dependencies from
@@ -68,184 +76,23 @@ pnpm typecheck
 
 ### Developing mobile apps with Expo
 
-If you are working on the mobile app, install a development build before using
-the mobile dev commands. The mobile app uses `expo-dev-client`, so Expo Go is not
-the target runtime.
+The mobile app uses `expo-dev-client`, so Expo Go is not the target runtime. See
+[Getting started with Expo](docs/getting-started-with-expo.md) to install Xcode,
+Android Studio, SDK tools, local simulators/emulators, and the development
+client.
 
-To build and install locally, use the native toolchain on your machine:
-
-```sh
-pnpm dev:ios:no-api
-pnpm dev:android:no-api
-```
-
-Local iOS builds require Xcode on macOS. Local Android builds require Android
-Studio and an Android SDK/emulator.
-
-For Android, install JDK 17 before setting up Android Studio. On macOS:
+After setup, run the mobile app from the repo root:
 
 ```sh
-brew install --cask zulu@17
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home
+pnpm dev:ios
+pnpm dev:android
 ```
 
-Then install Android Studio from the
-[official Android Studio download page](https://developer.android.com/studio) or
-with Homebrew on macOS:
-
-```sh
-brew install --cask android-studio
-```
-
-Open Android Studio once and complete the Setup Wizard. Then open Settings >
-Languages & Frameworks > Android SDK. If Android Studio shows an empty Android
-SDK Location, click Edit and use the default macOS location:
-
-```sh
-/Users/<your-user>/Library/Android/sdk
-```
-
-On this machine, that is:
-
-```sh
-/Users/royanger/Library/Android/sdk
-```
-
-The setup wizard installs these by default:
-
-- Android SDK Platform 36.1 or newer
-- Android SDK Build-Tools
-- Android SDK Platform-Tools
-- Android Emulator
-
-In Android Studio > Settings > Languages & Frameworks > Android SDK > SDK Tools,
-also confirm these are installed:
-
-- Android SDK Command-line Tools (latest)
-- at least one Android 36.1 or newer system image, if you plan to use an emulator
-
-You do not need a physical Android device for Android development. You need one
-runnable Android target:
-
-- an Android emulator/AVD, recommended for local development
-- or a physical Android device with USB debugging enabled
-
-Add the Android SDK tools to your shell profile and reload it:
-
-```sh
-{
-  echo ''
-  echo '# Android development tools'
-  echo 'export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home'
-  echo 'export ANDROID_HOME=$HOME/Library/Android/sdk'
-  echo 'export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin'
-  echo 'export PATH=$PATH:$ANDROID_HOME/emulator'
-  echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools'
-} >> ~/.zshrc
-
-source ~/.zshrc
-```
-
-The `sdkmanager` and `avdmanager` commands come from
-`$ANDROID_HOME/cmdline-tools/latest/bin`, so that directory must be on your
-shell path before running the setup commands below.
-
-Accept SDK licenses and verify the Android tools:
-
-```sh
-yes | sdkmanager --licenses
-adb version
-emulator -list-avds
-```
-
-You can rerun the repo Android environment check at any time:
-
-```sh
-pnpm dev:doctor:android
-```
-
-To set up the recommended local emulator, install a default Apple Silicon system
-image and create an AVD:
-
-```sh
-sdkmanager "system-images;android-36.1;google_apis;arm64-v8a"
-avdmanager create avd --name field-log-pixel --package "system-images;android-36.1;google_apis;arm64-v8a" --device "pixel_9"
-```
-
-Verify that the AVD exists, then rerun the repo doctor:
-
-```sh
-emulator -list-avds
-pnpm dev:doctor:android
-```
-
-Create an emulator from Android Studio > More Actions > Virtual Device Manager,
-or connect a physical Android device with USB debugging enabled. See the
-[Expo Android Studio Emulator guide](https://docs.expo.dev/workflow/android-studio-emulator/)
-for the full platform-specific walkthrough.
-
-If `pnpm dev:ios:no-api` fails with `xcodebuild` error code 70 and says it is
-`Unable to find a destination matching the provided destination specifier`, check
-that Xcode has a simulator runtime installed for its current iOS platform. This
-can happen when `xcrun simctl` lists an older simulator, but Xcode expects a
-newer platform such as iOS 26.5.
-
-```sh
-xcodebuild -version
-xcodebuild -showsdks
-xcrun simctl list runtimes
-xcrun simctl list devices available
-```
-
-Install the matching iOS simulator runtime from the command line:
-
-```sh
-xcodebuild -downloadPlatform iOS
-```
-
-You can also install it in Xcode from Settings > Components by downloading the
-matching iOS Simulator platform. After installation, rerun:
-
-```sh
-pnpm dev:ios:no-api
-```
-
-To build with EAS instead, install and authenticate the EAS CLI, then use the
-development profiles from the repo root. EAS builds run on Expo's cloud build
-service and produce a development build artifact; `dev:*:no-api` builds run on
-your machine and install directly to a local simulator, emulator, or device.
-
-```sh
-pnpm dev:eas:android
-pnpm dev:eas:ios
-```
-
-The `development` Android profile can be installed on an Android device or
-emulator. The `development-simulator` iOS profile is for iOS Simulator. For a
-physical iPhone, create an iOS development build with the `development` profile
-and Apple signing credentials.
-
-Once the mobile development build is installed, start local development from the
-repo root:
-
-```sh
-pnpm dev:expo
-```
-
-This starts the Hono API and the Expo dev-client Metro server. Use `pnpm dev:ios`
-or `pnpm dev:android` when you want the command to launch a specific installed
-mobile target. For web-only work, use:
+For web-only work, use:
 
 ```sh
 pnpm dev:web
 ```
-6. Confirm the app secret folders you need exist in Infisical:
-
-   - `/apps/api` in `dev`, `preview`, and `prod`
-   - `/apps/web` in `dev`, `preview`, and `prod`
-   - `/apps/mobile` in `dev`
-   - `/tools/cloudflare` in `dev`, `preview`, and `prod`, if deploying the API
-   - `/tools/logger-axiom-test` in `dev`, if running the live Axiom logger test
 
 ### Cloudflare API setup
 
