@@ -48,13 +48,8 @@ Worker deployment setup.
    Infisical working
    ```
 
-5. Confirm the app secret folders you need exist in Infisical:
-
-   - `/apps/api` in `dev`, `preview`, and `prod`
-   - `/apps/web` in `dev`, `preview`, and `prod`
-   - `/apps/mobile` in `dev`
-   - `/tools/cloudflare` in `dev`, `preview`, and `prod`, if deploying the API
-   - `/tools/logger-axiom-test` in `dev`, if running the live Axiom logger test
+5. For app-specific environment variables and secret paths, see
+   [Environment Variables](docs/environment-variables.md).
 
 ### Install deps and set up the repo after Infisical
 
@@ -100,15 +95,7 @@ pnpm dev:web
 `wrangler dev` through Infisical so the local runtime matches the deployed
 Worker runtime.
 
-Before deploying the API, configure:
-
-- the `field-log.app` zone in Cloudflare
-- Worker custom domains for `api.field-log.app` and
-  `api.staging.field-log.app`
-- Infisical Cloudflare App Connection and Cloudflare Workers Secret Syncs
-- `/tools/cloudflare` deploy credentials in Infisical
-
-The full setup is documented in [docs/cloudflare-api.md](docs/cloudflare-api.md).
+For deployment setup, see [Cloudflare API Deployment](docs/cloudflare-api.md).
 
 ## AI commands
 
