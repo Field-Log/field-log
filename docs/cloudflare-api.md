@@ -290,29 +290,60 @@ Pull requests:
   `synchronize`.
 - Runs only when changes include `apps/api/**`, `packages/**`, workspace config,
   or the workflow itself.
+- Detects DB-changing PRs from changes under `packages/database/src/schema/**`,
+  `packages/database/drizzle/**`, `packages/database/drizzle.config.ts`,
+  `packages/database/package.json`, or `pnpm-lock.yaml`.
+- Adds the `db-change` label when DB changes are present and removes it when
+  later PR updates no longer contain DB changes.
+- Creates an isolated Neon branch named `preview-pr-<number>` only for
+  DB-changing PRs. The branch is recreated from `production` on every PR update
+  before committed Drizzle migrations are applied.
+- Blocks DB-isolated preview creation instead of falling back to `staging` when
+  the Neon project is at the configured branch limit and no existing PR branch
+  can be reused.
+- Removes stale `preview-pr-*` branches and stale branch-specific Vercel
+  `DATABASE_URL` overrides when a PR no longer contains DB changes.
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `preview`, path `/tools/cloudflare`.
+- Reads Infisical environment `preview`, path `/apps/api`, then writes a
+  Wrangler secrets file with an explicit `DATABASE_URL` for that preview
+  version.
 - Uploads a preview Worker version with alias `pr-<number>`.
 - If `field-log-api-preview` does not exist yet, bootstraps it with
   `wrangler deploy --env preview`, then retries the aliased version upload.
 - Smoke-tests the preview health endpoint.
 - Posts or updates a pull request comment with the preview and health URLs
   using the installed `Field Log API Preview` GitHub App.
+- Posts or updates a separate DB preview comment with marker
+  `<!-- field-log-db-preview -->` using the installed `Field Log DB Preview`
+  GitHub App.
 - Marks the preview comment inactive when the pull request closes.
+- Deletes `preview-pr-<number>` and removes branch-specific Vercel
+  `DATABASE_URL` when the pull request closes.
 
 Merges to `main`:
 
 - Runs on pushes to `main` when API-relevant paths changed.
+- Runs committed Drizzle migrations against the Neon `production` branch before
+  deploying.
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `prod`, path `/tools/cloudflare`.
+- Reads Infisical environment `prod`, path `/apps/api`, then writes a Wrangler
+  secrets file with an explicit production `DATABASE_URL`.
 - Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/health`.
 
 Configure these GitHub repository variables:
 
 - `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID`
+- `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID`
 - `INFISICAL_CLOUDFLARE_IDENTITY_ID`
 - `INFISICAL_PROJECT_SLUG`
+- `NEON_DATABASE_NAME`
+- `NEON_DATABASE_ROLE`
+- `NEON_PROJECT_ID`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
 - optional `INFISICAL_DOMAIN`, defaults to `https://app.infisical.com`
 - optional `INFISICAL_OIDC_AUDIENCE`, defaults to
   `https://github.com/{repository_owner}`
@@ -320,12 +351,17 @@ Configure these GitHub repository variables:
 Configure these GitHub repository secrets:
 
 - `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY`
+- `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY`
+- `NEON_API_KEY`
+- `VERCEL_TOKEN`
 
 The `Field Log API Preview` GitHub App must be installed on this repository
 with these repository permissions:
 
 - `Issues: Read and write`
 - `Pull requests: Read and write`
+
+The `Field Log DB Preview` GitHub App needs the same repository permissions.
 
 Pull request comments use GitHub issue comments, but GitHub may accept either
 the Issues or Pull requests write permission for pull request comment endpoints.
@@ -370,6 +406,28 @@ This avoids shared Infisical `preview /apps/web` values that only support one PR
 at a time. If a Vercel branch preview was created before the pull request
 existed, redeploy that Vercel preview after the pull request exists so
 `VERCEL_GIT_PULL_REQUEST_ID` is populated.
+
+For DB-changing PRs, the API deploy workflow also creates or replaces a
+branch-specific Vercel Preview `DATABASE_URL` scoped to the PR Git branch. That
+override points the web preview server runtime at the matching
+`preview-pr-<number>` Neon branch. When DB changes are removed or the PR closes,
+the workflow removes the branch-specific `DATABASE_URL` so the web preview falls
+back to the shared Preview `DATABASE_URL`, which should point at Neon `staging`.
+
+Vercel environment changes apply to new deployments. If the latest Vercel
+preview build started before the branch-specific database override was updated,
+redeploy the Vercel preview.
+
+## Staging Refresh
+
+The `Staging Refresh` workflow runs on a nightly schedule and by manual
+`workflow_dispatch`. It resets Neon `staging` from `production`, runs committed
+Drizzle migrations against `staging`, deploys `field-log-api-staging` with an
+explicit staging `DATABASE_URL`, and smoke-tests
+`https://api.staging.field-log.app/health`.
+
+Do not reset staging from production on every PR. The staging branch backs
+normal previews and may contain shared non-production data.
 
 ## Smoke Tests
 

@@ -153,6 +153,21 @@ import { loggerMessages, loggerValues } from "@package/logger";
 Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
 Use `loggerValues` for logger app identifiers and log proxy protocol values.
 
+CI workflows and helper scripts emit compact JSON log events with `app: "ci"`.
+These are written to GitHub Actions logs rather than Axiom unless the workflow
+runner output is collected elsewhere. Current CI event namespaces include:
+
+- `ci.database.preview.*`: PR database change detection, staging fallback,
+  preview branch creation/recreation/deletion, branch-limit blocking, and
+  preview migration completion.
+- `ci.database.staging.*`: staging reset, staging database selection, and
+  staging migration completion.
+- `ci.database.production.*`: production database selection and migration
+  completion.
+- `ci.github.*`: GitHub-side metadata updates such as the `db-change` label.
+- `ci.vercel.preview.*`: branch-specific Preview `DATABASE_URL` override set,
+  removal, missing cleanup target, and latest preview deployment lookup.
+
 ## Biome Audit
 
 Root `biome.json` enforces the mechanical logger audit rules:
