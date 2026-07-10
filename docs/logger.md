@@ -65,19 +65,20 @@ domain.
 
 Client runtime folders provide their platform-specific public proxy settings:
 
-- `/apps/web`: `VITE_LOG_PROXY_URL`, `VITE_LOG_PROXY_CLIENT_KEY`, optional
+- `/apps/web`: `LOG_PROXY_URL`, `LOG_PROXY_CLIENT_KEY`, optional. The web build
+  aliases these to `VITE_LOG_PROXY_URL` and `VITE_LOG_PROXY_CLIENT_KEY` when the
+  `VITE_*` names are absent.
 - `/apps/mobile`: `EXPO_PUBLIC_LOG_PROXY_URL`,
   `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional
 - `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
 
-Use the exact variable names consumed by each runtime. The Infisical runner no
-longer aliases `LOG_PROXY_*` values into Vite or Expo names.
+Mobile does not alias log proxy variables; use the `EXPO_PUBLIC_*` names there.
 
 Local development:
 
 ```dotenv
 # /apps/web
-VITE_LOG_PROXY_URL=http://localhost:4006/logs
+LOG_PROXY_URL=http://localhost:4006/logs
 
 # /apps/mobile
 EXPO_PUBLIC_LOG_PROXY_URL=http://localhost:4006/logs
@@ -87,15 +88,15 @@ Production:
 
 ```dotenv
 # /apps/web
-VITE_LOG_PROXY_URL=https://<api-domain>/logs
+LOG_PROXY_URL=https://<api-domain>/logs
 
 # /apps/mobile
 EXPO_PUBLIC_LOG_PROXY_URL=https://<api-domain>/logs
 ```
 
-`LOG_PROXY_CLIENT_KEY` is an anti-noise check for `POST /logs`, not a security
-boundary. If it is configured, `/apps/api` and each public client runtime folder
-must receive matching values under the names that runtime consumes.
+If `LOG_PROXY_CLIENT_KEY` is configured, `/apps/api` and each public client
+runtime folder must receive matching values under the names that runtime
+consumes.
 
 ## Package Build
 
