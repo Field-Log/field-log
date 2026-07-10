@@ -38,6 +38,11 @@ import {
   toggleCarried,
   upsertTag,
 } from "../db/database";
+import {
+  deleteSyncedCurrentUserItemBestEffort,
+  deleteSyncedCurrentUserLogEntryBestEffort,
+  syncCurrentUserLogEntryBestEffort,
+} from "../db/sync";
 import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
 import { C } from "../theme/colors";
 
@@ -185,8 +190,10 @@ export default function ItemDetailScreen() {
       fetchTagsForItem(itemId).then(setItemTags);
       fetchAllTags().then(setAllTags);
       fetchCarryDatesForItem(itemId).then((dates) => {
+        const today = new Date().toISOString().slice(0, 10);
         setCarryDates(new Set(dates));
         setStreak(computeStreak(dates));
+        setCarriedToday(dates.includes(today));
       });
     }, [itemId, item_type]),
   );
@@ -197,7 +204,21 @@ export default function ItemDetailScreen() {
     if (!item) return;
     const today = new Date().toISOString().slice(0, 10);
     const nowCarried = await toggleCarried(itemId, item_type, today);
+    const entryId = `${itemId}_${today}_carried`;
     setCarriedToday(nowCarried);
+    if (nowCarried) {
+      syncCurrentUserLogEntryBestEffort(entryId);
+    } else {
+      deleteSyncedCurrentUserLogEntryBestEffort(entryId);
+    }
+    const nextDates = new Set(carryDates);
+    if (nowCarried) {
+      nextDates.add(today);
+    } else {
+      nextDates.delete(today);
+    }
+    setCarryDates(nextDates);
+    setStreak(computeStreak([...nextDates].sort()));
     Alert.alert(
       nowCarried ? "Marked as carried" : "Removed from today",
       nowCarried
@@ -218,6 +239,7 @@ export default function ItemDetailScreen() {
           style: "destructive",
           onPress: async () => {
             await deleteItem(itemId);
+            deleteSyncedCurrentUserItemBestEffort(itemId);
             navigation.goBack();
           },
         },

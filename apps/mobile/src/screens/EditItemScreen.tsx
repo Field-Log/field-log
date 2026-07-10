@@ -24,6 +24,7 @@ import {
   type SpecValue,
   updateItem,
 } from "../db/database";
+import { syncCurrentUserItemBestEffort } from "../db/sync";
 import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
 import { C } from "../theme/colors";
 
@@ -232,6 +233,7 @@ export default function EditItemScreen() {
       notes: notes.trim() || null,
       specs,
     });
+    syncCurrentUserItemBestEffort(itemId);
 
     navigation.goBack();
   };

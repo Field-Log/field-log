@@ -18,6 +18,7 @@ import {
   type SpecField,
 } from "../config/itemTypes";
 import { insertItem, type SpecValue } from "../db/database";
+import { syncCurrentUserItemBestEffort } from "../db/sync";
 import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
 import { C } from "../theme/colors";
 
@@ -182,6 +183,7 @@ export default function AddItemScreen() {
       notes: notes.trim() || null,
       specs,
     });
+    syncCurrentUserItemBestEffort(id);
 
     navigation.getParent()?.navigate("Library", { screen: "LibraryList" });
   };

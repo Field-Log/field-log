@@ -45,6 +45,17 @@ export type LogEntryType =
   | "ink_change"
   | "config_change";
 
+export type LogEntry = {
+  id: string;
+  item_id: string;
+  item_type: string;
+  entry_type: LogEntryType;
+  entry_date: string;
+  notes: string | null;
+  condition: string | null;
+  created_at: string;
+};
+
 export type Item = {
   id: string;
   item_type: string;
@@ -106,7 +117,28 @@ type MostCarriedRow = {
   item_type: string;
 };
 
+type TableColumnRow = {
+  name: string;
+};
+
 const SCHEMA_VERSION = "2";
+
+async function ensureColumn(
+  table: string,
+  column: string,
+  definition: string,
+): Promise<void> {
+  const columns = await db.getAllAsync<TableColumnRow>(
+    `PRAGMA table_info(${table});`,
+  );
+  if (columns.some((row) => row.name === column)) {
+    return;
+  }
+
+  await db.execAsync(
+    `ALTER TABLE ${table} ADD COLUMN ${column} ${definition};`,
+  );
+}
 
 export async function initDatabase(): Promise<void> {
   await db.execAsync(
@@ -117,86 +149,123 @@ export async function initDatabase(): Promise<void> {
     `SELECT value FROM db_meta WHERE key = 'schema_version';`,
   );
 
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS items (
+      id TEXT PRIMARY KEY NOT NULL,
+      item_type TEXT NOT NULL,
+      name TEXT,
+      manufacturer TEXT,
+      model TEXT,
+      variant TEXT,
+      nickname TEXT,
+      serial_number TEXT,
+      status TEXT DEFAULT 'own' CHECK (status IN ('own','sold','lost','gifted','wishlist')),
+      purchase_date TEXT,
+      purchase_price REAL,
+      current_value REAL,
+      seller TEXT,
+      warranty TEXT,
+      material TEXT,
+      finish TEXT,
+      color TEXT,
+      weight_g REAL,
+      dimensions TEXT,
+      storage_location TEXT,
+      is_favorite INTEGER DEFAULT 0,
+      is_carried INTEGER DEFAULT 0,
+      cover_photo TEXT,
+      gallery TEXT DEFAULT '[]',
+      notes TEXT,
+      specs TEXT DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS collections (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS item_collections (
+      item_id TEXT NOT NULL,
+      collection_id TEXT NOT NULL,
+      PRIMARY KEY (item_id, collection_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS tags (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS item_tags (
+      item_id TEXT NOT NULL,
+      tag_id TEXT NOT NULL,
+      PRIMARY KEY (item_id, tag_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS log_entries (
+      id TEXT PRIMARY KEY NOT NULL,
+      item_id TEXT NOT NULL,
+      item_type TEXT NOT NULL,
+      entry_type TEXT NOT NULL CHECK (entry_type IN ('carried','maintenance','note','ink_change','config_change')),
+      entry_date TEXT NOT NULL,
+      notes TEXT,
+      condition TEXT,
+      created_at TEXT NOT NULL
+    );
+  `);
+
+  await ensureColumn("items", "item_type", "TEXT NOT NULL DEFAULT 'unknown'");
+  await ensureColumn("items", "name", "TEXT");
+  await ensureColumn("items", "manufacturer", "TEXT");
+  await ensureColumn("items", "model", "TEXT");
+  await ensureColumn("items", "variant", "TEXT");
+  await ensureColumn("items", "nickname", "TEXT");
+  await ensureColumn("items", "serial_number", "TEXT");
+  await ensureColumn("items", "status", "TEXT DEFAULT 'own'");
+  await ensureColumn("items", "purchase_date", "TEXT");
+  await ensureColumn("items", "purchase_price", "REAL");
+  await ensureColumn("items", "current_value", "REAL");
+  await ensureColumn("items", "seller", "TEXT");
+  await ensureColumn("items", "warranty", "TEXT");
+  await ensureColumn("items", "material", "TEXT");
+  await ensureColumn("items", "finish", "TEXT");
+  await ensureColumn("items", "color", "TEXT");
+  await ensureColumn("items", "weight_g", "REAL");
+  await ensureColumn("items", "dimensions", "TEXT");
+  await ensureColumn("items", "storage_location", "TEXT");
+  await ensureColumn("items", "is_favorite", "INTEGER DEFAULT 0");
+  await ensureColumn("items", "is_carried", "INTEGER DEFAULT 0");
+  await ensureColumn("items", "cover_photo", "TEXT");
+  await ensureColumn("items", "gallery", "TEXT DEFAULT '[]'");
+  await ensureColumn("items", "notes", "TEXT");
+  await ensureColumn("items", "specs", "TEXT DEFAULT '{}'");
+  await ensureColumn("items", "created_at", "TEXT NOT NULL DEFAULT ''");
+  await ensureColumn("items", "updated_at", "TEXT NOT NULL DEFAULT ''");
+
+  await ensureColumn(
+    "log_entries",
+    "item_type",
+    "TEXT NOT NULL DEFAULT 'unknown'",
+  );
+  await ensureColumn(
+    "log_entries",
+    "entry_type",
+    "TEXT NOT NULL DEFAULT 'note'",
+  );
+  await ensureColumn("log_entries", "entry_date", "TEXT NOT NULL DEFAULT ''");
+  await ensureColumn("log_entries", "notes", "TEXT");
+  await ensureColumn("log_entries", "condition", "TEXT");
+  await ensureColumn("log_entries", "created_at", "TEXT NOT NULL DEFAULT ''");
+
   if (!row || row.value !== SCHEMA_VERSION) {
-    await db.execAsync(`
-      DROP TABLE IF EXISTS fountain_pens;
-      DROP TABLE IF EXISTS machined_pens;
-      DROP TABLE IF EXISTS log_entries;
-      DROP TABLE IF EXISTS items;
-      DROP TABLE IF EXISTS collections;
-      DROP TABLE IF EXISTS item_collections;
-      DROP TABLE IF EXISTS tags;
-      DROP TABLE IF EXISTS item_tags;
-
-      CREATE TABLE items (
-        id TEXT PRIMARY KEY NOT NULL,
-        item_type TEXT NOT NULL,
-        name TEXT,
-        manufacturer TEXT,
-        model TEXT,
-        variant TEXT,
-        nickname TEXT,
-        serial_number TEXT,
-        status TEXT DEFAULT 'own' CHECK (status IN ('own','sold','lost','gifted','wishlist')),
-        purchase_date TEXT,
-        purchase_price REAL,
-        current_value REAL,
-        seller TEXT,
-        warranty TEXT,
-        material TEXT,
-        finish TEXT,
-        color TEXT,
-        weight_g REAL,
-        dimensions TEXT,
-        storage_location TEXT,
-        is_favorite INTEGER DEFAULT 0,
-        is_carried INTEGER DEFAULT 0,
-        cover_photo TEXT,
-        gallery TEXT DEFAULT '[]',
-        notes TEXT,
-        specs TEXT DEFAULT '{}',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      );
-
-      CREATE TABLE collections (
-        id TEXT PRIMARY KEY NOT NULL,
-        name TEXT NOT NULL UNIQUE,
-        description TEXT,
-        created_at TEXT NOT NULL
-      );
-
-      CREATE TABLE item_collections (
-        item_id TEXT NOT NULL,
-        collection_id TEXT NOT NULL,
-        PRIMARY KEY (item_id, collection_id)
-      );
-
-      CREATE TABLE tags (
-        id TEXT PRIMARY KEY NOT NULL,
-        name TEXT NOT NULL UNIQUE,
-        created_at TEXT NOT NULL
-      );
-
-      CREATE TABLE item_tags (
-        item_id TEXT NOT NULL,
-        tag_id TEXT NOT NULL,
-        PRIMARY KEY (item_id, tag_id)
-      );
-
-      CREATE TABLE log_entries (
-        id TEXT PRIMARY KEY NOT NULL,
-        item_id TEXT NOT NULL,
-        item_type TEXT NOT NULL,
-        entry_type TEXT NOT NULL CHECK (entry_type IN ('carried','maintenance','note','ink_change','config_change')),
-        entry_date TEXT NOT NULL,
-        notes TEXT,
-        condition TEXT,
-        created_at TEXT NOT NULL
-      );
-
-      INSERT OR REPLACE INTO db_meta (key, value) VALUES ('schema_version', '2');
-    `);
+    await db.runAsync(
+      `INSERT OR REPLACE INTO db_meta (key, value) VALUES ('schema_version', ?);`,
+      [SCHEMA_VERSION],
+    );
   }
 }
 
@@ -324,6 +393,48 @@ export async function fetchItemById(id: string): Promise<Item | undefined> {
   );
   const first = rows[0];
   return first ? parseItem(first) : undefined;
+}
+
+export async function upsertRestoredItem(item: Item): Promise<void> {
+  await db.runAsync(
+    `INSERT OR REPLACE INTO items (
+      id, item_type, name, manufacturer, model, variant, nickname, serial_number,
+      status, purchase_date, purchase_price, current_value, seller, warranty,
+      material, finish, color, weight_g, dimensions, storage_location,
+      is_favorite, is_carried, cover_photo, gallery, notes, specs,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    [
+      item.id,
+      item.item_type,
+      item.name,
+      item.manufacturer,
+      item.model,
+      item.variant,
+      item.nickname,
+      item.serial_number,
+      item.status,
+      item.purchase_date,
+      item.purchase_price,
+      item.current_value,
+      item.seller,
+      item.warranty,
+      item.material,
+      item.finish,
+      item.color,
+      item.weight_g,
+      item.dimensions,
+      item.storage_location,
+      item.is_favorite,
+      item.is_carried,
+      item.cover_photo,
+      JSON.stringify(item.gallery),
+      item.notes,
+      JSON.stringify(item.specs),
+      item.created_at,
+      item.updated_at,
+    ],
+  );
 }
 
 /* ============================================================
@@ -500,6 +611,44 @@ export async function insertLogEntry(
       notes ?? null,
       condition ?? null,
       createdAt,
+    ],
+  );
+}
+
+export async function fetchAllLogEntries(): Promise<LogEntry[]> {
+  return await db.getAllAsync<LogEntry>(
+    `SELECT id, item_id, item_type, entry_type, entry_date, notes, condition, created_at
+     FROM log_entries
+     ORDER BY entry_date, created_at;`,
+  );
+}
+
+export async function fetchLogEntryById(
+  id: string,
+): Promise<LogEntry | undefined> {
+  const rows = await db.getAllAsync<LogEntry>(
+    `SELECT id, item_id, item_type, entry_type, entry_date, notes, condition, created_at
+     FROM log_entries
+     WHERE id = ?
+     LIMIT 1;`,
+    [id],
+  );
+  return rows[0];
+}
+
+export async function upsertRestoredLogEntry(entry: LogEntry): Promise<void> {
+  await db.runAsync(
+    `INSERT OR REPLACE INTO log_entries (id, item_id, item_type, entry_type, entry_date, notes, condition, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+    [
+      entry.id,
+      entry.item_id,
+      entry.item_type,
+      entry.entry_type,
+      entry.entry_date,
+      entry.notes,
+      entry.condition,
+      entry.created_at,
     ],
   );
 }

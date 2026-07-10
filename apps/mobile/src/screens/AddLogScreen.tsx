@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { insertLogEntry, type LogEntryType } from "../db/database";
+import { syncCurrentUserLogEntryBestEffort } from "../db/sync";
 import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
 import { C } from "../theme/colors";
 
@@ -30,10 +31,12 @@ export default function AddLogScreen() {
 
   const handleSave = async () => {
     if (!notes) return;
-    await insertLogEntry(Date.now().toString(), itemId, notes, condition, {
+    const id = Date.now().toString();
+    await insertLogEntry(id, itemId, notes, condition, {
       itemType,
       entryType,
     });
+    syncCurrentUserLogEntryBestEffort(id);
     navigation.goBack();
   };
 

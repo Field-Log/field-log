@@ -5,7 +5,7 @@ import { type ReactElement, useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { initDatabase } from "./src/db/database";
-import { uploadAllItems } from "./src/db/sync";
+import { syncCurrentUserDataBestEffort } from "./src/db/sync";
 import { logger } from "./src/lib/logger";
 import AddScreen from "./src/screens/AddScreen";
 import AuthScreen from "./src/screens/AuthScreen";
@@ -41,19 +41,11 @@ function AppGate() {
       });
   }, []);
 
-  // On first sign-in, upload local items to the cloud
+  // On sign-in, restore an empty local database or upload local changes.
   useEffect(() => {
-    if (!userId) return;
-
-    uploadAllItems(userId).catch((error: unknown) => {
-      logger.warn(loggerMessages.mobile.syncUploadFailed, {
-        attributes: {
-          reason: "local_data_remains_source_of_truth",
-        },
-        error,
-      });
-    });
-  }, [userId]);
+    if (!userId || !databaseReady) return;
+    syncCurrentUserDataBestEffort(userId);
+  }, [databaseReady, userId]);
 
   if (loading || !databaseReady) {
     return (
