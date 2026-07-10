@@ -306,7 +306,7 @@ Merges to `main`:
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `prod`, path `/tools/cloudflare`.
 - Deploys `field-log-api` to `api.field-log.app`.
-- Smoke-tests `https://api.field-log.app/health`.
+- Smoke-tests `https://api.field-log.app/api/v1/health`.
 
 Configure these GitHub repository variables:
 
@@ -363,7 +363,7 @@ During Vercel PR previews, `apps/web` derives the API URLs from the PR number:
 
 ```dotenv
 VITE_API_BASE_URL=https://pr-123-field-log-api-preview.23242.workers.dev
-VITE_LOG_PROXY_URL=https://pr-123-field-log-api-preview.23242.workers.dev/logs
+VITE_LOG_PROXY_URL=https://pr-123-field-log-api-preview.23242.workers.dev/api/v1/logs
 ```
 
 This avoids shared Infisical `preview /apps/web` values that only support one PR
@@ -378,13 +378,7 @@ Run these checks after production, staging, or preview deploys.
 Health:
 
 ```sh
-curl --fail https://api.field-log.app/health
-```
-
-Service info:
-
-```sh
-curl --fail https://api.field-log.app/
+curl --fail https://api.field-log.app/api/v1/health
 ```
 
 Log proxy with a configured client key:
@@ -395,7 +389,7 @@ curl --fail \
   --header "content-type: application/json" \
   --header "x-log-client-key: $LOG_PROXY_CLIENT_KEY" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/logs
+  https://api.field-log.app/api/v1/logs
 ```
 
 Log proxy rejection when a client key is configured:
@@ -405,7 +399,7 @@ curl --silent --output /dev/null --write-out "%{http_code}\n" \
   --request POST \
   --header "content-type: application/json" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/logs
+  https://api.field-log.app/api/v1/logs
 ```
 
 The unauthenticated log proxy check should return `401` when

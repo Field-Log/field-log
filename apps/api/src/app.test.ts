@@ -9,11 +9,27 @@ import app, { createApp } from "./app.js";
 
 describe("api", () => {
   it("returns health status", async () => {
-    const response = await app.request("/health");
+    const response = await app.request("/api/v1/health");
 
     await expect(response.json()).resolves.toEqual({
       ok: true,
       service: "api",
+    });
+  });
+
+  it("does not expose unversioned routes", async () => {
+    await expect(app.request("/")).resolves.toMatchObject({
+      status: 404,
+    });
+    await expect(app.request("/health")).resolves.toMatchObject({
+      status: 404,
+    });
+    await expect(
+      app.request("/logs", {
+        method: "POST",
+      }),
+    ).resolves.toMatchObject({
+      status: 404,
     });
   });
 
@@ -34,7 +50,7 @@ describe("api", () => {
       logger,
     });
 
-    const response = await testApp.request("/logs", {
+    const response = await testApp.request("/api/v1/logs", {
       body: JSON.stringify({
         events: [
           {
@@ -71,7 +87,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/logs", {
+    const response = await testApp.request("/api/v1/logs", {
       body: JSON.stringify({
         level: "info",
       }),
@@ -86,7 +102,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/logs", {
+    const response = await testApp.request("/api/v1/logs", {
       body: JSON.stringify({
         events: Array.from(
           { length: loggerValues.logProxy.maxBatchSize + 1 },
@@ -110,7 +126,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/logs", {
+    const response = await testApp.request("/api/v1/logs", {
       body: JSON.stringify({
         events: [
           {
@@ -140,7 +156,7 @@ describe("api", () => {
       },
     });
 
-    const response = await testApp.request("/logs", {
+    const response = await testApp.request("/api/v1/logs", {
       body: JSON.stringify({
         app: "web",
         environment: "test",
@@ -162,7 +178,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/logs", {
+    const response = await testApp.request("/api/v1/logs", {
       body: JSON.stringify({
         app: "web",
         environment: "test",
