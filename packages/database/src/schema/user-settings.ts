@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, uuid } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import {
   currencyCodes,
   dimensionUnits,
@@ -20,6 +20,7 @@ export const userSettings = pgTable("user_settings", {
   dimensionUnit: dimensionUnitEnum("dimension_unit").notNull().default("in"),
   theme: themeModeEnum("theme").notNull().default("dark"),
   weightUnit: weightUnitEnum("weight_unit").notNull().default("g"),
+  migrationNudge: text("migration_nudge").notNull().default("dismissed"),
 });
 
 export type UserSettings = typeof userSettings.$inferSelect;
