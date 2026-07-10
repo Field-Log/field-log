@@ -1,6 +1,7 @@
 import { loggerMessages } from "@package/logger";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as AuthSession from "expo-auth-session/providers/google";
+import * as Crypto from "expo-crypto";
 import * as WebBrowser from "expo-web-browser";
 import {
   createUserWithEmailAndPassword,
@@ -27,6 +28,16 @@ import { logger } from "../lib/logger";
 import { C } from "../theme/colors";
 
 WebBrowser.maybeCompleteAuthSession();
+
+const NONCE_CHARACTERS =
+  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._";
+
+async function createNonce(length = 32): Promise<string> {
+  const bytes = await Crypto.getRandomBytesAsync(length);
+  return Array.from(bytes)
+    .map((byte) => NONCE_CHARACTERS[byte % NONCE_CHARACTERS.length])
+    .join("");
+}
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<"landing" | "email">("landing");
@@ -61,7 +72,13 @@ export default function AuthScreen() {
   const handleApple = async () => {
     try {
       setLoading(true);
+      const rawNonce = await createNonce();
+      const hashedNonce = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        rawNonce,
+      );
       const appleCredential = await AppleAuthentication.signInAsync({
+        nonce: hashedNonce,
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
@@ -74,7 +91,7 @@ export default function AuthScreen() {
       }
       const credential = provider.credential({
         idToken,
-        rawNonce: appleCredential.authorizationCode ?? undefined,
+        rawNonce,
       });
       await signInWithCredential(auth, credential);
     } catch (error: unknown) {
