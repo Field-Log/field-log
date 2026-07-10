@@ -70,6 +70,10 @@ api() {
       cat "$response_file" >&2
       echo >&2
     fi
+    if [[ "$status" == "401" || "$status" == "403" ]]; then
+      echo "Check that VERCEL_TOKEN was created for the Vercel team in VERCEL_TEAM_ID and can access VERCEL_PROJECT_ID." >&2
+      echo "Current Vercel identifiers: VERCEL_TEAM_ID=${VERCEL_TEAM_ID}, VERCEL_PROJECT_ID=${VERCEL_PROJECT_ID}." >&2
+    fi
     rm -f "$response_file"
     return 22
   fi

@@ -183,10 +183,12 @@ Legend: `S` = server-only. `C` = client-visible.
 ### Create `VERCEL_TOKEN`
 
 1. Open Vercel account settings and go to the Access Tokens area.[^6]
-2. Create a token for the account or team that owns the web project.
+2. Create a token for the team that owns the web project.
 3. Copy the token once and save it as the repository secret `VERCEL_TOKEN`.
 4. Keep `VERCEL_TEAM_ID` and `VERCEL_PROJECT_ID` as repository variables. Use
    the exact `team_...` ID, not the team slug/name or surrounding label text.
+5. Make sure `VERCEL_PROJECT_ID` belongs to `VERCEL_TEAM_ID`; a token for a
+   different account or team will receive `401` or `403` from the Vercel API.
 
 GitHub workflows use the token as a bearer token against `https://api.vercel.com`.
 
@@ -250,7 +252,8 @@ Use least-privilege credentials where the provider supports scoping.
 ### `VERCEL_TOKEN`
 
 - Vercel project access[^6]:
-  - Must access the team or account that owns `VERCEL_PROJECT_ID`.
+  - Must be created for the team in `VERCEL_TEAM_ID`.
+  - Must access the project in `VERCEL_PROJECT_ID`.
   - Must allow project environment variable create/list/delete for Preview.
   - Must allow deployment lookup for the web project.
 
