@@ -6,6 +6,7 @@ on:
     paths:
       - apps/api/**
       - packages/**
+      - .github/scripts/**
       - .github/workflows/api-deploy.yml
       - package.json
       - pnpm-lock.yaml
@@ -16,6 +17,7 @@ on:
     paths:
       - apps/api/**
       - packages/**
+      - .github/scripts/**
       - .github/workflows/api-deploy.yml
       - package.json
       - pnpm-lock.yaml
@@ -29,6 +31,7 @@ permissions:
 env:
   API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
   API_PREVIEW_WORKER_NAME: field-log-api-preview
+  DB_PREVIEW_COMMENT_MARKER: "<!-- field-log-db-preview -->"
 
 jobs:
   preview:
@@ -44,6 +47,116 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect database changes
+        id: db_changes
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          changed_files="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          database=false
+
+          if grep -Eq '^(packages/database/src/schema/|packages/database/drizzle/|packages/database/drizzle\.config\.ts$|packages/database/package\.json$|pnpm-lock\.yaml$)' <<< "$changed_files"; then
+            database=true
+          fi
+
+          echo "database=$database" >> "$GITHUB_OUTPUT"
+          {
+            echo "changed_files<<EOF"
+            printf '%s\n' "$changed_files"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          jq -cn \
+            --arg app "ci" \
+            --arg environment "github-actions" \
+            --arg level "info" \
+            --arg message "ci.database.preview.changeDetection.completed" \
+            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --argjson database "$database" \
+            --arg changed_files "$changed_files" \
+            '{
+              app: $app,
+              environment: $environment,
+              level: $level,
+              message: $message,
+              timestamp: $timestamp,
+              attributes: {
+                databaseChanged: $database,
+                changedFiles: ($changed_files | split("\n") | map(select(. != "")))
+              }
+            }'
+
+      - name: Sync db-change label
+        uses: actions/github-script@v8
+        env:
+          DATABASE_CHANGED: ${{ steps.db_changes.outputs.database }}
+        with:
+          script: |
+            const label = "db-change";
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            if (process.env.DATABASE_CHANGED === "true") {
+              try {
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number,
+                  labels: [label],
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name: label,
+                  color: "0969da",
+                  description: "Changes database schema or migrations",
+                });
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number,
+                  labels: [label],
+                });
+              }
+            } else {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number,
+                  name: label,
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+              }
+            }
+
+            console.log(JSON.stringify({
+              app: "ci",
+              environment: "github-actions",
+              level: "info",
+              message: "ci.github.dbChangeLabel.synced",
+              timestamp: new Date().toISOString(),
+              attributes: {
+                databaseChanged: process.env.DATABASE_CHANGED === "true",
+                label,
+                pullRequestNumber: String(issue_number),
+              },
+            }));
 
       - name: Enable Corepack
         run: corepack enable
@@ -57,10 +170,98 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate preview database configuration
+        shell: bash
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
+          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_ROLE VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required." >&2
+              exit 1
+            fi
+          done
+
+      - name: Prepare Neon preview database
+        id: db
+        shell: bash
+        env:
+          DB_CHANGING: ${{ steps.db_changes.outputs.database }}
+          MAX_NEON_BRANCHES: 10
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
+          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/neon-database-branch.sh prepare-preview
+
+      - name: Configure Vercel branch database override
+        if: steps.db.outputs.can_deploy == 'true' && steps.db_changes.outputs.database == 'true'
+        id: vercel
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          DATABASE_URL: ${{ steps.db.outputs.database_url }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bash .github/scripts/vercel-branch-database-url.sh set
+
+      - name: Remove stale Vercel branch database override
+        if: steps.db.outputs.can_deploy == 'true' && steps.db_changes.outputs.database != 'true'
+        id: vercel_cleanup
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bash .github/scripts/vercel-branch-database-url.sh remove
+
+      - name: Run migrations on Neon PR branch
+        if: steps.db.outputs.can_deploy == 'true' && steps.db_changes.outputs.database == 'true'
+        working-directory: packages/database
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database_url }}
+        run: |
+          set -euo pipefail
+
+          pnpm exec drizzle-kit migrate --config=drizzle.config.ts
+
+          jq -cn \
+            --arg app "ci" \
+            --arg environment "github-actions" \
+            --arg level "info" \
+            --arg message "ci.database.preview.migrations.applied" \
+            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg branch_name "${{ steps.db.outputs.branch_name }}" \
+            --arg branch_id "${{ steps.db.outputs.branch_id }}" \
+            '{
+              app: $app,
+              environment: $environment,
+              level: $level,
+              message: $message,
+              timestamp: $timestamp,
+              attributes: {
+                branchName: $branch_name,
+                branchId: $branch_id
+              }
+            }'
+
       - name: Build Worker dependencies
+        if: steps.db.outputs.can_deploy == 'true'
         run: pnpm exec turbo run build --filter=@app/api
 
       - name: Validate Infisical OIDC configuration
+        if: steps.db.outputs.can_deploy == 'true'
         shell: bash
         env:
           INFISICAL_CLOUDFLARE_IDENTITY_ID: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
@@ -79,6 +280,7 @@ jobs:
           fi
 
       - name: Fetch Cloudflare deploy secrets from Infisical
+        if: steps.db.outputs.can_deploy == 'true'
         uses: Infisical/secrets-action@v1.0.16
         with:
           method: oidc
@@ -89,7 +291,47 @@ jobs:
           env-slug: preview
           secret-path: /tools/cloudflare
 
+      - name: Fetch API runtime secrets from Infisical
+        if: steps.db.outputs.can_deploy == 'true'
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: preview
+          secret-path: /apps/api
+
+      - name: Write API preview secrets file
+        if: steps.db.outputs.can_deploy == 'true'
+        shell: bash
+        env:
+          PREVIEW_DATABASE_URL: ${{ steps.db.outputs.database_url }}
+        run: |
+          set -euo pipefail
+
+          jq -n \
+            --arg DATABASE_URL "$PREVIEW_DATABASE_URL" \
+            --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
+            --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
+            --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
+            --arg LOG_LEVEL "${LOG_LEVEL:-}" \
+            --arg LOGGER "${LOGGER:-}" \
+            --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
+            '{
+              DATABASE_URL: $DATABASE_URL,
+              AXIOM_TOKEN: $AXIOM_TOKEN,
+              AXIOM_DATASET: $AXIOM_DATASET,
+              AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
+              LOG_LEVEL: $LOG_LEVEL,
+              LOGGER: $LOGGER,
+              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
+            } | with_entries(select(.value != ""))' \
+            > "$RUNNER_TEMP/api-preview-secrets.json"
+
       - name: Deploy PR preview Worker
+        if: steps.db.outputs.can_deploy == 'true'
         id: deploy
         shell: bash
         env:
@@ -116,7 +358,8 @@ jobs:
           upload_output="$(pnpm dlx wrangler versions upload \
             --config apps/api/wrangler.jsonc \
             --env preview \
-            --preview-alias "$PREVIEW_ALIAS" 2>&1)"
+            --preview-alias "$PREVIEW_ALIAS" \
+            --secrets-file "$RUNNER_TEMP/api-preview-secrets.json" 2>&1)"
           upload_status=$?
           set -e
 
@@ -130,12 +373,14 @@ jobs:
             echo "Preview Worker does not exist yet; creating it with wrangler deploy."
             pnpm dlx wrangler deploy \
               --config apps/api/wrangler.jsonc \
-              --env preview
+              --env preview \
+              --secrets-file "$RUNNER_TEMP/api-preview-secrets.json"
 
             pnpm dlx wrangler versions upload \
               --config apps/api/wrangler.jsonc \
               --env preview \
-              --preview-alias "$PREVIEW_ALIAS"
+              --preview-alias "$PREVIEW_ALIAS" \
+              --secrets-file "$RUNNER_TEMP/api-preview-secrets.json"
           fi
 
           preview_url="https://${PREVIEW_ALIAS}-${API_PREVIEW_WORKER_NAME}.${workers_subdomain}.workers.dev"
@@ -143,6 +388,7 @@ jobs:
           echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
 
       - name: Smoke test PR preview Worker
+        if: steps.db.outputs.can_deploy == 'true'
         shell: bash
         env:
           PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
@@ -156,20 +402,20 @@ jobs:
         env:
           FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
           FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
-          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_CLIENT_ID:-}" ]]; then
-            echo "Repository variable FIELD_LOG_API_PREVIEW_APP_CLIENT_ID is required." >&2
-            exit 1
-          fi
+          for name in FIELD_LOG_API_PREVIEW_APP_CLIENT_ID FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required." >&2
+              exit 1
+            fi
+          done
 
-          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY:-}" ]]; then
-            echo "Repository secret FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY is required." >&2
-            exit 1
-          fi
-
-      - name: Create PR comment app token
+      - name: Create API preview comment app token
+        if: steps.db.outputs.can_deploy == 'true'
         id: preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
@@ -180,9 +426,12 @@ jobs:
           permission-issues: write
           permission-pull-requests: write
 
-      - name: Comment on pull request
+      - name: Comment on API preview
+        if: steps.db.outputs.can_deploy == 'true'
         uses: actions/github-script@v8
         env:
+          DATABASE_BRANCH_NAME: ${{ steps.db.outputs.branch_name }}
+          DATABASE_ISOLATED: ${{ steps.db.outputs.isolated }}
           PREVIEW_ALIAS: ${{ steps.deploy.outputs.preview_alias }}
           PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
         with:
@@ -191,15 +440,145 @@ jobs:
             const marker = process.env.API_PREVIEW_COMMENT_MARKER;
             const previewUrl = process.env.PREVIEW_URL;
             const healthUrl = `${previewUrl}/health`;
+            const databaseScope = process.env.DATABASE_ISOLATED === "true"
+              ? `Neon branch \`${process.env.DATABASE_BRANCH_NAME}\``
+              : "shared Neon staging branch";
             const body = [
               marker,
               "The latest API preview deployment for this pull request:",
               "",
-              "| Project | Deployment | Actions |",
-              "| --- | --- | --- |",
-              `| field-log-api | Ready | [Preview](${previewUrl}), [Health](${healthUrl}) |`,
+              "| Project | Deployment | Actions | Database |",
+              "| --- | --- | --- | --- |",
+              `| field-log-api | Ready | [Preview](${previewUrl}), [Health](${healthUrl}) | ${databaseScope} |`,
               "",
               `Alias: \`${process.env.PREVIEW_ALIAS}\``,
+            ].join("\n");
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: Create DB preview comment app token
+        id: db-preview-comment-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-issues: write
+          permission-pull-requests: write
+
+      - name: Comment on blocked DB preview
+        if: steps.db_changes.outputs.database == 'true' && steps.db.outputs.can_deploy != 'true'
+        uses: actions/github-script@v8
+        env:
+          BRANCH_COUNT: ${{ steps.db.outputs.branch_count }}
+          BRANCH_NAMES: ${{ steps.db.outputs.branch_names }}
+          TARGET_BRANCH: ${{ steps.db.outputs.target_branch }}
+        with:
+          github-token: ${{ steps.db-preview-comment-token.outputs.token }}
+          script: |
+            const marker = process.env.DB_PREVIEW_COMMENT_MARKER;
+            const branchNames = (process.env.BRANCH_NAMES || "")
+              .split("\n")
+              .filter(Boolean)
+              .map((name) => `- \`${name}\``)
+              .join("\n");
+            const retryUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/workflows/api-deploy.yml`;
+            const body = [
+              marker,
+              "DB-isolated preview creation is blocked because the Neon branch limit has been reached.",
+              "",
+              `Requested branch: \`${process.env.TARGET_BRANCH}\``,
+              `Branch capacity: \`${process.env.BRANCH_COUNT}/10\``,
+              "",
+              "Active Neon branches:",
+              branchNames || "- none reported",
+              "",
+              "Close stale DB-changing PRs or delete stale `preview-pr-*` branches, then push a new commit or rerun the API Deploy workflow.",
+              "",
+              `[Retry workflow](${retryUrl})`,
+            ].join("\n");
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
+
+      - name: Comment on ready DB preview
+        if: steps.db_changes.outputs.database == 'true' && steps.db.outputs.can_deploy == 'true'
+        uses: actions/github-script@v8
+        env:
+          API_PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
+          BRANCH_NAME: ${{ steps.db.outputs.branch_name }}
+          BRANCH_URL: ${{ steps.db.outputs.branch_url }}
+          PARENT_BRANCH: ${{ steps.db.outputs.parent_branch }}
+          WEB_PREVIEW_URL: ${{ steps.vercel.outputs.web_preview_url }}
+        with:
+          github-token: ${{ steps.db-preview-comment-token.outputs.token }}
+          script: |
+            const marker = process.env.DB_PREVIEW_COMMENT_MARKER;
+            const webPreviewUrl = process.env.WEB_PREVIEW_URL;
+            const webPreview = webPreviewUrl
+              ? `[Preview](${webPreviewUrl})`
+              : "Vercel preview URL not available to this workflow yet; the branch-specific env var is set for the next preview deployment.";
+            const body = [
+              marker,
+              "DB-isolated preview is ready for this pull request.",
+              "",
+              "| Item | Value |",
+              "| --- | --- |",
+              `| Neon branch | [\`${process.env.BRANCH_NAME}\`](${process.env.BRANCH_URL}) |`,
+              `| Parent branch | \`${process.env.PARENT_BRANCH}\` |`,
+              "| Migration status | Committed Drizzle migrations applied |",
+              `| API preview | [Preview](${process.env.API_PREVIEW_URL}) |`,
+              `| Web preview | ${webPreview} |`,
+              "",
+              "The `preview-pr-*` branch and branch-specific Vercel `DATABASE_URL` are deleted when the PR closes or no longer contains DB changes.",
             ].join("\n");
 
             const { owner, repo } = context.repo;
@@ -238,25 +617,65 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Delete Neon PR branch
+        id: neon_cleanup
+        shell: bash
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
+          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash .github/scripts/neon-database-branch.sh cleanup-preview
+
+      - name: Remove Vercel branch database override
+        id: vercel_cleanup
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bash .github/scripts/vercel-branch-database-url.sh remove
+
+      - name: Remove db-change label
+        uses: actions/github-script@v8
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                name: "db-change",
+              });
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+            }
+
       - name: Validate PR comment app configuration
         shell: bash
         env:
           FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
           FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
-          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_CLIENT_ID:-}" ]]; then
-            echo "Repository variable FIELD_LOG_API_PREVIEW_APP_CLIENT_ID is required." >&2
-            exit 1
-          fi
+          for name in FIELD_LOG_API_PREVIEW_APP_CLIENT_ID FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required." >&2
+              exit 1
+            fi
+          done
 
-          if [[ -z "${FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY:-}" ]]; then
-            echo "Repository secret FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY is required." >&2
-            exit 1
-          fi
-
-      - name: Create PR comment app token
+      - name: Create API preview comment app token
         id: preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
@@ -267,7 +686,7 @@ jobs:
           permission-issues: write
           permission-pull-requests: write
 
-      - name: Mark preview comment closed
+      - name: Mark API preview comment closed
         uses: actions/github-script@v8
         with:
           github-token: ${{ steps.preview-comment-token.outputs.token }}
@@ -279,6 +698,56 @@ jobs:
               "The API preview for this pull request is no longer current because the pull request is closed.",
               "",
               `Alias: \`${alias}\``,
+            ].join("\n");
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            }
+
+      - name: Create DB preview comment app token
+        id: db-preview-comment-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-issues: write
+          permission-pull-requests: write
+
+      - name: Mark DB preview comment closed
+        uses: actions/github-script@v8
+        env:
+          CLEANUP_PERFORMED: ${{ steps.neon_cleanup.outputs.cleanup_performed }}
+          TARGET_BRANCH: ${{ steps.neon_cleanup.outputs.target_branch }}
+        with:
+          github-token: ${{ steps.db-preview-comment-token.outputs.token }}
+          script: |
+            const marker = process.env.DB_PREVIEW_COMMENT_MARKER;
+            const cleanup = process.env.CLEANUP_PERFORMED === "true"
+              ? "Deleted"
+              : "No active branch found";
+            const body = [
+              marker,
+              "The DB preview for this pull request is inactive because the pull request is closed.",
+              "",
+              `Neon cleanup: ${cleanup} for \`${process.env.TARGET_BRANCH}\``,
+              "Vercel branch-specific `DATABASE_URL` cleanup was attempted.",
             ].join("\n");
 
             const { owner, repo } = context.repo;
@@ -324,6 +793,46 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve production database URL
+        id: production_db
+        shell: bash
+        env:
+          BRANCH_NAME: production
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
+          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+        run: bash .github/scripts/neon-database-branch.sh branch-url
+
+      - name: Run production migrations
+        working-directory: packages/database
+        env:
+          DATABASE_URL: ${{ steps.production_db.outputs.database_url }}
+        run: |
+          set -euo pipefail
+
+          pnpm exec drizzle-kit migrate --config=drizzle.config.ts
+
+          jq -cn \
+            --arg app "ci" \
+            --arg environment "github-actions" \
+            --arg level "info" \
+            --arg message "ci.database.production.migrations.applied" \
+            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg branch_name "${{ steps.production_db.outputs.branch_name }}" \
+            --arg branch_id "${{ steps.production_db.outputs.branch_id }}" \
+            '{
+              app: $app,
+              environment: $environment,
+              level: $level,
+              message: $message,
+              timestamp: $timestamp,
+              attributes: {
+                branchName: $branch_name,
+                branchId: $branch_id
+              }
+            }'
+
       - name: Build Worker dependencies
         run: pnpm exec turbo run build --filter=@app/api
 
@@ -356,8 +865,45 @@ jobs:
           env-slug: prod
           secret-path: /tools/cloudflare
 
+      - name: Fetch API runtime secrets from Infisical
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: prod
+          secret-path: /apps/api
+
+      - name: Write production API secrets file
+        shell: bash
+        env:
+          PRODUCTION_DATABASE_URL: ${{ steps.production_db.outputs.database_url }}
+        run: |
+          set -euo pipefail
+
+          jq -n \
+            --arg DATABASE_URL "$PRODUCTION_DATABASE_URL" \
+            --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
+            --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
+            --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
+            --arg LOG_LEVEL "${LOG_LEVEL:-}" \
+            --arg LOGGER "${LOGGER:-}" \
+            --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
+            '{
+              DATABASE_URL: $DATABASE_URL,
+              AXIOM_TOKEN: $AXIOM_TOKEN,
+              AXIOM_DATASET: $AXIOM_DATASET,
+              AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
+              LOG_LEVEL: $LOG_LEVEL,
+              LOGGER: $LOGGER,
+              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
+            } | with_entries(select(.value != ""))' \
+            > "$RUNNER_TEMP/api-production-secrets.json"
+
       - name: Deploy production Worker
-        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env=""
+        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env="" --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
         run: curl --fail --retry 5 --retry-delay 3 https://api.field-log.app/health
