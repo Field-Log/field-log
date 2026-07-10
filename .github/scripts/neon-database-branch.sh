@@ -20,7 +20,7 @@ require_neon_env() {
   require_env NEON_API_KEY
   require_env NEON_PROJECT_ID
   require_env NEON_DATABASE_NAME
-  require_env NEON_DATABASE_ROLE
+  require_env NEON_DATABASE_USER
 }
 
 api() {
@@ -126,7 +126,7 @@ connection_uri() {
   local database_name
   database_name="$(url_encode "$NEON_DATABASE_NAME")"
   local role_name
-  role_name="$(url_encode "$NEON_DATABASE_ROLE")"
+  role_name="$(url_encode "$NEON_DATABASE_USER")"
 
   api GET "/projects/${NEON_PROJECT_ID}/connection_uri?branch_id=${branch_id}&database_name=${database_name}&role_name=${role_name}&pooled=true" |
     jq -r '.uri'

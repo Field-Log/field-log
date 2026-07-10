@@ -340,10 +340,10 @@ Configure these GitHub repository variables:
 - `INFISICAL_CLOUDFLARE_IDENTITY_ID`
 - `INFISICAL_PROJECT_SLUG`
 - `NEON_DATABASE_NAME`
-- `NEON_DATABASE_ROLE`
+- `NEON_DATABASE_USER`
 - `NEON_PROJECT_ID`
-- `VERCEL_ORG_ID`
 - `VERCEL_PROJECT_ID`
+- `VERCEL_TEAM_ID`
 - optional `INFISICAL_DOMAIN`, defaults to `https://app.infisical.com`
 - optional `INFISICAL_OIDC_AUDIENCE`, defaults to
   `https://github.com/{repository_owner}`

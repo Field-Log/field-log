@@ -15,7 +15,7 @@ require_env() {
 
 require_vercel_env() {
   require_env VERCEL_TOKEN
-  require_env VERCEL_ORG_ID
+  require_env VERCEL_TEAM_ID
   require_env VERCEL_PROJECT_ID
   require_env BRANCH_NAME
 }
@@ -75,7 +75,7 @@ write_output() {
 }
 
 team_query_prefix() {
-  printf '?teamId=%s' "$(jq -rn --arg value "$VERCEL_ORG_ID" '$value | @uri')"
+  printf '?teamId=%s' "$(jq -rn --arg value "$VERCEL_TEAM_ID" '$value | @uri')"
 }
 
 branch_query_value() {

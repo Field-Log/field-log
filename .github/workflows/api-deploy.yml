@@ -176,14 +176,14 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
           NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
-          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           set -euo pipefail
 
-          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_ROLE VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN; do
+          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_USER VERCEL_TEAM_ID VERCEL_PROJECT_ID VERCEL_TOKEN; do
             if [[ -z "${!name:-}" ]]; then
               echo "$name is required." >&2
               exit 1
@@ -199,7 +199,7 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
           NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bash .github/scripts/neon-database-branch.sh prepare-preview
 
@@ -210,7 +210,7 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
           DATABASE_URL: ${{ steps.db.outputs.database_url }}
-          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh set
@@ -221,7 +221,7 @@ jobs:
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove
@@ -627,7 +627,7 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
           NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bash .github/scripts/neon-database-branch.sh cleanup-preview
 
@@ -636,7 +636,7 @@ jobs:
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove
@@ -801,7 +801,7 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
           NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
         run: bash .github/scripts/neon-database-branch.sh branch-url
 
       - name: Run production migrations

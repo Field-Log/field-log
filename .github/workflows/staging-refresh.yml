@@ -37,7 +37,7 @@ jobs:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
           NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_ROLE: ${{ vars.NEON_DATABASE_ROLE }}
+          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
         run: bash .github/scripts/neon-database-branch.sh refresh-staging
 
       - name: Run staging migrations

@@ -161,11 +161,11 @@ notifications.
 | `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Stg | `S` |
 | `INFISICAL_OIDC_AUDIENCE` | OIDC audience for Infisical auth. | ? (All) | `S` |
 | `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows. | All | `S` |
-| `NEON_DATABASE_NAME` | Neon database name used for connection URI lookup. | Stg, Prod | `S` |
-| `NEON_DATABASE_ROLE` | Neon role name used for connection URI lookup. | Stg, Prod | `S` |
+| `NEON_DATABASE_NAME` | Neon `PGDATABASE` value used for connection URI lookup. | Stg, Prod | `S` |
+| `NEON_DATABASE_USER` | Neon `PGUSER` value used for connection URI lookup. | Stg, Prod | `S` |
 | `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
-| `VERCEL_ORG_ID` | Vercel team/org ID for REST API calls. | Stg | `S` |
 | `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg | `S` |
+| `VERCEL_TEAM_ID` | Vercel Team ID passed as `teamId` to REST API calls. | Stg | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -185,7 +185,7 @@ Legend: `S` = server-only. `C` = client-visible.
 1. Open Vercel account settings and go to the Access Tokens area.[^6]
 2. Create a token for the account or team that owns the web project.
 3. Copy the token once and save it as the repository secret `VERCEL_TOKEN`.
-4. Keep `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` as repository variables.
+4. Keep `VERCEL_TEAM_ID` and `VERCEL_PROJECT_ID` as repository variables.
 
 GitHub workflows use the token as a bearer token against `https://api.vercel.com`.
 
@@ -198,7 +198,7 @@ GitHub workflows use the token as a bearer token against `https://api.vercel.com
    by an organization admin.
 4. Copy the token immediately; Neon shows API key tokens only once.
 5. Save the token as the repository secret `NEON_API_KEY`.
-6. Keep `NEON_PROJECT_ID`, `NEON_DATABASE_NAME`, and `NEON_DATABASE_ROLE` as
+6. Keep `NEON_PROJECT_ID`, `NEON_DATABASE_NAME`, and `NEON_DATABASE_USER` as
    repository variables.
 
 ## Platform-Provided Or Managed Values
@@ -244,7 +244,7 @@ Use least-privilege credentials where the provider supports scoping.
   - Prefer a project-scoped organization API key for `NEON_PROJECT_ID`.
   - Must allow listing, creating, deleting, and restoring branches.
   - Must allow pooled connection URI lookup for `NEON_DATABASE_NAME` and
-    `NEON_DATABASE_ROLE`.
+    `NEON_DATABASE_USER`.
 
 ### `VERCEL_TOKEN`
 
