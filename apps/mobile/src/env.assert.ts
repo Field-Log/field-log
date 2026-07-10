@@ -20,48 +20,39 @@ function assertThrows(fn: () => unknown, message: string): void {
 
 const absentEnv = createMobileEnv({});
 assertEqual(
-  absentEnv.EXPO_PUBLIC_API_BASE_URL,
+  absentEnv.EXPO_PUBLIC_API_URL,
   undefined,
-  "optional API base URL can be absent",
-);
-assertEqual(
-  absentEnv.EXPO_PUBLIC_LOG_PROXY_URL,
-  undefined,
-  "optional log proxy URL can be absent",
+  "optional API URL can be absent",
 );
 
 const validEnv = createMobileEnv({
-  EXPO_PUBLIC_API_BASE_URL: "https://api.example.com",
+  EXPO_PUBLIC_API_URL: "https://api.example.com",
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY: "client-key",
-  EXPO_PUBLIC_LOG_PROXY_URL: "https://api.example.com/logs",
 });
 assertEqual(
-  validEnv.EXPO_PUBLIC_API_BASE_URL,
+  validEnv.EXPO_PUBLIC_API_URL,
   "https://api.example.com",
-  "valid API base URL is preserved",
+  "valid API URL is preserved",
 );
 assertEqual(
   validEnv.EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY,
   "client-key",
   "valid log proxy client key is preserved",
 );
+
+const localEnv = createMobileEnv({
+  EXPO_PUBLIC_API_URL: "localhost:4006",
+});
 assertEqual(
-  validEnv.EXPO_PUBLIC_LOG_PROXY_URL,
-  "https://api.example.com/logs",
-  "valid log proxy URL is preserved",
+  localEnv.EXPO_PUBLIC_API_URL,
+  "http://localhost:4006",
+  "bare localhost API URL is normalized",
 );
 
 assertThrows(
   () =>
     createMobileEnv({
-      EXPO_PUBLIC_API_BASE_URL: "not a url",
+      EXPO_PUBLIC_API_URL: "not a url",
     }),
-  "malformed API base URL is rejected",
-);
-assertThrows(
-  () =>
-    createMobileEnv({
-      EXPO_PUBLIC_LOG_PROXY_URL: "not a url",
-    }),
-  "malformed log proxy URL is rejected",
+  "malformed API URL is rejected",
 );

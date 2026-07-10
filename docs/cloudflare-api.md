@@ -398,8 +398,7 @@ API_PREVIEW_WORKER_HOST=field-log-api-preview.23242.workers.dev
 During Vercel PR previews, `apps/web` derives the API URLs from the PR number:
 
 ```dotenv
-VITE_API_BASE_URL=https://pr-123-field-log-api-preview.23242.workers.dev
-VITE_LOG_PROXY_URL=https://pr-123-field-log-api-preview.23242.workers.dev/logs
+VITE_API_URL=https://pr-123-field-log-api-preview.23242.workers.dev
 ```
 
 This avoids shared Infisical `preview /apps/web` values that only support one PR

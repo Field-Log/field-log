@@ -38,6 +38,7 @@ secret syncs.
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `API_PREVIEW_WORKER_HOST`[^3] | Stable Cloudflare preview Worker host used to derive PR API URLs. | Stg | `C` |
+| `API_URL`[^2] | API origin used by browser requests and client log proxy posts. | ? (All) | `C` |
 | `AXIOM_DATASET` | Axiom dataset for web logs. | ? (All) | `S` |
 | `AXIOM_EDGE_DOMAIN` | Axiom edge domain. | ? (All) | `S` |
 | `AXIOM_TOKEN` | Axiom ingest token for server-side web logs. | ? (All) | `S` |
@@ -46,9 +47,7 @@ secret syncs.
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY`[^2] | Client key aliased into the web client log proxy config. | ? (All) | `C` |
-| `LOG_PROXY_URL`[^2] | API log proxy URL aliased into the web client log proxy config. | ? (All) | `C` |
 | `SITE_URL` | Explicit absolute site origin for canonical and Open Graph URLs. | ? (All) | `S` |
-| `VITE_API_BASE_URL` | API base URL used by browser requests. | ? (All) | `C` |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk browser SDK publishable key. | All | `C` |
 | `VITE_CLERK_SIGN_IN_URL` | Clerk sign-in route. | All | `C` |
 | `VITE_CLERK_SIGN_UP_URL` | Clerk sign-up route. | All | `C` |
@@ -69,7 +68,6 @@ deployment secrets are written to Workers through Wrangler `--secrets-file`.
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY` | Key checked by `POST /logs`. | ? (All) | `C` |
-| `PORT` | Local Node server port. | ? (Dev) | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -94,9 +92,8 @@ JavaScript must use Expo's `EXPO_PUBLIC_` prefix.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
-| `EXPO_PUBLIC_API_BASE_URL` | API base URL for mobile requests. | ? (All) | `C` |
+| `EXPO_PUBLIC_API_URL` | API origin used by mobile requests and client log proxy posts. | ? (All) | `C` |
 | `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY` | Client key sent to the API log proxy. | ? (All) | `C` |
-| `EXPO_PUBLIC_LOG_PROXY_URL` | API log proxy URL. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -278,9 +275,9 @@ Use least-privilege credentials where the provider supports scoping.
 
 [^1]: Vercel Preview uses the shared staging database by default.
     DB-changing PRs get a branch-specific `DATABASE_URL` override.
-[^2]: The web build aliases `LOG_PROXY_CLIENT_KEY` to
-    `VITE_LOG_PROXY_CLIENT_KEY` and `LOG_PROXY_URL` to `VITE_LOG_PROXY_URL`
-    when the `VITE_*` names are absent.
+[^2]: The web build aliases `API_URL` to `VITE_API_URL` and
+    `LOG_PROXY_CLIENT_KEY` to `VITE_LOG_PROXY_CLIENT_KEY` when the `VITE_*`
+    names are absent. The web and mobile loggers append `/logs` to the API URL.
 [^3]: `Stg` here means Vercel Preview. This value is not
     used by the shared staging web deploy.
 [^4]: GitHub deploy workflows resolve branch-specific Neon URLs

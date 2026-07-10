@@ -10,7 +10,7 @@ Local development uses stable ports:
 
 - Web: `http://localhost:4005`
 - API: `http://localhost:4006`
-- Client log proxy: `http://localhost:4006/logs`
+- Client log proxy: derived from `http://localhost:4006`
 
 ## Axiom Setup
 
@@ -63,35 +63,36 @@ LOG_LEVEL=info
 Omit `AXIOM_EDGE_DOMAIN` unless Axiom has given the project a custom edge
 domain.
 
-Client runtime folders provide their platform-specific public proxy settings:
+Client runtime folders provide their platform-specific API and proxy settings:
 
-- `/apps/web`: `LOG_PROXY_URL`, `LOG_PROXY_CLIENT_KEY`, optional. The web build
-  aliases these to `VITE_LOG_PROXY_URL` and `VITE_LOG_PROXY_CLIENT_KEY` when the
+- `/apps/web`: `API_URL`, `LOG_PROXY_CLIENT_KEY`, optional. The web build
+  aliases these to `VITE_API_URL` and `VITE_LOG_PROXY_CLIENT_KEY` when the
   `VITE_*` names are absent.
-- `/apps/mobile`: `EXPO_PUBLIC_LOG_PROXY_URL`,
-  `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional
+- `/apps/mobile`: `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`,
+  optional
 - `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
 
-Mobile does not alias log proxy variables; use the `EXPO_PUBLIC_*` names there.
+Web and mobile derive the client log proxy URL by appending `/logs` to the API
+URL. Mobile does not alias API variables; use the `EXPO_PUBLIC_*` names there.
 
 Local development:
 
 ```dotenv
 # /apps/web
-LOG_PROXY_URL=http://localhost:4006/logs
+API_URL=http://localhost:4006
 
 # /apps/mobile
-EXPO_PUBLIC_LOG_PROXY_URL=http://localhost:4006/logs
+EXPO_PUBLIC_API_URL=http://localhost:4006
 ```
 
 Production:
 
 ```dotenv
 # /apps/web
-LOG_PROXY_URL=https://<api-domain>/logs
+API_URL=https://<api-domain>
 
 # /apps/mobile
-EXPO_PUBLIC_LOG_PROXY_URL=https://<api-domain>/logs
+EXPO_PUBLIC_API_URL=https://<api-domain>
 ```
 
 If `LOG_PROXY_CLIENT_KEY` is configured, `/apps/api` and each public client
@@ -360,7 +361,8 @@ The app-local module owns the browser proxy configuration:
 ```ts
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
-const logProxyUrl = import.meta.env.VITE_LOG_PROXY_URL;
+const apiUrl = import.meta.env.VITE_API_URL;
+const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
 
 const transports = logProxyUrl
   ? [
@@ -398,7 +400,8 @@ The Expo app-local module owns the proxy configuration:
 ```ts
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
-const logProxyUrl = process.env.EXPO_PUBLIC_LOG_PROXY_URL;
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
 
 const transports = logProxyUrl
   ? [
