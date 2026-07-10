@@ -4,8 +4,20 @@ set -euo pipefail
 
 VERCEL_API_BASE="${VERCEL_API_BASE:-https://api.vercel.com}"
 
+trim_whitespace() {
+  local value="$1"
+
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+  printf '%s' "$value"
+}
+
 require_env() {
   local name="$1"
+  local value
+
+  value="$(trim_whitespace "${!name:-}")"
+  printf -v "$name" '%s' "$value"
 
   if [[ -z "${!name:-}" ]]; then
     echo "$name is required." >&2
@@ -24,26 +36,61 @@ api() {
   local method="$1"
   local path="$2"
   local body="${3:-}"
+  local response_file
+  response_file="$(mktemp)"
+  local status
+  local curl_status
 
+  set +e
   if [[ -n "$body" ]]; then
-    curl --fail --silent --show-error \
+    status="$(curl --silent --show-error \
+      --output "$response_file" \
+      --write-out "%{http_code}" \
       --request "$method" \
       --header "Authorization: Bearer ${VERCEL_TOKEN}" \
       --header "content-type: application/json" \
       --data "$body" \
-      "${VERCEL_API_BASE}${path}"
+      "${VERCEL_API_BASE}${path}")"
   else
-    curl --fail --silent --show-error \
+    status="$(curl --silent --show-error \
+      --output "$response_file" \
+      --write-out "%{http_code}" \
       --request "$method" \
       --header "Authorization: Bearer ${VERCEL_TOKEN}" \
-      "${VERCEL_API_BASE}${path}"
+      "${VERCEL_API_BASE}${path}")"
   fi
+  curl_status=$?
+  set -e
+  status="${status:-000}"
+
+  if [[ "$curl_status" -ne 0 || "$status" -lt 200 || "$status" -ge 300 ]]; then
+    echo "Vercel API request failed: ${method} ${path} returned HTTP ${status}." >&2
+    if [[ -s "$response_file" ]]; then
+      echo "Vercel API response:" >&2
+      cat "$response_file" >&2
+      echo >&2
+    fi
+    rm -f "$response_file"
+    return 22
+  fi
+
+  cat "$response_file"
+  rm -f "$response_file"
 }
 
 emit_ci_log() {
   local level="$1"
   local message="$2"
-  local attributes="${3:-{}}"
+  local attributes="${3:-}"
+  local normalized_attributes
+
+  if [[ -z "$attributes" ]]; then
+    attributes="{}"
+  fi
+
+  if ! normalized_attributes="$(jq -c . <<< "$attributes" 2> /dev/null)"; then
+    normalized_attributes="{}"
+  fi
 
   jq -cn \
     --arg app "ci" \
@@ -51,7 +98,7 @@ emit_ci_log() {
     --arg level "$level" \
     --arg message "$message" \
     --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-    --argjson attributes "$attributes" \
+    --argjson attributes "$normalized_attributes" \
     '{
       app: $app,
       environment: (if $environment == "" then "local" else $environment end),
