@@ -50,7 +50,16 @@ url_encode() {
 emit_ci_log() {
   local level="$1"
   local message="$2"
-  local attributes="${3:-{}}"
+  local attributes="${3:-}"
+  local normalized_attributes
+
+  if [[ -z "$attributes" ]]; then
+    attributes="{}"
+  fi
+
+  if ! normalized_attributes="$(jq -c . <<< "$attributes" 2> /dev/null)"; then
+    normalized_attributes="{}"
+  fi
 
   jq -cn \
     --arg app "ci" \
@@ -58,7 +67,7 @@ emit_ci_log() {
     --arg level "$level" \
     --arg message "$message" \
     --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-    --argjson attributes "$attributes" \
+    --argjson attributes "$normalized_attributes" \
     '{
       app: $app,
       environment: (if $environment == "" then "local" else $environment end),
@@ -243,12 +252,21 @@ prepare_preview() {
   require_env PR_NUMBER
   require_env DB_CHANGING
 
+  if ! [[ "$MAX_NEON_BRANCHES" =~ ^[0-9]+$ ]]; then
+    echo "MAX_NEON_BRANCHES must be a non-negative integer." >&2
+    exit 1
+  fi
+
   local target_branch="preview-pr-${PR_NUMBER}"
   local branches_json
   branches_json="$(list_branches)"
 
   local branch_count
   branch_count="$(branch_count_from_list "$branches_json")"
+  if ! [[ "$branch_count" =~ ^[0-9]+$ ]]; then
+    echo "Neon branch count must be a non-negative integer." >&2
+    exit 1
+  fi
   local branch_names
   branch_names="$(branch_names_from_list "$branches_json")"
   local production_branch_id
@@ -302,14 +320,14 @@ prepare_preview() {
     emit_ci_log warn "ci.database.preview.branchLimit.reached" "$(jq -n \
       --arg pr_number "$PR_NUMBER" \
       --arg target_branch "$target_branch" \
-      --argjson branch_count "$branch_count" \
-      --argjson max_branches "$MAX_NEON_BRANCHES" \
+      --arg branch_count "$branch_count" \
+      --arg max_branches "$MAX_NEON_BRANCHES" \
       --arg branch_names "$branch_names" \
       '{
         pullRequestNumber: $pr_number,
         targetBranch: $target_branch,
-        branchCount: $branch_count,
-        maxBranches: $max_branches,
+        branchCount: ($branch_count | tonumber),
+        maxBranches: ($max_branches | tonumber),
         branchNames: ($branch_names | split("\n") | map(select(. != "")))
       }')"
     return
