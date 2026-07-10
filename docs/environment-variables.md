@@ -17,8 +17,8 @@ Required values use these labels:
 
 | Service | URL | Notes |
 | --- | --- | --- |
-| Web | `http://localhost:4005` | TanStack Start app in `apps/web`. |
 | API Worker | `http://localhost:4006` | Wrangler dev server for `apps/api`. |
+| Web | `http://localhost:4005` | TanStack Start app in `apps/web`. |
 
 Logging environment variables, Axiom setup, and client proxy configuration are
 documented in [logger.md](./logger.md).
@@ -37,21 +37,21 @@ secret syncs.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
+| `API_PREVIEW_WORKER_HOST`[^2] | Stable Cloudflare preview Worker host used to derive PR API URLs. | Stg | `C` |
+| `AXIOM_DATASET` | Axiom dataset for web logs. | ? (All) | `S` |
+| `AXIOM_EDGE_DOMAIN` | Optional Axiom edge domain. | ? (All) | `S` |
+| `AXIOM_TOKEN` | Axiom ingest token for server-side web logs. | ? (All) | `S` |
+| `CLERK_SECRET_KEY` | Clerk server SDK secret key. | All | `S` |
+| `DATABASE_URL`[^1] | Web server runtime database connection. | All | `S` |
+| `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
+| `SITE_URL` | Explicit absolute site origin for canonical and Open Graph URLs. | ? (All) | `S` |
+| `VITE_API_BASE_URL` | API base URL used by browser requests. | ? (All) | `C` |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk browser SDK publishable key. | All | `C` |
 | `VITE_CLERK_SIGN_IN_URL` | Clerk sign-in route. | All | `C` |
 | `VITE_CLERK_SIGN_UP_URL` | Clerk sign-up route. | All | `C` |
-| `VITE_API_BASE_URL` | API base URL used by browser requests. | ? (All) | `C` |
-| `VITE_LOG_PROXY_URL` | Client log proxy endpoint. | ? (All) | `C` |
 | `VITE_LOG_PROXY_CLIENT_KEY` | Optional client key sent to the API log proxy. | ? (All) | `C` |
-| `CLERK_SECRET_KEY` | Clerk server SDK secret key. | All | `S` |
-| `DATABASE_URL`[^1] | Web server runtime database connection. | All | `S` |
-| `API_PREVIEW_WORKER_HOST`[^2] | Stable Cloudflare preview Worker host used to derive PR API URLs. | Stg | `C` |
-| `SITE_URL` | Explicit absolute site origin for canonical and Open Graph URLs. | ? (All) | `S` |
-| `AXIOM_TOKEN` | Axiom ingest token for server-side web logs. | ? (All) | `S` |
-| `AXIOM_DATASET` | Axiom dataset for web logs. | ? (All) | `S` |
-| `AXIOM_EDGE_DOMAIN` | Optional Axiom edge domain. | ? (All) | `S` |
-| `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
-| `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `VITE_LOG_PROXY_URL` | Client log proxy endpoint. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -62,12 +62,12 @@ deployment secrets are written to Workers through Wrangler `--secrets-file`.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
-| `DATABASE_URL`[^3] | API database connection string. | All | `S` |
-| `AXIOM_TOKEN` | Axiom ingest token for API logs. | ? (All) | `S` |
 | `AXIOM_DATASET` | Axiom dataset for API logs. | ? (All) | `S` |
 | `AXIOM_EDGE_DOMAIN` | Optional Axiom edge domain. | ? (All) | `S` |
-| `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
+| `AXIOM_TOKEN` | Axiom ingest token for API logs. | ? (All) | `S` |
+| `DATABASE_URL`[^3] | API database connection string. | All | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY` | Optional key required by `POST /logs`. | ? (All) | `S` |
 | `PORT` | Legacy local Node server port. | ? (Dev) | `S` |
 
@@ -79,8 +79,8 @@ Cloudflare deployment credentials are separate from API runtime secrets.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Wrangler authentication for deploys. | All | `S` |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account selected by Wrangler. | All | `S` |
+| `CLOUDFLARE_API_TOKEN` | Wrangler authentication for deploys. | All | `S` |
 | `CLOUDFLARE_WORKERS_SUBDOMAIN` | workers.dev account subdomain used to form PR preview URLs. | Stg | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
@@ -95,8 +95,8 @@ JavaScript must use Expo's `EXPO_PUBLIC_` prefix.
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `EXPO_PUBLIC_API_BASE_URL` | API base URL for mobile requests. | ? (All) | `C` |
-| `EXPO_PUBLIC_LOG_PROXY_URL` | API log proxy URL. | ? (All) | `C` |
 | `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY` | Optional client key sent to the API log proxy. | ? (All) | `C` |
+| `EXPO_PUBLIC_LOG_PROXY_URL` | API log proxy URL. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -120,8 +120,8 @@ integration account.
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `FIGMA_ACCESS_TOKEN` | Personal Access Token for the dedicated integration account. | Dev | `S` |
-| `FIGMA_FIGJAM_FILE_KEY` | Primary FigJam planning board file key. | Dev | `S` |
 | `FIGMA_FIGJAM_ALLOWED_FILE_KEYS` | Comma-separated allowlist of FigJam/Figma file keys. | Dev | `S` |
+| `FIGMA_FIGJAM_FILE_KEY` | Primary FigJam planning board file key. | Dev | `S` |
 | `GIT_BRANCH` | Optional payload metadata. | ? (Dev) | `S` |
 | `GIT_COMMIT` | Optional payload metadata. | ? (Dev) | `S` |
 
@@ -159,14 +159,14 @@ notifications.
 | `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for DB preview comments. | Stg | `S` |
 | `INFISICAL_CLOUDFLARE_IDENTITY_ID` | Infisical OIDC identity for Cloudflare/API deploy secrets. | Stg, Prod | `S` |
 | `INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID` | Infisical OIDC identity for Discord webhook delivery. | All | `S` |
-| `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Stg | `S` |
-| `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows. | All | `S` |
 | `INFISICAL_DOMAIN` | Infisical API base URL override. | ? (All) | `S` |
 | `INFISICAL_ENV_SLUG` | Infisical environment slug override. | ? (All) | `S` |
+| `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Stg | `S` |
 | `INFISICAL_OIDC_AUDIENCE` | OIDC audience override for Infisical auth. | ? (All) | `S` |
-| `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
+| `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows. | All | `S` |
 | `NEON_DATABASE_NAME` | Neon database name used for connection URI lookup. | Stg, Prod | `S` |
 | `NEON_DATABASE_ROLE` | Neon role name used for connection URI lookup. | Stg, Prod | `S` |
+| `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
 | `VERCEL_ORG_ID` | Vercel team/org ID for REST API calls. | Stg | `S` |
 | `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg | `S` |
 
@@ -213,15 +213,15 @@ a workflow explicitly starts requiring that.
 | Variable | What it is for | Provider | Important notes |
 | --- | --- | --- | --- |
 | `APP_ENV` | API runtime environment label. | Wrangler | `S` |
-| `VERCEL_ENV` | Vercel deployment environment. | Vercel | `S` |
-| `VERCEL_GIT_PULL_REQUEST_ID` | Pull request number for Vercel Preview builds. | Vercel | `S` |
-| `VERCEL_PROJECT_PRODUCTION_URL`[^7] | Vercel production domain. | Vercel | `S` |
 | `GITHUB_EVENT_NAME` | GitHub event name. | GitHub Actions | `S` |
 | `GITHUB_EVENT_PATH` | Path to the event payload JSON. | GitHub Actions | `S` |
 | `GITHUB_REPOSITORY` | Repository owner/name. | GitHub Actions | `S` |
 | `GITHUB_RUN_ID` | Workflow run ID for links. | GitHub Actions | `S` |
-| `GITHUB_SHA` | Commit SHA for links. | GitHub Actions | `S` |
 | `GITHUB_SERVER_URL` | GitHub server base URL. | GitHub Actions | `S` |
+| `GITHUB_SHA` | Commit SHA for links. | GitHub Actions | `S` |
+| `VERCEL_ENV` | Vercel deployment environment. | Vercel | `S` |
+| `VERCEL_GIT_PULL_REQUEST_ID` | Pull request number for Vercel Preview builds. | Vercel | `S` |
+| `VERCEL_PROJECT_PRODUCTION_URL`[^7] | Vercel production domain. | Vercel | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
