@@ -1,4 +1,4 @@
-import { pgEnum, pgTable, uuid, text } from "drizzle-orm/pg-core";
+import { pgEnum, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import {
   currencyCodes,
   dimensionUnits,

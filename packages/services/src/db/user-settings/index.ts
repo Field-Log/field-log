@@ -41,6 +41,7 @@ export function createUserSettingsService(
             .select({
               currencyCode: schema.userSettings.currencyCode,
               dimensionUnit: schema.userSettings.dimensionUnit,
+              migrationNudge: schema.userSettings.migrationNudge,
               theme: schema.userSettings.theme,
               userId: schema.userSettings.userId,
               weightUnit: schema.userSettings.weightUnit,

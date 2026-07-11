@@ -111,6 +111,7 @@ describe("database service logging", () => {
     const settings: UserSettings = {
       currencyCode: "CAD",
       dimensionUnit: "in",
+      migrationNudge: "dismissed",
       theme: "dark",
       userId: "user-1",
       weightUnit: "g",
@@ -154,6 +155,7 @@ describe("database service logging", () => {
     } as const;
     const userSettings: UserSettings = {
       ...settings,
+      migrationNudge: "dismissed",
       userId: user.id,
     };
     const db = createDbMock({
