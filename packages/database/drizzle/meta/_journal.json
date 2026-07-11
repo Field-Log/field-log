@@ -8,6 +8,13 @@
       "when": 1783030745915,
       "tag": "0000_flawless_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783731152430,
+      "tag": "0001_eminent_warbound",
+      "breakpoints": true
     }
   ]
 }

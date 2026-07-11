@@ -1,0 +1,1 @@
+ALTER TABLE "user_settings" ADD COLUMN "migration_nudge" text DEFAULT 'dismissed' NOT NULL;
