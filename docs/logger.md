@@ -10,7 +10,7 @@ Local development uses stable ports:
 
 - Web: `http://localhost:4005`
 - API: `http://localhost:4006`
-- Client log proxy: `http://localhost:4006/logs`
+- Client log proxy: `http://localhost:4006/api/v1/logs`
 
 ## Axiom Setup
 
@@ -77,25 +77,26 @@ Local development:
 
 ```dotenv
 # /apps/web
-VITE_LOG_PROXY_URL=http://localhost:4006/logs
+VITE_LOG_PROXY_URL=http://localhost:4006/api/v1/logs
 
 # /apps/mobile
-EXPO_PUBLIC_LOG_PROXY_URL=http://localhost:4006/logs
+EXPO_PUBLIC_LOG_PROXY_URL=http://localhost:4006/api/v1/logs
 ```
 
 Production:
 
 ```dotenv
 # /apps/web
-VITE_LOG_PROXY_URL=https://<api-domain>/logs
+VITE_LOG_PROXY_URL=https://<api-domain>/api/v1/logs
 
 # /apps/mobile
-EXPO_PUBLIC_LOG_PROXY_URL=https://<api-domain>/logs
+EXPO_PUBLIC_LOG_PROXY_URL=https://<api-domain>/api/v1/logs
 ```
 
-`LOG_PROXY_CLIENT_KEY` is an anti-noise check for `POST /logs`, not a security
-boundary. If it is configured, `/apps/api` and each public client runtime folder
-must receive matching values under the names that runtime consumes.
+`LOG_PROXY_CLIENT_KEY` is an anti-noise check for `POST /api/v1/logs`, not a
+security boundary. If it is configured, `/apps/api` and each public client
+runtime folder must receive matching values under the names that runtime
+consumes.
 
 ## Package Build
 
@@ -268,10 +269,10 @@ Use the configured service instance in API code:
 import { s } from "./lib/services.js";
 import { loggerMessages } from "@package/logger";
 
-app.get("/health", (context) => {
+app.get("/api/v1/health", (context) => {
   s.logger.info(loggerMessages.api.healthChecked, {
     attributes: {
-      route: "/health",
+      route: "/api/v1/health",
     },
   });
 
@@ -402,10 +403,10 @@ export const logger = createLogger({
 
 ## Log Proxy
 
-The API exposes `POST /logs`. It accepts a single event, an array of events, or
-`{ "events": [...] }`. Batches are capped at 25 events. The API validates the
-event shape, enriches the event with proxy metadata, redacts again server-side,
-and forwards through `s.logger`.
+The API exposes `POST /api/v1/logs`. It accepts a single event, an array of
+events, or `{ "events": [...] }`. Batches are capped at 25 events. The API
+validates the event shape, enriches the event with proxy metadata, redacts again
+server-side, and forwards through `s.logger`.
 
 If `LOG_PROXY_CLIENT_KEY` is configured, clients must send it with the
 `x-log-client-key` header. The proxy transport handles this automatically.
