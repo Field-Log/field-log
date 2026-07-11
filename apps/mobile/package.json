@@ -11,6 +11,7 @@
     "ios": "tsx ../../packages/infisical-runner/src/cli.ts mobile ios -- expo start --ios",
     "build": "tsx ../../packages/infisical-runner/src/cli.ts mobile build -- expo export --platform all",
     "build:preview": "tsx ../../packages/infisical-runner/src/cli.ts mobile build:preview -- expo export --platform all",
+    "build:prod": "tsx ../../packages/infisical-runner/src/cli.ts mobile build:prod -- expo export --platform all",
     "build:ci": "expo export --platform all",
     "check": "biome check .",
     "lint": "eslint .",

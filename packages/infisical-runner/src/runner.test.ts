@@ -104,11 +104,32 @@ describe("buildInfisicalRunArgs", () => {
     ]);
   });
 
-  it("builds mobile production builds with production app secrets", () => {
+  it("builds mobile default builds with development app secrets", () => {
     expect(
       buildInfisicalRunArgs({
         app: "mobile",
         command: "build",
+        commandArgs: ["expo", "export", "--platform", "all"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/mobile",
+      "--",
+      "expo",
+      "export",
+      "--platform",
+      "all",
+    ]);
+  });
+
+  it("builds mobile production builds with production app secrets", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "mobile",
+        command: "build:prod",
         commandArgs: ["expo", "export", "--platform", "all"],
         repoRoot: "/repo",
       }),

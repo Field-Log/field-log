@@ -83,12 +83,16 @@ export const commandSecrets = {
   mobile: {
     build: {
       allowServerSecrets: false,
-      environmentSlug: "prod",
       paths: [mobileSecretPath],
     },
     "build:preview": {
       allowServerSecrets: false,
       environmentSlug: "preview",
+      paths: [mobileSecretPath],
+    },
+    "build:prod": {
+      allowServerSecrets: false,
+      environmentSlug: "prod",
       paths: [mobileSecretPath],
     },
     dev: {

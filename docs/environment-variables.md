@@ -133,10 +133,10 @@ Current mobile variables:
 - optional `EXPO_PUBLIC_LOG_PROXY_URL`
 - optional `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`
 
-Mobile development and test commands load these values from Infisical
-environment `dev` at `/apps/mobile`. Production Expo builds load Infisical
-environment `prod` at `/apps/mobile`, and preview Expo builds load Infisical
-environment `preview` at `/apps/mobile`.
+Mobile development, test, and default build commands load these values from
+Infisical environment `dev` at `/apps/mobile`. Preview Expo builds load
+Infisical environment `preview` at `/apps/mobile`, and production Expo builds
+load Infisical environment `prod` at `/apps/mobile`.
 
 Server-only values such as `DATABASE_URL` and `CLERK_SECRET_KEY` should stay
 behind `apps/api` or web server code.

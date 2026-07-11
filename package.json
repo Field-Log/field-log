@@ -15,6 +15,7 @@
     "build": "turbo run build",
     "build:ci": "turbo run build:ci",
     "build:mobile:preview": "pnpm --filter @app/mobile run build:preview",
+    "build:mobile:prod": "pnpm --filter @app/mobile run build:prod",
     "db:generate": "pnpm --filter @package/database db:generate",
     "db:migrate": "pnpm --filter @package/database db:migrate",
     "lint": "biome lint . && turbo run lint",
