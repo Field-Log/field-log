@@ -285,10 +285,10 @@ Use the configured service instance in API code:
 import { s } from "./lib/services.js";
 import { loggerMessages } from "@package/logger";
 
-app.get("/health", (context) => {
+app.get("/api/v1/health", (context) => {
   s.logger.info(loggerMessages.api.healthChecked, {
     attributes: {
-      route: "/health",
+      route: "/api/v1/health",
     },
   });
 
@@ -421,10 +421,10 @@ export const logger = createLogger({
 
 ## Log Proxy
 
-The API exposes `POST /logs`. It accepts a single event, an array of events, or
-`{ "events": [...] }`. Batches are capped at 25 events. The API validates the
-event shape, enriches the event with proxy metadata, redacts again server-side,
-and forwards through `s.logger`.
+The API exposes `POST /api/v1/logs`. It accepts a single event, an array of
+events, or `{ "events": [...] }`. Batches are capped at 25 events. The API
+validates the event shape, enriches the event with proxy metadata, redacts again
+server-side, and forwards through `s.logger`.
 
 If `LOG_PROXY_CLIENT_KEY` is configured, clients must send it with the
 `x-log-client-key` header. The proxy transport handles this automatically.

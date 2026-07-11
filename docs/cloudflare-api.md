@@ -331,7 +331,7 @@ Merges to `main`:
 - Reads Infisical environment `prod`, path `/apps/api`, then writes a Wrangler
   secrets file with an explicit production `DATABASE_URL`.
 - Deploys `field-log-api` to `api.field-log.app`.
-- Smoke-tests `https://api.field-log.app/health`.
+- Smoke-tests `https://api.field-log.app/api/v1/health`.
 
 Configure these GitHub repository variables:
 
@@ -435,13 +435,7 @@ Run these checks after production, staging, or preview deploys.
 Health:
 
 ```sh
-curl --fail https://api.field-log.app/health
-```
-
-Service info:
-
-```sh
-curl --fail https://api.field-log.app/
+curl --fail https://api.field-log.app/api/v1/health
 ```
 
 Log proxy with a configured client key:
@@ -452,7 +446,7 @@ curl --fail \
   --header "content-type: application/json" \
   --header "x-log-client-key: $LOG_PROXY_CLIENT_KEY" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/logs
+  https://api.field-log.app/api/v1/logs
 ```
 
 Log proxy rejection when a client key is configured:
@@ -462,7 +456,7 @@ curl --silent --output /dev/null --write-out "%{http_code}\n" \
   --request POST \
   --header "content-type: application/json" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/logs
+  https://api.field-log.app/api/v1/logs
 ```
 
 The unauthenticated log proxy check should return `401` when

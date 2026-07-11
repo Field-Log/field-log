@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Routes"
+  short_description: "Follow apps/api route versioning patterns."
+  default_prompt: "Use $api-routes when adding or changing apps/api routes."
