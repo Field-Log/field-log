@@ -607,6 +607,34 @@ jobs:
               });
             }
 
+      - name: Cleanup failed DB preview resources
+        if: ${{ always() && steps.db_changes.outputs.database == 'true' && steps.db.outcome != 'skipped' && (failure() || cancelled()) }}
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set +e
+
+          bash .github/scripts/neon-database-branch.sh cleanup-preview
+          neon_status=$?
+
+          bash .github/scripts/vercel-branch-database-url.sh remove
+          vercel_status=$?
+
+          if [[ "$neon_status" -ne 0 || "$vercel_status" -ne 0 ]]; then
+            echo "Preview cleanup encountered errors: neon=${neon_status}, vercel=${vercel_status}." >&2
+          fi
+
+          exit 0
+
   preview-closed:
     name: API Preview Closed
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository

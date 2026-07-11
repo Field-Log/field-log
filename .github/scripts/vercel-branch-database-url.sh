@@ -66,9 +66,7 @@ api() {
   if [[ "$curl_status" -ne 0 || "$status" -lt 200 || "$status" -ge 300 ]]; then
     echo "Vercel API request failed: ${method} ${path} returned HTTP ${status}." >&2
     if [[ -s "$response_file" ]]; then
-      echo "Vercel API response:" >&2
-      cat "$response_file" >&2
-      echo >&2
+      echo "Vercel API response body omitted to avoid leaking environment variable values." >&2
     fi
     if [[ "$status" == "401" || "$status" == "403" ]]; then
       echo "Check that VERCEL_TOKEN was created for the Vercel team in VERCEL_TEAM_ID and can access VERCEL_PROJECT_ID." >&2
@@ -176,6 +174,7 @@ delete_existing_database_url() {
 
 set_database_url() {
   require_env DATABASE_URL
+  printf '::add-mask::%s\n' "$DATABASE_URL"
 
   delete_existing_database_url
 

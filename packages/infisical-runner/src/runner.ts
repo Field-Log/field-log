@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   type CommandSecretConfig,
   commandSecrets,
-  localEnvironmentSlug,
+  defaultEnvironmentSlug,
 } from "./config.js";
 
 export class RunnerError extends Error {
@@ -71,6 +71,16 @@ export function getCommandSecretConfig(
   return commandConfig;
 }
 
+export function getCommandEnvironmentSlug(
+  app: string,
+  command: string,
+): string {
+  return (
+    getCommandSecretConfig(app, command).environmentSlug ??
+    defaultEnvironmentSlug
+  );
+}
+
 export function isServerSecretPath(secretPath: string): boolean {
   return secretPath.endsWith("/server") || secretPath.includes("/server/");
 }
@@ -98,6 +108,10 @@ export function validateSecretPaths(
 export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
   const config = getCommandSecretConfig(request.app, request.command);
   validateSecretPaths(request.app, request.command, config);
+  const environmentSlug = getCommandEnvironmentSlug(
+    request.app,
+    request.command,
+  );
 
   const runArgsForPath = (secretPath: string): string[] => [
     "run",
@@ -105,7 +119,7 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
       ? [`--projectId=${request.infisicalProjectId}`]
       : []),
     `--project-config-dir=${request.repoRoot}`,
-    `--env=${localEnvironmentSlug}`,
+    `--env=${environmentSlug}`,
     `--path=${secretPath}`,
     "--",
   ];
@@ -193,14 +207,17 @@ export function getInfisicalAuthCheckError(output: string): RunnerError {
   );
 }
 
-export function assertInfisicalAuthenticated(repoRoot: string): void {
+export function assertInfisicalAuthenticated(
+  repoRoot: string,
+  environmentSlug = defaultEnvironmentSlug,
+): void {
   const result = spawnSync(
     "infisical",
     [
       "secrets",
       "folders",
       "get",
-      `--env=${localEnvironmentSlug}`,
+      `--env=${environmentSlug}`,
       "--path=/",
       "--output=json",
     ],
@@ -227,7 +244,10 @@ export async function runInfisicalCommand(
 ): Promise<number> {
   assertInfisicalCliAvailable();
   assertInfisicalProjectConfig(request.repoRoot);
-  assertInfisicalAuthenticated(request.repoRoot);
+  assertInfisicalAuthenticated(
+    request.repoRoot,
+    getCommandEnvironmentSlug(request.app, request.command),
+  );
 
   const args = buildInfisicalRunArgs(request);
   const child = spawn("infisical", args, {

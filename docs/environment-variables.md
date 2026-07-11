@@ -97,6 +97,14 @@ JavaScript must use Expo's `EXPO_PUBLIC_` prefix.
 
 Legend: `S` = server-only. `C` = client-visible.
 
+Mobile development, test, and default build commands load these values from
+Infisical environment `dev` at `/apps/mobile`. Preview Expo builds load
+Infisical environment `preview` at `/apps/mobile`, and production Expo builds
+load Infisical environment `prod` at `/apps/mobile`.
+
+Server-only values such as `DATABASE_URL` and `CLERK_SECRET_KEY` should stay
+behind `apps/api` or web server code.
+
 ### Database Commands
 
 `packages/database` validates `DATABASE_URL` when it is present in

@@ -344,10 +344,30 @@ prepare_preview() {
     write_output cleanup_performed false
   fi
 
+  local cleanup_target_on_error=true
+  cleanup_target_branch_on_error() {
+    local exit_code=$?
+
+    if [[ "$cleanup_target_on_error" == "true" ]]; then
+      set +e
+      local cleanup_branches_json
+      cleanup_branches_json="$(list_branches)"
+      if [[ -n "$cleanup_branches_json" ]]; then
+        delete_branch_if_exists "$target_branch" "$cleanup_branches_json"
+      fi
+      set -e
+    fi
+
+    exit "$exit_code"
+  }
+  trap cleanup_target_branch_on_error ERR
+
   local created_branch_id
   created_branch_id="$(create_branch_from_parent "$target_branch" "$production_branch_id")"
   local preview_uri
   preview_uri="$(connection_uri "$created_branch_id")"
+  cleanup_target_on_error=false
+  trap - ERR
 
   write_output can_deploy true
   write_branch_metadata "$target_branch" "$created_branch_id" "$PRODUCTION_BRANCH_NAME"
