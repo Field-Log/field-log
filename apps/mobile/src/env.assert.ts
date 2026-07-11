@@ -33,7 +33,7 @@ assertEqual(
 const validEnv = createMobileEnv({
   EXPO_PUBLIC_API_BASE_URL: "https://api.example.com",
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY: "client-key",
-  EXPO_PUBLIC_LOG_PROXY_URL: "https://api.example.com/logs",
+  EXPO_PUBLIC_LOG_PROXY_URL: "https://api.example.com/api/v1/logs",
 });
 assertEqual(
   validEnv.EXPO_PUBLIC_API_BASE_URL,
@@ -47,7 +47,7 @@ assertEqual(
 );
 assertEqual(
   validEnv.EXPO_PUBLIC_LOG_PROXY_URL,
-  "https://api.example.com/logs",
+  "https://api.example.com/api/v1/logs",
   "valid log proxy URL is preserved",
 );
 

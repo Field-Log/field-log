@@ -45,7 +45,7 @@ jobs:
             case "$1" in
               packages/logger/*) return 0 ;;
               apps/api/src/app.ts) return 0 ;;
-              apps/api/src/logs.ts) return 0 ;;
+              apps/api/src/routes/*) return 0 ;;
               apps/api/src/lib/services.ts) return 0 ;;
               packages/services/*) return 0 ;;
               packages/infisical-runner/*) return 0 ;;
