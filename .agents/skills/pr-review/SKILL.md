@@ -65,21 +65,11 @@ pnpm exec biome check --linter-enabled=false .   # format check without rewritin
 5. If the PR ships a schema change, confirm a migration was generated;
    `drizzle-kit check` alone does not catch a missing migration.
 
-## Check for cross-PR interactions
-
-Other open PRs can conflict silently. Run `gh pr list --state open`, and for any
-PR that touches the same files or feature, compare approaches. Flag interactions
-where git would auto-merge with no conflict markers but the merged result is
-broken (e.g. two PRs refactoring the same endpoint or env two different ways).
-Raise these with the user — they inform merge order, not a single PR's review.
-
 ## Report
 
-- Summarize findings to the user first: checks pass/fail, ranked defects, and
-  any cross-PR interactions.
+- Summarize findings to the user first: checks pass/fail and ranked defects.
 - Post a comment only when the user asks. Keep each PR's comment scoped to that
-  PR — do not reference other PRs inside it. Raise cross-PR issues with the user
-  or in a separate tracking issue instead.
+  PR — do not reference other PRs inside it.
 - Post a plain comment by default: `gh pr comment <n> --body-file <file>` (write
   the body to a file so backticks and `$` render literally).
 - Use `gh pr review <n> --approve` or `--request-changes` only when the user
