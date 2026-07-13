@@ -10,7 +10,7 @@
     "dev:node": "tsx ../../packages/infisical-runner/src/cli.ts api dev -- tsx watch src/index.ts",
     "dev:worker": "pnpm run dev",
     "deploy": "pnpm exec turbo run build --filter=@app/api && tsx ../../packages/infisical-runner/src/cli.ts api deploy -- pnpm dlx wrangler deploy --config wrangler.jsonc --env=\"\"",
-    "deploy:preview": "pnpm exec turbo run build --filter=@app/api && tsx ../../packages/infisical-runner/src/cli.ts api deploy:preview -- pnpm dlx wrangler versions upload --config wrangler.jsonc --env preview",
+    "deploy:preview": "pnpm exec turbo run build --filter=@app/api && tsx ../../packages/infisical-runner/src/cli.ts api deploy:preview -- bash scripts/deploy-preview.sh",
     "deploy:staging": "pnpm exec turbo run build --filter=@app/api && tsx ../../packages/infisical-runner/src/cli.ts api deploy:staging -- pnpm dlx wrangler deploy --config wrangler.jsonc --env staging",
     "dev:web": "pnpm run dev",
     "dev:ios": "pnpm run dev",
