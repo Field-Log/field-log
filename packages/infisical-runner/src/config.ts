@@ -1,4 +1,4 @@
-export const localEnvironmentSlug = "dev";
+export const defaultEnvironmentSlug = "dev";
 
 const apiSecretPath = "/apps/api";
 const cloudflareToolsSecretPath = "/tools/cloudflare";
@@ -10,6 +10,7 @@ const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
 export type CommandSecretConfig = {
   allowServerSecrets: boolean;
   envAliases?: readonly EnvironmentAlias[];
+  environmentSlug?: string;
   paths: readonly string[];
 };
 
@@ -145,6 +146,23 @@ export const commandSecrets = {
     start: {
       allowServerSecrets: false,
       envAliases: fieldLogExpoAliases,
+      paths: [mobileSecretPath],
+    },
+    build: {
+      allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
+      paths: [mobileSecretPath],
+    },
+    "build:preview": {
+      allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
+      environmentSlug: "preview",
+      paths: [mobileSecretPath],
+    },
+    "build:prod": {
+      allowServerSecrets: false,
+      envAliases: fieldLogExpoAliases,
+      environmentSlug: "prod",
       paths: [mobileSecretPath],
     },
     dev: {

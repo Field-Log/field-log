@@ -26,7 +26,7 @@ describe("web client env", () => {
       VITE_CLERK_SIGN_IN_URL: "/sign-in",
       VITE_CLERK_SIGN_UP_URL: "/sign-up",
       VITE_LOG_PROXY_CLIENT_KEY: "client-key",
-      VITE_LOG_PROXY_URL: "https://api.example.com/logs",
+      VITE_LOG_PROXY_URL: "https://api.example.com/api/v1/logs",
     });
 
     expect(env.VITE_API_BASE_URL).toBe("https://api.preview.example.com");
@@ -34,7 +34,7 @@ describe("web client env", () => {
     expect(env.VITE_CLERK_SIGN_IN_URL).toBe("/sign-in");
     expect(env.VITE_CLERK_SIGN_UP_URL).toBe("/sign-up");
     expect(env.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
-    expect(env.VITE_LOG_PROXY_URL).toBe("https://api.example.com/logs");
+    expect(env.VITE_LOG_PROXY_URL).toBe("https://api.example.com/api/v1/logs");
   });
 
   it("rejects empty client values", () => {
@@ -72,7 +72,7 @@ describe("web client env aliases", () => {
   it("maps unprefixed log proxy variables to their Vite client names", () => {
     const runtimeEnv: Record<string, string | undefined> = {
       LOG_PROXY_CLIENT_KEY: "client-key",
-      LOG_PROXY_URL: "https://api.example.com/logs",
+      LOG_PROXY_URL: "https://api.example.com/api/v1/logs",
     };
 
     applyWebClientEnvAliases(runtimeEnv);
@@ -86,21 +86,23 @@ describe("web client env aliases", () => {
     });
 
     expect(env.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
-    expect(env.VITE_LOG_PROXY_URL).toBe("https://api.example.com/logs");
+    expect(env.VITE_LOG_PROXY_URL).toBe("https://api.example.com/api/v1/logs");
   });
 
   it("keeps explicit Vite log proxy variables over unprefixed aliases", () => {
     const runtimeEnv: Record<string, string | undefined> = {
       LOG_PROXY_CLIENT_KEY: "fallback-client-key",
-      LOG_PROXY_URL: "https://api.example.com/fallback-logs",
+      LOG_PROXY_URL: "https://api.example.com/api/v1/fallback-logs",
       VITE_LOG_PROXY_CLIENT_KEY: "client-key",
-      VITE_LOG_PROXY_URL: "https://api.example.com/logs",
+      VITE_LOG_PROXY_URL: "https://api.example.com/api/v1/logs",
     };
 
     applyWebClientEnvAliases(runtimeEnv);
 
     expect(runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
-    expect(runtimeEnv.VITE_LOG_PROXY_URL).toBe("https://api.example.com/logs");
+    expect(runtimeEnv.VITE_LOG_PROXY_URL).toBe(
+      "https://api.example.com/api/v1/logs",
+    );
   });
 });
 
@@ -118,7 +120,7 @@ describe("Vercel preview API env", () => {
       "https://pr-27-field-log-api-preview.23242.workers.dev",
     );
     expect(runtimeEnv.VITE_LOG_PROXY_URL).toBe(
-      "https://pr-27-field-log-api-preview.23242.workers.dev/logs",
+      "https://pr-27-field-log-api-preview.23242.workers.dev/api/v1/logs",
     );
     expect(consoleLogSpy).toHaveBeenCalledWith(
       expect.stringContaining("web.previewApi.derived"),
@@ -149,7 +151,7 @@ describe("Vercel preview API env", () => {
       VERCEL_ENV: "preview",
       VERCEL_GIT_PULL_REQUEST_ID: "42",
       VITE_API_BASE_URL: "https://api.preview.field-log.app",
-      VITE_LOG_PROXY_URL: "https://api.preview.field-log.app/logs",
+      VITE_LOG_PROXY_URL: "https://api.preview.field-log.app/api/v1/logs",
     };
 
     await applyVercelPreviewApiEnv(runtimeEnv);
@@ -158,7 +160,7 @@ describe("Vercel preview API env", () => {
       "https://pr-42-field-log-api-preview.23242.workers.dev",
     );
     expect(runtimeEnv.VITE_LOG_PROXY_URL).toBe(
-      "https://pr-42-field-log-api-preview.23242.workers.dev/logs",
+      "https://pr-42-field-log-api-preview.23242.workers.dev/api/v1/logs",
     );
   });
 

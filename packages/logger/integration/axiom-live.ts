@@ -150,7 +150,7 @@ async function main(): Promise<void> {
     logger: apiLogger,
   });
   const proxyFetch: FetchLike = async (_input, init) => {
-    const response = await apiApp.request("/logs", {
+    const response = await apiApp.request("/api/v1/logs", {
       body: init?.body,
       headers: init?.headers,
       method: init?.method ?? "POST",
@@ -177,7 +177,7 @@ async function main(): Promise<void> {
       createProxyTransport({
         clientKey: config.logProxyClientKey,
         fetch: proxyFetch,
-        url: "http://logger-live.test/logs",
+        url: "http://logger-live.test/api/v1/logs",
       }),
     ],
   });

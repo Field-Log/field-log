@@ -100,7 +100,7 @@ export async function applyVercelPreviewApiEnv(
   const apiBaseUrl = `https://pr-${pullRequestId}-${workerHost}`;
 
   env.VITE_API_BASE_URL = apiBaseUrl;
-  env.VITE_LOG_PROXY_URL = `${apiBaseUrl}/logs`;
+  env.VITE_LOG_PROXY_URL = `${apiBaseUrl}/api/v1/logs`;
 
   const buildLogger = logger ?? createWebBuildLogger(env);
 
