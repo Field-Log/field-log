@@ -114,6 +114,7 @@ For deployment setup, see [Cloudflare API Deployment](docs/cloudflare-api.md).
 | FigJam | `/figjam` | `$figjam` | Uses shared FigJam tooling to read allowed FigJam/Figma files, generate plugin payloads, and update planning/design boards through the private plugin bridge. |
 | Grill me | `/grill-me` | `$grill-me` | Uses `.agents/skills/grill-me/SKILL.md` to stress-test a plan or design by walking through decision-tree questions one at a time. |
 | Update PR | `/pr-update` | `$pr-update` | Uses `.agents/skills/pr-update/SKILL.md` to refresh an existing PR title and description from branch commits and changes. |
+| Review PR | `/pr-review` | `$pr-review` | Uses `.agents/skills/pr-review/SKILL.md` to review a PR: run the repo checks, review the diff for real defects, and report findings scoped to that PR. |
 
 ## Running apps
 
