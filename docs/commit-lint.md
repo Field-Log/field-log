@@ -12,6 +12,9 @@ duplicating the lists.
 
 The scope may be omitted for truly cross-cutting changes.
 
+Local Git hooks lint only the commit message being created. CI lints pull
+request titles only, not the individual commits already present on the branch.
+
 ## Types
 
 | Type | Covers |
