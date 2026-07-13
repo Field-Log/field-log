@@ -57,19 +57,8 @@ conventional commit subject format as `$commit`:
   summarizes the branch.
 - Use imperative mood, lowercase, no period, and keep the title at or under 72
   characters.
-- Use one of these types: `feat`, `fix`, `refactor`, `chore`, `docs`, `test`,
-  `style`, `perf`, or `ci`.
-- Use the most specific scope from this repo when applicable:
-  - `web` for `apps/web/`
-  - `api` for `apps/api/`
-  - `mcp-server` for `apps/mcp-server/`
-  - `packages` for multiple packages or `packages/` root
-  - `database` for `packages/database/`
-  - `types` for `packages/types/`
-  - `config` for root config files
-  - `docs` for CLAUDE.md, AGENTS.md, or `resources/guides/`
-  - `skills` for `.claude/skills/`, `.agents/skills/`, or `.claude/commands/`
-  - `scripts` for `scripts/`
+- Read `./docs/commit-lint.md` before choosing a type or scope. It is the
+  source of truth for allowed conventional commit types and repository scopes.
 - Omit the scope only for truly cross-cutting changes.
 - Do not include AI co-authorship or generated-by lines.
 
