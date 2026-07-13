@@ -10,7 +10,7 @@ Local development uses stable ports:
 
 - Web: `http://localhost:4005`
 - API: `http://localhost:4006`
-- Client log proxy: `http://localhost:4006/api/v1/logs`
+- Client log proxy: derived from `http://localhost:4006`
 
 ## Axiom Setup
 
@@ -63,38 +63,39 @@ LOG_LEVEL=info
 Omit `AXIOM_EDGE_DOMAIN` unless Axiom has given the project a custom edge
 domain.
 
-Client runtime folders provide their platform-specific public proxy settings:
+Client runtime folders provide their platform-specific API and proxy settings:
 
-- `/apps/web`: `VITE_LOG_PROXY_URL`, `VITE_LOG_PROXY_CLIENT_KEY`, optional
-- `/apps/mobile`: `EXPO_PUBLIC_LOG_PROXY_URL`,
-  `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional
+- `/apps/web`: `API_URL`, `LOG_PROXY_CLIENT_KEY`, optional. The web build
+  aliases these to `VITE_API_URL` and `VITE_LOG_PROXY_CLIENT_KEY` when the
+  `VITE_*` names are absent.
+- `/apps/mobile`: `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`,
+  optional
 - `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
 
-Use the exact variable names consumed by each runtime. The Infisical runner no
-longer aliases `LOG_PROXY_*` values into Vite or Expo names.
+Web and mobile derive the client log proxy URL by appending `/logs` to the API
+URL. Mobile does not alias API variables; use the `EXPO_PUBLIC_*` names there.
 
 Local development:
 
 ```dotenv
 # /apps/web
-VITE_LOG_PROXY_URL=http://localhost:4006/api/v1/logs
+API_URL=http://localhost:4006
 
 # /apps/mobile
-EXPO_PUBLIC_LOG_PROXY_URL=http://localhost:4006/api/v1/logs
+EXPO_PUBLIC_API_URL=http://localhost:4006
 ```
 
 Production:
 
 ```dotenv
 # /apps/web
-VITE_LOG_PROXY_URL=https://<api-domain>/api/v1/logs
+API_URL=https://<api-domain>
 
 # /apps/mobile
-EXPO_PUBLIC_LOG_PROXY_URL=https://<api-domain>/api/v1/logs
+EXPO_PUBLIC_API_URL=https://<api-domain>
 ```
 
-`LOG_PROXY_CLIENT_KEY` is an anti-noise check for `POST /api/v1/logs`, not a
-security boundary. If it is configured, `/apps/api` and each public client
+If `LOG_PROXY_CLIENT_KEY` is configured, `/apps/api` and each public client
 runtime folder must receive matching values under the names that runtime
 consumes.
 
@@ -153,6 +154,21 @@ import { loggerMessages, loggerValues } from "@package/logger";
 
 Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
 Use `loggerValues` for logger app identifiers and log proxy protocol values.
+
+CI workflows and helper scripts emit compact JSON log events with `app: "ci"`.
+These are written to GitHub Actions logs rather than Axiom unless the workflow
+runner output is collected elsewhere. Current CI event namespaces include:
+
+- `ci.database.preview.*`: PR database change detection, staging fallback,
+  preview branch creation/recreation/deletion, branch-limit blocking, and
+  preview migration completion.
+- `ci.database.staging.*`: staging reset, staging database selection, and
+  staging migration completion.
+- `ci.database.production.*`: production database selection and migration
+  completion.
+- `ci.github.*`: GitHub-side metadata updates such as the `db-change` label.
+- `ci.vercel.preview.*`: branch-specific Preview `DATABASE_URL` override set,
+  removal, missing cleanup target, and latest preview deployment lookup.
 
 ## Biome Audit
 
@@ -345,7 +361,8 @@ The app-local module owns the browser proxy configuration:
 ```ts
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
-const logProxyUrl = import.meta.env.VITE_LOG_PROXY_URL;
+const apiUrl = import.meta.env.VITE_API_URL;
+const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
 
 const transports = logProxyUrl
   ? [
@@ -383,7 +400,8 @@ The Expo app-local module owns the proxy configuration:
 ```ts
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
-const logProxyUrl = process.env.EXPO_PUBLIC_LOG_PROXY_URL;
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
 
 const transports = logProxyUrl
   ? [

@@ -2,7 +2,6 @@ import { createMobileEnv } from "./env.schema";
 
 declare const process: {
   env: {
-    EXPO_PUBLIC_API_BASE_URL?: string;
     EXPO_PUBLIC_FIREBASE_API_KEY?: string;
     EXPO_PUBLIC_FIREBASE_APP_ID?: string;
     EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN?: string;
@@ -11,13 +10,12 @@ declare const process: {
     EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET?: string;
     EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?: string;
     EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?: string;
+    EXPO_PUBLIC_API_URL?: string;
     EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY?: string;
-    EXPO_PUBLIC_LOG_PROXY_URL?: string;
   };
 };
 
 export const mobileEnv = createMobileEnv({
-  EXPO_PUBLIC_API_BASE_URL: process.env.EXPO_PUBLIC_API_BASE_URL,
   EXPO_PUBLIC_FIREBASE_API_KEY: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   EXPO_PUBLIC_FIREBASE_APP_ID: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN:
@@ -31,7 +29,7 @@ export const mobileEnv = createMobileEnv({
     process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:
     process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY:
     process.env.EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY,
-  EXPO_PUBLIC_LOG_PROXY_URL: process.env.EXPO_PUBLIC_LOG_PROXY_URL,
 });

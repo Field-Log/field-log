@@ -4,6 +4,45 @@ export const loggerMessages = {
     healthChecked: "api.health.checked",
     serverListening: "api.server.listening",
   },
+  ci: {
+    database: {
+      preview: {
+        branchCleanupSkipped: "ci.database.preview.branchCleanup.skipped",
+        branchCreated: "ci.database.preview.branch.created",
+        branchDeleted: "ci.database.preview.branch.deleted",
+        branchLimitReached: "ci.database.preview.branchLimit.reached",
+        changeDetectionCompleted:
+          "ci.database.preview.changeDetection.completed",
+        migrationsApplied: "ci.database.preview.migrations.applied",
+        noPrBranchNeeded: "ci.database.preview.noPrBranch.needed",
+        prBranchRecreateRequested:
+          "ci.database.preview.prBranchRecreate.requested",
+        stagingDatabaseSelected: "ci.database.preview.stagingDatabase.selected",
+      },
+      production: {
+        databaseSelected: "ci.database.production.database.selected",
+        migrationsApplied: "ci.database.production.migrations.applied",
+      },
+      staging: {
+        databaseSelected: "ci.database.staging.database.selected",
+        migrationsApplied: "ci.database.staging.migrations.applied",
+        reset: "ci.database.staging.reset",
+      },
+    },
+    github: {
+      dbChangeLabelSynced: "ci.github.dbChangeLabel.synced",
+    },
+    vercel: {
+      preview: {
+        databaseOverrideMissing: "ci.vercel.preview.databaseOverride.missing",
+        databaseOverrideRemoved: "ci.vercel.preview.databaseOverride.removed",
+        databaseOverrideSet: "ci.vercel.preview.databaseOverride.set",
+        latestDeploymentResolved: "ci.vercel.preview.latestDeployment.resolved",
+        latestDeploymentUnavailable:
+          "ci.vercel.preview.latestDeployment.unavailable",
+      },
+    },
+  },
   common: {},
   database: {
     userSettings: {
@@ -31,6 +70,7 @@ export const loggerMessages = {
 export const loggerValues = {
   apps: {
     api: "api",
+    ci: "ci",
     mobile: "expo",
     web: "web",
   },
