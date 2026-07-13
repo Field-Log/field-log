@@ -232,23 +232,21 @@ Required keys:
 ```dotenv
 CLOUDFLARE_API_TOKEN=
 CLOUDFLARE_ACCOUNT_ID=
-CLOUDFLARE_WORKERS_SUBDOMAIN=
 ```
 
 `CLOUDFLARE_API_TOKEN` lets Wrangler deploy without an interactive
-`wrangler login`. `CLOUDFLARE_ACCOUNT_ID` selects the Cloudflare account.
-`CLOUDFLARE_WORKERS_SUBDOMAIN` is the account workers.dev subdomain and is used
-to construct PR preview URLs. Use either the bare subdomain, for example
-`23242`, or the full workers.dev host, for example `23242.workers.dev`; the
-GitHub workflow normalizes both formats.
+`wrangler login`. `CLOUDFLARE_ACCOUNT_ID` selects the Cloudflare account. The
+GitHub preview workflow reads the PR preview URL from Wrangler's
+`Version Preview Alias URL` output instead of constructing it from a configured
+workers.dev subdomain.
 
 Create `/tools/cloudflare` in these Infisical environments:
 
 | Infisical environment | Used by | Values |
 | --- | --- | --- |
-| `dev` | Local `pnpm deploy`, `pnpm deploy:staging`, and `pnpm deploy:preview` | Cloudflare deploy token, account ID, workers.dev subdomain |
-| `preview` | GitHub PR preview workflow | Cloudflare deploy token, account ID, workers.dev subdomain |
-| `prod` | GitHub production workflow on `main` | Cloudflare deploy token, account ID, workers.dev subdomain |
+| `dev` | Local `pnpm deploy`, `pnpm deploy:staging`, and `pnpm deploy:preview` | Cloudflare deploy token, account ID |
+| `preview` | GitHub PR preview workflow | Cloudflare deploy token, account ID |
+| `prod` | GitHub production workflow on `main` | Cloudflare deploy token, account ID |
 
 The token values can be the same or different across environments. Prefer
 separate tokens when you want separate revocation and audit trails for local
@@ -392,7 +390,7 @@ builds.
 Store this stable value in the web preview environment:
 
 ```dotenv
-API_PREVIEW_WORKER_HOST=field-log-api-preview.23242.workers.dev
+API_PREVIEW_WORKER_HOST=field-log-api-preview.<account-subdomain>.workers.dev
 ```
 
 During Vercel PR previews, `apps/web` derives the API URLs from the PR number:

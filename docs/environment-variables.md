@@ -79,7 +79,6 @@ Cloudflare deployment credentials are separate from API runtime secrets.
 | --- | --- | --- | --- |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account selected by Wrangler. | All | `S` |
 | `CLOUDFLARE_API_TOKEN` | Wrangler authentication for deploys. | All | `S` |
-| `CLOUDFLARE_WORKERS_SUBDOMAIN` | workers.dev account subdomain used to form PR preview URLs. | Stg | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
