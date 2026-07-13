@@ -118,6 +118,10 @@ describe("buildInfisicalRunArgs", () => {
       "--env=dev",
       "--path=/apps/mobile",
       "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_FIREBASE_API_KEY"),
+      "--",
       "expo",
       "export",
       "--platform",
@@ -139,6 +143,10 @@ describe("buildInfisicalRunArgs", () => {
       "--env=prod",
       "--path=/apps/mobile",
       "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_FIREBASE_API_KEY"),
+      "--",
       "expo",
       "export",
       "--platform",
@@ -159,6 +167,10 @@ describe("buildInfisicalRunArgs", () => {
       "--project-config-dir=/repo",
       "--env=preview",
       "--path=/apps/mobile",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_FIREBASE_API_KEY"),
       "--",
       "expo",
       "export",
@@ -211,6 +223,30 @@ describe("buildInfisicalRunArgs", () => {
       "--filter",
       "@package/github-discord-notifier",
       "notify",
+    ]);
+  });
+
+  it("builds mobile web args with Expo public aliases from the mobile path", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "mobile",
+        command: "web",
+        commandArgs: ["expo", "start", "--web"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/mobile",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_FIREBASE_API_KEY"),
+      "--",
+      "expo",
+      "start",
+      "--web",
     ]);
   });
 });

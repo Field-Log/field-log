@@ -1,6 +1,34 @@
 import * as SQLite from "expo-sqlite";
 
-const db = SQLite.openDatabaseSync("fieldlog.db");
+const dbPromise = SQLite.openDatabaseAsync("fieldlog.db");
+
+const db = {
+  async execAsync(source: string): Promise<void> {
+    const database = await dbPromise;
+    await database.execAsync(source);
+  },
+  async getAllAsync<T>(
+    source: string,
+    params: SQLite.SQLiteBindParams = [],
+  ): Promise<T[]> {
+    const database = await dbPromise;
+    return await database.getAllAsync<T>(source, params);
+  },
+  async getFirstAsync<T>(
+    source: string,
+    params: SQLite.SQLiteBindParams = [],
+  ): Promise<T | null> {
+    const database = await dbPromise;
+    return await database.getFirstAsync<T>(source, params);
+  },
+  async runAsync(
+    source: string,
+    params: SQLite.SQLiteBindParams = [],
+  ): Promise<SQLite.SQLiteRunResult> {
+    const database = await dbPromise;
+    return await database.runAsync(source, params);
+  },
+};
 
 export type LogEntryType =
   | "carried"
@@ -50,17 +78,17 @@ export type ItemInsert = Omit<
 
 const SCHEMA_VERSION = "2";
 
-export function initDatabase() {
-  db.execSync(
+export async function initDatabase(): Promise<void> {
+  await db.execAsync(
     `CREATE TABLE IF NOT EXISTS db_meta (key TEXT PRIMARY KEY, value TEXT);`,
   );
 
-  const row = db.getFirstSync<{ value: string }>(
+  const row = await db.getFirstAsync<{ value: string }>(
     `SELECT value FROM db_meta WHERE key = 'schema_version';`,
   );
 
   if (!row || row.value !== SCHEMA_VERSION) {
-    db.execSync(`
+    await db.execAsync(`
       DROP TABLE IF EXISTS fountain_pens;
       DROP TABLE IF EXISTS machined_pens;
       DROP TABLE IF EXISTS log_entries;

@@ -421,7 +421,7 @@ The `Staging Refresh` workflow runs on a nightly schedule and by manual
 `workflow_dispatch`. It resets Neon `staging` from `production`, runs committed
 Drizzle migrations against `staging`, deploys `field-log-api-staging` with an
 explicit staging `DATABASE_URL`, and smoke-tests
-`https://api.staging.field-log.app/health`.
+`https://api.staging.field-log.app/api/v1/health`.
 
 Do not reset staging from production on every PR. The staging branch backs
 normal previews and may contain shared non-production data.
