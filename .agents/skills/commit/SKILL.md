@@ -17,66 +17,18 @@ Write conventional commits for this monorepo. Never include AI co-authorship lin
 - point form detail
 ```
 
-## Types
+## Types And Scopes
 
-* `feat` — new feature
-* `fix` — bug fix
-* `refactor` — code change that neither fixes nor adds
-* `chore` — tooling, deps, config
-* `docs` — documentation only
-* `test` — adding or updating tests
-* `style` — formatting, lint fixes (no logic change)
-* `perf` — performance improvement
-* `ci` — CI/CD changes
-
-## Scopes
-
-| Scope | Covers |
-|---|---|
-| `web` | `apps/web/` |
-| `api` | `apps/api/` |
-| `mcp-server` | `apps/mcp-server/` |
-| `packages` | multiple packages or `packages/` root |
-| `database` | `packages/database/` |
-| `types` | `packages/types/` |
-| `config` | root config files (biome, turbo, pnpm-workspace, tsconfig) |
-| `docs` | CLAUDE.md, AGENTS.md, `resources/guides/` |
-| `skills` | `.claude/skills/`, `.agents/skills/`, `.claude/commands/` |
-| `scripts` | `scripts/` directory |
-
-Use the most specific scope. If changes span multiple scopes, use the primary one or omit scope for truly cross-cutting changes.
+Read `./docs/commit-lint.md` before choosing a type or scope. It is the source
+of truth for allowed conventional commit types and repository scopes.
 
 ## Rules
 
 * Never create a commit on `main`. If the current branch is `main` then prompt the user with a suggestion for a new branch and on approval create and checkout the new branch.
-* When suggesting a branch from `main`, prefix it with the user's initials from `git config --get user.initials`, for example `roy/setup-monorepo`. Do not use the conventional commit type as the branch prefix, for example `chore/setup-monorepo`.
+* When suggesting a branch from `main`, prefix it with the user's initials from `git config --get user.initials`, for example `roy/setup-monorepo`. Do not use the conventional commit type as the branch prefix.
 * If `user.initials` is unset, tell the user they can set it with `git config --global user.initials <initials>` or for this repository only with `git config user.initials <initials>`.
 * **No `Co-Authored-By` lines** — commits are from the user only
 * **Summary line**: imperative mood, lowercase, no period, max 72 chars
 * **Body**: point-form list of changes, keep each point succinct
 * **One commit per logical change** — don't bundle unrelated work
 * Stage specific files by name — avoid `git add -A` or `git add .`
-
-## Examples
-
-```
-feat(web): add markdown preview to draft panel
-
-- add MarkdownRenderer component
-- wire up live preview toggle in editor toolbar
-- update draft-panel layout for side-by-side view
-```
-
-```
-fix(api): handle missing slug in article lookup
-
-- return 404 instead of 500 when slug param is undefined
-- add validation to getArticleBySlug handler
-```
-
-```
-chore(config): update biome and turbo settings
-
-- enable new lint rules in biome.json
-- add mcp-server to turbo pipeline
-```
