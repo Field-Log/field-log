@@ -100,7 +100,8 @@ environment variable configuration:
 - `VITE_CLERK_SIGN_UP_URL=/sign-up`
 - `CLERK_SECRET_KEY`
 - `DATABASE_URL`
-- preview only: `API_PREVIEW_WORKER_HOST=field-log-api-preview.23242.workers.dev`
+- preview only:
+  `API_PREVIEW_WORKER_HOST=field-log-api-preview.<account-subdomain>.workers.dev`
 - optional `AXIOM_TOKEN`
 - optional `AXIOM_DATASET`
 - optional `AXIOM_EDGE_DOMAIN`
