@@ -395,7 +395,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl --fail --retry 5 --retry-delay 3 "$PREVIEW_URL/api/v1/health"
+          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/api/v1/health"
 
       - name: Validate PR comment app configuration
         shell: bash
@@ -439,7 +439,7 @@ jobs:
           script: |
             const marker = process.env.API_PREVIEW_COMMENT_MARKER;
             const previewUrl = process.env.PREVIEW_URL;
-            const healthUrl = `${previewUrl}/health`;
+            const healthUrl = `${previewUrl}/api/v1/health`;
             const databaseScope = process.env.DATABASE_ISOLATED === "true"
               ? `Neon branch \`${process.env.DATABASE_BRANCH_NAME}\``
               : "shared Neon staging branch";
@@ -934,4 +934,4 @@ jobs:
         run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env="" --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
-        run: curl --fail --retry 5 --retry-delay 3 https://api.field-log.app/api/v1/health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v1/health
