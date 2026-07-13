@@ -23,7 +23,7 @@
     "test:watch:no-infisical": "vitest"
   },
   "devDependencies": {
-    "@repo/eslint": "workspace:*",
-    "@repo/tsconfig": "workspace:*"
+    "@package/eslint": "workspace:*",
+    "@package/tsconfig": "workspace:*"
   }
 }

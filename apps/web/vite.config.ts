@@ -52,21 +52,18 @@ function createWebBuildLogger(env: MutableEnv): Logger {
 }
 
 export function applyWebClientEnvAliases(env: MutableEnv = process.env) {
+  const apiUrl = envValue(env, "API_URL");
   const logProxyClientKey = envValue(env, "LOG_PROXY_CLIENT_KEY");
-  const logProxyUrl = envValue(env, "LOG_PROXY_URL");
+
+  if (envValue(env, "VITE_API_URL") === undefined && apiUrl !== undefined) {
+    env.VITE_API_URL = apiUrl;
+  }
 
   if (
     envValue(env, "VITE_LOG_PROXY_CLIENT_KEY") === undefined &&
     logProxyClientKey !== undefined
   ) {
     env.VITE_LOG_PROXY_CLIENT_KEY = logProxyClientKey;
-  }
-
-  if (
-    envValue(env, "VITE_LOG_PROXY_URL") === undefined &&
-    logProxyUrl !== undefined
-  ) {
-    env.VITE_LOG_PROXY_URL = logProxyUrl;
   }
 }
 
@@ -97,17 +94,15 @@ export async function applyVercelPreviewApiEnv(
     return;
   }
 
-  const apiBaseUrl = `https://pr-${pullRequestId}-${workerHost}`;
+  const apiUrl = `https://pr-${pullRequestId}-${workerHost}`;
 
-  env.VITE_API_BASE_URL = apiBaseUrl;
-  env.VITE_LOG_PROXY_URL = `${apiBaseUrl}/api/v1/logs`;
+  env.VITE_API_URL = apiUrl;
 
   const buildLogger = logger ?? createWebBuildLogger(env);
 
   buildLogger.info(loggerMessages.web.previewApiDerived, {
     attributes: {
-      apiBaseUrl,
-      logProxyUrl: env.VITE_LOG_PROXY_URL,
+      apiUrl,
       pullRequestId,
       workerHost,
     },
@@ -126,12 +121,11 @@ export default defineConfig(async ({ mode }) => {
     await applyVercelPreviewApiEnv();
 
     createWebClientEnv({
-      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
+      VITE_API_URL: process.env.VITE_API_URL,
       VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: process.env.VITE_CLERK_SIGN_IN_URL,
       VITE_CLERK_SIGN_UP_URL: process.env.VITE_CLERK_SIGN_UP_URL,
       VITE_LOG_PROXY_CLIENT_KEY: process.env.VITE_LOG_PROXY_CLIENT_KEY,
-      VITE_LOG_PROXY_URL: process.env.VITE_LOG_PROXY_URL,
     });
     createWebServerEnv({
       AXIOM_DATASET: process.env.AXIOM_DATASET,

@@ -17,6 +17,7 @@
     "check": "biome check .",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
     "db:migrate": "tsx ../infisical-runner/src/cli.ts database db:migrate -- drizzle-kit migrate --config=drizzle.config.ts",
+    "db:resolve-conflicts": "node scripts/print-resolve-conflicts-prompt.js",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests --exclude \"dist/**\"",

@@ -5,7 +5,13 @@ import {
 } from "@package/logger";
 import { mobileEnv } from "../env";
 
-const logProxyUrl = mobileEnv.EXPO_PUBLIC_LOG_PROXY_URL;
+function createLogProxyUrl(apiUrl: string) {
+  return `${apiUrl.replace(/\/+$/, "")}/logs`;
+}
+
+const logProxyUrl = mobileEnv.EXPO_PUBLIC_API_URL
+  ? createLogProxyUrl(mobileEnv.EXPO_PUBLIC_API_URL)
+  : undefined;
 
 const transports = logProxyUrl
   ? [
