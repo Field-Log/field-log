@@ -1,10 +1,14 @@
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { loggerMessages } from "@package/logger";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  type BottomTabBarButtonProps,
+  createBottomTabNavigator,
+} from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { type ReactElement, useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { AccountMenuButton } from "./src/components/AccountMenuButton";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { initDatabase } from "./src/db/database";
 import {
@@ -13,28 +17,50 @@ import {
 } from "./src/db/sync";
 import { mobileEnv } from "./src/env";
 import { logger } from "./src/lib/logger";
+import { type MainTabParamList } from "./src/navigation/types";
 import AddScreen from "./src/screens/AddScreen";
 import AuthScreen from "./src/screens/AuthScreen";
+import CollectionsScreen from "./src/screens/CollectionsScreen";
 import LibraryScreen from "./src/screens/LibraryScreen";
 import LogScreen from "./src/screens/LogScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
 import StatsScreen from "./src/screens/StatsScreen";
+import { C } from "./src/theme/colors";
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
-function MainTabs() {
+function MainTabs(): ReactElement {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Library" component={LibraryScreen} />
       <Tab.Screen name="Log" component={LogScreen} />
       <Tab.Screen name="Stats" component={StatsScreen} />
       <Tab.Screen name="Add" component={AddScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen
+        name="Collections"
+        component={CollectionsScreen}
+        options={{
+          tabBarButton: () => null,
+          title: "Collections",
+        }}
+      />
+      <Tab.Screen
+        name="Account"
+        component={AccountTabPlaceholder}
+        options={{
+          tabBarButton: (props: BottomTabBarButtonProps) => (
+            <AccountMenuButton tabBarButtonProps={props} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
-function AppGate() {
+function AccountTabPlaceholder(): ReactElement {
+  return <View style={{ backgroundColor: C.bg, flex: 1 }} />;
+}
+
+function AppGate(): ReactElement {
   const { user, loading } = useAuth();
   const [databaseReady, setDatabaseReady] = useState(false);
   const userId = user?.id;

@@ -8,6 +8,15 @@ export type FieldLogParamList = {
   LibraryList: undefined;
 };
 
+export type MainTabParamList = {
+  Account: undefined;
+  Add: undefined;
+  Collections: undefined;
+  Library: undefined;
+  Log: undefined;
+  Stats: undefined;
+};
+
 export type FieldLogNavigation = {
   getParent: () =>
     | {
