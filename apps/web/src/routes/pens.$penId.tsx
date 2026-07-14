@@ -1,6 +1,6 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
-import type { AutmogProduct } from "@/lib/autmog-data";
 import { SITE_NAME } from "@/lib/constants";
+import type { PenProduct } from "@/lib/pen-data";
 import { decodePenParam, penParam } from "@/lib/pen-links";
 import { absoluteUrl } from "@/lib/site-url";
 import { ArchivePage } from "@/pages/archive-page";
@@ -70,7 +70,7 @@ export const Route = createFileRoute("/pens/$penId")({
   component: ArchivePage,
 });
 
-function buildDescription(product: AutmogProduct): string {
+function buildDescription(product: PenProduct): string {
   const specs = [
     product.sizes.length ? product.sizes.join(" / ") : null,
     product.materials.length ? product.materials.join(", ") : null,

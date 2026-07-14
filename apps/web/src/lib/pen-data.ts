@@ -1,7 +1,7 @@
-import autmogData from "../../../../packages/json-data/autmog.json";
+import penData from "../../../../packages/json-data/autmog.json";
 import type {
-  AutmogProduct,
-  AutmogProductCollection,
+  PenProduct,
+  PenProductCollection,
 } from "../../../../packages/types/src";
 
 const IMAGE_PREFIX = "/images/tmp/";
@@ -11,8 +11,8 @@ function localImageUrl(path: string) {
   return filename ? `${IMAGE_PREFIX}${filename}` : path;
 }
 
-export const products: AutmogProduct[] = (
-  autmogData as AutmogProductCollection
+export const products: PenProduct[] = (
+  penData as PenProductCollection
 ).products.map((product) => ({
   ...product,
   image: localImageUrl(product.image),
@@ -20,4 +20,4 @@ export const products: AutmogProduct[] = (
   images_local: product.images_local.map(localImageUrl),
 }));
 
-export type { AutmogProduct };
+export type { PenProduct };

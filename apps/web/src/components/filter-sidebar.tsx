@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { AutmogProduct } from "@/lib/autmog-data";
+import type { PenProduct } from "@/lib/pen-data";
 import {
   type ActiveFilters,
   type FilterKey,
@@ -8,7 +8,7 @@ import {
   type MatchMode,
   type MatchModes,
   valuesFor,
-} from "@/lib/autmog-filters";
+} from "@/lib/pen-filters";
 import { cn } from "@/lib/utils";
 
 type FilterSidebarProps = {
@@ -17,7 +17,7 @@ type FilterSidebarProps = {
   onClear: () => void;
   onMatchModeChange: (key: FilterKey, mode: MatchMode) => void;
   onToggleFilter: (key: FilterKey, value: string) => void;
-  products: AutmogProduct[];
+  products: PenProduct[];
 };
 
 export function FilterSidebar({

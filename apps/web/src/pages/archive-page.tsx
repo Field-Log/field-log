@@ -18,11 +18,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  useAutmogSettings,
   useCurrencyRates,
   useFiltersOpen,
-} from "@/hooks/use-autmog-settings";
-import { type AutmogProduct, products } from "@/lib/autmog-data";
+  usePenSettings,
+} from "@/hooks/use-pen-settings";
+import { SITE_NAME } from "@/lib/constants";
+import { type PenProduct, products } from "@/lib/pen-data";
 import {
   createDefaultMatchModes,
   createEmptyFilters,
@@ -31,8 +32,7 @@ import {
   productMatches,
   type SortKey,
   sortProducts,
-} from "@/lib/autmog-filters";
-import { SITE_NAME } from "@/lib/constants";
+} from "@/lib/pen-filters";
 import { decodePenParam, penParam } from "@/lib/pen-links";
 
 const sortOptions: Array<{ label: string; value: SortKey }> = [
@@ -66,7 +66,7 @@ export function ArchivePage() {
   const { img } = useSearch({ strict: false }) as { img?: number };
 
   const { currency, setCurrency, setUnits, setWeight, units, weight } =
-    useAutmogSettings();
+    usePenSettings();
   const { rates, refreshRates } = useCurrencyRates();
   const [filtersOpen, setFiltersOpen] = useFiltersOpen();
   const [refreshing, setRefreshing] = React.useState(false);
@@ -79,7 +79,7 @@ export function ArchivePage() {
   );
   const searchInputId = React.useId();
 
-  const selectedProduct = React.useMemo<AutmogProduct | null>(
+  const selectedProduct = React.useMemo<PenProduct | null>(
     () => (penId ? decodePenParam(penId) : null),
     [penId],
   );
