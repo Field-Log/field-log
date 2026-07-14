@@ -315,9 +315,11 @@ Pull requests:
 - Posts or updates a separate DB preview comment with marker
   `<!-- field-log-db-preview -->` using the installed `Field Log DB Preview`
   GitHub App.
-- Marks the preview comment inactive when the pull request closes.
-- Deletes `preview-pr-<number>` and removes branch-specific Vercel
-  `DATABASE_URL` when the pull request closes.
+- A separate `API Preview Cleanup` workflow runs for every same-repository
+  `closed` pull request without path filters.
+- The cleanup workflow marks the preview comments inactive, deletes
+  `preview-pr-<number>`, and removes branch-specific Vercel `DATABASE_URL` when
+  the pull request closes.
 
 Merges to `main`:
 
