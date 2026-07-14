@@ -1,11 +1,4 @@
-import {
-  ArrowUpDown,
-  Check,
-  Search,
-  Settings,
-  SlidersHorizontal,
-  X,
-} from "lucide-react";
+import { ArrowUpDown, Check, Settings, SlidersHorizontal } from "lucide-react";
 import * as React from "react";
 import { FilterSidebar } from "@/components/filter-sidebar";
 import { SettingsPanel } from "@/components/settings-drawer";
@@ -17,8 +10,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import type { AutmogProduct } from "@/lib/autmog-data";
 import type {
   ActiveFilters,
@@ -46,13 +37,11 @@ type MobileToolbarProps = {
   onClearFilters: () => void;
   onCurrencyChange: (currency: CurrencyCode) => void;
   onMatchModeChange: (key: FilterKey, mode: MatchMode) => void;
-  onQueryChange: (query: string) => void;
   onSortChange: (sort: SortKey) => void;
   onToggleFilter: (key: FilterKey, value: string) => void;
   onUnitsChange: (unit: DimensionUnit) => void;
   onWeightChange: (unit: WeightUnit) => void;
   products: AutmogProduct[];
-  query: string;
   sort: SortKey;
   sortOptions: Array<{ label: string; value: SortKey }>;
   units: DimensionUnit;
@@ -61,10 +50,12 @@ type MobileToolbarProps = {
 
 /**
  * Compact-only (`< md`) bottom toolbar. It is a toolbar, not a nav bar: each
- * item opens a sheet or field rather than switching screens. Filters / Sort /
- * Settings are vaul bottom sheets (swipe-to-dismiss); Search expands a field
- * docked above the bar. Hidden at `md` and up, where the persistent sidebar and
- * header controls take over.
+ * item opens a bottom sheet rather than switching screens. Filters / Sort /
+ * Settings are vaul bottom sheets (swipe-to-dismiss). Search deliberately lives
+ * in the sticky top header (its own full-width row on compact) rather than
+ * here, so the field never has to dock to the on-screen keyboard — the pattern
+ * that fought iOS Safari's viewport. Hidden at `md` and up, where the
+ * persistent sidebar and header controls take over.
  */
 export function MobileToolbar({
   active,
@@ -74,89 +65,25 @@ export function MobileToolbar({
   onClearFilters,
   onCurrencyChange,
   onMatchModeChange,
-  onQueryChange,
   onSortChange,
   onToggleFilter,
   onUnitsChange,
   onWeightChange,
   products,
-  query,
   sort,
   sortOptions,
   units,
   weight,
 }: MobileToolbarProps) {
-  const [searchOpen, setSearchOpen] = React.useState(false);
   const [sortOpen, setSortOpen] = React.useState(false);
-  // Distinct from the desktop header search field so the two inputs never share
-  // an id (the header one stays mounted, just hidden, on compact).
-  const searchInputId = React.useId();
-  const searchRef = React.useRef<HTMLInputElement>(null);
-
-  // Focus the field when it opens (replaces autoFocus, which fights the sheets).
-  React.useEffect(() => {
-    if (searchOpen) searchRef.current?.focus();
-  }, [searchOpen]);
-
-  // Dock the field to the top of the on-screen keyboard. iOS Safari overlays
-  // the keyboard without shrinking the layout viewport, so without this the
-  // fixed field stays anchored behind the keyboard and floats detached.
-  const keyboardInset = useKeyboardInset(searchOpen);
 
   return (
     <div className="md:hidden">
-      {searchOpen ? (
-        <div
-          className="fixed inset-x-0 z-40 flex items-center gap-2 border-t border-border bg-background/95 p-2 backdrop-blur"
-          style={{
-            // While the keyboard is up, sit flush on its tray; otherwise rest
-            // above the bottom toolbar (clear of the home indicator).
-            bottom:
-              keyboardInset > 0
-                ? `${keyboardInset}px`
-                : `calc(${BAR_HEIGHT} + env(safe-area-inset-bottom))`,
-          }}
-        >
-          <label
-            className="relative flex flex-1 items-center"
-            htmlFor={searchInputId}
-          >
-            <Search className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
-            <Input
-              aria-label="Search pens by title, specs, or description"
-              autoComplete="off"
-              className="pr-3 pl-9"
-              id={searchInputId}
-              onChange={(event) => onQueryChange(event.target.value)}
-              placeholder="Search..."
-              ref={searchRef}
-              type="search"
-              value={query}
-            />
-          </label>
-          <button
-            aria-label="Close search"
-            className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
-            onClick={() => setSearchOpen(false)}
-            type="button"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-      ) : null}
-
       <nav
         aria-label="Archive controls"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
         style={{ height: `calc(${BAR_HEIGHT} + env(safe-area-inset-bottom))` }}
       >
-        <ToolbarButton
-          active={searchOpen || query.length > 0}
-          icon={Search}
-          label="Search"
-          onClick={() => setSearchOpen((open) => !open)}
-        />
-
         <Drawer>
           <DrawerTrigger asChild>
             <ToolbarButton

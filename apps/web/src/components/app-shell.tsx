@@ -19,6 +19,10 @@ type AppShellProps = {
   children: React.ReactNode;
   defaultSidebarOpen?: boolean;
   headerActions?: React.ReactNode;
+  // Search field rendered in the sticky header. Unlike `headerActions` it stays
+  // visible on compact screens (its own full-width row) so search never has to
+  // dock to the on-screen keyboard.
+  headerSearch?: React.ReactNode;
   meta?: React.ReactNode;
   onSidebarOpenChange?: (open: boolean) => void;
   sidebarContent?: React.ReactNode;
@@ -31,6 +35,7 @@ export function AppShell({
   children,
   defaultSidebarOpen = true,
   headerActions,
+  headerSearch,
   meta,
   onSidebarOpenChange,
   sidebarContent,
@@ -93,6 +98,7 @@ export function AppShell({
                 <UserMenu compact />
               </div>
             ) : null}
+            {headerSearch}
             <div
               className={hasBottomBar ? "contents max-md:hidden" : "contents"}
             >
