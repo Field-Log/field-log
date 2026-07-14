@@ -23,6 +23,12 @@ assertThrows(() => createMobileEnv({}), "Clerk publishable key is required");
 const validEnv = createMobileEnv({
   EXPO_PUBLIC_API_URL: "https://api.example.com",
   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
+  EXPO_PUBLIC_FIREBASE_API_KEY: "firebase-api-key",
+  EXPO_PUBLIC_FIREBASE_APP_ID: "firebase-app-id",
+  EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: "field-log.example.com",
+  EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "123456789",
+  EXPO_PUBLIC_FIREBASE_PROJECT_ID: "field-log",
+  EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: "field-log.example.com",
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY: "client-key",
 });
 assertEqual(
@@ -34,6 +40,11 @@ assertEqual(
   validEnv.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
   "pk_test_example",
   "valid Clerk publishable key is preserved",
+);
+assertEqual(
+  validEnv.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  "field-log",
+  "valid Firebase project ID is preserved",
 );
 assertEqual(
   validEnv.EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY,

@@ -30,7 +30,6 @@ permissions:
 
 env:
   API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
-  API_PREVIEW_WORKER_NAME: field-log-api-preview
   DB_PREVIEW_COMMENT_MARKER: "<!-- field-log-db-preview -->"
 
 jobs:
@@ -339,21 +338,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ -z "${CLOUDFLARE_WORKERS_SUBDOMAIN:-}" ]]; then
-            echo "CLOUDFLARE_WORKERS_SUBDOMAIN is required in Infisical /tools/cloudflare." >&2
-            exit 1
-          fi
-
-          workers_subdomain="${CLOUDFLARE_WORKERS_SUBDOMAIN#https://}"
-          workers_subdomain="${workers_subdomain#http://}"
-          workers_subdomain="${workers_subdomain%%/*}"
-          workers_subdomain="${workers_subdomain%.workers.dev}"
-
-          if [[ -z "$workers_subdomain" || "$workers_subdomain" == *.* ]]; then
-            echo "CLOUDFLARE_WORKERS_SUBDOMAIN must be the workers.dev account subdomain, for example 23242 or 23242.workers.dev." >&2
-            exit 1
-          fi
-
           set +e
           upload_output="$(pnpm dlx wrangler versions upload \
             --config apps/api/wrangler.jsonc \
@@ -376,14 +360,29 @@ jobs:
               --env preview \
               --secrets-file "$RUNNER_TEMP/api-preview-secrets.json"
 
-            pnpm dlx wrangler versions upload \
+            set +e
+            upload_output="$(pnpm dlx wrangler versions upload \
               --config apps/api/wrangler.jsonc \
               --env preview \
               --preview-alias "$PREVIEW_ALIAS" \
-              --secrets-file "$RUNNER_TEMP/api-preview-secrets.json"
+              --secrets-file "$RUNNER_TEMP/api-preview-secrets.json" 2>&1)"
+            upload_status=$?
+            set -e
+
+            printf '%s\n' "$upload_output"
+
+            if [[ "$upload_status" -ne 0 ]]; then
+              exit "$upload_status"
+            fi
           fi
 
-          preview_url="https://${PREVIEW_ALIAS}-${API_PREVIEW_WORKER_NAME}.${workers_subdomain}.workers.dev"
+          if [[ "$upload_output" =~ Version[[:space:]]Preview[[:space:]]Alias[[:space:]]URL:[[:space:]](https://[^[:space:]]+) ]]; then
+            preview_url="${BASH_REMATCH[1]}"
+          else
+            echo "Wrangler did not print a Version Preview Alias URL for $PREVIEW_ALIAS." >&2
+            exit 1
+          fi
+
           echo "preview_alias=$PREVIEW_ALIAS" >> "$GITHUB_OUTPUT"
           echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
 
@@ -395,7 +394,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl --fail --retry 5 --retry-delay 3 "$PREVIEW_URL/api/v1/health"
+          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/api/v1/health"
 
       - name: Validate PR comment app configuration
         shell: bash
@@ -439,7 +438,7 @@ jobs:
           script: |
             const marker = process.env.API_PREVIEW_COMMENT_MARKER;
             const previewUrl = process.env.PREVIEW_URL;
-            const healthUrl = `${previewUrl}/health`;
+            const healthUrl = `${previewUrl}/api/v1/health`;
             const databaseScope = process.env.DATABASE_ISOLATED === "true"
               ? `Neon branch \`${process.env.DATABASE_BRANCH_NAME}\``
               : "shared Neon staging branch";
@@ -934,4 +933,4 @@ jobs:
         run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env="" --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
-        run: curl --fail --retry 5 --retry-delay 3 https://api.field-log.app/api/v1/health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v1/health

@@ -167,7 +167,7 @@ export default function AddItemScreen() {
       specs,
     });
 
-    navigation.navigate("LibraryList");
+    navigation.getParent()?.navigate("Library", { screen: "LibraryList" });
   };
 
   const renderField = (field: SpecField) => {

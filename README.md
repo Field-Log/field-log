@@ -11,13 +11,6 @@ Monorepo for the field-log.app apps and shared packages.
 - pnpm 10.33.2, provided by the repo `packageManager` setting
 - Infisical CLI access to the `Field Log` project
 
-Install dependencies after cloning:
-
-```sh
-corepack enable
-pnpm install
-```
-
 ### Installing and configuring Infisical
 
 This repo uses the Infisical project `Field Log` for local Development secrets.
@@ -43,15 +36,7 @@ Worker deployment setup.
    infisical login
    ```
 
-4. Initialize or verify the repo project config:
-
-   ```sh
-   infisical init
-   ```
-
-   Choose the `Field Log` project if prompted.
-
-5. Test local Infisical access:
+4. Test local Infisical access:
 
    ```sh
    infisical run --env=dev --path=/local/smoke -- node -e "console.log(process.env.TEST)"
@@ -63,6 +48,9 @@ Worker deployment setup.
    Infisical working
    ```
 
+5. For app-specific environment variables and secret paths, see
+   [Environment Variables](docs/environment-variables.md).
+
 6. Confirm the app secret folders you need exist in Infisical:
 
    - `/apps/api` in `dev`, `preview`, and `prod`
@@ -71,21 +59,51 @@ Worker deployment setup.
    - `/tools/cloudflare` in `dev`, `preview`, and `prod`, if deploying the API
    - `/tools/logger-axiom-test` in `dev`, if running the live Axiom logger test
 
+### Install deps and set up the repo after Infisical
+
+After cloning the repo and confirming Infisical access, install dependencies from
+the repo root:
+
+```sh
+corepack enable
+pnpm install
+```
+
+Run the baseline checks before starting app work:
+
+```sh
+pnpm format
+pnpm lint
+pnpm typecheck
+```
+
+### Developing mobile apps with Expo
+
+The mobile app uses `expo-dev-client`, so Expo Go is not the target runtime. See
+[Getting started with Expo](docs/getting-started-with-expo.md) to install Xcode,
+Android Studio, SDK tools, local simulators/emulators, and the development
+client.
+
+After setup, run the mobile app from the repo root:
+
+```sh
+pnpm dev:ios
+pnpm dev:android
+```
+
+For web-only work, use:
+
+```sh
+pnpm dev:web
+```
+
 ### Cloudflare API setup
 
 `apps/api` runs as a Cloudflare Worker. Local API development uses
 `wrangler dev` through Infisical so the local runtime matches the deployed
 Worker runtime.
 
-Before deploying the API, configure:
-
-- the `field-log.app` zone in Cloudflare
-- Worker custom domains for `api.field-log.app` and
-  `api.staging.field-log.app`
-- Infisical Cloudflare App Connection and Cloudflare Workers Secret Syncs
-- `/tools/cloudflare` deploy credentials in Infisical
-
-The full setup is documented in [docs/cloudflare-api.md](docs/cloudflare-api.md).
+For deployment setup, see [Cloudflare API Deployment](docs/cloudflare-api.md).
 
 ## AI commands
 
@@ -104,10 +122,15 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Starts every app dev server: Cloudflare Worker API, Autmog archive, Expo mobile, and TanStack Start web. |
-| `pnpm dev:web` | Starts the Cloudflare Worker API and the TanStack Start web app. |
-| `pnpm dev:ios` | Starts the Cloudflare Worker API and launches the Expo app for iOS. |
-| `pnpm dev:android` | Starts the Cloudflare Worker API and launches the Expo app for Android. |
+| `pnpm dev` | Starts every app dev server: API, Autmog archive, Expo mobile, and TanStack Start web. |
+| `pnpm dev:web` | Starts the Hono API and the TanStack Start web app. |
+| `pnpm dev:ios` | Starts the Hono API and launches the Expo app for iOS. |
+| `pnpm dev:android` | Starts the Hono API and launches the Expo app for Android. |
+| `pnpm dev:expo` | Starts the Hono API and the interactive Expo dev-client Metro server. |
+| `pnpm dev:ios:no-api` | Builds, installs, and launches the iOS development build with the local native toolchain, without starting the API. |
+| `pnpm dev:android:no-api` | Builds, installs, and launches the Android development build with the local native toolchain, without starting the API. |
+| `pnpm dev:eas:android` | Starts an EAS Android development build using the `development` profile. |
+| `pnpm dev:eas:ios` | Starts an EAS iOS Simulator development build using the `development-simulator` profile. |
 | `pnpm --filter @app/api dev:node` | Starts the legacy local Node Hono server for API debugging outside the Worker runtime. |
 
 
@@ -121,6 +144,7 @@ Infisical.
 | --- | --- |
 | `pnpm build` | Builds all apps and packages through Turborepo, using Infisical-backed app commands where configured. The Expo mobile build reads `dev` secrets from `/apps/mobile`. |
 | `pnpm build:ci` | Builds all apps and packages through Turborepo with environment variables already provided. |
+| `pnpm dev:doctor:android` | Checks that JDK 17, Android Studio, Android SDK tools, an emulator image, and a runnable Android target are available. |
 | `pnpm build:mobile:preview` | Builds the Expo mobile app with `preview` secrets from `/apps/mobile`. |
 | `pnpm build:mobile:prod` | Builds the Expo mobile app with `prod` secrets from `/apps/mobile`. |
 | `pnpm figjam read` | Reads the configured FigJam/Figma file into `.figjam/cache`; run through `infisical run --env=dev --path=/local/figma -- pnpm figjam read`. |

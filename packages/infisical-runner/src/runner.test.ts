@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildEnvironmentAliasCommandArgs,
   buildInfisicalRunArgs,
   getInfisicalAuthCheckError,
   getSecretPaths,
@@ -119,14 +118,9 @@ describe("buildInfisicalRunArgs", () => {
       "--env=dev",
       "--path=/apps/mobile",
       "--",
-      "node",
-      "/repo/packages/infisical-runner/src/env-alias.mjs",
-      JSON.stringify([
-        {
-          from: "CLERK_PUBLISHABLE_KEY",
-          to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        },
-      ]),
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
       "--",
       "expo",
       "export",
@@ -149,14 +143,9 @@ describe("buildInfisicalRunArgs", () => {
       "--env=prod",
       "--path=/apps/mobile",
       "--",
-      "node",
-      "/repo/packages/infisical-runner/src/env-alias.mjs",
-      JSON.stringify([
-        {
-          from: "CLERK_PUBLISHABLE_KEY",
-          to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        },
-      ]),
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
       "--",
       "expo",
       "export",
@@ -179,14 +168,9 @@ describe("buildInfisicalRunArgs", () => {
       "--env=preview",
       "--path=/apps/mobile",
       "--",
-      "node",
-      "/repo/packages/infisical-runner/src/env-alias.mjs",
-      JSON.stringify([
-        {
-          from: "CLERK_PUBLISHABLE_KEY",
-          to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        },
-      ]),
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"),
       "--",
       "expo",
       "export",
@@ -241,41 +225,29 @@ describe("buildInfisicalRunArgs", () => {
       "notify",
     ]);
   });
-});
 
-describe("buildEnvironmentAliasCommandArgs", () => {
-  it("wraps commands when aliases are configured", () => {
+  it("builds mobile web args with Expo public aliases from the mobile path", () => {
     expect(
-      buildEnvironmentAliasCommandArgs({
-        commandArgs: ["expo", "start"],
-        config: {
-          allowServerSecrets: false,
-          envAliases: [{ from: "A", to: "B" }],
-          paths: ["/apps/mobile"],
-        },
+      buildInfisicalRunArgs({
+        app: "mobile",
+        command: "web",
+        commandArgs: ["expo", "start", "--web"],
         repoRoot: "/repo",
       }),
     ).toEqual([
-      "node",
-      "/repo/packages/infisical-runner/src/env-alias.mjs",
-      JSON.stringify([{ from: "A", to: "B" }]),
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/mobile",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_FIREBASE_API_KEY"),
       "--",
       "expo",
       "start",
+      "--web",
     ]);
-  });
-
-  it("keeps commands unchanged when aliases are absent", () => {
-    expect(
-      buildEnvironmentAliasCommandArgs({
-        commandArgs: ["vite", "build"],
-        config: {
-          allowServerSecrets: false,
-          paths: ["/apps/web"],
-        },
-        repoRoot: "/repo",
-      }),
-    ).toEqual(["vite", "build"]);
   });
 });
 

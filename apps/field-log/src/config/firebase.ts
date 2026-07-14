@@ -3,14 +3,15 @@ import { getApps, initializeApp } from "firebase/app";
 // @ts-expect-error React Native persistence is available at runtime.
 import { getReactNativePersistence, initializeAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { fieldLogEnv } from "./env";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAVZNV_cv9PsuRI-1aw2oYqLLiK8GxyET8",
-  authDomain: "field-log-fc96c.firebaseapp.com",
-  projectId: "field-log-fc96c",
-  storageBucket: "field-log-fc96c.firebasestorage.app",
-  messagingSenderId: "987730931157",
-  appId: "1:987730931157:web:858c21b63cd2a300d1615c",
+  apiKey: fieldLogEnv.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: fieldLogEnv.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: fieldLogEnv.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: fieldLogEnv.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: fieldLogEnv.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: fieldLogEnv.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
 const app =

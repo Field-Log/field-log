@@ -18,6 +18,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import type { AutmogProduct } from "@/lib/autmog-data";
 import type {
   ActiveFilters,
@@ -97,13 +98,23 @@ export function MobileToolbar({
     if (searchOpen) searchRef.current?.focus();
   }, [searchOpen]);
 
+  // Dock the field to the top of the on-screen keyboard. iOS Safari overlays
+  // the keyboard without shrinking the layout viewport, so without this the
+  // fixed field stays anchored behind the keyboard and floats detached.
+  const keyboardInset = useKeyboardInset(searchOpen);
+
   return (
     <div className="md:hidden">
       {searchOpen ? (
         <div
           className="fixed inset-x-0 z-40 flex items-center gap-2 border-t border-border bg-background/95 p-2 backdrop-blur"
           style={{
-            bottom: `calc(${BAR_HEIGHT} + env(safe-area-inset-bottom))`,
+            // While the keyboard is up, sit flush on its tray; otherwise rest
+            // above the bottom toolbar (clear of the home indicator).
+            bottom:
+              keyboardInset > 0
+                ? `${keyboardInset}px`
+                : `calc(${BAR_HEIGHT} + env(safe-area-inset-bottom))`,
           }}
         >
           <label

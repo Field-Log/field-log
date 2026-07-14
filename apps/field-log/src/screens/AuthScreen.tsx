@@ -20,15 +20,11 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { fieldLogEnv } from "../config/env";
 import { auth } from "../config/firebase";
 import { C } from "../theme/colors";
 
 WebBrowser.maybeCompleteAuthSession();
-
-const GOOGLE_WEB_CLIENT_ID =
-  "987730931157-mamj2vf7c6nlteqkbrq6fsdfo2rf0nip.apps.googleusercontent.com";
-const GOOGLE_IOS_CLIENT_ID =
-  "987730931157-6f067fjcrqcn3jnj12d6vlionj77e2et.apps.googleusercontent.com";
 
 export default function AuthScreen() {
   const [mode, setMode] = useState<"landing" | "email">("landing");
@@ -38,8 +34,8 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
 
   const [, googleResponse, googlePrompt] = AuthSession.useAuthRequest({
-    clientId: GOOGLE_WEB_CLIENT_ID,
-    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    clientId: fieldLogEnv.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    iosClientId: fieldLogEnv.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
   });
 
   // Handle Google OAuth response
