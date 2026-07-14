@@ -8,8 +8,6 @@ export type MobileRuntimeEnv = {
   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?: string;
   EXPO_PUBLIC_FIREBASE_PROJECT_ID?: string;
   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET?: string;
-  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?: string;
-  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?: string;
   EXPO_PUBLIC_API_URL?: string;
   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY?: string;
@@ -42,8 +40,6 @@ export function createMobileEnv(runtimeEnv: MobileRuntimeEnv) {
       EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1).optional(),
       EXPO_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1).optional(),
       EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1).optional(),
-      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: z.string().min(1).optional(),
-      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: z.string().min(1).optional(),
       EXPO_PUBLIC_API_URL: urlSchema.optional(),
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
       EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY: z.string().min(1).optional(),
@@ -62,10 +58,6 @@ export function createMobileEnv(runtimeEnv: MobileRuntimeEnv) {
         runtimeEnv.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
       EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET:
         runtimeEnv.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
-      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:
-        runtimeEnv.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:
-        runtimeEnv.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
       EXPO_PUBLIC_API_URL: runtimeEnv.EXPO_PUBLIC_API_URL,
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:
         runtimeEnv.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,

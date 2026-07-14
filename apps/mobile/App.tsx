@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/expo";
+import { ClerkProvider, useAuth as useClerkAuth, useUser } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { loggerMessages } from "@package/logger";
 import {
@@ -9,7 +9,6 @@ import { NavigationContainer } from "@react-navigation/native";
 import { type ReactElement, useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { AccountMenuButton } from "./src/components/AccountMenuButton";
-import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { initDatabase } from "./src/db/database";
 import {
   setCurrentSyncUserId,
@@ -61,7 +60,10 @@ function AccountTabPlaceholder(): ReactElement {
 }
 
 function AppGate(): ReactElement {
-  const { user, loading } = useAuth();
+  const { isLoaded: authLoaded, isSignedIn } = useClerkAuth({
+    treatPendingAsSignedOut: false,
+  });
+  const { isLoaded: userLoaded, user } = useUser();
   const [databaseReady, setDatabaseReady] = useState(false);
   const userId = user?.id;
 
@@ -84,7 +86,7 @@ function AppGate(): ReactElement {
     syncCurrentUserDataBestEffort(userId);
   }, [databaseReady, userId]);
 
-  if (loading || !databaseReady) {
+  if (!authLoaded || !userLoaded || !databaseReady) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator size="large" />
@@ -92,7 +94,7 @@ function AppGate(): ReactElement {
     );
   }
 
-  return user ? <MainTabs /> : <AuthScreen />;
+  return isSignedIn && user ? <MainTabs /> : <AuthScreen />;
 }
 
 export default function App(): ReactElement {
@@ -101,11 +103,9 @@ export default function App(): ReactElement {
       publishableKey={mobileEnv.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
       tokenCache={tokenCache}
     >
-      <AuthProvider>
-        <NavigationContainer>
-          <AppGate />
-        </NavigationContainer>
-      </AuthProvider>
+      <NavigationContainer>
+        <AppGate />
+      </NavigationContainer>
     </ClerkProvider>
   );
 }

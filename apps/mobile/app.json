@@ -38,12 +38,6 @@
         {
           "appleSignIn": false
         }
-      ],
-      [
-        "expo-notifications",
-        {
-          "iosDisplayInForeground": true
-        }
       ]
     ]
   }

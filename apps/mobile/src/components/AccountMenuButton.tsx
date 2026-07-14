@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/expo";
+import { useClerk, useUser } from "@clerk/expo";
 import { type BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { type NavigationProp, useNavigation } from "@react-navigation/native";
 import { type ReactElement, useState } from "react";
@@ -11,7 +11,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { useAuth } from "../contexts/AuthContext";
 import { type MainTabParamList } from "../navigation/types";
 import { C } from "../theme/colors";
 import { AccountProfileModal } from "./AccountProfileModal";
@@ -23,14 +22,14 @@ type AccountMenuButtonProps = {
 export function AccountMenuButton({
   tabBarButtonProps,
 }: AccountMenuButtonProps): ReactElement {
-  const { user, signOut } = useAuth();
+  const clerk = useClerk();
   const { user: clerkUser } = useUser();
   const navigation = useNavigation<NavigationProp<MainTabParamList>>();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const username = clerkUser?.username ?? user?.displayName ?? "User";
-  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? user?.email;
+  const username = clerkUser?.username ?? clerkUser?.fullName ?? "User";
+  const email = clerkUser?.primaryEmailAddress?.emailAddress;
   const imageUrl = clerkUser?.imageUrl;
 
   function closeMenu(): void {
@@ -39,7 +38,7 @@ export function AccountMenuButton({
 
   async function handleSignOut(): Promise<void> {
     closeMenu();
-    await signOut();
+    await clerk.signOut();
   }
 
   return (
