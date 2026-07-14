@@ -15,6 +15,13 @@
       "when": 1783994527575,
       "tag": "0001_lethal_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783997272070,
+      "tag": "0002_cuddly_doctor_faustus",
+      "breakpoints": true
     }
   ]
 }
