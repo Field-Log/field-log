@@ -43,7 +43,11 @@ If the current branch is not `main`:
 
 - If there are unstaged, staged, or uncommitted changes, stop and tell the user
   to commit or otherwise resolve those changes before proceeding.
-- If the worktree is clean, check out `main`.
+- If the tree is clean and the user is **not** using worktrees, check out
+  `main`. If the user **is** using worktrees, do **not** switch the current
+  worktree — that fails if `main` is already checked out in another worktree.
+  Instead run `git fetch origin` and branch the new worktree from `origin/main`
+  in "Create The Branch Or Worktree" below.
 
 Once on `main`, run:
 
