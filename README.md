@@ -157,3 +157,7 @@ Infisical.
 | `pnpm test:ci` | Runs local/unit tests without Infisical for CI. |
 | `pnpm test:watch` | Runs watch-mode app tests with Infisical Development secrets and package tests without secrets. |
 | `pnpm test:watch:no-infisical` | Runs watch-mode tests without Infisical where supported. |
+
+
+
+.............
