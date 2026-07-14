@@ -70,7 +70,7 @@ Ask whether the user is using git worktrees. If they are:
 3. Create the worktree at `<parent>/<derived-name>` with the Linear branch name:
 
 ```sh
-git worktree add <parent>/<derived-name> -b <linear-branch-name>
+git worktree add <parent>/<derived-name> -b <linear-branch-name> origin/main
 ```
 
 4. Complete all remaining work inside the new worktree directory.
