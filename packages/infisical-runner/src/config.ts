@@ -10,8 +10,21 @@ const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
 export type CommandSecretConfig = {
   allowServerSecrets: boolean;
   environmentSlug?: string;
+  envAliases?: readonly EnvironmentAlias[];
   paths: readonly string[];
 };
+
+export type EnvironmentAlias = {
+  from: string;
+  to: string;
+};
+
+const mobileSecretAliases = [
+  {
+    from: "CLERK_PUBLISHABLE_KEY",
+    to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  },
+] as const satisfies readonly EnvironmentAlias[];
 
 export const commandSecrets = {
   api: {
@@ -83,36 +96,44 @@ export const commandSecrets = {
   mobile: {
     build: {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       paths: [mobileSecretPath],
     },
     "build:preview": {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       environmentSlug: "preview",
       paths: [mobileSecretPath],
     },
     "build:prod": {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       environmentSlug: "prod",
       paths: [mobileSecretPath],
     },
     dev: {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       paths: [mobileSecretPath],
     },
     android: {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       paths: [mobileSecretPath],
     },
     ios: {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       paths: [mobileSecretPath],
     },
     test: {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       paths: [mobileSecretPath],
     },
     "test:watch": {
       allowServerSecrets: false,
+      envAliases: mobileSecretAliases,
       paths: [mobileSecretPath],
     },
   },

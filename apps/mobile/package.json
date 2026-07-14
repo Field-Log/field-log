@@ -22,18 +22,20 @@
     "test:watch:no-infisical": "tsx src/env.assert.ts && jest --watch"
   },
   "dependencies": {
-    "@t3-oss/env-core": "^0.13.11",
+    "@clerk/expo": "^3.7.4",
     "@package/logger": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
     "expo": "latest",
+    "expo-secure-store": "^57.0.0",
     "expo-status-bar": "latest",
     "react": "latest",
     "react-native": "0.85.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@react-native/jest-preset": "0.85.3",
     "@package/eslint": "workspace:*",
     "@package/tsconfig": "workspace:*",
+    "@react-native/jest-preset": "0.85.3",
     "@types/react": "latest",
     "jest": "^29.7.0",
     "jest-expo": "latest"

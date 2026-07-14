@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildEnvironmentAliasCommandArgs,
   buildInfisicalRunArgs,
   getInfisicalAuthCheckError,
   getSecretPaths,
@@ -118,6 +119,15 @@ describe("buildInfisicalRunArgs", () => {
       "--env=dev",
       "--path=/apps/mobile",
       "--",
+      "node",
+      "/repo/packages/infisical-runner/src/env-alias.mjs",
+      JSON.stringify([
+        {
+          from: "CLERK_PUBLISHABLE_KEY",
+          to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        },
+      ]),
+      "--",
       "expo",
       "export",
       "--platform",
@@ -139,6 +149,15 @@ describe("buildInfisicalRunArgs", () => {
       "--env=prod",
       "--path=/apps/mobile",
       "--",
+      "node",
+      "/repo/packages/infisical-runner/src/env-alias.mjs",
+      JSON.stringify([
+        {
+          from: "CLERK_PUBLISHABLE_KEY",
+          to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        },
+      ]),
+      "--",
       "expo",
       "export",
       "--platform",
@@ -159,6 +178,15 @@ describe("buildInfisicalRunArgs", () => {
       "--project-config-dir=/repo",
       "--env=preview",
       "--path=/apps/mobile",
+      "--",
+      "node",
+      "/repo/packages/infisical-runner/src/env-alias.mjs",
+      JSON.stringify([
+        {
+          from: "CLERK_PUBLISHABLE_KEY",
+          to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        },
+      ]),
       "--",
       "expo",
       "export",
@@ -212,6 +240,42 @@ describe("buildInfisicalRunArgs", () => {
       "@package/github-discord-notifier",
       "notify",
     ]);
+  });
+});
+
+describe("buildEnvironmentAliasCommandArgs", () => {
+  it("wraps commands when aliases are configured", () => {
+    expect(
+      buildEnvironmentAliasCommandArgs({
+        commandArgs: ["expo", "start"],
+        config: {
+          allowServerSecrets: false,
+          envAliases: [{ from: "A", to: "B" }],
+          paths: ["/apps/mobile"],
+        },
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "node",
+      "/repo/packages/infisical-runner/src/env-alias.mjs",
+      JSON.stringify([{ from: "A", to: "B" }]),
+      "--",
+      "expo",
+      "start",
+    ]);
+  });
+
+  it("keeps commands unchanged when aliases are absent", () => {
+    expect(
+      buildEnvironmentAliasCommandArgs({
+        commandArgs: ["vite", "build"],
+        config: {
+          allowServerSecrets: false,
+          paths: ["/apps/web"],
+        },
+        repoRoot: "/repo",
+      }),
+    ).toEqual(["vite", "build"]);
   });
 });
 

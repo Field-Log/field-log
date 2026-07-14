@@ -18,21 +18,22 @@ function assertThrows(fn: () => unknown, message: string): void {
   throw new Error(`${message}: expected function to throw`);
 }
 
-const absentEnv = createMobileEnv({});
-assertEqual(
-  absentEnv.EXPO_PUBLIC_API_URL,
-  undefined,
-  "optional API URL can be absent",
-);
+assertThrows(() => createMobileEnv({}), "Clerk publishable key is required");
 
 const validEnv = createMobileEnv({
   EXPO_PUBLIC_API_URL: "https://api.example.com",
+  EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY: "client-key",
 });
 assertEqual(
   validEnv.EXPO_PUBLIC_API_URL,
   "https://api.example.com",
   "valid API URL is preserved",
+);
+assertEqual(
+  validEnv.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+  "pk_test_example",
+  "valid Clerk publishable key is preserved",
 );
 assertEqual(
   validEnv.EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY,
@@ -42,6 +43,7 @@ assertEqual(
 
 const localEnv = createMobileEnv({
   EXPO_PUBLIC_API_URL: "localhost:4006",
+  EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
 });
 assertEqual(
   localEnv.EXPO_PUBLIC_API_URL,
@@ -53,6 +55,7 @@ assertThrows(
   () =>
     createMobileEnv({
       EXPO_PUBLIC_API_URL: "not a url",
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_example",
     }),
   "malformed API URL is rejected",
 );

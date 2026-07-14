@@ -8,6 +8,15 @@
     "scheme": "machinedpens",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "plugins": [
+      "expo-secure-store",
+      [
+        "@clerk/expo",
+        {
+          "appleSignIn": false
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true
     },

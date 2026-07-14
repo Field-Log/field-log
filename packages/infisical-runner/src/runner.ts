@@ -128,15 +128,40 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
 
   // Infisical accepts a single secret path per `run`, so nest runs to
   // accumulate each path's secrets before the wrapped command executes.
-  let args = [
-    ...runArgsForPath(paths[paths.length - 1]!),
-    ...request.commandArgs,
-  ];
+  const commandArgs = buildEnvironmentAliasCommandArgs({
+    commandArgs: request.commandArgs,
+    config,
+    repoRoot: request.repoRoot,
+  });
+
+  let args = [...runArgsForPath(paths[paths.length - 1]!), ...commandArgs];
   for (let index = paths.length - 2; index >= 0; index -= 1) {
     args = [...runArgsForPath(paths[index]!), "infisical", ...args];
   }
 
   return args;
+}
+
+export function buildEnvironmentAliasCommandArgs({
+  commandArgs,
+  config,
+  repoRoot,
+}: {
+  commandArgs: readonly string[];
+  config: CommandSecretConfig;
+  repoRoot: string;
+}): string[] {
+  if (!config.envAliases || config.envAliases.length === 0) {
+    return [...commandArgs];
+  }
+
+  return [
+    "node",
+    join(repoRoot, "packages/infisical-runner/src/env-alias.mjs"),
+    JSON.stringify(config.envAliases),
+    "--",
+    ...commandArgs,
+  ];
 }
 
 export function hasInfisicalProjectConfig(repoRoot: string): boolean {

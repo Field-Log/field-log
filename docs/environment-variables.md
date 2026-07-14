@@ -93,6 +93,8 @@ JavaScript must use Expo's `EXPO_PUBLIC_` prefix.
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `EXPO_PUBLIC_API_URL` | API origin used by mobile requests and client log proxy posts. | ? (All) | `C` |
+| `CLERK_PUBLISHABLE_KEY` | Clerk mobile SDK publishable key. The Infisical runner aliases this to `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` before Expo commands run. | All | `C` |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Expo-visible Clerk publishable key consumed by app JavaScript. Prefer setting `CLERK_PUBLISHABLE_KEY` in Infisical and letting the runner alias it. | All | `C` |
 | `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY` | Client key sent to the API log proxy. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.
