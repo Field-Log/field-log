@@ -72,8 +72,9 @@ Client runtime folders provide their platform-specific API and proxy settings:
   optional
 - `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
 
-Web and mobile derive the client log proxy URL by appending `/logs` to the API
-URL. Mobile does not alias API variables; use the `EXPO_PUBLIC_*` names there.
+Web and mobile derive the client log proxy URL by appending `/api/v1/logs` to
+the API URL. Mobile does not alias API variables; use the `EXPO_PUBLIC_*` names
+there.
 
 Local development:
 
@@ -362,7 +363,9 @@ The app-local module owns the browser proxy configuration:
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const apiUrl = import.meta.env.VITE_API_URL;
-const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
+const logProxyUrl = apiUrl
+  ? `${apiUrl.replace(/\/+$/, "")}/api/v1/logs`
+  : undefined;
 
 const transports = logProxyUrl
   ? [
@@ -401,7 +404,9 @@ The Expo app-local module owns the proxy configuration:
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
+const logProxyUrl = apiUrl
+  ? `${apiUrl.replace(/\/+$/, "")}/api/v1/logs`
+  : undefined;
 
 const transports = logProxyUrl
   ? [

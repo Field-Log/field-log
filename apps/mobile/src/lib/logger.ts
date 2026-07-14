@@ -6,7 +6,7 @@ import {
 import { mobileEnv } from "../env";
 
 function createLogProxyUrl(apiUrl: string) {
-  return `${apiUrl.replace(/\/+$/, "")}/logs`;
+  return `${apiUrl.replace(/\/+$/, "")}/api/v1/logs`;
 }
 
 const logProxyUrl = mobileEnv.EXPO_PUBLIC_API_URL
