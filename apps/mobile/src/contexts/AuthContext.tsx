@@ -1,4 +1,4 @@
-import { useAuth as useClerkAuth, useClerk, useUser } from "@clerk/expo";
+import { useClerk, useAuth as useClerkAuth, useUser } from "@clerk/expo";
 import type React from "react";
 import { createContext, useContext, useMemo } from "react";
 

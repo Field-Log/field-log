@@ -1,10 +1,38 @@
-# Getting started with Expo
+# Getting Started With Expo
 
-The mobile app uses `expo-dev-client`, so Expo Go is not the target runtime.
-Install the native toolchain first, then create a development build near the end
-of this setup flow.
+The active Expo app is `apps/mobile`. It uses `expo-dev-client`, so Expo Go is
+not the target runtime. Install the native toolchain first, then create a
+development build near the end of this setup flow.
 
-## iOS setup
+## Prerequisites
+
+- Install Node.js and pnpm as documented in the repo README.
+- Install Expo tooling through the workspace commands. Do not install a separate
+  global Expo CLI for this repo.
+- For iOS development, install Xcode and open it once so command-line tools and
+  simulators are initialized.
+- For Android development, install JDK 17, Android Studio, an Android SDK, and a
+  runnable Android target.
+
+## Clerk Native Setup
+
+The app uses Clerk through `@clerk/expo` and stores tokens with
+`expo-secure-store`. Apple sign-in is intentionally disabled:
+
+```json
+[
+  "@clerk/expo",
+  {
+    "appleSignIn": false
+  }
+]
+```
+
+Configure Google OAuth in Clerk for the iOS bundle identifier
+`com.dsabh.fieldlog`, the Android package `com.dsabh.fieldlog`, and the mobile
+redirect scheme `fieldlog`.
+
+## iOS Setup
 
 Local iOS development requires macOS, Xcode, and an installed iOS Simulator
 runtime. Install Xcode from the App Store or Apple Developer downloads, then open
@@ -33,7 +61,7 @@ xcrun simctl list runtimes
 xcrun simctl list devices available
 ```
 
-## Android setup
+## Android Setup
 
 Local Android development requires JDK 17, Android Studio, an Android SDK, and a
 runnable Android target. Install JDK 17 before setting up Android Studio:
@@ -139,7 +167,7 @@ You can rerun the Android environment check at any time:
 pnpm dev:doctor:android
 ```
 
-## Development builds
+## Development Builds
 
 After the native toolchain is installed, build and install the local development
 client with the native toolchain on your machine:
@@ -175,7 +203,7 @@ emulator. The `development-simulator` iOS profile is for iOS Simulator. For a
 physical iPhone, create an iOS development build with the `development` profile
 and Apple signing credentials.
 
-## Run the app
+## Run the App
 
 Once the mobile development build is installed, start local development from the
 repo root:
@@ -187,3 +215,20 @@ pnpm dev:expo
 This starts the Hono API and the Expo dev-client Metro server. Use `pnpm dev:ios`
 or `pnpm dev:android` when you want the command to launch a specific installed
 mobile target.
+
+## Validation
+
+After mobile code changes, run the repo validation commands:
+
+```sh
+pnpm format
+pnpm test
+pnpm lint
+pnpm typecheck
+```
+
+For documentation-only changes, run:
+
+```sh
+pnpm format
+```

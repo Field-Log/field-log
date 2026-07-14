@@ -1,7 +1,8 @@
-import { useSignIn, useSignUp, useSSO } from "@clerk/expo";
+import { useSSO } from "@clerk/expo";
+import { useSignIn, useSignUp } from "@clerk/expo/legacy";
 import { loggerMessages } from "@package/logger";
 import * as WebBrowser from "expo-web-browser";
-import React, { useState } from "react";
+import { type ReactElement, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +21,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 type AuthMode = "sign-in" | "sign-up";
 
-export default function AuthScreen() {
+export default function AuthScreen(): ReactElement {
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
