@@ -8,7 +8,7 @@ on:
 
 permissions:
   issues: write
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   assign:
@@ -35,9 +35,21 @@ jobs:
               return;
             }
 
-            await github.rest.issues.addAssignees({
-              owner,
-              repo,
-              issue_number: pr.number,
-              assignees: [pr.user.login],
-            });
+            try {
+              await github.rest.issues.addAssignees({
+                owner,
+                repo,
+                issue_number: pr.number,
+                assignees: [pr.user.login],
+              });
+            } catch (error) {
+              if (error.status === 403) {
+                core.setFailed(
+                  `GitHub token could not assign ${pr.user.login} to PR #${pr.number}. ` +
+                    "Verify workflow permissions include pull-requests: write and issues: write.",
+                );
+                return;
+              }
+
+              throw error;
+            }
