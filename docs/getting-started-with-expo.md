@@ -177,6 +177,30 @@ pnpm dev:ios:no-api
 pnpm dev:android:no-api
 ```
 
+### Troubleshooting stale development clients
+
+Rebuild the development client any time mobile native dependencies or Expo
+plugins change. If `pnpm dev:ios` starts Metro but the app fails with an error
+like `Cannot find native module 'ExpoSecureStore'`, stop Metro and rebuild the
+iOS development client:
+
+```sh
+pnpm dev:ios:no-api
+pnpm dev:ios
+```
+
+If the error persists, uninstall the old simulator app, then rebuild and launch
+the development client again:
+
+```sh
+xcrun simctl uninstall booted com.dsabh.fieldlog
+pnpm dev:ios:no-api
+pnpm dev:ios
+```
+
+Use the same pattern for Android with `pnpm dev:android:no-api` followed by
+`pnpm dev:android`.
+
 If `pnpm dev:ios:no-api` fails with `xcodebuild` error code 70 and says it is
 `Unable to find a destination matching the provided destination specifier`, check
 that Xcode has a simulator runtime installed for its current iOS platform.
