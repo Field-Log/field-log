@@ -56,8 +56,9 @@ Legend: `S` = server-only. `C` = client-visible.
 
 ### API App: `/apps/api`
 
-`apps/api` runs on Cloudflare Workers. Local development uses Wrangler, and
-deployment secrets are written to Workers through Wrangler `--secrets-file`.
+`apps/api` runs on Cloudflare Workers. Local development uses Wrangler. Deployed
+Worker runtime secrets are owned by Infisical Secrets Sync for preview, staging,
+and production; deploy commands must not write Worker secrets with Wrangler.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
@@ -67,7 +68,7 @@ deployment secrets are written to Workers through Wrangler `--secrets-file`.
 | `DATABASE_URL`[^4] | API database connection string. | All | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
-| `LOG_PROXY_CLIENT_KEY` | Key checked by `POST /logs`. | ? (All) | `C` |
+| `LOG_PROXY_CLIENT_KEY` | Key checked by `POST /api/v1/logs`. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -290,7 +291,8 @@ Use least-privilege credentials where the provider supports scoping.
     DB-changing PRs get a branch-specific `DATABASE_URL` override.
 [^2]: The web build aliases `API_URL` to `VITE_API_URL` and
     `LOG_PROXY_CLIENT_KEY` to `VITE_LOG_PROXY_CLIENT_KEY` when the `VITE_*`
-    names are absent. The web and mobile loggers append `/logs` to the API URL.
+    names are absent. The web and mobile loggers append `/api/v1/logs` to the
+    API URL.
 [^3]: `Stg` here means Vercel Preview. This value is not
     used by the shared staging web deploy.
 [^4]: GitHub deploy workflows resolve branch-specific Neon URLs

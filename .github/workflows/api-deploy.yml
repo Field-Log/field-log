@@ -290,45 +290,6 @@ jobs:
           env-slug: preview
           secret-path: /tools/cloudflare
 
-      - name: Fetch API runtime secrets from Infisical
-        if: steps.db.outputs.can_deploy == 'true'
-        uses: Infisical/secrets-action@v1.0.16
-        with:
-          method: oidc
-          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-          env-slug: preview
-          secret-path: /apps/api
-
-      - name: Write API preview secrets file
-        if: steps.db.outputs.can_deploy == 'true'
-        shell: bash
-        env:
-          PREVIEW_DATABASE_URL: ${{ steps.db.outputs.database_url }}
-        run: |
-          set -euo pipefail
-
-          jq -n \
-            --arg DATABASE_URL "$PREVIEW_DATABASE_URL" \
-            --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
-            --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
-            --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
-            --arg LOG_LEVEL "${LOG_LEVEL:-}" \
-            --arg LOGGER "${LOGGER:-}" \
-            --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
-            '{
-              DATABASE_URL: $DATABASE_URL,
-              AXIOM_TOKEN: $AXIOM_TOKEN,
-              AXIOM_DATASET: $AXIOM_DATASET,
-              AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
-              LOG_LEVEL: $LOG_LEVEL,
-              LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
-            } | with_entries(select(.value != ""))' \
-            > "$RUNNER_TEMP/api-preview-secrets.json"
-
       - name: Deploy PR preview Worker
         if: steps.db.outputs.can_deploy == 'true'
         id: deploy
@@ -342,8 +303,7 @@ jobs:
           upload_output="$(pnpm dlx wrangler versions upload \
             --config apps/api/wrangler.jsonc \
             --env preview \
-            --preview-alias "$PREVIEW_ALIAS" \
-            --secrets-file "$RUNNER_TEMP/api-preview-secrets.json" 2>&1)"
+            --preview-alias "$PREVIEW_ALIAS" 2>&1)"
           upload_status=$?
           set -e
 
@@ -357,15 +317,13 @@ jobs:
             echo "Preview Worker does not exist yet; creating it with wrangler deploy."
             pnpm dlx wrangler deploy \
               --config apps/api/wrangler.jsonc \
-              --env preview \
-              --secrets-file "$RUNNER_TEMP/api-preview-secrets.json"
+              --env preview
 
             set +e
             upload_output="$(pnpm dlx wrangler versions upload \
               --config apps/api/wrangler.jsonc \
               --env preview \
-              --preview-alias "$PREVIEW_ALIAS" \
-              --secrets-file "$RUNNER_TEMP/api-preview-secrets.json" 2>&1)"
+              --preview-alias "$PREVIEW_ALIAS" 2>&1)"
             upload_status=$?
             set -e
 
@@ -892,45 +850,8 @@ jobs:
           env-slug: prod
           secret-path: /tools/cloudflare
 
-      - name: Fetch API runtime secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.16
-        with:
-          method: oidc
-          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-          env-slug: prod
-          secret-path: /apps/api
-
-      - name: Write production API secrets file
-        shell: bash
-        env:
-          PRODUCTION_DATABASE_URL: ${{ steps.production_db.outputs.database_url }}
-        run: |
-          set -euo pipefail
-
-          jq -n \
-            --arg DATABASE_URL "$PRODUCTION_DATABASE_URL" \
-            --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
-            --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
-            --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
-            --arg LOG_LEVEL "${LOG_LEVEL:-}" \
-            --arg LOGGER "${LOGGER:-}" \
-            --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
-            '{
-              DATABASE_URL: $DATABASE_URL,
-              AXIOM_TOKEN: $AXIOM_TOKEN,
-              AXIOM_DATASET: $AXIOM_DATASET,
-              AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
-              LOG_LEVEL: $LOG_LEVEL,
-              LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
-            } | with_entries(select(.value != ""))' \
-            > "$RUNNER_TEMP/api-production-secrets.json"
-
       - name: Deploy production Worker
-        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env="" --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
+        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env=""
 
       - name: Smoke test production Worker
         run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v1/health
