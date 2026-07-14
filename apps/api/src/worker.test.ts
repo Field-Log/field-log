@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runHourlyCron } from "./worker.js";
+import worker, { runHourlyCron, runScheduled } from "./worker.js";
 
 describe("api worker", () => {
   afterEach(() => {
@@ -52,6 +52,121 @@ describe("api worker", () => {
         environment: "preview",
         level: "info",
         message: "api.cron.hourly",
+      }),
+    ]);
+  });
+
+  it("captures request-time failures when only Axiom env is usable", async () => {
+    const requests: Array<{ body: unknown; input: string }> = [];
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: { body?: string }) => {
+        requests.push({
+          body: init?.body ? JSON.parse(init.body) : undefined,
+          input,
+        });
+
+        return {
+          ok: true,
+          status: 200,
+        };
+      }),
+    );
+
+    const response = await worker.fetch(
+      new Request("https://api.field-log.app/api/v1/logs", {
+        body: JSON.stringify({
+          app: "web",
+          environment: "production",
+          level: "info",
+          message: "client.event",
+        }),
+        method: "POST",
+      }),
+      {
+        AXIOM_DATASET: "testing",
+        AXIOM_TOKEN: "xaat-example",
+        DATABASE_URL: "not-a-url",
+        LOGGER: "not-a-logger",
+        LOG_LEVEL: "not-a-level",
+        LOG_PROXY_CLIENT_KEY: "",
+      },
+      {
+        waitUntil: vi.fn(),
+      },
+    );
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: "Internal server error.",
+    });
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.input).toBe(
+      "https://api.axiom.co/v1/datasets/testing/ingest",
+    );
+    expect(requests[0]?.body).toEqual([
+      expect.objectContaining({
+        app: "api",
+        attributes: {
+          method: "POST",
+          path: "/api/v1/logs",
+          source: "cloudflare-worker",
+          trigger: "fetch",
+        },
+        environment: "unknown",
+        level: "error",
+        message: "api.worker.unhandledException",
+      }),
+    ]);
+  });
+
+  it("captures scheduled failures when only Axiom env is usable", async () => {
+    const requests: Array<{ body: unknown; input: string }> = [];
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string, init?: { body?: string }) => {
+        requests.push({
+          body: init?.body ? JSON.parse(init.body) : undefined,
+          input,
+        });
+
+        return {
+          ok: true,
+          status: 200,
+        };
+      }),
+    );
+
+    await runScheduled(
+      {
+        cron: "0 * * * *",
+        scheduledTime: Date.parse("2026-07-07T12:00:00.000Z"),
+      },
+      {
+        AXIOM_DATASET: "testing",
+        AXIOM_TOKEN: "xaat-example",
+        DATABASE_URL: "not-a-url",
+        LOGGER: "not-a-logger",
+        LOG_LEVEL: "not-a-level",
+        LOG_PROXY_CLIENT_KEY: "",
+      },
+    );
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.body).toEqual([
+      expect.objectContaining({
+        app: "api",
+        attributes: {
+          cron: "0 * * * *",
+          scheduledAt: "2026-07-07T12:00:00.000Z",
+          source: "cloudflare-cron",
+          trigger: "scheduled",
+        },
+        environment: "unknown",
+        level: "error",
+        message: "api.worker.unhandledException",
       }),
     ]);
   });
