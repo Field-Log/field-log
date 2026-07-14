@@ -1,7 +1,7 @@
 import { loggerMessages } from "@package/logger";
 import { createApp } from "./app.js";
 import type { ApiRuntimeEnv } from "./env.schema.js";
-import { createApiServices } from "./lib/create-services.js";
+import { createApiLoggerRuntime } from "./lib/create-services.js";
 
 export type CloudflareApiBindings = ApiRuntimeEnv;
 
@@ -16,13 +16,13 @@ export type CloudflareExecutionContext = {
 
 const app = createApp({
   getRuntimeConfig(context) {
-    const { apiEnv, services } = createApiServices(
+    const { apiEnv, logger } = createApiLoggerRuntime(
       context.env as CloudflareApiBindings,
     );
 
     return {
       clientLogKey: apiEnv.LOG_PROXY_CLIENT_KEY,
-      logger: services.logger,
+      logger,
     };
   },
 });
@@ -31,9 +31,9 @@ export async function runHourlyCron(
   event: CloudflareScheduledEvent,
   env: CloudflareApiBindings,
 ): Promise<void> {
-  const { services } = createApiServices(env);
+  const { logger } = createApiLoggerRuntime(env);
 
-  services.logger.info(loggerMessages.api.cronHourly, {
+  logger.info(loggerMessages.api.cronHourly, {
     attributes: {
       cron: event.cron,
       scheduledAt: new Date(event.scheduledTime).toISOString(),
@@ -41,7 +41,7 @@ export async function runHourlyCron(
     },
   });
 
-  await services.logger.flush();
+  await logger.flush();
 }
 
 export default {

@@ -1,5 +1,6 @@
+import { loggerValues } from "@package/logger";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { runHourlyCron } from "./worker.js";
+import worker, { runHourlyCron } from "./worker.js";
 
 describe("api worker", () => {
   afterEach(() => {
@@ -54,5 +55,26 @@ describe("api worker", () => {
         message: "api.cron.hourly",
       }),
     ]);
+  });
+
+  it("handles client log requests without database bindings", async () => {
+    const response = await worker.fetch(
+      new Request("https://api.example.test/api/v1/logs", {
+        body: "not-json",
+        headers: {
+          [loggerValues.logProxy.clientKeyHeader]: "runtime-key",
+        },
+        method: "POST",
+      }),
+      {
+        APP_ENV: "preview",
+        LOG_PROXY_CLIENT_KEY: "runtime-key",
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Expected a JSON request body.",
+    });
   });
 });

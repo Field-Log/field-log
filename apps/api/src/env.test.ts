@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApiEnv } from "./env.schema.js";
+import { createApiEnv, createApiLoggerEnv } from "./env.schema.js";
 
 describe("api env", () => {
   beforeEach(() => {
@@ -73,5 +73,28 @@ describe("api env", () => {
     expect(() => createApiEnv({ PORT: "3000" })).toThrow(
       "Invalid environment variables",
     );
+  });
+
+  it("allows logger-only API environment without DATABASE_URL", () => {
+    const env = createApiLoggerEnv({
+      APP_ENV: "preview",
+      AXIOM_DATASET: "development",
+      AXIOM_EDGE_DOMAIN: "api.axiom.co",
+      AXIOM_TOKEN: "xaat-example",
+      LOGGER: "verbose",
+      LOG_LEVEL: "debug",
+      LOG_PROXY_CLIENT_KEY: "client-key",
+    });
+
+    expect(env.APP_ENV).toBe("preview");
+    expect(env.LOG_PROXY_CLIENT_KEY).toBe("client-key");
+  });
+
+  it("rejects invalid logger-only API environment values", () => {
+    expect(() =>
+      createApiLoggerEnv({
+        LOG_LEVEL: "loud",
+      }),
+    ).toThrow("Invalid environment variables");
   });
 });

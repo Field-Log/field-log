@@ -13,6 +13,17 @@ export type ApiRuntimeEnv = {
   PORT?: string;
 };
 
+export type ApiLoggerRuntimeEnv = Pick<
+  ApiRuntimeEnv,
+  | "APP_ENV"
+  | "AXIOM_DATASET"
+  | "AXIOM_EDGE_DOMAIN"
+  | "AXIOM_TOKEN"
+  | "LOGGER"
+  | "LOG_LEVEL"
+  | "LOG_PROXY_CLIENT_KEY"
+>;
+
 export function createApiEnv(runtimeEnv: ApiRuntimeEnv) {
   return createEnv({
     emptyStringAsUndefined: true,
@@ -40,6 +51,33 @@ export function createApiEnv(runtimeEnv: ApiRuntimeEnv) {
         .optional(),
       LOG_PROXY_CLIENT_KEY: z.string().min(1).optional(),
       PORT: z.coerce.number().int().min(1).max(65_535).default(4006),
+    },
+  });
+}
+
+export function createApiLoggerEnv(runtimeEnv: ApiLoggerRuntimeEnv) {
+  return createEnv({
+    emptyStringAsUndefined: true,
+    isServer: true,
+    runtimeEnvStrict: {
+      APP_ENV: runtimeEnv.APP_ENV,
+      AXIOM_DATASET: runtimeEnv.AXIOM_DATASET,
+      AXIOM_EDGE_DOMAIN: runtimeEnv.AXIOM_EDGE_DOMAIN,
+      AXIOM_TOKEN: runtimeEnv.AXIOM_TOKEN,
+      LOGGER: runtimeEnv.LOGGER,
+      LOG_LEVEL: runtimeEnv.LOG_LEVEL,
+      LOG_PROXY_CLIENT_KEY: runtimeEnv.LOG_PROXY_CLIENT_KEY,
+    },
+    server: {
+      APP_ENV: z.string().min(1).optional(),
+      AXIOM_DATASET: z.string().min(1).optional(),
+      AXIOM_EDGE_DOMAIN: z.string().min(1).optional(),
+      AXIOM_TOKEN: z.string().min(1).optional(),
+      LOGGER: z.enum(["compact", "verbose"]).optional(),
+      LOG_LEVEL: z
+        .enum(["trace", "debug", "verbose", "info", "warn", "error", "fatal"])
+        .optional(),
+      LOG_PROXY_CLIENT_KEY: z.string().min(1).optional(),
     },
   });
 }
