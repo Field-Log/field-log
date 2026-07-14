@@ -1,0 +1,43 @@
+name: Assign PR
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+
+permissions:
+  issues: write
+  pull-requests: read
+
+jobs:
+  assign:
+    name: Assign PR opener
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    if: github.event.pull_request.user.login != 'renovate[bot]'
+
+    steps:
+      - name: Set assignee
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+
+            const response = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: pr.number,
+            });
+
+            if (response.data.assignees.length > 0) {
+              return;
+            }
+
+            await github.rest.issues.addAssignees({
+              owner,
+              repo,
+              issue_number: pr.number,
+              assignees: [pr.user.login],
+            });
