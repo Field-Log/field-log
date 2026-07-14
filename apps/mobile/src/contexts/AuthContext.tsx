@@ -21,7 +21,9 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { isLoaded: authLoaded, isSignedIn } = useClerkAuth();
+  const { isLoaded: authLoaded, isSignedIn } = useClerkAuth({
+    treatPendingAsSignedOut: false,
+  });
   const clerk = useClerk();
   const { isLoaded: userLoaded, user } = useUser();
 

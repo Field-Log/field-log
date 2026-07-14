@@ -1,7 +1,7 @@
 import { loggerMessages } from "@package/logger";
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import React, { useCallback, useEffect, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { AccountProfileModal } from "../components/AccountProfileModal";
 import { useAuth } from "../contexts/AuthContext";
 import {
   deleteCollection,
@@ -28,7 +29,7 @@ import {
   scheduleCarryReminder,
 } from "../utils/notifications";
 
-export default function SettingsScreen() {
+export default function SettingsScreen(): ReactElement {
   const [collections, setCollections] = useState<
     { id: string; name: string; description: string | null }[]
   >([]);
@@ -37,6 +38,7 @@ export default function SettingsScreen() {
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderHour, setReminderHour] = useState(20);
   const [reminderMinute, setReminderMinute] = useState(0);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const { user, signOut } = useAuth();
 
@@ -72,6 +74,12 @@ export default function SettingsScreen() {
       setReminderMinute(minute);
     });
   }, [reload]);
+
+  useEffect(() => {
+    if (!user) {
+      setProfileOpen(false);
+    }
+  }, [user]);
 
   const handleToggleReminder = async (value: boolean) => {
     if (value) {
@@ -140,9 +148,21 @@ export default function SettingsScreen() {
             </Text>
             <Text style={styles.accountSub}>Syncing to cloud</Text>
           </View>
-          <Pressable style={styles.signOutButton} onPress={signOut}>
-            <Text style={styles.signOutText}>Sign out</Text>
-          </Pressable>
+          <View style={styles.accountActions}>
+            <Pressable
+              style={styles.accountButton}
+              onPress={() => setProfileOpen(true)}
+            >
+              <Text style={styles.accountButtonText}>Manage</Text>
+            </Pressable>
+            <Pressable style={styles.signOutButton} onPress={signOut}>
+              <Text style={styles.signOutText}>Sign out</Text>
+            </Pressable>
+          </View>
+          <AccountProfileModal
+            onClose={() => setProfileOpen(false)}
+            visible={profileOpen}
+          />
         </View>
       ) : (
         <Text style={styles.empty}>Not signed in.</Text>
@@ -304,6 +324,16 @@ const styles = StyleSheet.create({
     borderBottomColor: C.border,
     marginBottom: 8,
   },
+  accountActions: { flexDirection: "row", gap: 8 },
+  accountButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: C.border,
+    backgroundColor: C.bgMuted,
+  },
+  accountButtonText: { fontSize: 13, fontWeight: "600", color: C.text },
   accountEmail: { fontSize: 15, fontWeight: "600", color: C.text },
   accountSub: { fontSize: 12, color: C.success, marginTop: 2 },
   signOutButton: {
