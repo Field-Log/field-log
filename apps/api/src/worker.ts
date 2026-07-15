@@ -1,6 +1,9 @@
 import { loggerMessages } from "@package/logger";
 import { createApp } from "./app.js";
-import type { ApiRuntimeEnv } from "./env.schema.js";
+import {
+  type ApiRuntimeEnv,
+  createMobileVersionPolicyFromApiEnv,
+} from "./env.schema.js";
 import { createApiServices } from "./lib/create-services.js";
 
 export type CloudflareApiBindings = ApiRuntimeEnv;
@@ -23,6 +26,7 @@ const app = createApp({
     return {
       clientLogKey: apiEnv.LOG_PROXY_CLIENT_KEY,
       logger: services.logger,
+      mobileVersionPolicy: createMobileVersionPolicyFromApiEnv(apiEnv),
     };
   },
 });

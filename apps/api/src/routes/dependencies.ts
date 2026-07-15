@@ -1,9 +1,26 @@
 import type { Logger } from "@package/logger";
 import type { Context } from "hono";
 
+export const mobileUpdateSeverities = [
+  "none",
+  "recommended",
+  "required",
+] as const;
+
+export type MobileUpdateSeverity = (typeof mobileUpdateSeverities)[number];
+
+export type MobileVersionPolicy = {
+  androidStoreUrl?: string;
+  iosStoreUrl?: string;
+  latestVersion?: string;
+  minimumSupportedVersion?: string;
+  severity: MobileUpdateSeverity;
+};
+
 export type AppRuntimeConfig = {
   clientLogKey?: string;
   logger?: Logger;
+  mobileVersionPolicy?: MobileVersionPolicy;
 };
 
 export type AppDependencies = {
@@ -12,6 +29,7 @@ export type AppDependencies = {
     context: Context,
   ) => AppRuntimeConfig | Promise<AppRuntimeConfig>;
   logger?: Logger;
+  mobileVersionPolicy?: MobileVersionPolicy;
 };
 
 export async function getRuntimeConfig(
@@ -23,6 +41,8 @@ export async function getRuntimeConfig(
   return {
     clientLogKey: runtimeConfig?.clientLogKey ?? dependencies.clientLogKey,
     logger: runtimeConfig?.logger ?? dependencies.logger,
+    mobileVersionPolicy:
+      runtimeConfig?.mobileVersionPolicy ?? dependencies.mobileVersionPolicy,
   };
 }
 
