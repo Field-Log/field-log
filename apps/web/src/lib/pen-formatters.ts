@@ -1,4 +1,4 @@
-import type { AutmogProduct } from "./autmog-data";
+import type { PenProduct } from "./pen-data";
 
 export type DimensionUnit = "in" | "mm";
 export type WeightUnit = "g" | "oz";
@@ -40,7 +40,7 @@ export function formatDate(iso: string) {
   });
 }
 
-export function formatDiameter(product: AutmogProduct, unit: DimensionUnit) {
+export function formatDiameter(product: PenProduct, unit: DimensionUnit) {
   if (unit === "mm") {
     const mm =
       product.diameter_mm ??
@@ -53,7 +53,7 @@ export function formatDiameter(product: AutmogProduct, unit: DimensionUnit) {
   return product.diameter_in == null ? null : `${product.diameter_in}"`;
 }
 
-export function formatLength(product: AutmogProduct, unit: DimensionUnit) {
+export function formatLength(product: PenProduct, unit: DimensionUnit) {
   if (unit === "mm") {
     const mm =
       product.length_in == null
@@ -65,7 +65,7 @@ export function formatLength(product: AutmogProduct, unit: DimensionUnit) {
   return product.length_in == null ? null : `${product.length_in}"`;
 }
 
-export function formatWeight(product: AutmogProduct, unit: WeightUnit) {
+export function formatWeight(product: PenProduct, unit: WeightUnit) {
   if (product.weight_g == null) return null;
   if (unit === "oz") {
     return `${Number((product.weight_g / 28.3495).toFixed(2))} oz`;

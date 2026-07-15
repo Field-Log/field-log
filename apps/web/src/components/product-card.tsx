@@ -1,7 +1,7 @@
 import { CircleGauge, MoveHorizontal, Scale } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import type { AutmogProduct } from "@/lib/autmog-data";
-import { normalizedHeadline, splitTitle } from "@/lib/autmog-filters";
+import type { PenProduct } from "@/lib/pen-data";
+import { normalizedHeadline, splitTitle } from "@/lib/pen-filters";
 import {
   type CurrencyCode,
   type CurrencyRates,
@@ -11,13 +11,13 @@ import {
   formatPrice,
   formatWeight,
   type WeightUnit,
-} from "@/lib/autmog-formatters";
+} from "@/lib/pen-formatters";
 import { cn } from "@/lib/utils";
 
 type ProductCardProps = {
   currency: CurrencyCode;
-  onOpen: (product: AutmogProduct, element: HTMLButtonElement) => void;
-  product: AutmogProduct;
+  onOpen: (product: PenProduct, element: HTMLButtonElement) => void;
+  product: PenProduct;
   rates: CurrencyRates;
   units: DimensionUnit;
   weight: WeightUnit;
