@@ -3,7 +3,21 @@ import { createScraperEnv } from "./env.schema.js";
 export function readProcessScraperRuntimeEnv() {
   return {
     APP_ENV: process.env.APP_ENV,
+    AXIOM_DATASET: process.env.AXIOM_DATASET,
+    AXIOM_EDGE_DOMAIN: process.env.AXIOM_EDGE_DOMAIN,
+    AXIOM_TOKEN: process.env.AXIOM_TOKEN,
+    DATABASE_URL: process.env.DATABASE_URL,
+    IMAGE_KIT_PRIVATE_KEY: process.env.IMAGE_KIT_PRIVATE_KEY,
+    IMAGE_KIT_PUBLIC_KEY: process.env.IMAGE_KIT_PUBLIC_KEY,
+    IMAGE_KIT_URL_ENDPOINT: process.env.IMAGE_KIT_URL_ENDPOINT,
+    LOGGER: process.env.LOGGER,
+    LOG_LEVEL: process.env.LOG_LEVEL,
     PORT: process.env.PORT,
+    REDIS_URL: process.env.REDIS_URL,
+    SCRAPER_DRY_RUN: process.env.SCRAPER_DRY_RUN,
+    SCRAPER_IMAGE_BATCH_SIZE: process.env.SCRAPER_IMAGE_BATCH_SIZE,
+    SCRAPER_ITEM_BATCH_SIZE: process.env.SCRAPER_ITEM_BATCH_SIZE,
+    SCRAPER_QUEUE_CONCURRENCY: process.env.SCRAPER_QUEUE_CONCURRENCY,
   };
 }
 

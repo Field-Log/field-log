@@ -28,6 +28,9 @@ packages/database/
 ## Schema Files
 
 - Table schema files define Drizzle table objects and inferred row types.
+- `src/schema/scraper.ts` defines scraper-owned tables, including `makers`,
+  `scraper_runs`, `tmp_autmog_pens`, `tmp_autmog_pen_images`, and
+  `tmp_autmog_pen_versions`.
 - `src/schema/enums.ts` defines TypeScript constants and types for allowed setting values.
 - `src/schema/relations.ts` defines Drizzle relationships between tables.
 - `src/schema/index.ts` re-exports all schema objects for Drizzle config and package consumers.

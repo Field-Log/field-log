@@ -134,9 +134,18 @@ Create Redis directly in Railway using the Railway Redis database/template.
 `apps/scraper` should not provision Redis at runtime. Reference Redis from each
 scraper service through `REDIS_URL`.
 
-Prefer Railway private networking/service variables for production service to
-service access. Local development can use a local Redis instance or a
-development Redis URL loaded through Infisical.
+Prefer Railway private networking/service variables for preview and production
+service-to-service access. If the Redis service is named `scraper-queue`, set
+this variable on each scraper service:
+
+```dotenv
+REDIS_URL=${{scraper-queue.REDIS_URL}}
+```
+
+Use the actual Railway Redis service name. Avoid copying Railway Redis URLs into
+Infisical unless the scraper is connecting to a non-Railway Redis provider.
+Local development uses Docker/OrbStack through `pnpm dev:scraper`; see
+[docker.md](./docker.md).
 
 ## Environment Variables
 

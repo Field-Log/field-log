@@ -10,6 +10,8 @@
     "build": "tsc -p tsconfig.json",
     "build:ci": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "scrape:autmog": "node dist/cli.js scrape:autmog",
+    "process:queue": "node dist/cli.js process:queue",
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -19,8 +21,14 @@
   },
   "dependencies": {
     "@hono/node-server": "latest",
+    "@package/database": "workspace:*",
+    "@package/logger": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
+    "bullmq": "^5.80.4",
+    "drizzle-orm": "^0.45.2",
     "hono": "latest",
+    "imagekit": "^6.0.0",
+    "ioredis": "^5.11.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {

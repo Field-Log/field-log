@@ -61,6 +61,49 @@ export const loggerMessages = {
     screenViewed: "mobile.screen.viewed",
     syncUploadFailed: "mobile.sync.upload.failed",
   },
+  scraper: {
+    autmog: {
+      fetchCompleted: "scraper.autmog.fetch.completed",
+      fetchFailed: "scraper.autmog.fetch.failed",
+      producerCompleted: "scraper.autmog.producer.completed",
+      producerStarted: "scraper.autmog.producer.started",
+    },
+    database: {
+      archiveCompleted: "scraper.database.archive.completed",
+      mutationCompleted: "scraper.database.mutation.completed",
+      mutationFailed: "scraper.database.mutation.failed",
+    },
+    image: {
+      deleteCompleted: "scraper.image.delete.completed",
+      deleteFailed: "scraper.image.delete.failed",
+      deleteSkipped: "scraper.image.delete.skipped",
+      uploadCompleted: "scraper.image.upload.completed",
+      uploadFailed: "scraper.image.upload.failed",
+      uploadSkipped: "scraper.image.upload.skipped",
+    },
+    healthChecked: "scraper.health.checked",
+    processor: {
+      completed: "scraper.processor.completed",
+      failed: "scraper.processor.failed",
+      imageJobCompleted: "scraper.processor.imageJob.completed",
+      imageJobFailed: "scraper.processor.imageJob.failed",
+      itemJobCompleted: "scraper.processor.itemJob.completed",
+      itemJobFailed: "scraper.processor.itemJob.failed",
+      started: "scraper.processor.started",
+    },
+    queue: {
+      drainCompleted: "scraper.queue.drain.completed",
+      drainFailed: "scraper.queue.drain.failed",
+      enqueueCompleted: "scraper.queue.enqueue.completed",
+      enqueueFailed: "scraper.queue.enqueue.failed",
+    },
+    run: {
+      completed: "scraper.run.completed",
+      failed: "scraper.run.failed",
+      started: "scraper.run.started",
+    },
+    serverListening: "scraper.server.listening",
+  },
   web: {
     accountLoaded: "web.account.loaded",
     fxRatesFetchFailed: "web.fxRates.fetch.failed",
@@ -73,6 +116,7 @@ export const loggerValues = {
     api: "api",
     ci: "ci",
     mobile: "expo",
+    scraper: "scraper",
     web: "web",
   },
   logProxy: {

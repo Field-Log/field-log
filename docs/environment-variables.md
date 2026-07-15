@@ -90,13 +90,14 @@ values such as Redis connection strings.
 | `AXIOM_TOKEN` | Axiom ingest token for scraper logs. | ? (All) | `S` |
 | `DATABASE_URL` | Scraper database connection string. | All | `S` |
 | `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
-| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key for uploads/deletes. | All | `S` |
-| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key paired with the private key. | All | `C` |
-| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint from the ImageKit dashboard, for example `https://ik.imagekit.io/<imagekit-id>` or a configured custom domain. | ? (All) | `C` |
+| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key for uploads/deletes. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `S` |
+| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key paired with the private key. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `C` |
+| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint from the ImageKit dashboard, for example `https://ik.imagekit.io/<imagekit-id>` or a configured custom domain. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `C` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the health service. Defaults to `4007` locally. | ? (All) | `S` |
 | `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
+| `SCRAPER_DRY_RUN` | When `true`, processor jobs write DB/queue state but skip ImageKit upload/delete mutations. | ? (All) | `S` |
 | `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
 | `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
 | `SCRAPER_QUEUE_CONCURRENCY` | Optional BullMQ worker concurrency cap. Recommended initial value: `3`. | ? (All) | `S` |
@@ -104,6 +105,17 @@ values such as Redis connection strings.
 Legend: `S` = server-only. `C` = client-visible.
 
 See [railway.md](./railway.md) for Railway service and cron setup.
+
+For Railway preview and production, prefer a Railway service reference rather
+than storing the Redis URL in Infisical. If the Redis service is named
+`scraper-queue`, set this on each scraper service in Railway:
+
+```dotenv
+REDIS_URL=${{scraper-queue.REDIS_URL}}
+```
+
+For local development, use Docker/OrbStack and `pnpm dev:scraper`; see
+[docker.md](./docker.md).
 
 ### Cloudflare Deploy Tools: `/tools/cloudflare`
 

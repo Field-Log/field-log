@@ -27,6 +27,9 @@ differ by app.
 
 The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
 Use that event to confirm scheduled Worker execution and Axiom ingestion.
+Railway scraper jobs emit `scraper.*` events for run lifecycle, source fetches,
+queue enqueue/drain, item and image processing, ImageKit operations, and
+database mutations.
 
 ## Infisical
 
