@@ -12,6 +12,21 @@ Redis is only the BullMQ work queue.
 
 ## Services
 
+Create only the `apps/scraper` services from this repository. Railway may
+detect other deployable workspace apps during import, but they should be ignored
+or skipped for this Railway project.
+
+The scraper service config lives at `apps/scraper/railway.json`. If Railway asks
+for a config file path, use:
+
+```txt
+/apps/scraper/railway.json
+```
+
+That config pins the build and start commands to `@app/scraper`, sets `/health`
+as the healthcheck path, and limits automatic deploy triggers to `apps/scraper`,
+shared packages, and root workspace config files.
+
 Create these Railway services from the same repository:
 
 | Service | Type | Command | Schedule |
