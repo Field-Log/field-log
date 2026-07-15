@@ -53,7 +53,8 @@ That creates `v0.0.1` and the matching GitHub Release from the baseline commit.
 The pushed `v*` tag triggers:
 
 - `API Deploy`: validates, migrates, deploys the production Cloudflare Worker,
-  and smoke-tests `/api/v0/health`.
+  deploys the production Vercel web app, and smoke-tests both production
+  surfaces.
 - `Mobile Release`: builds and submits `apps/mobile` through fastlane on macOS
   runners. Android and iOS run as separate jobs with runner labels
   `mobile-release, android` and `mobile-release, ios`.

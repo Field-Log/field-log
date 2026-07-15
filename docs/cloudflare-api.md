@@ -347,6 +347,12 @@ Release tags:
   secrets file with an explicit production `DATABASE_URL`.
 - Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/api/v0/health`.
+- Validates `@app/web`, pulls the Vercel production environment, builds with
+  `vercel build --prod`, deploys with `vercel deploy --prebuilt --prod`, and
+  smoke-tests the resulting production deployment URL.
+- `apps/web/vercel.json` disables automatic Vercel Git deployments from
+  `main`, so the release tag workflow owns production web deploys while branch
+  previews still run through Vercel's Git integration.
 
 Manual `workflow_dispatch` on `main` remains available for operational
 recovery, but normal production deploys should come from an annotated `v*` tag.

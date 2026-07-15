@@ -202,7 +202,7 @@ notifications.
 | `NEON_DATABASE_USER` | Neon `PGUSER` value used for connection URI lookup. | Stg, Prod | `S` |
 | `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
 | `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg | `S` |
-| `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls. | Stg | `S` |
+| `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls and as `VERCEL_ORG_ID` to Vercel CLI release deploys. | Stg, Prod | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -213,7 +213,7 @@ Legend: `S` = server-only. `C` = client-visible.
 | `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Stg | `S` |
 | `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Stg | `S` |
 | `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Stg, Prod | `S` |
-| `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars and deployment lookup. | Stg | `S` |
+| `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars, deployment lookup, and CLI production deploys. | Stg, Prod | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
