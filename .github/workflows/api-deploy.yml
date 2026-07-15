@@ -13,16 +13,8 @@ on:
       - pnpm-workspace.yaml
       - turbo.json
   push:
-    branches: [main]
-    paths:
-      - apps/api/**
-      - packages/**
-      - .github/scripts/**
-      - .github/workflows/api-deploy.yml
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - turbo.json
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -318,6 +310,11 @@ jobs:
             --arg LOG_LEVEL "${LOG_LEVEL:-}" \
             --arg LOGGER "${LOGGER:-}" \
             --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
+            --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
+            --arg MOBILE_IOS_STORE_URL "${MOBILE_IOS_STORE_URL:-}" \
+            --arg MOBILE_LATEST_VERSION "${MOBILE_LATEST_VERSION:-}" \
+            --arg MOBILE_MIN_SUPPORTED_VERSION "${MOBILE_MIN_SUPPORTED_VERSION:-}" \
+            --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
             '{
               DATABASE_URL: $DATABASE_URL,
               AXIOM_TOKEN: $AXIOM_TOKEN,
@@ -325,7 +322,12 @@ jobs:
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
               LOG_LEVEL: $LOG_LEVEL,
               LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
+              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
+              MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
+              MOBILE_IOS_STORE_URL: $MOBILE_IOS_STORE_URL,
+              MOBILE_LATEST_VERSION: $MOBILE_LATEST_VERSION,
+              MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
+              MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
             } | with_entries(select(.value != ""))' \
             > "$RUNNER_TEMP/api-preview-secrets.json"
 
@@ -394,7 +396,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/api/v1/health"
+          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/api/v0/health"
 
       - name: Validate PR comment app configuration
         shell: bash
@@ -438,7 +440,7 @@ jobs:
           script: |
             const marker = process.env.API_PREVIEW_COMMENT_MARKER;
             const previewUrl = process.env.PREVIEW_URL;
-            const healthUrl = `${previewUrl}/api/v1/health`;
+            const healthUrl = `${previewUrl}/api/v0/health`;
             const databaseScope = process.env.DATABASE_ISOLATED === "true"
               ? `Neon branch \`${process.env.DATABASE_BRANCH_NAME}\``
               : "shared Neon staging branch";
@@ -636,7 +638,7 @@ jobs:
 
   production:
     name: API Production
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -756,6 +758,11 @@ jobs:
             --arg LOG_LEVEL "${LOG_LEVEL:-}" \
             --arg LOGGER "${LOGGER:-}" \
             --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
+            --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
+            --arg MOBILE_IOS_STORE_URL "${MOBILE_IOS_STORE_URL:-}" \
+            --arg MOBILE_LATEST_VERSION "${MOBILE_LATEST_VERSION:-}" \
+            --arg MOBILE_MIN_SUPPORTED_VERSION "${MOBILE_MIN_SUPPORTED_VERSION:-}" \
+            --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
             '{
               DATABASE_URL: $DATABASE_URL,
               AXIOM_TOKEN: $AXIOM_TOKEN,
@@ -763,7 +770,12 @@ jobs:
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
               LOG_LEVEL: $LOG_LEVEL,
               LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
+              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
+              MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
+              MOBILE_IOS_STORE_URL: $MOBILE_IOS_STORE_URL,
+              MOBILE_LATEST_VERSION: $MOBILE_LATEST_VERSION,
+              MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
+              MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
             } | with_entries(select(.value != ""))' \
             > "$RUNNER_TEMP/api-production-secrets.json"
 
@@ -771,4 +783,4 @@ jobs:
         run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env="" --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
-        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v1/health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v0/health

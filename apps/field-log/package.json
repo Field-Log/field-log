@@ -1,6 +1,6 @@
 {
   "name": "@app/field-log",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "index.ts",
   "scripts": {
     "start": "tsx ../../packages/infisical-runner/src/cli.ts field-log start -- expo start",

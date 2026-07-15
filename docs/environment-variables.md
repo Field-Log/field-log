@@ -67,7 +67,12 @@ deployment secrets are written to Workers through Wrangler `--secrets-file`.
 | `DATABASE_URL`[^4] | API database connection string. | All | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
-| `LOG_PROXY_CLIENT_KEY` | Key checked by `POST /logs`. | ? (All) | `C` |
+| `LOG_PROXY_CLIENT_KEY` | Key checked by `POST /api/v0/logs`. | ? (All) | `C` |
+| `MOBILE_ANDROID_STORE_URL` | Google Play store URL returned by `GET /api/v0/mobile-version`. | ? (Prod) | `S` |
+| `MOBILE_IOS_STORE_URL` | App Store URL returned by `GET /api/v0/mobile-version`. | ? (Prod) | `S` |
+| `MOBILE_LATEST_VERSION` | Latest mobile app version advertised to clients. | ? (Prod) | `S` |
+| `MOBILE_MIN_SUPPORTED_VERSION` | Oldest mobile app version allowed to continue. | ? (Prod) | `S` |
+| `MOBILE_UPDATE_SEVERITY` | Mobile update prompt severity: `none`, `recommended`, or `required`. | ? (Prod) | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -84,6 +89,30 @@ Legend: `S` = server-only. `C` = client-visible.
 
 See [cloudflare-api.md](./cloudflare-api.md) for deployment flow details.
 
+### Mobile Release Tools: `/tools/fastlane`
+
+Fastlane mobile release credentials are separate from mobile app runtime values.
+See [mobile-release-fastlane.md](./mobile-release-fastlane.md) for the full
+release flow.
+
+| Variable | What it is for | Required | Important notes |
+| --- | --- | --- | --- |
+| `ANDROID_KEY_ALIAS` | Android release signing key alias. | Prod | `S` |
+| `ANDROID_KEY_PASSWORD` | Android release signing key password. | Prod | `S` |
+| `ANDROID_KEYSTORE_BASE64` | Base64-encoded Android release keystore. | Prod | `S` |
+| `ANDROID_KEYSTORE_PASSWORD` | Android release keystore password. | Prod | `S` |
+| `APPLE_TEAM_ID` | Apple Developer Team ID used by fastlane. | Prod | `S` |
+| `ASC_ISSUER_ID` | App Store Connect API issuer ID. | Prod | `S` |
+| `ASC_KEY_ID` | App Store Connect API key ID. | Prod | `S` |
+| `ASC_KEY_P8_BASE64` | Base64-encoded App Store Connect API private key. | Prod | `S` |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_BASE64` | Base64-encoded Google Play service account JSON. | Prod | `S` |
+| `GOOGLE_PLAY_TRACK` | Google Play upload track. | Prod | `S` |
+| `MATCH_GIT_BASIC_AUTHORIZATION` | Optional auth header for the match signing repo. | ? (Prod) | `S` |
+| `MATCH_GIT_URL` | Private fastlane match signing repository URL. | Prod | `S` |
+| `MATCH_PASSWORD` | Encryption password for fastlane match signing assets. | Prod | `S` |
+
+Legend: `S` = server-only. `C` = client-visible.
+
 ### Mobile App: `/apps/mobile`
 
 `apps/mobile` validates JavaScript-visible Expo values. Values available to app
@@ -91,6 +120,7 @@ JavaScript must use Expo's `EXPO_PUBLIC_` prefix.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
+| `API_URL` | API origin aliased to `EXPO_PUBLIC_API_URL` by the Infisical runner. | ? (All) | `C` |
 | `EXPO_PUBLIC_API_URL` | API origin used by mobile requests and client log proxy posts. | ? (All) | `C` |
 | `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY` | Client key sent to the API log proxy. | ? (All) | `C` |
 
@@ -288,7 +318,8 @@ Use least-privilege credentials where the provider supports scoping.
     DB-changing PRs get a branch-specific `DATABASE_URL` override.
 [^2]: The web build aliases `API_URL` to `VITE_API_URL` and
     `LOG_PROXY_CLIENT_KEY` to `VITE_LOG_PROXY_CLIENT_KEY` when the `VITE_*`
-    names are absent. The web and mobile loggers append `/logs` to the API URL.
+    names are absent. The web and mobile loggers append `/api/v0/logs` to the
+    API URL.
 [^3]: `Stg` here means Vercel Preview. This value is not
     used by the shared staging web deploy.
 [^4]: GitHub deploy workflows resolve branch-specific Neon URLs
