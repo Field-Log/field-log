@@ -1,0 +1,55 @@
+name: Assign PR
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  assign:
+    name: Assign PR opener
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    if: github.event.pull_request.user.login != 'renovate[bot]'
+
+    steps:
+      - name: Set assignee
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+
+            const response = await github.rest.issues.get({
+              owner,
+              repo,
+              issue_number: pr.number,
+            });
+
+            if (response.data.assignees.length > 0) {
+              return;
+            }
+
+            try {
+              await github.rest.issues.addAssignees({
+                owner,
+                repo,
+                issue_number: pr.number,
+                assignees: [pr.user.login],
+              });
+            } catch (error) {
+              if (error.status === 403) {
+                core.setFailed(
+                  `GitHub token could not assign ${pr.user.login} to PR #${pr.number}. ` +
+                    "Verify workflow permissions include pull-requests: write and issues: write.",
+                );
+                return;
+              }
+
+              throw error;
+            }

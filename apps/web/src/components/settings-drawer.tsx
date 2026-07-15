@@ -22,7 +22,7 @@ import {
   currencies,
   type DimensionUnit,
   type WeightUnit,
-} from "@/lib/autmog-formatters";
+} from "@/lib/pen-formatters";
 
 type SettingsDrawerProps = {
   currency: CurrencyCode;
@@ -60,7 +60,7 @@ export function SettingsDrawer({
         <SheetHeader>
           <SheetTitle>Settings</SheetTitle>
           <SheetDescription className="sr-only">
-            Display preferences for the Autmog archive.
+            Display preferences for the Machined Pens archive.
           </SheetDescription>
         </SheetHeader>
         <SettingsPanel
