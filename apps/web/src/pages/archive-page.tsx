@@ -1,5 +1,5 @@
 import { useNavigate, useParams, useSearch } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import * as React from "react";
 import { AppShell } from "@/components/app-shell";
 import { FilterSidebar } from "@/components/filter-sidebar";
@@ -162,13 +162,11 @@ export function ArchivePage() {
           onClearFilters={clearFilters}
           onCurrencyChange={setCurrency}
           onMatchModeChange={setMatchMode}
-          onQueryChange={setQuery}
           onSortChange={setSort}
           onToggleFilter={toggleFilter}
           onUnitsChange={setUnits}
           onWeightChange={setWeight}
           products={products}
-          query={query}
           sort={sort}
           sortOptions={sortOptions}
           units={units}
@@ -177,22 +175,6 @@ export function ArchivePage() {
       }
       headerActions={
         <>
-          <label
-            className="relative order-99 w-full md:order-none md:w-[260px]"
-            htmlFor={searchInputId}
-          >
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              aria-label="Search pens by title, specs, or description"
-              autoComplete="off"
-              className="pr-3 pl-9"
-              id={searchInputId}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search..."
-              type="search"
-              value={query}
-            />
-          </label>
           <Select
             items={sortOptions}
             onValueChange={(value) => setSort(value as SortKey)}
@@ -218,6 +200,35 @@ export function ArchivePage() {
             weight={weight}
           />
         </>
+      }
+      headerSearch={
+        <div className="relative order-99 w-full md:order-none md:w-[260px]">
+          <label className="sr-only" htmlFor={searchInputId}>
+            Search pens by title, specs, or description
+          </label>
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          {/* The custom clear button below replaces the native search cancel
+              control, which iOS Safari does not render. */}
+          <Input
+            autoComplete="off"
+            className="pr-9 pl-9 [&::-webkit-search-cancel-button]:appearance-none"
+            id={searchInputId}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search..."
+            type="search"
+            value={query}
+          />
+          {query ? (
+            <button
+              aria-label="Clear search"
+              className="absolute top-1/2 right-2 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+              onClick={() => setQuery("")}
+              type="button"
+            >
+              <X className="size-4" />
+            </button>
+          ) : null}
+        </div>
       }
       meta={`${visibleProducts.length} of ${products.length} items`}
       onSidebarOpenChange={setFiltersOpen}
