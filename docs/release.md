@@ -54,7 +54,7 @@ The pushed `v*` tag triggers:
 
 - `API Deploy`: validates, migrates, deploys the production Cloudflare Worker,
   deploys the production Vercel web app, and smoke-tests both production
-  surfaces.
+  surfaces. Web production waits for API production to pass first.
 - `Mobile Release`: builds and submits `apps/mobile` through fastlane on macOS
   runners. Android and iOS run as separate jobs with runner labels
   `mobile-release, android` and `mobile-release, ios`.

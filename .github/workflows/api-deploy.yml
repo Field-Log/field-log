@@ -660,6 +660,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate API app
+        run: |
+          pnpm --filter @app/api run test:ci
+          pnpm --filter @app/api run lint
+          pnpm --filter @app/api run typecheck
+
       - name: Resolve production database URL
         id: production_db
         shell: bash
@@ -787,6 +793,7 @@ jobs:
 
   web-production:
     name: Web Production
+    needs: production
     if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:

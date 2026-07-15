@@ -158,6 +158,27 @@ function bumpVersion(version, bump) {
   return `${major}.${minor}.${patch + 1}`;
 }
 
+function getLatestReleaseVersion() {
+  const tags = git(
+    ["tag", "--list", "v[0-9]*.[0-9]*.[0-9]*", "--sort=-v:refname"],
+    {
+      capture: true,
+    },
+  )
+    .split("\n")
+    .filter(Boolean);
+
+  const latestTag = tags[0];
+
+  if (!latestTag) {
+    throw new Error(
+      "No v* release tags found. Run pnpm release --initial first.",
+    );
+  }
+
+  return latestTag.replace(/^v/, "");
+}
+
 function updatePackageVersions(version) {
   for (const path of versionPackagePaths) {
     const packageJson = readJson(path);
@@ -308,9 +329,8 @@ function createInitialRelease(changesets) {
 }
 
 function createChangesetRelease(changesets) {
-  const rootPackageJson = readJson(join(repoRoot, "package.json"));
   const nextVersion = bumpVersion(
-    rootPackageJson.version,
+    getLatestReleaseVersion(),
     getHighestBump(changesets),
   );
   const tagName = `v${nextVersion}`;
