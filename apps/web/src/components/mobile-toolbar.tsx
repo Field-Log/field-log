@@ -19,19 +19,19 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
-import type { AutmogProduct } from "@/lib/autmog-data";
+import type { PenProduct } from "@/lib/pen-data";
 import type {
   ActiveFilters,
   FilterKey,
   MatchMode,
   MatchModes,
   SortKey,
-} from "@/lib/autmog-filters";
+} from "@/lib/pen-filters";
 import type {
   CurrencyCode,
   DimensionUnit,
   WeightUnit,
-} from "@/lib/autmog-formatters";
+} from "@/lib/pen-formatters";
 import { cn } from "@/lib/utils";
 
 // Height of the bar itself (excludes the safe-area padding below it). Kept in
@@ -51,7 +51,7 @@ type MobileToolbarProps = {
   onToggleFilter: (key: FilterKey, value: string) => void;
   onUnitsChange: (unit: DimensionUnit) => void;
   onWeightChange: (unit: WeightUnit) => void;
-  products: AutmogProduct[];
+  products: PenProduct[];
   query: string;
   sort: SortKey;
   sortOptions: Array<{ label: string; value: SortKey }>;

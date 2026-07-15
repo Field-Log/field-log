@@ -18,7 +18,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useIsMobile } from "@/hooks/use-mobile";
-import type { AutmogProduct } from "@/lib/autmog-data";
+import type { PenProduct } from "@/lib/pen-data";
 import {
   type CurrencyCode,
   type CurrencyRates,
@@ -29,7 +29,7 @@ import {
   formatPrice,
   formatWeight,
   type WeightUnit,
-} from "@/lib/autmog-formatters";
+} from "@/lib/pen-formatters";
 import { cn } from "@/lib/utils";
 
 type ProductLightboxProps = {
@@ -37,7 +37,7 @@ type ProductLightboxProps = {
   imageIndex: number;
   onClose: () => void;
   onImageChange: (nextIndex: number) => void;
-  product: AutmogProduct | null;
+  product: PenProduct | null;
   rates: CurrencyRates;
   units: DimensionUnit;
   weight: WeightUnit;

@@ -195,7 +195,7 @@ Use Tailwind v4 CSS-first tokens. The app must apply `.dark` on the document roo
 - Opens over a dark scrim with blur.
 - Uses segmented controls for theme (`Light`, `Dark`, `System`), dimensions, and weight; select menu for currency.
 - Gear button rotates when drawer is open.
-- Theme mode persists in `localStorage` under `field-log.theme`; units and weight persist under `autmog.settings`; currency persists separately.
+- Theme mode persists in `localStorage` under `field-log.theme`; units and weight persist under `field-log.settings`; currency persists separately.
 
 ### Lightbox
 - Full-screen dialog with dark blurred overlay.
