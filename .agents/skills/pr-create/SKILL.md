@@ -28,17 +28,29 @@ suggest a branch, create a branch, push, fetch, or create a PR from `main`.
 3. Inspect branch state:
    - `git status --short --branch`
    - `git log --oneline <base>..HEAD`
-4. If there are no commits on the branch relative to the base branch, stop and
+4. Read `./docs/changesets.md`.
+5. If there are no commits on the branch relative to the base branch, stop and
    report that there is nothing to open a PR for.
-5. If there are uncommitted changes, mention them clearly. Do not include them
+6. If there are uncommitted changes, mention them clearly. Do not include them
    in the PR description as completed work.
-6. Push the branch when it has no upstream or the remote is behind:
+7. Create or update a branch Changeset before pushing:
+   - Inspect changed `.changeset/*.md` files relative to the base.
+   - If none exists, create one under `.changeset/`.
+   - If one exists and no longer matches the branch, update it.
+   - Use `"field-log.app"` as the package name.
+   - Choose `patch`, `minor`, or `major` from the branch impact. Use `patch`
+     for docs, tests, internal tooling, chores, and compatible fixes. Use
+     `minor` for new compatible behavior. Use `major` for breaking API,
+     database, or mobile compatibility changes.
+   - Keep the Changeset description succinct, terse, human friendly, and
+     changelog-ready.
+8. Push the branch when it has no upstream or the remote is behind:
    `git push -u origin <branch>`.
-7. Check whether a PR already exists for the branch:
+9. Check whether a PR already exists for the branch:
    `gh pr list --head <branch> --json url,title,state`.
-8. If no PR exists, create one:
+10. If no PR exists, create one:
    `gh pr create --base <base> --head <branch> --title "<title>" --body "<body>"`.
-9. Return the PR URL and a concise summary of the created PR.
+11. Return the PR URL and a concise summary of the created PR.
 
 ## Title And Body
 
@@ -89,6 +101,23 @@ Write the PR body in this format:
 
 Keep the body factual. Prefer commit messages, diffs, and test output over
 guessing. If the user asks for a draft PR, pass `--draft`.
+
+## Changeset
+
+Each PR needs one release-impact marker:
+
+```markdown
+---
+"field-log.app": patch
+---
+
+Add release automation.
+```
+
+Use the smallest accurate bump. Keep the description one short sentence when
+possible. Prefer concrete human wording such as `Add release automation.` or
+`Fix mobile update prompts.` Avoid long implementation detail, issue IDs, and
+robotic phrasing.
 
 ## Error Cases
 
