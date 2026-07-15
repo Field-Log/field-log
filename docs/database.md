@@ -48,7 +48,9 @@ const db = createDb({
 ```
 
 `DATABASE_URL` is stored in Infisical at `/apps/api` for API and migration
-commands. The web app keeps its deploy copy in `/apps/web`.
+commands. The web app keeps its deploy copy in `/apps/web`. The Railway scraper
+app keeps its runtime copy in `/apps/scraper`, or receives the equivalent value
+through Railway service configuration.
 
 ## Migrations
 

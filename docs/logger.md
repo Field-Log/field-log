@@ -20,9 +20,10 @@ Use one Axiom dataset per environment:
 - Production: `production`
 
 Keep the app name on each event with `app: "api"`, `app: "web"`, or
-`app: "expo"`. This keeps cross-app flows queryable in one dataset. Split into
-per-app datasets only if access, retention, or cost controls need to differ by
-app.
+`app: "expo"`. Scraper events should use a scraper-specific app value once
+`apps/scraper` is added. This keeps cross-app flows queryable in one dataset.
+Split into per-app datasets only if access, retention, or cost controls need to
+differ by app.
 
 The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
 Use that event to confirm scheduled Worker execution and Axiom ingestion.
@@ -33,6 +34,7 @@ Server targets that send directly to Axiom keep their Axiom settings in their
 own runtime folders:
 
 - `/apps/api`
+- `/apps/scraper`
 - `/apps/web`
 
 Each server runtime folder may provide:

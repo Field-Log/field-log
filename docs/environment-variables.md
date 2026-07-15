@@ -18,6 +18,7 @@ Required values use these labels:
 | Service | URL | Notes |
 | --- | --- | --- |
 | API Worker | `http://localhost:4006` | Wrangler dev server for `apps/api`. |
+| Scraper | `http://localhost:4007` | Railway-targeted health service in `apps/scraper`. |
 | Web | `http://localhost:4005` | TanStack Start app in `apps/web`. |
 
 Logging environment variables, Axiom setup, and client proxy configuration are
@@ -70,6 +71,39 @@ deployment secrets are written to Workers through Wrangler `--secrets-file`.
 | `LOG_PROXY_CLIENT_KEY` | Key checked by `POST /logs`. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.
+
+### Scraper App: `/apps/scraper`
+
+`apps/scraper` runs as Railway cron services. Source producer services enqueue
+scraped item work into BullMQ/Redis. A processor service runs every 15 minutes
+and drains queued item and image work.
+
+Use Infisical path `/apps/scraper` for local development and non-Railway secret
+source of truth. In Railway, prefer service references for platform-provided
+values such as Redis connection strings.
+
+| Variable | What it is for | Required | Important notes |
+| --- | --- | --- | --- |
+| `APP_ENV` | Runtime environment label for scraper logs. | All | `S` |
+| `AXIOM_DATASET` | Axiom dataset for scraper logs. | ? (All) | `S` |
+| `AXIOM_EDGE_DOMAIN` | Axiom edge domain. | ? (All) | `S` |
+| `AXIOM_TOKEN` | Axiom ingest token for scraper logs. | ? (All) | `S` |
+| `DATABASE_URL` | Scraper database connection string. | All | `S` |
+| `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
+| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key for uploads/deletes. | All | `S` |
+| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key paired with the private key. | All | `C` |
+| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint from the ImageKit dashboard, for example `https://ik.imagekit.io/<imagekit-id>` or a configured custom domain. | ? (All) | `C` |
+| `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
+| `PORT` | HTTP port for the health service. Defaults to `4007` locally. | ? (All) | `S` |
+| `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
+| `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
+| `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
+| `SCRAPER_QUEUE_CONCURRENCY` | Optional BullMQ worker concurrency cap. Recommended initial value: `3`. | ? (All) | `S` |
+
+Legend: `S` = server-only. `C` = client-visible.
+
+See [railway.md](./railway.md) for Railway service and cron setup.
 
 ### Cloudflare Deploy Tools: `/tools/cloudflare`
 
@@ -226,6 +260,10 @@ a workflow explicitly starts requiring that.
 | `GITHUB_RUN_ID` | Workflow run ID for links. | GitHub Actions | `S` |
 | `GITHUB_SERVER_URL` | GitHub server base URL. | GitHub Actions | `S` |
 | `GITHUB_SHA` | Commit SHA for links. | GitHub Actions | `S` |
+| `RAILWAY_ENVIRONMENT_NAME` | Railway environment name for deployed scraper services. | Railway | `S` |
+| `RAILWAY_PROJECT_ID` | Railway project identifier for deployed scraper services. | Railway | `S` |
+| `RAILWAY_SERVICE_ID` | Railway service identifier for a deployed scraper cron service. | Railway | `S` |
+| `RAILWAY_SERVICE_NAME` | Railway service name for a deployed scraper cron service. | Railway | `S` |
 | `VERCEL_ENV` | Vercel deployment environment. | Vercel | `S` |
 | `VERCEL_GIT_PULL_REQUEST_ID` | Pull request number for Vercel Preview builds. | Vercel | `S` |
 | `VERCEL_PROJECT_PRODUCTION_URL`[^8] | Vercel production domain. | Vercel | `S` |

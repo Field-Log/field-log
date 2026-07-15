@@ -181,6 +181,7 @@ Only import the web services module from SSR code, server functions, loaders, or
 ## Boundaries
 
 - `apps/api` can use services directly.
+- `apps/scraper` can use services directly from Railway cron commands.
 - `apps/web` can use services from SSR/server-side tasks.
 - `apps/mobile` must not receive `DATABASE_URL` and must not use database services directly. Mobile should call `apps/api` for persisted user or settings behavior.
 
