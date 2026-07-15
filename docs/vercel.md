@@ -14,7 +14,7 @@ The `API Deploy` workflow deploys production web on pushed `v*` tags:
 4. Deploys with `vercel deploy --prebuilt --prod`.
 5. Smoke-tests the resulting production deployment URL.
 
-## Git Deployment Gating
+## Production Domain Gating
 
 `apps/web/vercel.json` disables automatic Vercel Git deployments from `main`:
 
@@ -30,11 +30,13 @@ The `API Deploy` workflow deploys production web on pushed `v*` tags:
 
 Confirm the same behavior in Vercel:
 
-1. Open the Vercel project for `apps/web`.
-2. Go to Project Settings -> Git.
-3. Confirm `main` does not auto-promote to production.
-4. If the Vercel project root is not `apps/web`, move the same
+1. Go to the Vercel Dashboard and select the `apps/web` project.
+2. Open Settings in the sidebar.
+3. Go to Environments -> Production.
+4. Under Branch Tracking, disable the Auto-assign Custom Production Domains
+   toggle.
+5. If the Vercel project root is not `apps/web`, move the same
    `git.deploymentEnabled` config to the configured Vercel root or disable
-   `main` deployments in the dashboard.
+   automatic production domain assignment in the dashboard.
 
 Branch previews should remain enabled through Vercel's Git integration.
