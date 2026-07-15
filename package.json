@@ -21,6 +21,7 @@
     "deploy:staging": "pnpm --filter @app/api run deploy:staging",
     "build": "turbo run build",
     "build:ci": "turbo run build:ci",
+    "start": "pnpm --filter @app/scraper start",
     "build:mobile:preview": "pnpm --filter @app/mobile run build:preview",
     "build:mobile:prod": "pnpm --filter @app/mobile run build:prod",
     "db:generate": "pnpm --filter @package/database db:generate",

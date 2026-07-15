@@ -22,13 +22,17 @@ path, use the path for the service being created:
 
 | Service | Config file path |
 | --- | --- |
-| `scraper-health` | `/apps/scraper/railway.json` |
-| `scraper-autmog` | `/apps/scraper/railway.autmog.json` |
-| `scraper-processor` | `/apps/scraper/railway.processor.json` |
+| `scraper-health` | `/railway.json` |
+| `scraper-autmog` | `/railway.autmog.json` |
+| `scraper-processor` | `/railway.processor.json` |
 
 These configs pin the build and start commands to `@app/scraper`, set the health
 check or cron schedule for each service, and limit automatic deploy triggers to
 `apps/scraper`, shared packages, and root workspace config files.
+
+The same config files also live under `apps/scraper/` for package-local
+discoverability, but the root paths above are the preferred Railway config paths
+because Railway always checks the repository root by default.
 
 Create these Railway services from the same repository:
 
@@ -93,8 +97,8 @@ minute.
 The Autmog producer and queue processor schedules are encoded in:
 
 ```txt
-apps/scraper/railway.autmog.json
-apps/scraper/railway.processor.json
+railway.autmog.json
+railway.processor.json
 ```
 
 ## Queue Design
