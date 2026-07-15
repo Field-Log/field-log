@@ -16,23 +16,26 @@ Create only the `apps/scraper` services from this repository. Railway may
 detect other deployable workspace apps during import, but they should be ignored
 or skipped for this Railway project.
 
-The scraper service config lives at `apps/scraper/railway.json`. If Railway asks
-for a config file path, use:
+The scraper services use separate Railway config files because each Railway
+config file describes one service deployment. If Railway asks for a config file
+path, use the path for the service being created:
 
-```txt
-/apps/scraper/railway.json
-```
+| Service | Config file path |
+| --- | --- |
+| `scraper-health` | `/apps/scraper/railway.json` |
+| `scraper-autmog` | `/apps/scraper/railway.autmog.json` |
+| `scraper-processor` | `/apps/scraper/railway.processor.json` |
 
-That config pins the build and start commands to `@app/scraper`, sets `/health`
-as the healthcheck path, and limits automatic deploy triggers to `apps/scraper`,
-shared packages, and root workspace config files.
+These configs pin the build and start commands to `@app/scraper`, set the health
+check or cron schedule for each service, and limit automatic deploy triggers to
+`apps/scraper`, shared packages, and root workspace config files.
 
 Create these Railway services from the same repository:
 
 | Service | Type | Command | Schedule |
 | --- | --- | --- | --- |
 | `scraper-health` | Web service | `pnpm --filter @app/scraper start` | Always on; used for Railway health checks. |
-| `scraper-autmog` | Cron service | `pnpm --filter @app/scraper run scrape:autmog` | Hourly, for example `5 * * * *`. |
+| `scraper-autmog` | Cron service | `pnpm --filter @app/scraper run scrape:autmog` | `5 * * * *` |
 | `scraper-processor` | Cron service | `pnpm --filter @app/scraper run process:queue` | `*/15 * * * *` |
 | `redis` | Redis database | Railway Redis template | Always available to scraper services. |
 
@@ -86,6 +89,13 @@ minutes:
 Autmog and Grimsmo source producers should run hourly. Stagger Grimsmo producers
 so Saga, Rask, Fjell, and Norseman source scrapes do not start at the same
 minute.
+
+The Autmog producer and queue processor schedules are encoded in:
+
+```txt
+apps/scraper/railway.autmog.json
+apps/scraper/railway.processor.json
+```
 
 ## Queue Design
 
