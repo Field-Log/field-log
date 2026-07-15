@@ -7,7 +7,7 @@ import {
   normalizeLogLevel,
 } from "@package/logger";
 import { createApp } from "./app.js";
-import type { ApiRuntimeEnv } from "./env.schema.js";
+import { ApiEnvValidationError, type ApiRuntimeEnv } from "./env.schema.js";
 import { createApiServices } from "./lib/create-services.js";
 
 export type CloudflareApiBindings = ApiRuntimeEnv;
@@ -126,11 +126,25 @@ async function logWorkerException(
   });
 
   logger.error(loggerMessages.api.workerUnhandledException, {
-    attributes,
+    attributes: {
+      ...attributes,
+      ...getExceptionAttributes(error),
+    },
     error,
   });
 
   await logger.flush();
+}
+
+function getExceptionAttributes(error: unknown): Record<string, unknown> {
+  if (!(error instanceof ApiEnvValidationError)) {
+    return {};
+  }
+
+  return {
+    envValidationIssues: error.issues,
+    envValidationVariables: error.variables,
+  };
 }
 
 export default {

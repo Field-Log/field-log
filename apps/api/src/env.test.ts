@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApiEnv } from "./env.schema.js";
+import { ApiEnvValidationError, createApiEnv } from "./env.schema.js";
 
 describe("api env", () => {
   beforeEach(() => {
@@ -59,19 +59,50 @@ describe("api env", () => {
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
         LOG_LEVEL: "loud",
       }),
-    ).toThrow("Invalid environment variables");
+    ).toThrow("Invalid environment variables: LOG_LEVEL");
 
     expect(() =>
       createApiEnv({
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
         LOGGER: "pretty",
       }),
-    ).toThrow("Invalid environment variables");
+    ).toThrow("Invalid environment variables: LOGGER");
   });
 
   it("rejects missing DATABASE_URL", () => {
     expect(() => createApiEnv({ PORT: "3000" })).toThrow(
-      "Invalid environment variables",
+      "Invalid environment variables: DATABASE_URL",
     );
+  });
+
+  it("exposes sanitized validation issue details", () => {
+    expect(() =>
+      createApiEnv({
+        DATABASE_URL: "not-a-url",
+        LOGGER: "pretty",
+        LOG_LEVEL: "loud",
+      }),
+    ).toThrow(ApiEnvValidationError);
+
+    try {
+      createApiEnv({
+        DATABASE_URL: "not-a-url",
+        LOGGER: "pretty",
+        LOG_LEVEL: "loud",
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(ApiEnvValidationError);
+      expect(error).toMatchObject({
+        issues: [
+          { variable: "DATABASE_URL" },
+          { variable: "LOGGER" },
+          { variable: "LOG_LEVEL" },
+        ],
+        message:
+          "Invalid environment variables: DATABASE_URL, LOGGER, LOG_LEVEL",
+        name: "ApiEnvValidationError",
+        variables: ["DATABASE_URL", "LOGGER", "LOG_LEVEL"],
+      });
+    }
   });
 });

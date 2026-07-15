@@ -109,12 +109,33 @@ describe("api worker", () => {
       expect.objectContaining({
         app: "api",
         attributes: {
+          envValidationIssues: [
+            {
+              message: expect.any(String),
+              variable: "DATABASE_URL",
+            },
+            {
+              message: expect.any(String),
+              variable: "LOGGER",
+            },
+            {
+              message: expect.any(String),
+              variable: "LOG_LEVEL",
+            },
+          ],
+          envValidationVariables: ["DATABASE_URL", "LOGGER", "LOG_LEVEL"],
           method: "POST",
           path: "/api/v1/logs",
           source: "cloudflare-worker",
           trigger: "fetch",
         },
         environment: "unknown",
+        error: {
+          message:
+            "Invalid environment variables: DATABASE_URL, LOGGER, LOG_LEVEL",
+          name: "ApiEnvValidationError",
+          stack: expect.any(String),
+        },
         level: "error",
         message: "api.worker.unhandledException",
       }),
@@ -160,11 +181,32 @@ describe("api worker", () => {
         app: "api",
         attributes: {
           cron: "0 * * * *",
+          envValidationIssues: [
+            {
+              message: expect.any(String),
+              variable: "DATABASE_URL",
+            },
+            {
+              message: expect.any(String),
+              variable: "LOGGER",
+            },
+            {
+              message: expect.any(String),
+              variable: "LOG_LEVEL",
+            },
+          ],
+          envValidationVariables: ["DATABASE_URL", "LOGGER", "LOG_LEVEL"],
           scheduledAt: "2026-07-07T12:00:00.000Z",
           source: "cloudflare-cron",
           trigger: "scheduled",
         },
         environment: "unknown",
+        error: {
+          message:
+            "Invalid environment variables: DATABASE_URL, LOGGER, LOG_LEVEL",
+          name: "ApiEnvValidationError",
+          stack: expect.any(String),
+        },
         level: "error",
         message: "api.worker.unhandledException",
       }),
