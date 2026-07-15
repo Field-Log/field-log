@@ -350,13 +350,7 @@ Release tags:
 - Validates `@app/web`, pulls the Vercel production environment, builds with
   `vercel build --prod`, deploys with `vercel deploy --prebuilt --prod`, and
   smoke-tests the resulting production deployment URL.
-- `apps/web/vercel.json` disables automatic Vercel Git deployments from
-  `main`, so the release tag workflow owns production web deploys while branch
-  previews still run through Vercel's Git integration.
-- In Vercel Project Settings -> Git, confirm the connected project does not
-  auto-promote `main` to production. If the project root is not `apps/web`, move
-  the same `git.deploymentEnabled` config to the configured Vercel root or
-  disable `main` deployments in the dashboard.
+- Vercel Git deployment gating is documented in [vercel.md](./vercel.md).
 
 Manual `workflow_dispatch` on `main` remains available for operational
 recovery, but normal production deploys should come from an annotated `v*` tag.

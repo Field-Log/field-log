@@ -63,3 +63,6 @@ Mobile store approval can lag behind the web/API deployment. Patch and minor
 releases must remain backward-compatible with the currently available mobile
 app. Major releases must keep API and database behavior compatible for at least
 one prior mobile major version.
+
+Vercel production Git deployment gating is documented in
+[vercel.md](./vercel.md).
