@@ -324,6 +324,11 @@ Pull requests:
 - Uploads a preview Worker version with alias `pr-<number>`.
 - If `field-log-api-preview` does not exist yet, bootstraps it with
   `wrangler deploy --env preview`, then retries the aliased version upload.
+- Uses a fresh temporary copy of the preview secrets file for every Wrangler
+  invocation because Wrangler may remove the secrets file after reading it.
+- Deploys a preview Worker anchor version after the aliased upload so
+  Cloudflare's latest Worker version is deployed while existing preview aliases
+  remain available.
 - Smoke-tests the preview health endpoint.
 - Posts or updates a pull request comment with the preview and health URLs
   using the installed `Field Log API Preview` GitHub App.
