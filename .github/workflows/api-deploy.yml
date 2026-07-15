@@ -383,6 +383,12 @@ jobs:
             exit 1
           fi
 
+          echo "Deploying preview Worker anchor version so the latest Worker version is deployed."
+          pnpm dlx wrangler deploy \
+            --config apps/api/wrangler.jsonc \
+            --env preview \
+            --secrets-file "$RUNNER_TEMP/api-preview-secrets.json"
+
           echo "preview_alias=$PREVIEW_ALIAS" >> "$GITHUB_OUTPUT"
           echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
 
