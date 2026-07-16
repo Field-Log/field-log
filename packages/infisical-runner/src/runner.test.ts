@@ -39,6 +39,10 @@ describe("buildInfisicalRunArgs", () => {
       "--env=dev",
       "--path=/apps/api",
       "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
       "vitest",
       "run",
     ]);
@@ -99,6 +103,10 @@ describe("buildInfisicalRunArgs", () => {
       "--env=dev",
       "--path=/apps/web",
       "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
       "vite",
       "build",
     ]);
@@ -119,9 +127,37 @@ describe("buildInfisicalRunArgs", () => {
       "--path=/apps/scraper",
       "--",
       "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "tsx",
       "apps/scraper/src/cli.ts",
       "scrape",
       "autmog",
+    ]);
+  });
+
+  it("builds scraper dead-letter processor commands from the scraper target path", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "scraper",
+        command: "process:dead-letter",
+        commandArgs: ["tsx", "apps/scraper/src/cli.ts", "process:dead-letter"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/scraper",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "tsx",
+      "apps/scraper/src/cli.ts",
+      "process:dead-letter",
     ]);
   });
 
@@ -268,6 +304,30 @@ describe("buildInfisicalRunArgs", () => {
       "expo",
       "start",
       "--web",
+    ]);
+  });
+
+  it("builds database migrate args with the database URL user override", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "database",
+        command: "db:migrate",
+        commandArgs: ["drizzle-kit", "migrate", "--config=drizzle.config.ts"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/api",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "drizzle-kit",
+      "migrate",
+      "--config=drizzle.config.ts",
     ]);
   });
 });

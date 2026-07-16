@@ -10,6 +10,7 @@ const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
 
 export type CommandSecretConfig = {
   allowServerSecrets: boolean;
+  databaseUrlUserOverride?: boolean;
   envAliases?: readonly EnvironmentAlias[];
   environmentSlug?: string;
   paths: readonly string[];
@@ -75,6 +76,7 @@ export const commandSecrets = {
   api: {
     dev: {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [apiSecretPath],
     },
     deploy: {
@@ -91,16 +93,19 @@ export const commandSecrets = {
     },
     test: {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [apiSecretPath],
     },
     "test:watch": {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [apiSecretPath],
     },
   },
   database: {
     "db:migrate": {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [apiSecretPath],
     },
   },
@@ -198,34 +203,46 @@ export const commandSecrets = {
     },
   },
   scraper: {
+    "process:dead-letter": {
+      allowServerSecrets: true,
+      databaseUrlUserOverride: true,
+      paths: [scraperSecretPath],
+    },
     "process:queue": {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [scraperSecretPath],
     },
     scrape: {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [scraperSecretPath],
     },
     "scrape:autmog": {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [scraperSecretPath],
     },
   },
   web: {
     build: {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [webSecretPath],
     },
     dev: {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [webSecretPath],
     },
     test: {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [webSecretPath],
     },
     "test:watch": {
       allowServerSecrets: true,
+      databaseUrlUserOverride: true,
       paths: [webSecretPath],
     },
   },
