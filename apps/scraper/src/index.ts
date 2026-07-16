@@ -27,12 +27,7 @@ void main().catch(async (error) => {
 });
 
 async function main() {
-  const scheduler = scraperEnv.SCRAPER_SCHEDULER_ENABLED
-    ? await startScraperScheduler({
-        env: createScraperJobEnv(readProcessScraperRuntimeEnv()),
-        logger,
-      })
-    : undefined;
+  let scheduler: ScraperScheduler | undefined;
   const app = createApp({ logger });
   const server = serve({
     fetch: app.fetch,
@@ -45,6 +40,27 @@ async function main() {
       schedulerEnabled: scraperEnv.SCRAPER_SCHEDULER_ENABLED,
     },
   });
+
+  if (scraperEnv.SCRAPER_SCHEDULER_ENABLED) {
+    void Promise.resolve()
+      .then(() =>
+        startScraperScheduler({
+          env: createScraperJobEnv(readProcessScraperRuntimeEnv()),
+          logger,
+        }),
+      )
+      .then((startedScheduler) => {
+        scheduler = startedScheduler;
+      })
+      .catch((error) => {
+        logger.fatal(loggerMessages.scraper.serverFailed, {
+          attributes: {
+            source: "scheduler",
+          },
+          error,
+        });
+      });
+  }
 
   process.once("SIGINT", () => {
     void shutdown({ scheduler, server, signal: "SIGINT" });
