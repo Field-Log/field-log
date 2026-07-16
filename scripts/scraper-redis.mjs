@@ -36,11 +36,11 @@ export async function ensureScraperRedisContainer({
     return;
   }
 
-  await assertScraperRedisPort(redisPort);
-
   if (!existing.includes("Up ")) {
     await runCommand("docker", ["start", scraperRedisContainerName]);
   }
+
+  await assertScraperRedisPort(redisPort);
 }
 
 export function runCommand(command, args, env = process.env) {
