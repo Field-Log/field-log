@@ -104,6 +104,27 @@ describe("buildInfisicalRunArgs", () => {
     ]);
   });
 
+  it("builds scraper source commands from the scraper target path", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "scraper",
+        command: "scrape",
+        commandArgs: ["tsx", "apps/scraper/src/cli.ts", "scrape", "autmog"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/scraper",
+      "--",
+      "tsx",
+      "apps/scraper/src/cli.ts",
+      "scrape",
+      "autmog",
+    ]);
+  });
+
   it("builds mobile default builds with development app secrets", () => {
     expect(
       buildInfisicalRunArgs({

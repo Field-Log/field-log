@@ -3,6 +3,7 @@ export const defaultEnvironmentSlug = "dev";
 const apiSecretPath = "/apps/api";
 const cloudflareToolsSecretPath = "/tools/cloudflare";
 const mobileSecretPath = "/apps/mobile";
+const scraperSecretPath = "/apps/scraper";
 const webSecretPath = "/apps/web";
 const githubDiscordNotifierSecretPath = "/tools/github-discord-notifier";
 const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
@@ -194,6 +195,20 @@ export const commandSecrets = {
       allowServerSecrets: false,
       envAliases: fieldLogExpoAliases,
       paths: [mobileSecretPath],
+    },
+  },
+  scraper: {
+    "process:queue": {
+      allowServerSecrets: true,
+      paths: [scraperSecretPath],
+    },
+    scrape: {
+      allowServerSecrets: true,
+      paths: [scraperSecretPath],
+    },
+    "scrape:autmog": {
+      allowServerSecrets: true,
+      paths: [scraperSecretPath],
     },
   },
   web: {

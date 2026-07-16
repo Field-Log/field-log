@@ -123,6 +123,14 @@ REDIS_URL=${{scraper-queue.REDIS_URL}}
 For local development, use Docker/OrbStack and `pnpm dev:scraper`; see
 [docker.md](./docker.md).
 
+For local manual source runs, use the root scraper commands so Infisical injects
+`/apps/scraper` values:
+
+```sh
+pnpm scraper:scrape -- autmog
+pnpm scraper:process:queue
+```
+
 ### Cloudflare Deploy Tools: `/tools/cloudflare`
 
 Cloudflare deployment credentials are separate from API runtime secrets.

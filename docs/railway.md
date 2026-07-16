@@ -69,7 +69,15 @@ Future source schedules should be added in `apps/scraper` and staggered in code
 or configuration. For example, Grimsmo Saga can run on the hour while knife
 sources run at offset minutes.
 
-Manual source runs use source keys:
+Manual source runs use source keys. For local development, use the root command
+so `/apps/scraper` secrets are injected from Infisical:
+
+```sh
+pnpm scraper:scrape -- autmog
+```
+
+Inside a Railway shell, the service already has its environment variables, so
+the package command can be used directly:
 
 ```sh
 pnpm --filter @app/scraper run scrape -- autmog
@@ -77,7 +85,8 @@ pnpm --filter @app/scraper run scrape -- autmog
 
 Future source keys should follow the same shape, for example `grimsmo-saga` or
 `grimsmo-fjell`, once their producers are implemented. The older
-`pnpm --filter @app/scraper run scrape:autmog` alias remains available.
+`pnpm scraper:scrape:autmog` and `pnpm --filter @app/scraper run scrape:autmog`
+aliases remain available.
 
 ## Queue Design
 
