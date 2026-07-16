@@ -335,57 +335,31 @@ jobs:
         if: steps.db.outputs.can_deploy == 'true'
         id: deploy
         shell: bash
+        working-directory: apps/api
         env:
           PREVIEW_ALIAS: pr-${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
           set +e
-          upload_output="$(pnpm dlx wrangler versions upload \
-            --config apps/api/wrangler.jsonc \
-            --env preview \
-            --preview-alias "$PREVIEW_ALIAS" 2>&1)"
-          upload_status=$?
+          deploy_output="$(bash scripts/deploy-preview.sh \
+            --preview-alias "$PREVIEW_ALIAS" \
+            --secrets-file "$RUNNER_TEMP/api-preview-secrets.json" 2>&1)"
+          deploy_status=$?
           set -e
 
-          printf '%s\n' "$upload_output"
+          printf '%s\n' "$deploy_output"
 
-          if [[ "$upload_status" -ne 0 ]]; then
-            if [[ "$upload_output" != *"does not yet exist"* ]]; then
-              exit "$upload_status"
-            fi
-
-            echo "Preview Worker does not exist yet; creating it with wrangler deploy."
-            pnpm dlx wrangler deploy \
-              --config apps/api/wrangler.jsonc \
-              --env preview
-
-            set +e
-            upload_output="$(pnpm dlx wrangler versions upload \
-              --config apps/api/wrangler.jsonc \
-              --env preview \
-              --preview-alias "$PREVIEW_ALIAS" 2>&1)"
-            upload_status=$?
-            set -e
-
-            printf '%s\n' "$upload_output"
-
-            if [[ "$upload_status" -ne 0 ]]; then
-              exit "$upload_status"
-            fi
+          if [[ "$deploy_status" -ne 0 ]]; then
+            exit "$deploy_status"
           fi
 
-          if [[ "$upload_output" =~ Version[[:space:]]Preview[[:space:]]Alias[[:space:]]URL:[[:space:]](https://[^[:space:]]+) ]]; then
+          if [[ "$deploy_output" =~ Version[[:space:]]Preview[[:space:]]Alias[[:space:]]URL:[[:space:]](https://[^[:space:]]+) ]]; then
             preview_url="${BASH_REMATCH[1]}"
           else
             echo "Wrangler did not print a Version Preview Alias URL for $PREVIEW_ALIAS." >&2
             exit 1
           fi
-
-          echo "Deploying preview Worker anchor version so the latest Worker version is deployed."
-          pnpm dlx wrangler deploy \
-            --config apps/api/wrangler.jsonc \
-            --env preview
 
           echo "preview_alias=$PREVIEW_ALIAS" >> "$GITHUB_OUTPUT"
           echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
@@ -398,7 +372,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/api/v0/health"
+          curl --fail-with-body --retry 12 --retry-all-errors --retry-delay 5 "$PREVIEW_URL/api/v0/health"
 
       - name: Validate PR comment app configuration
         shell: bash
