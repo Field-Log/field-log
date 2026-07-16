@@ -36,6 +36,8 @@ export async function ensureScraperRedisContainer({
     return;
   }
 
+  await assertScraperRedisPort(redisPort);
+
   if (!existing.includes("Up ")) {
     await runCommand("docker", ["start", scraperRedisContainerName]);
   }
@@ -58,6 +60,11 @@ export function runCommand(command, args, env = process.env) {
       reject(new Error(`${command} exited with ${code ?? "null"}`));
     });
   });
+}
+
+export function printScriptError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  process.stderr.write(`${message}\n`);
 }
 
 function capture(command, args) {
@@ -84,4 +91,43 @@ function capture(command, args) {
       reject(new Error(stderr || `${command} exited with ${code ?? "null"}`));
     });
   });
+}
+
+async function assertScraperRedisPort(expectedPort) {
+  const portOutput = await capture("docker", [
+    "port",
+    scraperRedisContainerName,
+    "6379/tcp",
+  ]);
+  const hostPorts = getHostPorts(portOutput);
+
+  if (hostPorts.includes(expectedPort)) {
+    return;
+  }
+
+  throw new Error(
+    [
+      `Existing Docker container "${scraperRedisContainerName}" is mapped to host port ${hostPorts.join(", ") || "unknown"}, but the scraper expects ${expectedPort}.`,
+      "Docker cannot change port mappings on an existing container.",
+      "",
+      "To recreate the local scraper Redis container on the expected port, run:",
+      `  docker rm -f ${scraperRedisContainerName}`,
+      "  pnpm dev:scraper",
+      "",
+      "To keep using the existing container, run scraper commands with matching env:",
+      `  SCRAPER_REDIS_PORT=${hostPorts[0] ?? "6379"} REDIS_URL=redis://localhost:${hostPorts[0] ?? "6379"} pnpm scraper:scrape -- autmog`,
+    ].join("\n"),
+  );
+}
+
+function getHostPorts(portOutput) {
+  return [
+    ...new Set(
+      portOutput
+        .trim()
+        .split("\n")
+        .map((line) => line.match(/:(\d+)$/)?.[1])
+        .filter(Boolean),
+    ),
+  ];
 }

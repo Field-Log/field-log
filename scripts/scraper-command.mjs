@@ -1,24 +1,30 @@
 import {
   ensureScraperRedisContainer,
   getScraperRedisUrl,
+  printScriptError,
   runCommand,
 } from "./scraper-redis.mjs";
 
-const [command, ...commandArgs] = process.argv.slice(2);
+try {
+  const [command, ...commandArgs] = process.argv.slice(2);
 
-if (!command) {
-  throw new Error(
-    "Expected scraper command. Use scrape, scrape:autmog, or process:queue.",
-  );
+  if (!command) {
+    throw new Error(
+      "Expected scraper command. Use scrape, scrape:autmog, or process:queue.",
+    );
+  }
+
+  await ensureScraperRedisContainer();
+
+  const runnerCommand = getRunnerCommand(command, commandArgs);
+  await runCommand(runnerCommand.command, runnerCommand.args, {
+    ...process.env,
+    REDIS_URL: getScraperRedisUrl(),
+  });
+} catch (error) {
+  printScriptError(error);
+  process.exitCode = 1;
 }
-
-await ensureScraperRedisContainer();
-
-const runnerCommand = getRunnerCommand(command, commandArgs);
-await runCommand(runnerCommand.command, runnerCommand.args, {
-  ...process.env,
-  REDIS_URL: getScraperRedisUrl(),
-});
 
 function getRunnerCommand(command, commandArgs) {
   if (command === "scrape") {

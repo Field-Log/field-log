@@ -51,3 +51,8 @@ container and its data:
 ```sh
 docker rm -f field-log-scraper-redis
 ```
+
+Docker does not allow changing published ports on an existing container. If
+`field-log-scraper-redis` was created before the scraper Redis port moved to
+`4008`, remove it once with the command above and rerun `pnpm dev:scraper` or
+`pnpm scraper:scrape -- autmog`.
