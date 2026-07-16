@@ -28,7 +28,7 @@ suggest a branch, create a branch, push, fetch, or create a PR from `main`.
 3. Inspect branch state:
    - `git status --short --branch`
    - `git log --oneline <base>..HEAD`
-4. Read `./docs/changesets.md`.
+4. Read `./docs/changesets.md` and `./.github/pull_request_template.md`.
 5. If there are no commits on the branch relative to the base branch, stop and
    report that there is nothing to open a PR for.
 6. If there are uncommitted changes, mention them clearly. Do not include them
@@ -88,16 +88,30 @@ Do not add `Co-Authored-By` lines.
 Keep each commit to one logical change, use point-form body details, and stage
 specific files by name.
 
-Write the PR body in this format:
+Write the PR body by starting from `./.github/pull_request_template.md` and
+replacing only the content between these markers:
 
 ```markdown
+<!-- AI SECTION START -->
+<!-- AI SECTION END -->
+```
+
+Use this AI section format:
+
+```markdown
+<!-- AI SECTION START -->
 ## Summary
 - point form summary
 - point form summary
 
-## Testing
+## Validation
 - command run, or "Not run (reason)"
+
+<!-- AI SECTION END -->
 ```
+
+Leave the Human section blank by default. Do not remove or edit the Human
+section markers.
 
 Keep the body factual. Prefer commit messages, diffs, and test output over
 guessing. If the user asks for a draft PR, pass `--draft`.
