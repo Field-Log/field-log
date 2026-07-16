@@ -5,12 +5,14 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - apps/api/**
+      - apps/scraper/**
       - packages/**
       - .github/scripts/**
       - .github/workflows/api-deploy.yml
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
+      - railway.json
       - turbo.json
   push:
     tags:
