@@ -10,7 +10,7 @@ try {
 
   if (!command) {
     throw new Error(
-      "Expected scraper command. Use scrape, scrape:autmog, or process:queue.",
+      "Expected scraper command. Use scrape, scrape:autmog, process:queue, or process:dead-letter.",
     );
   }
 
@@ -68,6 +68,21 @@ function getRunnerCommand(command, commandArgs) {
         "tsx",
         "apps/scraper/src/cli.ts",
         "process:queue",
+      ],
+      command: "tsx",
+    };
+  }
+
+  if (command === "process:dead-letter") {
+    return {
+      args: [
+        "packages/infisical-runner/src/cli.ts",
+        "scraper",
+        "process:dead-letter",
+        "--",
+        "tsx",
+        "apps/scraper/src/cli.ts",
+        "process:dead-letter",
       ],
       command: "tsx",
     };

@@ -8,7 +8,10 @@ import {
 } from "./db/autmog.js";
 import type { createScraperJobEnv } from "./env.schema.js";
 import { createImageStorage } from "./image/imagekit.js";
-import { runQueueProcessor } from "./queue/processor.js";
+import {
+  runQueueDeadLetterProcessor,
+  runQueueProcessor,
+} from "./queue/processor.js";
 import { createScraperQueues, type ScraperQueues } from "./queue/queues.js";
 import { createRedisConnection } from "./queue/redis.js";
 import { type ScraperSourceName, scraperSources } from "./scraper-types.js";
@@ -136,6 +139,43 @@ export async function runQueueProcessorJob({
   });
 }
 
+export async function runQueueDeadLetterProcessorJob({
+  context,
+  env,
+  logger,
+}: {
+  context: ScraperJobContext;
+  env: ScraperJobEnv;
+  logger: Logger;
+}) {
+  await runLoggedCommand({
+    command: "process:dead-letter",
+    db: context.db,
+    execute: async () => {
+      const result = await runQueueDeadLetterProcessor({
+        batchSize: {
+          images: env.SCRAPER_IMAGE_BATCH_SIZE,
+          items: env.SCRAPER_ITEM_BATCH_SIZE,
+        },
+        logger,
+        queues: context.queues,
+      });
+
+      return {
+        deadLetterFailedImageJobs: result.images.failed,
+        deadLetterFailedItemJobs: result.items.failed,
+        deadLetterRequeueFailedImageJobs: result.images.requeueFailed,
+        deadLetterRequeueFailedItemJobs: result.items.requeueFailed,
+        deadLetterRequeuedImageJobs: result.images.requeued,
+        deadLetterRequeuedItemJobs: result.items.requeued,
+      };
+    },
+    jobType: "dead-letter-processor",
+    logger,
+    source: "queue",
+  });
+}
+
 async function runLoggedCommand({
   command,
   db,
@@ -144,7 +184,10 @@ async function runLoggedCommand({
   logger,
   source,
 }: {
-  command: "process:queue" | `scrape:${ScraperSourceName}`;
+  command:
+    | "process:dead-letter"
+    | "process:queue"
+    | `scrape:${ScraperSourceName}`;
   db: Database;
   execute: () => Promise<Record<string, number | undefined>>;
   jobType: string;

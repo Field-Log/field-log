@@ -4,6 +4,7 @@ import { readProcessScraperRuntimeEnv } from "./env.js";
 import { createScraperJobEnv } from "./env.schema.js";
 import {
   createScraperJobContext,
+  runQueueDeadLetterProcessorJob,
   runQueueProcessorJob,
   runSourceProducerJob,
   scraperSourceKeys,
@@ -12,6 +13,9 @@ import { createScraperLogger } from "./lib/logger.js";
 import type { ScraperSourceName } from "./scraper-types.js";
 
 type ScraperCommand =
+  | {
+      type: "process:dead-letter";
+    }
   | {
       type: "process:queue";
     }
@@ -47,6 +51,11 @@ async function main() {
       return;
     }
 
+    if (command.type === "process:dead-letter") {
+      await runQueueDeadLetterProcessorJob({ context, env, logger });
+      return;
+    }
+
     await runQueueProcessorJob({ context, env, logger });
   } catch (error) {
     logger ??= createScraperLogger({});
@@ -72,6 +81,10 @@ export function parseCommand(args: string[]): ScraperCommand {
     return { type: "process:queue" };
   }
 
+  if (command === "process:dead-letter") {
+    return { type: "process:dead-letter" };
+  }
+
   if (command === "scrape" && isScraperSourceKey(sourceArg)) {
     return {
       source: sourceArg,
@@ -89,12 +102,15 @@ export function parseCommand(args: string[]): ScraperCommand {
   }
 
   throw new Error(
-    `Unknown scraper command "${args.join(" ")}". Expected scrape <source>, scrape:<source>, or process:queue. Supported sources: ${scraperSourceKeys.join(", ")}.`,
+    `Unknown scraper command "${args.join(" ")}". Expected scrape <source>, scrape:<source>, process:queue, or process:dead-letter. Supported sources: ${scraperSourceKeys.join(", ")}.`,
   );
 }
 
 function formatCommand(command: ScraperCommand): string {
-  if (command.type === "process:queue") {
+  if (
+    command.type === "process:queue" ||
+    command.type === "process:dead-letter"
+  ) {
     return command.type;
   }
 

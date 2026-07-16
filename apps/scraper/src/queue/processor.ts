@@ -1,6 +1,6 @@
 import type { Database } from "@package/database";
 import { type Logger, loggerMessages } from "@package/logger";
-import { type Job, Worker } from "bullmq";
+import { type Job, type Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import {
   archiveMissingAutmogPens,
@@ -45,6 +45,26 @@ export type RunQueueProcessorOptions = {
 export type RunQueueProcessorResult = {
   images: QueueDrainStats;
   items: QueueDrainStats;
+};
+
+export type QueueDeadLetterStats = {
+  failed: number;
+  requeueFailed: number;
+  requeued: number;
+};
+
+export type RunQueueDeadLetterProcessorOptions = {
+  batchSize: {
+    images: number;
+    items: number;
+  };
+  logger: Logger;
+  queues: ScraperQueues;
+};
+
+export type RunQueueDeadLetterProcessorResult = {
+  images: QueueDeadLetterStats;
+  items: QueueDeadLetterStats;
 };
 
 export async function runQueueProcessor({
@@ -100,6 +120,60 @@ export async function runQueueProcessor({
     };
   } catch (error) {
     logger.error(loggerMessages.scraper.processor.failed, {
+      attributes: {
+        durationMs: Date.now() - startedAt,
+      },
+      error,
+    });
+    throw error;
+  }
+}
+
+export async function runQueueDeadLetterProcessor({
+  batchSize,
+  logger,
+  queues,
+}: RunQueueDeadLetterProcessorOptions): Promise<RunQueueDeadLetterProcessorResult> {
+  const startedAt = Date.now();
+  logger.info(loggerMessages.scraper.queue.deadLetterStarted, {
+    attributes: {
+      imageBatchSize: batchSize.images,
+      itemBatchSize: batchSize.items,
+    },
+  });
+
+  try {
+    const items = await processDeadLetters({
+      batchSize: batchSize.items,
+      logger,
+      queue: queues.items,
+      queueName: scraperQueueNames.items,
+    });
+    const images = await processDeadLetters({
+      batchSize: batchSize.images,
+      logger,
+      queue: queues.images,
+      queueName: scraperQueueNames.images,
+    });
+
+    logger.info(loggerMessages.scraper.queue.deadLetterCompleted, {
+      attributes: {
+        durationMs: Date.now() - startedAt,
+        failedImageJobs: images.failed,
+        failedItemJobs: items.failed,
+        requeueFailedImageJobs: images.requeueFailed,
+        requeueFailedItemJobs: items.requeueFailed,
+        requeuedImageJobs: images.requeued,
+        requeuedItemJobs: items.requeued,
+      },
+    });
+
+    return {
+      images,
+      items,
+    };
+  } catch (error) {
+    logger.error(loggerMessages.scraper.queue.deadLetterFailed, {
       attributes: {
         durationMs: Date.now() - startedAt,
       },
@@ -183,7 +257,9 @@ async function processItemJob({
         deleteImageJobs: result.deleteImageJobs.length,
         durationMs: Date.now() - startedAt,
         enqueuedImageJobs: imageJobs.length,
+        dbResponse: result.dbResponse,
         jobId: job.id,
+        mutationInput: result.mutationInput,
         source: scraperSources.autmog,
         sourceProductId: job.data.item.sourceProductId,
         updated: result.updated,
@@ -469,4 +545,57 @@ async function drainQueue<TJobData>({
       void closeWorker().then(() => reject(error), reject);
     });
   });
+}
+
+async function processDeadLetters<TJobData>({
+  batchSize,
+  logger,
+  queue,
+  queueName,
+}: {
+  batchSize: number;
+  logger: Logger;
+  queue: Queue<TJobData>;
+  queueName: string;
+}): Promise<QueueDeadLetterStats> {
+  const startedAt = Date.now();
+  const failedCount = await queue.getFailedCount();
+  const jobs = batchSize > 0 ? await queue.getFailed(0, batchSize - 1) : [];
+  const stats: QueueDeadLetterStats = {
+    failed: failedCount,
+    requeueFailed: 0,
+    requeued: 0,
+  };
+
+  for (const job of jobs) {
+    try {
+      await job.retry("failed");
+      stats.requeued += 1;
+    } catch (error) {
+      stats.requeueFailed += 1;
+      logger.error(loggerMessages.scraper.queue.deadLetterFailed, {
+        attributes: {
+          attemptsMade: job.attemptsMade,
+          failedReason: job.failedReason,
+          jobId: job.id,
+          jobName: job.name,
+          queue: queueName,
+        },
+        error,
+      });
+    }
+  }
+
+  logger.info(loggerMessages.scraper.queue.deadLetterCompleted, {
+    attributes: {
+      batchSize,
+      durationMs: Date.now() - startedAt,
+      failedJobs: failedCount,
+      queue: queueName,
+      requeueFailedJobs: stats.requeueFailed,
+      requeuedJobs: stats.requeued,
+    },
+  });
+
+  return stats;
 }

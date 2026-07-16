@@ -129,7 +129,8 @@ Infisical:
 
 ```sh
 pnpm scraper:scrape -- autmog
-pnpm scraper:process:queue
+pnpm scraper:process
+pnpm scraper:process:dead-letter
 ```
 
 ### Cloudflare Deploy Tools: `/tools/cloudflare`
@@ -174,8 +175,18 @@ that do not need database credentials can still run.
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `DATABASE_URL`[^5] | Drizzle migration and database command connection string. | All | `S` |
+| `DATABASE_URL_<INITIALS>` | Optional personal dev database override used by Infisical-wrapped database, API, web, and scraper commands. For example, `DATABASE_URL_RA` overrides `DATABASE_URL` when the runner resolves the suffix `RA`. | ? (Dev) | `S` |
+| `INFISICAL_DATABASE_URL_SUFFIX` | Optional local suffix override for personal database URLs. For example, set `INFISICAL_DATABASE_URL_SUFFIX=RA` to make the runner look for `DATABASE_URL_RA`. If omitted, the runner tries `git config user.initials`, then initials derived from `git config user.name`. | ? (Dev) | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
+
+The personal database override is applied after Infisical injects secrets and
+before the wrapped command starts. If the suffixed variable is missing, the
+command keeps using `DATABASE_URL`. When an override is used, the runner prints
+the variable name and Infisical path, for example `DATABASE_URL_RA` from
+`/apps/api`, without printing the secret value. When the suffixed variable is
+missing, the runner prints the Infisical path it checked and that it is falling
+back to `DATABASE_URL`.
 
 ### FigJam / Figma Agent Bridge: `/local/figma`
 

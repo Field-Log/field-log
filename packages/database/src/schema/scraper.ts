@@ -45,6 +45,12 @@ export type AutmogPenNormalizedData = {
 
 export type ScraperRunStats = {
   archivedCount?: number;
+  deadLetterFailedImageJobs?: number;
+  deadLetterFailedItemJobs?: number;
+  deadLetterRequeueFailedImageJobs?: number;
+  deadLetterRequeueFailedItemJobs?: number;
+  deadLetterRequeuedImageJobs?: number;
+  deadLetterRequeuedItemJobs?: number;
   enqueuedImageJobs?: number;
   enqueuedItemJobs?: number;
   failedImageJobs?: number;

@@ -92,6 +92,9 @@ export const loggerMessages = {
       started: "scraper.processor.started",
     },
     queue: {
+      deadLetterCompleted: "scraper.queue.deadLetter.completed",
+      deadLetterFailed: "scraper.queue.deadLetter.failed",
+      deadLetterStarted: "scraper.queue.deadLetter.started",
       drainCompleted: "scraper.queue.drain.completed",
       drainFailed: "scraper.queue.drain.failed",
       enqueueCompleted: "scraper.queue.enqueue.completed",

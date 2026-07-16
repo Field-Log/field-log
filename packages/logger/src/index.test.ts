@@ -87,6 +87,13 @@ describe("logger", () => {
         screenViewed: "mobile.screen.viewed",
         syncUploadFailed: "mobile.sync.upload.failed",
       },
+      scraper: {
+        queue: {
+          deadLetterCompleted: "scraper.queue.deadLetter.completed",
+          deadLetterFailed: "scraper.queue.deadLetter.failed",
+          deadLetterStarted: "scraper.queue.deadLetter.started",
+        },
+      },
       web: {
         accountLoaded: "web.account.loaded",
         fxRatesFetchFailed: "web.fxRates.fetch.failed",

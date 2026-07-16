@@ -7,6 +7,8 @@
   "scripts": {
     "dev": "turbo run dev --filter='./apps/*' --filter=@package/logger",
     "dev:scraper": "node scripts/dev-scraper.mjs",
+    "scraper:process": "node scripts/scraper-command.mjs process:queue",
+    "scraper:process:dead-letter": "node scripts/scraper-command.mjs process:dead-letter",
     "scraper:process:queue": "node scripts/scraper-command.mjs process:queue",
     "scraper:scrape": "node scripts/scraper-command.mjs scrape",
     "scraper:scrape:autmog": "node scripts/scraper-command.mjs scrape:autmog",

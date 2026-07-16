@@ -15,10 +15,77 @@ const autmogMaker = {
 
 export type AutmogPenSyncResult = {
   created: boolean;
+  dbResponse: AutmogPenSyncDbResponse;
   deleteImageJobs: { imageId: string }[];
+  mutationInput: AutmogPenSyncMutationInput;
   uploadImageJobs: { imageId: string; sourceHash: string }[];
   updated: boolean;
   versioned: boolean;
+};
+
+export type AutmogPenSyncMutationInput = {
+  images: {
+    altText: string | null;
+    height: number | null;
+    position: number;
+    sourceHash: string;
+    sourceImageId: string | null;
+    sourceUrl: string;
+    width: number | null;
+  }[];
+  pen: {
+    availableForSale: boolean;
+    bodyDetails: string[];
+    bodyShape: string | null;
+    category: string | null;
+    clip: string | null;
+    currencyCode: string;
+    detailsHash: string;
+    finish: string | null;
+    grip: string | null;
+    imageSetHash: string;
+    makerId: string;
+    materials: string[];
+    mechanism: string | null;
+    nose: string | null;
+    priceMaxCents: number | null;
+    priceMinCents: number | null;
+    productType: string | null;
+    productUrl: string;
+    rawPayloadHash: string;
+    refill: string | null;
+    size: string | null;
+    sourceHandle: string;
+    sourceProductId: string;
+    tags: string[];
+    title: string;
+    vendor: string | null;
+  };
+};
+
+export type AutmogPenSyncDbResponse = {
+  images: {
+    deleteJobImageIds: string[];
+    uploadJobImageIds: string[];
+    upserted: {
+      id: string;
+      penId: string;
+      sourceHash: string;
+      sourceImageId: string | null;
+      sourceUrl: string;
+      status: string;
+    }[];
+  };
+  pen: {
+    detailsHash: string;
+    id: string;
+    imageSetHash: string;
+    isArchived: boolean;
+    makerId: string;
+    sourceHandle: string;
+    sourceProductId: string;
+    title: string;
+  };
 };
 
 export type ScraperRunUpdate = {
@@ -119,6 +186,7 @@ export async function syncAutmogPen(
 ): Promise<AutmogPenSyncResult> {
   const maker = await ensureAutmogMaker(db);
   const now = new Date();
+  const mutationInput = getAutmogPenSyncMutationInput(item, maker.id);
   const [existing] = await db
     .select()
     .from(schema.tmpAutmogPens)
@@ -244,6 +312,7 @@ export async function syncAutmogPen(
   const existingBySourceUrl = new Map(
     existingImages.map((image) => [image.sourceUrl, image]),
   );
+  const upsertedImages: AutmogPenSyncDbResponse["images"]["upserted"] = [];
 
   for (const image of item.images) {
     const existingImage = existingBySourceUrl.get(image.sourceUrl);
@@ -294,6 +363,15 @@ export async function syncAutmogPen(
     if (shouldUpload) {
       uploadImageJobs.push({ imageId: row.id, sourceHash: image.sourceHash });
     }
+
+    upsertedImages.push({
+      id: row.id,
+      penId: row.penId,
+      sourceHash: row.sourceHash,
+      sourceImageId: row.sourceImageId,
+      sourceUrl: row.sourceUrl,
+      status: row.status,
+    });
   }
 
   for (const existingImage of existingImages) {
@@ -335,7 +413,25 @@ export async function syncAutmogPen(
 
   return {
     created: !existing,
+    dbResponse: {
+      images: {
+        deleteJobImageIds: deleteImageJobs.map((job) => job.imageId),
+        uploadJobImageIds: uploadImageJobs.map((job) => job.imageId),
+        upserted: upsertedImages,
+      },
+      pen: {
+        detailsHash: pen.detailsHash,
+        id: pen.id,
+        imageSetHash: pen.imageSetHash,
+        isArchived: pen.isArchived,
+        makerId: pen.makerId,
+        sourceHandle: pen.sourceHandle,
+        sourceProductId: pen.sourceProductId,
+        title: pen.title,
+      },
+    },
     deleteImageJobs,
+    mutationInput,
     updated: Boolean(existing && existing.detailsHash !== item.detailsHash),
     uploadImageJobs,
     versioned,
@@ -484,4 +580,49 @@ function getChangeReason(
   }
 
   return changes.join("+") || "unknown";
+}
+
+function getAutmogPenSyncMutationInput(
+  item: NormalizedAutmogPen,
+  makerId: string,
+): AutmogPenSyncMutationInput {
+  return {
+    images: item.images.map((image) => ({
+      altText: image.altText,
+      height: image.height,
+      position: image.position,
+      sourceHash: image.sourceHash,
+      sourceImageId: image.sourceImageId,
+      sourceUrl: image.sourceUrl,
+      width: image.width,
+    })),
+    pen: {
+      availableForSale: item.availableForSale,
+      bodyDetails: item.bodyDetails,
+      bodyShape: item.bodyShape,
+      category: item.category,
+      clip: item.clip,
+      currencyCode: item.currencyCode,
+      detailsHash: item.detailsHash,
+      finish: item.finish,
+      grip: item.grip,
+      imageSetHash: item.imageSetHash,
+      makerId,
+      materials: item.materials,
+      mechanism: item.mechanism,
+      nose: item.nose,
+      priceMaxCents: item.priceMaxCents,
+      priceMinCents: item.priceMinCents,
+      productType: item.productType,
+      productUrl: item.productUrl,
+      rawPayloadHash: item.rawPayloadHash,
+      refill: item.refill,
+      size: item.size,
+      sourceHandle: item.sourceHandle,
+      sourceProductId: item.sourceProductId,
+      tags: item.tags,
+      title: item.title,
+      vendor: item.vendor,
+    },
+  };
 }

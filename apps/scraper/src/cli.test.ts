@@ -28,4 +28,10 @@ describe("scraper CLI", () => {
       type: "process:queue",
     });
   });
+
+  it("parses dead-letter processor commands", () => {
+    expect(parseCommand(["process:dead-letter"])).toEqual({
+      type: "process:dead-letter",
+    });
+  });
 });
