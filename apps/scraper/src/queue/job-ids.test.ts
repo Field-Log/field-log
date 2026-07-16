@@ -15,12 +15,12 @@ describe("scraper job ids", () => {
   it("creates deterministic image job ids", () => {
     expect(
       getAutmogImageUploadJobId({
-        imageId: "image-id",
+        imageId: 1000,
         sourceHash: "sha256:image",
       }),
-    ).toBe("autmog--image--upload--image-id--sha256%3Aimage");
-    expect(getAutmogImageDeleteJobId({ imageId: "image-id" })).toBe(
-      "autmog--image--delete--image-id",
+    ).toBe("autmog--image--upload--1000--sha256%3Aimage");
+    expect(getAutmogImageDeleteJobId({ imageId: 1000 })).toBe(
+      "autmog--image--delete--1000",
     );
   });
 
@@ -28,10 +28,10 @@ describe("scraper job ids", () => {
     const jobIds = [
       getAutmogArchiveJobId(["2", "1"]),
       getAutmogImageUploadJobId({
-        imageId: "image-id",
+        imageId: 1000,
         sourceHash: "sha256:image",
       }),
-      getAutmogImageDeleteJobId({ imageId: "image-id" }),
+      getAutmogImageDeleteJobId({ imageId: 1000 }),
     ];
 
     expect(jobIds.every((jobId) => !jobId.includes(":"))).toBe(true);

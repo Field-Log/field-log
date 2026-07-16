@@ -16,9 +16,9 @@ const autmogMaker = {
 export type AutmogPenSyncResult = {
   created: boolean;
   dbResponse: AutmogPenSyncDbResponse;
-  deleteImageJobs: { imageId: string }[];
+  deleteImageJobs: { imageId: number }[];
   mutationInput: AutmogPenSyncMutationInput;
-  uploadImageJobs: { imageId: string; sourceHash: string }[];
+  uploadImageJobs: { imageId: number; sourceHash: string }[];
   updated: boolean;
   versioned: boolean;
 };
@@ -44,7 +44,7 @@ export type AutmogPenSyncMutationInput = {
     finish: string | null;
     grip: string | null;
     imageSetHash: string;
-    makerId: string;
+    makerId: number;
     materials: string[];
     mechanism: string | null;
     nose: string | null;
@@ -65,11 +65,11 @@ export type AutmogPenSyncMutationInput = {
 
 export type AutmogPenSyncDbResponse = {
   images: {
-    deleteJobImageIds: string[];
-    uploadJobImageIds: string[];
+    deleteJobImageIds: number[];
+    uploadJobImageIds: number[];
     upserted: {
-      id: string;
-      penId: string;
+      id: number;
+      penId: number;
       sourceHash: string;
       sourceImageId: string | null;
       sourceUrl: string;
@@ -78,10 +78,10 @@ export type AutmogPenSyncDbResponse = {
   };
   pen: {
     detailsHash: string;
-    id: string;
+    id: number;
     imageSetHash: string;
     isArchived: boolean;
-    makerId: string;
+    makerId: number;
     sourceHandle: string;
     sourceProductId: string;
     title: string;
@@ -159,7 +159,7 @@ export async function startScraperRun(
 
 export async function finishScraperRun(
   db: Database,
-  runId: string,
+  runId: number,
   update: ScraperRunUpdate,
 ) {
   const [run] = await db
@@ -303,8 +303,8 @@ export async function syncAutmogPen(
       .select()
       .from(schema.tmpAutmogPenImages)
       .where(eq(schema.tmpAutmogPenImages.penId, pen.id)),
-    Promise.resolve([] as { imageId: string; sourceHash: string }[]),
-    Promise.resolve([] as { imageId: string }[]),
+    Promise.resolve([] as { imageId: number; sourceHash: string }[]),
+    Promise.resolve([] as { imageId: number }[]),
   ]);
   const currentSourceUrls = new Set(
     item.images.map((image) => image.sourceUrl),
@@ -467,7 +467,7 @@ export async function archiveMissingAutmogPens(
 
 export async function getAutmogImageForProcessing(
   db: Database,
-  imageId: string,
+  imageId: number,
 ) {
   const [row] = await db
     .select({
@@ -488,7 +488,7 @@ export async function getAutmogImageForProcessing(
 export async function markAutmogImageUploaded(
   db: Database,
   input: {
-    imageId: string;
+    imageId: number;
     imageKitFileId: string;
     imageKitPath: string;
     imageKitUrl: string;
@@ -507,7 +507,7 @@ export async function markAutmogImageUploaded(
     .where(eq(schema.tmpAutmogPenImages.id, input.imageId));
 }
 
-export async function markAutmogImageDeleted(db: Database, imageId: string) {
+export async function markAutmogImageDeleted(db: Database, imageId: number) {
   const now = new Date();
 
   await db
@@ -522,7 +522,7 @@ export async function markAutmogImageDeleted(db: Database, imageId: string) {
 
 export async function markAutmogImageFailed(
   db: Database,
-  input: { imageId: string; status: "delete_failed" | "upload_failed" },
+  input: { imageId: number; status: "delete_failed" | "upload_failed" },
 ) {
   await db
     .update(schema.tmpAutmogPenImages)
@@ -584,7 +584,7 @@ function getChangeReason(
 
 function getAutmogPenSyncMutationInput(
   item: NormalizedAutmogPen,
-  makerId: string,
+  makerId: number,
 ): AutmogPenSyncMutationInput {
   return {
     images: item.images.map((image) => ({

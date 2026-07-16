@@ -30,12 +30,12 @@ export type ScraperItemJob =
 
 export type ScraperImageJob =
   | {
-      imageId: string;
+      imageId: number;
       source: typeof scraperSources.autmog;
       type: "autmog.image.upload";
     }
   | {
-      imageId: string;
+      imageId: number;
       source: typeof scraperSources.autmog;
       type: "autmog.image.delete";
     };

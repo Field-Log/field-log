@@ -14,20 +14,20 @@ export function getAutmogArchiveJobId(sourceProductIds: readonly string[]) {
 }
 
 export function getAutmogImageUploadJobId(input: {
-  imageId: string;
+  imageId: number;
   sourceHash: string;
 }): string {
   return createJobId(
     "autmog",
     "image",
     "upload",
-    input.imageId,
+    String(input.imageId),
     input.sourceHash,
   );
 }
 
-export function getAutmogImageDeleteJobId(input: { imageId: string }): string {
-  return createJobId("autmog", "image", "delete", input.imageId);
+export function getAutmogImageDeleteJobId(input: { imageId: number }): string {
+  return createJobId("autmog", "image", "delete", String(input.imageId));
 }
 
 function createJobId(...parts: readonly string[]): string {

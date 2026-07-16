@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -8,7 +9,6 @@ import {
   text,
   timestamp,
   uniqueIndex,
-  uuid,
 } from "drizzle-orm/pg-core";
 
 export type AutmogPenImageRecord = {
@@ -65,7 +65,9 @@ export type ScraperRunStats = {
 export const makers = pgTable(
   "makers",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
     name: text("name").notNull(),
     rootUrl: text("root_url").notNull(),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
@@ -83,7 +85,9 @@ export const makers = pgTable(
 export const scraperRuns = pgTable(
   "scraper_runs",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
     source: text("source").notNull(),
     jobType: text("job_type").notNull(),
     status: text("status").notNull(),
@@ -114,8 +118,10 @@ export const scraperRuns = pgTable(
 export const tmpAutmogPens = pgTable(
   "tmp_autmog_pens",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
-    makerId: uuid("maker_id")
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
+    makerId: bigint("maker_id", { mode: "number" })
       .notNull()
       .references(() => makers.id, { onDelete: "restrict" }),
     sourceProductId: text("source_product_id").notNull(),
@@ -200,8 +206,10 @@ export const tmpAutmogPens = pgTable(
 export const tmpAutmogPenImages = pgTable(
   "tmp_autmog_pen_images",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
-    penId: uuid("pen_id")
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
+    penId: bigint("pen_id", { mode: "number" })
       .notNull()
       .references(() => tmpAutmogPens.id, { onDelete: "cascade" }),
     sourceImageId: text("source_image_id"),
@@ -243,8 +251,10 @@ export const tmpAutmogPenImages = pgTable(
 export const tmpAutmogPenVersions = pgTable(
   "tmp_autmog_pen_versions",
   {
-    id: uuid("id").defaultRandom().primaryKey(),
-    penId: uuid("pen_id")
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
+    penId: bigint("pen_id", { mode: "number" })
       .notNull()
       .references(() => tmpAutmogPens.id, { onDelete: "cascade" }),
     sourceProductId: text("source_product_id").notNull(),

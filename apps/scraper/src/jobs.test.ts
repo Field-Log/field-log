@@ -19,7 +19,7 @@ vi.mock("./db/autmog.js", () => ({
   createScraperDb: vi.fn(),
   finishScraperRun: vi.fn(),
   startScraperRun: vi.fn(async () => ({
-    id: "run_1",
+    id: 1000,
   })),
 }));
 
