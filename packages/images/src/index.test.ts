@@ -1,18 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { createImageStorage } from "./imagekit.js";
+import { createImageStorage } from "./index.js";
 
 describe("createImageStorage", () => {
-  it("skips uploads and deletes in dry-run mode", async () => {
+  it("skips image mutations in dry-run mode", async () => {
     const storage = createImageStorage({ dryRun: true });
 
     await expect(
-      storage.uploadAutmogPenImage({
-        sourceHash: "sha256:abc",
-        sourceImageId: "123",
-        sourceProductId: "456",
-        sourceUrl: "https://cdn.shopify.com/image.jpg",
+      storage.uploadRemoteImage({
+        fileName: "test.webp",
+        sourceUrl: "https://cdn.example.test/image.jpg",
       }),
     ).resolves.toBeNull();
+    await expect(storage.updateFile("file-id", {})).resolves.toBeNull();
     await expect(storage.deleteFile("file-id")).resolves.toBe("skipped");
   });
 

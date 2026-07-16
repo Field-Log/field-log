@@ -1,3 +1,4 @@
+import { createNoopLogger } from "@package/logger";
 import { describe, expect, it } from "vitest";
 import { createServices } from "./index.js";
 
@@ -15,6 +16,14 @@ describe("services", () => {
 
     expect(() => services.logger).toThrow(
       "Logger service has not been configured",
+    );
+  });
+
+  it("throws a clear error when image services are used before configuration", () => {
+    const services = createServices();
+
+    expect(() => services.images).toThrow(
+      "Image services have not been configured",
     );
   });
 
@@ -47,6 +56,18 @@ describe("services", () => {
     ).toThrow("Database services require logger configuration");
   });
 
+  it("rejects image configuration without logger configuration", () => {
+    const services = createServices();
+
+    expect(() =>
+      services.configure({
+        images: {
+          dryRun: true,
+        },
+      }),
+    ).toThrow("Image services require logger configuration");
+  });
+
   it("configures database when logger configuration is provided", () => {
     const services = createServices();
 
@@ -63,5 +84,38 @@ describe("services", () => {
 
     expect(services.db).toBeDefined();
     expect(services.logger).toBeDefined();
+  });
+
+  it("configures images when logger configuration is provided", () => {
+    const services = createServices();
+
+    services.configure({
+      images: {
+        dryRun: true,
+      },
+      logger: {
+        app: "api",
+        environment: "test",
+        transports: [],
+      },
+    });
+
+    expect(services.images).toBeDefined();
+    expect(services.logger).toBeDefined();
+  });
+
+  it("accepts an existing logger instance for image services", () => {
+    const services = createServices();
+    const logger = createNoopLogger({ app: "scraper", environment: "test" });
+
+    services.configure({
+      images: {
+        dryRun: true,
+      },
+      logger,
+    });
+
+    expect(services.logger).toBe(logger);
+    expect(services.images).toBeDefined();
   });
 });

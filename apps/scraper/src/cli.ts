@@ -44,7 +44,7 @@ async function main() {
       loggerMode: env.LOGGER,
       logLevel: env.LOG_LEVEL,
     });
-    context = await createScraperJobContext(env);
+    context = await createScraperJobContext(env, logger);
 
     if (command.type === "cron:run") {
       await runRailwayCronJob({ context, env, logger });

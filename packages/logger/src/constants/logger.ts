@@ -54,6 +54,11 @@ export const loggerMessages = {
       ensure: "database.users.ensure",
     },
   },
+  images: {
+    delete: "images.delete",
+    update: "images.update",
+    upload: "images.upload",
+  },
   mobile: {
     authSignInFailed: "mobile.auth.signIn.failed",
     databaseInitFailed: "mobile.database.init.failed",

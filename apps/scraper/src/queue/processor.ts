@@ -1,5 +1,6 @@
 import type { Database } from "@package/database";
 import { type Logger, loggerMessages } from "@package/logger";
+import type { ImagesService } from "@package/services";
 import { type Job, type Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
 import {
@@ -10,7 +11,6 @@ import {
   markAutmogImageUploaded,
   syncAutmogPen,
 } from "../db/autmog.js";
-import type { ImageStorage } from "../image/imagekit.js";
 import {
   type ScraperImageJob,
   type ScraperItemJob,
@@ -37,7 +37,7 @@ export type RunQueueProcessorOptions = {
   concurrency: number;
   connection: Redis;
   db: Database;
-  imageStorage: ImageStorage;
+  imageStorage: ImagesService;
   logger: Logger;
   queues: ScraperQueues;
 };
@@ -342,7 +342,7 @@ async function processImageJob({
 }: {
   db: Database;
   errorCounter: ProcessorErrorCounter;
-  imageStorage: ImageStorage;
+  imageStorage: ImagesService;
   job: Job<ScraperImageJob>;
   logger: Logger;
 }) {
@@ -378,11 +378,25 @@ async function processImageJob({
         return "skipped";
       }
 
-      const result = await imageStorage.uploadAutmogPenImage({
-        sourceHash: row.image.sourceHash,
-        sourceImageId: job.data.sourceImageId,
-        sourceProductId: row.pen.sourceProductId,
+      const result = await imageStorage.uploadRemoteImage({
+        fileName: getAutmogImageFileName({
+          sourceHash: row.image.sourceHash,
+          sourceImageId: job.data.sourceImageId,
+        }),
+        folder: `/scrapers/autmog/pens/${row.pen.sourceProductId}`,
+        overwriteFile: true,
+        overwriteTags: true,
         sourceUrl: job.data.sourceUrl,
+        tags: [
+          "scraper",
+          "autmog",
+          "autmog-pen",
+          `source-product:${row.pen.sourceProductId}`,
+        ],
+        transformation: {
+          pre: "w-2000,h-2000,c-at_max,q-85,f-webp",
+        },
+        useUniqueFileName: false,
       });
 
       if (!result) {
@@ -493,6 +507,18 @@ async function processImageJob({
     });
     throw error;
   }
+}
+
+function getAutmogImageFileName({
+  sourceHash,
+  sourceImageId,
+}: {
+  sourceHash: string;
+  sourceImageId: string | null;
+}): string {
+  const suffix = sourceImageId ?? sourceHash.replace("sha256:", "");
+
+  return `${suffix}.webp`;
 }
 
 export function createProcessorErrorCounter(): ProcessorErrorCounter {

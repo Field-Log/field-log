@@ -296,6 +296,9 @@ importers:
       '@package/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@package/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@6.0.3)(zod@4.4.3)
@@ -308,9 +311,6 @@ importers:
       hono:
         specifier: latest
         version: 4.12.30
-      imagekit:
-        specifier: ^6.0.0
-        version: 6.0.0
       ioredis:
         specifier: ^5.11.1
         version: 5.11.1
@@ -472,6 +472,19 @@ importers:
         specifier: workspace:*
         version: link:../tsconfig
 
+  packages/images:
+    dependencies:
+      '@imagekit/nodejs':
+        specifier: ^7.10.0
+        version: 7.10.0
+    devDependencies:
+      '@package/eslint':
+        specifier: workspace:*
+        version: link:../eslint
+      '@package/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+
   packages/infisical-runner:
     devDependencies:
       '@package/eslint':
@@ -497,6 +510,9 @@ importers:
       '@package/database':
         specifier: workspace:*
         version: link:../database
+      '@package/images':
+        specifier: workspace:*
+        version: link:../images
       '@package/logger':
         specifier: workspace:*
         version: link:../logger
@@ -2399,6 +2415,9 @@ packages:
 
   '@ide/backoff@1.0.0':
     resolution: {integrity: sha512-F0YfUDjvT+Mtt/R4xdl2X0EYCHMMiJqNLdxHD++jDT5ydEFIyqbCHh51Qx2E211dgZprPKhV7sHmnXKpLuvc5g==}
+
+  '@imagekit/nodejs@7.10.0':
+    resolution: {integrity: sha512-9dM/bxK5LCx1lB6jHpGuRJpeh+uM2hlsHQfW8h3SC0ycvIof1ePDWeXcEakxpQ5WZs0iTaLpRjWUkDW2weT3Eg==}
 
   '@inquirer/external-editor@1.0.3':
     resolution: {integrity: sha512-RWbSrDiYmO4LbejWY7ttpxczuwQyZLBUyygsA9Nsv95hpzUWwnNTVQmAq3xuh7vNwCp07UTmE5i11XAEExx4RA==}
@@ -5976,9 +5995,6 @@ packages:
       crossws:
         optional: true
 
-  hamming-distance@1.0.0:
-    resolution: {integrity: sha512-hYz2IIKtyuZGfOqCs7skNiFEATf+v9IUNSOaQSr6Ll4JOxxWhOvXvc3mIdCW82Z3xW+zUoto7N/ssD4bDxAWoA==}
-
   has-flag@3.0.0:
     resolution: {integrity: sha512-sKJf1+ceQBr4SMkvQnBDNDtf4TXpVhVGateu0t918bl30FnbE2m4vNLX+VWe/dpjlb+HugGYzW7uQXH98HPEYw==}
     engines: {node: '>=4'}
@@ -6122,11 +6138,6 @@ packages:
     resolution: {integrity: sha512-rH+46sQJ2dlwfjfhCyNx5thzrv+dtmBIhPHk0zgRUukHzZ/kRueTJXoYYsclBaKcSMBWuGbOFXtioLpzTb5euw==}
     engines: {node: '>=16.x'}
     hasBin: true
-
-  imagekit@6.0.0:
-    resolution: {integrity: sha512-0MsxThZM2PYH6ngwN3zi9PDa8pCB5mEZG2FSySYiZk3Hfri8IMwUqVNzRlLQewBHQ3YtTN9M59O0Xe9HRewtOA==}
-    engines: {node: '>=12.0.0'}
-    deprecated: Please use @imagekit/nodejs
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -11232,6 +11243,10 @@ snapshots:
 
   '@ide/backoff@1.0.0': {}
 
+  '@imagekit/nodejs@7.10.0':
+    dependencies:
+      standardwebhooks: 1.0.0
+
   '@inquirer/external-editor@1.0.3(@types/node@26.1.0)':
     dependencies:
       chardet: 2.2.0
@@ -15484,8 +15499,6 @@ snapshots:
     optionalDependencies:
       crossws: 0.4.9(srvx@0.11.17)
 
-  hamming-distance@1.0.0: {}
-
   has-flag@3.0.0: {}
 
   has-flag@4.0.0: {}
@@ -15619,18 +15632,6 @@ snapshots:
   image-size@1.2.1:
     dependencies:
       queue: 6.0.2
-
-  imagekit@6.0.0:
-    dependencies:
-      axios: 1.18.1
-      form-data: 4.0.6
-      hamming-distance: 1.0.0
-      lodash: 4.18.1
-      tslib: 2.8.1
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   import-fresh@3.3.1:
     dependencies:

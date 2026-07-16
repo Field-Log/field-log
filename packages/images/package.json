@@ -1,5 +1,5 @@
 {
-  "name": "@package/services",
+  "name": "@package/images",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -23,10 +23,7 @@
     "test:watch:no-infisical": "vitest --passWithNoTests --exclude \"dist/**\""
   },
   "dependencies": {
-    "@package/database": "workspace:*",
-    "@package/images": "workspace:*",
-    "@package/logger": "workspace:*",
-    "drizzle-orm": "latest"
+    "@imagekit/nodejs": "^7.10.0"
   },
   "devDependencies": {
     "@package/eslint": "workspace:*",

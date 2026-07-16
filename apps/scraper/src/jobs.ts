@@ -1,5 +1,6 @@
 import type { Database } from "@package/database";
 import { type Logger, loggerMessages } from "@package/logger";
+import { createServices, type ImagesService } from "@package/services";
 import { runAutmogProducer } from "./autmog/producer.js";
 import {
   createScraperDb,
@@ -7,7 +8,6 @@ import {
   startScraperRun,
 } from "./db/autmog.js";
 import type { createScraperJobEnv } from "./env.schema.js";
-import { createImageStorage } from "./image/imagekit.js";
 import {
   runQueueDeadLetterProcessor,
   runQueueProcessor,
@@ -23,22 +23,27 @@ export const scraperSourceKeys = Object.values(scraperSources);
 export type ScraperJobContext = {
   close: () => Promise<void>;
   db: Database;
-  imageStorage: ReturnType<typeof createImageStorage>;
+  imageStorage: ImagesService;
   redis: ReturnType<typeof createRedisConnection>;
   queues: ScraperQueues;
 };
 
 export async function createScraperJobContext(
   env: ScraperJobEnv,
+  logger: Logger,
 ): Promise<ScraperJobContext> {
   const db = createScraperDb(env.DATABASE_URL);
   const redis = createRedisConnection(env.REDIS_URL);
   const queues = createScraperQueues(redis);
-  const imageStorage = createImageStorage({
-    dryRun: env.SCRAPER_DRY_RUN,
-    privateKey: env.IMAGE_KIT_PRIVATE_KEY,
-    publicKey: env.IMAGE_KIT_PUBLIC_KEY,
-    urlEndpoint: env.IMAGE_KIT_URL_ENDPOINT,
+  const services = createServices();
+  services.configure({
+    images: {
+      dryRun: env.SCRAPER_DRY_RUN,
+      privateKey: env.IMAGE_KIT_PRIVATE_KEY,
+      publicKey: env.IMAGE_KIT_PUBLIC_KEY,
+      urlEndpoint: env.IMAGE_KIT_URL_ENDPOINT,
+    },
+    logger,
   });
 
   await redis.ping();
@@ -49,7 +54,7 @@ export async function createScraperJobContext(
       redis.disconnect();
     },
     db,
-    imageStorage,
+    imageStorage: services.images,
     queues,
     redis,
   };

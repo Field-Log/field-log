@@ -33,7 +33,7 @@ export async function startScraperScheduler({
   env: ScraperJobEnv;
   logger: Logger;
 }): Promise<ScraperScheduler> {
-  const context = await createScraperJobContext(env);
+  const context = await createScraperJobContext(env, logger);
   const tasks: ScheduledTask[] = [
     {
       intervalMs: env.SCRAPER_AUTMOG_INTERVAL_MINUTES * millisecondsPerMinute,

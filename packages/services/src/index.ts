@@ -1,29 +1,36 @@
 import type { DatabaseConfig } from "@package/database";
 import { createDb } from "@package/database";
+import type { ImageStorageConfig } from "@package/images";
 import { createLogger, type Logger, type LoggerConfig } from "@package/logger";
 import { createDbServices, type DbServices } from "./db/index.js";
+import { createImagesService, type ImagesService } from "./images/index.js";
 
-export type ServicesConfig =
-  | {
-      db: DatabaseConfig;
-      logger: LoggerConfig;
-    }
-  | {
-      db?: undefined;
-      logger?: LoggerConfig;
-    };
+export type ServicesLoggerConfig = LoggerConfig | Logger;
+
+export type ServicesConfig = {
+  db?: DatabaseConfig;
+  images?: ImageStorageConfig;
+  logger?: ServicesLoggerConfig;
+};
 
 export class Services {
   #db?: DbServices;
+  #images?: ImagesService;
   #logger?: Logger;
 
   configure(config: ServicesConfig): void {
-    if (config.db && !config.logger) {
+    if (config.db && !config.logger && !this.#logger) {
       throw new Error("Database services require logger configuration.");
     }
 
+    if (config.images && !config.logger && !this.#logger) {
+      throw new Error("Image services require logger configuration.");
+    }
+
     if (config.logger) {
-      this.#logger = createLogger(config.logger);
+      this.#logger = isLogger(config.logger)
+        ? config.logger
+        : createLogger(config.logger);
     }
 
     if (config.db) {
@@ -32,6 +39,14 @@ export class Services {
       }
 
       this.#db = createDbServices(createDb(config.db), this.#logger);
+    }
+
+    if (config.images) {
+      if (!this.#logger) {
+        throw new Error("Image services require logger configuration.");
+      }
+
+      this.#images = createImagesService(config.images, this.#logger);
     }
   }
 
@@ -54,6 +69,16 @@ export class Services {
 
     return this.#logger;
   }
+
+  get images(): ImagesService {
+    if (!this.#images) {
+      throw new Error(
+        "Image services have not been configured. Import the app-local services module and provide image configuration before using s.images.",
+      );
+    }
+
+    return this.#images;
+  }
 }
 
 export function createServices(): Services {
@@ -63,3 +88,23 @@ export function createServices(): Services {
 const services = createServices();
 
 export default services;
+
+function isLogger(value: ServicesLoggerConfig): value is Logger {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "operation" in value &&
+    typeof value.operation === "function"
+  );
+}
+
+export type {
+  ImageStorageConfig,
+  ImageUpdateInput,
+  ImageUpdateResult,
+  ImageUploadInput,
+  ImageUploadResult,
+  RemoteImageUploadInput,
+} from "@package/images";
+export type { ImagesService };
+export { createImagesService };
