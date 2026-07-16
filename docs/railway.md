@@ -69,6 +69,16 @@ Future source schedules should be added in `apps/scraper` and staggered in code
 or configuration. For example, Grimsmo Saga can run on the hour while knife
 sources run at offset minutes.
 
+Manual source runs use source keys:
+
+```sh
+pnpm --filter @app/scraper run scrape -- autmog
+```
+
+Future source keys should follow the same shape, for example `grimsmo-saga` or
+`grimsmo-fjell`, once their producers are implemented. The older
+`pnpm --filter @app/scraper run scrape:autmog` alias remains available.
+
 ## Queue Design
 
 Use BullMQ with Railway Redis.

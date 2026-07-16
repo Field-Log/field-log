@@ -11,9 +11,11 @@ import { createImageStorage } from "./image/imagekit.js";
 import { runQueueProcessor } from "./queue/processor.js";
 import { createScraperQueues, type ScraperQueues } from "./queue/queues.js";
 import { createRedisConnection } from "./queue/redis.js";
-import { scraperSources } from "./scraper-types.js";
+import { type ScraperSourceName, scraperSources } from "./scraper-types.js";
 
 export type ScraperJobEnv = ReturnType<typeof createScraperJobEnv>;
+
+export const scraperSourceKeys = Object.values(scraperSources);
 
 export type ScraperJobContext = {
   close: () => Promise<void>;
@@ -77,6 +79,23 @@ export async function runAutmogProducerJob({
   });
 }
 
+export async function runSourceProducerJob({
+  context,
+  logger,
+  source,
+}: {
+  context: ScraperJobContext;
+  logger: Logger;
+  source: ScraperSourceName;
+}) {
+  if (source === scraperSources.autmog) {
+    await runAutmogProducerJob({ context, logger });
+    return;
+  }
+
+  throw new Error(`Scraper source "${source}" is not implemented yet.`);
+}
+
 export async function runQueueProcessorJob({
   context,
   env,
@@ -125,7 +144,7 @@ async function runLoggedCommand({
   logger,
   source,
 }: {
-  command: "process:queue" | "scrape:autmog";
+  command: "process:queue" | `scrape:${ScraperSourceName}`;
   db: Database;
   execute: () => Promise<Record<string, number | undefined>>;
   jobType: string;

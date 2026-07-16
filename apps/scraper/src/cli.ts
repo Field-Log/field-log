@@ -2,15 +2,24 @@ import { readProcessScraperRuntimeEnv } from "./env.js";
 import { createScraperJobEnv } from "./env.schema.js";
 import {
   createScraperJobContext,
-  runAutmogProducerJob,
   runQueueProcessorJob,
+  runSourceProducerJob,
+  scraperSourceKeys,
 } from "./jobs.js";
 import { createScraperLogger } from "./lib/logger.js";
+import type { ScraperSourceName } from "./scraper-types.js";
 
-type ScraperCommand = "process:queue" | "scrape:autmog";
+type ScraperCommand =
+  | {
+      type: "process:queue";
+    }
+  | {
+      source: ScraperSourceName;
+      type: "scrape";
+    };
 
 async function main() {
-  const command = parseCommand(process.argv[2]);
+  const command = parseCommand(process.argv.slice(2));
   const env = createScraperJobEnv(readProcessScraperRuntimeEnv());
   const logger = createScraperLogger({
     appEnv: env.APP_ENV,
@@ -23,8 +32,12 @@ async function main() {
   const context = await createScraperJobContext(env);
 
   try {
-    if (command === "scrape:autmog") {
-      await runAutmogProducerJob({ context, logger });
+    if (command.type === "scrape") {
+      await runSourceProducerJob({
+        context,
+        logger,
+        source: command.source,
+      });
       return;
     }
 
@@ -35,14 +48,38 @@ async function main() {
   }
 }
 
-function parseCommand(value: string | undefined): ScraperCommand {
-  if (value === "process:queue" || value === "scrape:autmog") {
-    return value;
+function parseCommand(args: string[]): ScraperCommand {
+  const [command, sourceArg] = args;
+
+  if (command === "process:queue") {
+    return { type: "process:queue" };
+  }
+
+  if (command === "scrape" && isScraperSourceKey(sourceArg)) {
+    return {
+      source: sourceArg,
+      type: "scrape",
+    };
+  }
+
+  const [prefix, sourceKey] = command?.split(":") ?? [];
+
+  if (prefix === "scrape" && isScraperSourceKey(sourceKey)) {
+    return {
+      source: sourceKey,
+      type: "scrape",
+    };
   }
 
   throw new Error(
-    `Unknown scraper command "${value ?? ""}". Expected scrape:autmog or process:queue.`,
+    `Unknown scraper command "${args.join(" ")}". Expected scrape <source>, scrape:<source>, or process:queue. Supported sources: ${scraperSourceKeys.join(", ")}.`,
   );
+}
+
+function isScraperSourceKey(
+  value: string | undefined,
+): value is ScraperSourceName {
+  return scraperSourceKeys.some((source) => source === value);
 }
 
 void main().catch(() => {
