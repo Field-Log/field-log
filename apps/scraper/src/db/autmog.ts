@@ -4,7 +4,7 @@ import {
   type ScraperRunStats,
   schema,
 } from "@package/database";
-import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, notInArray } from "drizzle-orm";
 import { parseDate } from "../lib/dates.js";
 import type { NormalizedAutmogPen } from "../scraper-types.js";
 
@@ -52,7 +52,7 @@ export async function startScraperRun(
         eq(schema.scraperRuns.source, input.source),
         eq(schema.scraperRuns.jobType, input.jobType),
         eq(schema.scraperRuns.status, "running"),
-        sql`${schema.scraperRuns.startedAt} < ${staleBefore}`,
+        lt(schema.scraperRuns.startedAt, staleBefore),
       ),
     );
 

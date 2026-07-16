@@ -52,7 +52,7 @@ describe("runAutmogProducer", () => {
       },
       name: "autmog.pen",
     });
-    expect(jobs[0].opts.jobId).toMatch(/^autmog:pen:123:sha256:/);
+    expect(jobs[0].opts.jobId).toMatch(/^autmog--pen--123--sha256%3A/);
     expect(jobs[1]).toMatchObject({
       data: {
         seenSourceProductIds: ["123"],

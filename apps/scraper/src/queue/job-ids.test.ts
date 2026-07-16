@@ -18,9 +18,22 @@ describe("scraper job ids", () => {
         imageId: "image-id",
         sourceHash: "sha256:image",
       }),
-    ).toBe("autmog:image:upload:image-id:sha256:image");
+    ).toBe("autmog--image--upload--image-id--sha256%3Aimage");
     expect(getAutmogImageDeleteJobId({ imageId: "image-id" })).toBe(
-      "autmog:image:delete:image-id",
+      "autmog--image--delete--image-id",
     );
+  });
+
+  it("creates BullMQ-safe job ids without colon separators", () => {
+    const jobIds = [
+      getAutmogArchiveJobId(["2", "1"]),
+      getAutmogImageUploadJobId({
+        imageId: "image-id",
+        sourceHash: "sha256:image",
+      }),
+      getAutmogImageDeleteJobId({ imageId: "image-id" }),
+    ];
+
+    expect(jobIds.every((jobId) => !jobId.includes(":"))).toBe(true);
   });
 });
