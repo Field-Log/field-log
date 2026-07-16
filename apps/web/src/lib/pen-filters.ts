@@ -1,4 +1,4 @@
-import type { AutmogProduct } from "./autmog-data";
+import type { PenProduct } from "./pen-data";
 
 export const filterGroups = [
   { key: "category", label: "Category", andable: false },
@@ -40,7 +40,7 @@ export function createDefaultMatchModes(): MatchModes {
   ) as MatchModes;
 }
 
-export function valuesFor(products: AutmogProduct[], key: FilterKey) {
+export function valuesFor(products: PenProduct[], key: FilterKey) {
   const counts = new Map<string, number>();
 
   for (const product of products) {
@@ -60,9 +60,9 @@ export function valuesFor(products: AutmogProduct[], key: FilterKey) {
   });
 }
 
-const haystackCache = new WeakMap<AutmogProduct, string>();
+const haystackCache = new WeakMap<PenProduct, string>();
 
-function searchableHaystack(product: AutmogProduct) {
+function searchableHaystack(product: PenProduct) {
   const cached = haystackCache.get(product);
   if (cached) return cached;
 
@@ -90,7 +90,7 @@ function searchableHaystack(product: AutmogProduct) {
 }
 
 export function productMatches(
-  product: AutmogProduct,
+  product: PenProduct,
   query: string,
   active: ActiveFilters,
   matchModes: MatchModes,
@@ -127,16 +127,16 @@ export function productMatches(
   return true;
 }
 
-export function sortProducts(products: AutmogProduct[], sort: SortKey) {
+export function sortProducts(products: PenProduct[], sort: SortKey) {
   const rows = [...products];
   const numberAscending =
     (key: "price_min" | "weight_g" | "diameter_in") =>
-    (a: AutmogProduct, b: AutmogProduct) =>
+    (a: PenProduct, b: PenProduct) =>
       (a[key] ?? Number.POSITIVE_INFINITY) -
       (b[key] ?? Number.POSITIVE_INFINITY);
   const numberDescending =
     (key: "price_min" | "weight_g" | "diameter_in") =>
-    (a: AutmogProduct, b: AutmogProduct) =>
+    (a: PenProduct, b: PenProduct) =>
       (b[key] ?? Number.NEGATIVE_INFINITY) -
       (a[key] ?? Number.NEGATIVE_INFINITY);
 
@@ -173,7 +173,7 @@ export function sortProducts(products: AutmogProduct[], sort: SortKey) {
   return rows;
 }
 
-export function normalizedHeadline(product: AutmogProduct) {
+export function normalizedHeadline(product: PenProduct) {
   if (product.category === "Accessory") return product.title;
 
   const clip = product.clips[0];

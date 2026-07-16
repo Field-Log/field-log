@@ -26,6 +26,7 @@ describe("logger", () => {
       api: {
         healthChecked: "api.health.checked",
         serverListening: "api.server.listening",
+        workerUnhandledException: "api.worker.unhandledException",
       },
       ci: {
         database: {
