@@ -38,6 +38,13 @@ Override the local Redis port when needed:
 SCRAPER_REDIS_PORT=6380 pnpm dev:scraper
 ```
 
+Manual scraper commands use the same Redis helper, so this also starts or reuses
+the local container:
+
+```sh
+pnpm scraper:scrape -- autmog
+```
+
 The helper does not delete Redis data. To remove the local scraper Redis
 container and its data:
 

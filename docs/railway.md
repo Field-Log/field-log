@@ -70,7 +70,8 @@ or configuration. For example, Grimsmo Saga can run on the hour while knife
 sources run at offset minutes.
 
 Manual source runs use source keys. For local development, use the root command
-so `/apps/scraper` secrets are injected from Infisical:
+so local Docker/OrbStack Redis is started and `/apps/scraper` secrets are
+injected from Infisical:
 
 ```sh
 pnpm scraper:scrape -- autmog

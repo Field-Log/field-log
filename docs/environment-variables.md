@@ -123,8 +123,9 @@ REDIS_URL=${{scraper-queue.REDIS_URL}}
 For local development, use Docker/OrbStack and `pnpm dev:scraper`; see
 [docker.md](./docker.md).
 
-For local manual source runs, use the root scraper commands so Infisical injects
-`/apps/scraper` values:
+For local manual source runs, use the root scraper commands. They start or reuse
+the local Docker/OrbStack Redis container and inject `/apps/scraper` values from
+Infisical:
 
 ```sh
 pnpm scraper:scrape -- autmog
