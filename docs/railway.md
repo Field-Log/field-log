@@ -1,58 +1,40 @@
 # Railway
 
-`apps/scraper` runs as a TypeScript app on Railway. Stage 1 is a minimal
-deployable app with a health endpoint so Railway can be connected to the repo.
-Later stages add cron producer and processor commands. The scraper is separate
-from the Cloudflare API Worker because scraper runs may exceed Worker Cron
-wall-time limits.
+`apps/scraper` runs as one TypeScript service on Railway. The service exposes a
+health endpoint, owns source scrape schedules in process, and uses BullMQ/Redis
+for item and image work. The scraper is separate from the Cloudflare API Worker
+because scraper runs may exceed Worker Cron wall-time limits.
 
-Railway owns process scheduling and Redis hosting. Postgres remains the durable
-source of truth for scraped rows, image state, run records, and version history.
-Redis is only the BullMQ work queue.
+Railway hosts the long-running scraper service and Redis. Postgres remains the
+durable source of truth for scraped rows, image state, run records, and version
+history. Redis is the BullMQ work queue and the scheduler lock store.
 
 ## Services
 
-Create only the `apps/scraper` services from this repository. Railway may
+Create only the `apps/scraper` service from this repository. Railway may
 detect other deployable workspace apps during import, but they should be ignored
 or skipped for this Railway project.
 
-The scraper services use separate Railway config files because each Railway
-config file describes one service deployment. If Railway asks for a config file
-path, use the path for the service being created:
+Use the root Railway config:
 
 | Service | Config file path |
 | --- | --- |
-| `scraper-health` | `/railway.json` |
-| `scraper-autmog` | `/railway.autmog.json` |
-| `scraper-processor` | `/railway.processor.json` |
+| `field-log` / `apps-scraper` | `/railway.json` |
 
-These configs pin the build and start commands to `@app/scraper`, set the health
-check or cron schedule for each service, and limit automatic deploy triggers to
-`apps/scraper`, shared packages, and root workspace config files.
+The config pins the build and start commands to `@app/scraper`, sets the health
+check, and limits automatic deploy triggers to `apps/scraper`, shared packages,
+and root workspace config files.
 
-The same config files also live under `apps/scraper/` for package-local
-discoverability, but the root paths above are the preferred Railway config paths
-because Railway always checks the repository root by default.
-
-Create these Railway services from the same repository:
+Create these Railway services/resources:
 
 | Service | Type | Command | Schedule |
 | --- | --- | --- | --- |
-| `scraper-health` | Web service | `pnpm --filter @app/scraper start` | Always on; used for Railway health checks. |
-| `scraper-autmog` | Cron service | `pnpm --filter @app/scraper run scrape:autmog` | `5 * * * *` |
-| `scraper-processor` | Cron service | `pnpm --filter @app/scraper run process:queue` | `*/15 * * * *` |
-| `redis` | Redis database | Railway Redis template | Always available to scraper services. |
+| `field-log` / `apps-scraper` | Web service | `pnpm --filter @app/scraper run start:scheduled` | Always on; runs `/health`, source schedules, and queue processing. |
+| `redis` | Redis database | Railway Redis template | Always available to the scraper service. |
 
-Stage 2 should add source producer services for Grimsmo without changing the
-processor shape. Keep Grimsmo producers separate for retry isolation, clearer
-logs, and staggered schedules:
-
-| Service | Type | Command | Schedule |
-| --- | --- | --- | --- |
-| `scraper-grimsmo-saga` | Cron service | `pnpm --filter @app/scraper run scrape:grimsmo-saga` | Hourly, staggered from knife scrapes, for example `0 * * * *`. |
-| `scraper-grimsmo-rask` | Cron service | `pnpm --filter @app/scraper run scrape:grimsmo-rask` | Hourly, staggered from other Grimsmo scrapes, for example `20 * * * *`. |
-| `scraper-grimsmo-fjell` | Cron service | `pnpm --filter @app/scraper run scrape:grimsmo-fjell` | Hourly, staggered from other Grimsmo scrapes, for example `40 * * * *`. |
-| `scraper-grimsmo-norseman` | Cron service | `pnpm --filter @app/scraper run scrape:grimsmo-norseman` | Hourly, staggered from other Grimsmo scrapes, for example `30 * * * *`. |
+Do not create one Railway service per scraped site. Adding Autmog, Grimsmo, FH,
+NTI, or future sources should add source definitions and handlers in
+`apps/scraper`, not new Railway services.
 
 ## Health Check
 
@@ -71,35 +53,21 @@ The response body is:
 }
 ```
 
-Use `/health` as the Railway healthcheck path for the `scraper-health` web
-service.
+Use `/health` as the Railway healthcheck path for the scraper service.
 
-## Cron Behavior
+## Schedule Behavior
 
-Railway cron services should do one task and exit. Close database, Redis, and
-logger transports before the process exits.
+The scraper service uses in-process schedules instead of Railway cron services.
+Autmog runs hourly by default, starting immediately after the service boots. The
+queue processor runs every 15 minutes by default, starting 30 seconds after boot.
 
-Railway skips a cron execution when the previous execution for that service is
-still active. Use the scraper run lock in Postgres as the application-level
-guard, and make commands safe to retry.
+Schedules are guarded with Redis locks so a future multi-replica deployment does
+not run duplicate source fetches or processors at the same time. Keep handlers
+idempotent anyway; BullMQ delivery is at-least-once.
 
-Railway cron schedules use UTC. The processor schedule should run every 15
-minutes:
-
-```txt
-*/15 * * * *
-```
-
-Autmog and Grimsmo source producers should run hourly. Stagger Grimsmo producers
-so Saga, Rask, Fjell, and Norseman source scrapes do not start at the same
-minute.
-
-The Autmog producer and queue processor schedules are encoded in:
-
-```txt
-railway.autmog.json
-railway.processor.json
-```
+Future source schedules should be added in `apps/scraper` and staggered in code
+or configuration. For example, Grimsmo Saga can run on the hour while knife
+sources run at offset minutes.
 
 ## Queue Design
 
@@ -145,12 +113,12 @@ batch sizes before raising concurrency.
 ## Redis
 
 Create Redis directly in Railway using the Railway Redis database/template.
-`apps/scraper` should not provision Redis at runtime. Reference Redis from each
+`apps/scraper` should not provision Redis at runtime. Reference Redis from the
 scraper service through `REDIS_URL`.
 
 Prefer Railway private networking/service variables for preview and production
 service-to-service access. If the Redis service is named `scraper-queue`, set
-this variable on each scraper service:
+this variable on the scraper service:
 
 ```dotenv
 REDIS_URL=${{scraper-queue.REDIS_URL}}
@@ -179,9 +147,8 @@ Required groups:
 
 ## Deployment Notes
 
-- Keep each Railway cron service scoped to one command.
-- Do not run an in-process scheduler inside `apps/scraper`; Railway cron starts
-  the process on schedule.
+- Keep one Railway service for `apps/scraper`.
+- Run the scheduled service with `pnpm --filter @app/scraper run start:scheduled`.
 - Do not rely on Redis for historical state. Persist current state and
   idempotency markers in Postgres.
 - Make the processor safe to stop mid-run. Pending queue jobs and Postgres image

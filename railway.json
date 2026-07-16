@@ -9,11 +9,12 @@
       "package.json",
       "pnpm-lock.yaml",
       "pnpm-workspace.yaml",
+      "railway.json",
       "turbo.json"
     ]
   },
   "deploy": {
-    "startCommand": "pnpm --filter @app/scraper start",
+    "startCommand": "pnpm --filter @app/scraper run start:scheduled",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",

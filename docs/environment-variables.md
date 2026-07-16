@@ -74,9 +74,9 @@ Legend: `S` = server-only. `C` = client-visible.
 
 ### Scraper App: `/apps/scraper`
 
-`apps/scraper` runs as Railway cron services. Source producer services enqueue
-scraped item work into BullMQ/Redis. A processor service runs every 15 minutes
-and drains queued item and image work.
+`apps/scraper` runs as one Railway service. The service exposes `/health`, owns
+source schedules in process, enqueues scraped item work into BullMQ/Redis, and
+drains queued item and image work.
 
 Use Infisical path `/apps/scraper` for local development and non-Railway secret
 source of truth. In Railway, prefer service references for platform-provided
@@ -97,18 +97,23 @@ values such as Redis connection strings.
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the health service. Defaults to `4007` locally. | ? (All) | `S` |
 | `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
+| `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval. Defaults to `60`. | ? (All) | `S` |
+| `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape after service boot. Defaults to `0`. | ? (All) | `S` |
 | `SCRAPER_DRY_RUN` | When `true`, processor jobs write DB/queue state but skip ImageKit upload/delete mutations. | ? (All) | `S` |
 | `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
 | `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
+| `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval. Defaults to `15`. | ? (All) | `S` |
+| `SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS` | Optional delay before the first queue processor run after service boot. Defaults to `30`. | ? (All) | `S` |
 | `SCRAPER_QUEUE_CONCURRENCY` | Optional BullMQ worker concurrency cap. Recommended initial value: `3`. | ? (All) | `S` |
+| `SCRAPER_SCHEDULER_ENABLED` | Enables in-process scrape and processor schedules. Railway uses `start:scheduled`, which sets this to `true`; local `pnpm dev:scraper` leaves it disabled unless explicitly set. | ? (All) | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
-See [railway.md](./railway.md) for Railway service and cron setup.
+See [railway.md](./railway.md) for Railway service and scheduler setup.
 
 For Railway preview and production, prefer a Railway service reference rather
 than storing the Redis URL in Infisical. If the Redis service is named
-`scraper-queue`, set this on each scraper service in Railway:
+`scraper-queue`, set this on the scraper service in Railway:
 
 ```dotenv
 REDIS_URL=${{scraper-queue.REDIS_URL}}
@@ -272,10 +277,10 @@ a workflow explicitly starts requiring that.
 | `GITHUB_RUN_ID` | Workflow run ID for links. | GitHub Actions | `S` |
 | `GITHUB_SERVER_URL` | GitHub server base URL. | GitHub Actions | `S` |
 | `GITHUB_SHA` | Commit SHA for links. | GitHub Actions | `S` |
-| `RAILWAY_ENVIRONMENT_NAME` | Railway environment name for deployed scraper services. | Railway | `S` |
-| `RAILWAY_PROJECT_ID` | Railway project identifier for deployed scraper services. | Railway | `S` |
-| `RAILWAY_SERVICE_ID` | Railway service identifier for a deployed scraper cron service. | Railway | `S` |
-| `RAILWAY_SERVICE_NAME` | Railway service name for a deployed scraper cron service. | Railway | `S` |
+| `RAILWAY_ENVIRONMENT_NAME` | Railway environment name for the deployed scraper service. | Railway | `S` |
+| `RAILWAY_PROJECT_ID` | Railway project identifier for the deployed scraper service. | Railway | `S` |
+| `RAILWAY_SERVICE_ID` | Railway service identifier for the deployed scraper service. | Railway | `S` |
+| `RAILWAY_SERVICE_NAME` | Railway service name for the deployed scraper service. | Railway | `S` |
 | `VERCEL_ENV` | Vercel deployment environment. | Vercel | `S` |
 | `VERCEL_GIT_PULL_REQUEST_ID` | Pull request number for Vercel Preview builds. | Vercel | `S` |
 | `VERCEL_PROJECT_PRODUCTION_URL`[^8] | Vercel production domain. | Vercel | `S` |

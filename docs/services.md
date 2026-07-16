@@ -181,7 +181,7 @@ Only import the web services module from SSR code, server functions, loaders, or
 ## Boundaries
 
 - `apps/api` can use services directly.
-- `apps/scraper` can use services directly from Railway cron commands. Its
+- `apps/scraper` can use services directly from the Railway service. Its
   scraper-specific persistence currently uses `@package/database` directly
   because the schema and queue processor are source-specific.
 - `apps/web` can use services from SSR/server-side tasks.
