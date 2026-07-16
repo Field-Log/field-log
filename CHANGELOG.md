@@ -2,9 +2,9 @@
 
 ## 0.0.1
 
-### Patch Changes
+### Minor Changes
 
-- Establish the initial release baseline.
+- Add release automation and API versioning.
 
 ## Mobile Release Status
 
