@@ -14,10 +14,8 @@
     ]
   },
   "deploy": {
-    "startCommand": "pnpm --filter @app/scraper run start:scheduled",
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "startCommand": "pnpm --filter @app/scraper run cron:run",
+    "cronSchedule": "*/15 * * * *",
+    "restartPolicyType": "NEVER"
   }
 }

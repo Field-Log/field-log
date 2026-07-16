@@ -1,13 +1,14 @@
 # Railway
 
-`apps/scraper` runs as one TypeScript service on Railway. The service exposes a
-health endpoint, owns source scrape schedules in process, and uses BullMQ/Redis
-for item and image work. The scraper is separate from the Cloudflare API Worker
-because scraper runs may exceed Worker Cron wall-time limits.
+`apps/scraper` runs as one TypeScript cron service on Railway. Railway starts the
+service on a cron schedule, the scraper runs due source and queue jobs, then the
+process exits. The scraper is separate from the Cloudflare API Worker because
+scraper runs may exceed Worker Cron wall-time limits.
 
-Railway hosts the long-running scraper service and Redis. Postgres remains the
+Railway hosts the scheduled scraper service and Redis. Postgres remains the
 durable source of truth for scraped rows, image state, run records, and version
-history. Redis is the BullMQ work queue and the scheduler lock store.
+history. Redis is the BullMQ work queue and stores lightweight cron state, such
+as the last successful source run time.
 
 ## Services
 
@@ -21,15 +22,15 @@ Use the root Railway config:
 | --- | --- |
 | `field-log` / `apps-scraper` | `/railway.json` |
 
-The config pins the build and start commands to `@app/scraper`, sets the health
-check, and limits automatic deploy triggers to `apps/scraper`, shared packages,
-and root workspace config files.
+The config pins the build and start commands to `@app/scraper`, configures the
+Railway cron schedule, and limits automatic deploy triggers to `apps/scraper`,
+shared packages, and root workspace config files.
 
 Create these Railway services/resources:
 
 | Service | Type | Command | Schedule |
 | --- | --- | --- | --- |
-| `field-log` / `apps-scraper` | Web service | `pnpm --filter @app/scraper run start:scheduled` | Always on; runs `/health`, source schedules, and queue processing. |
+| `field-log` / `apps-scraper` | Cron service | `pnpm --filter @app/scraper run cron:run` | Railway cron `*/15 * * * *`; runs due source jobs and queue processing, then exits. |
 | `redis` | Redis database | Railway Redis template | Always available to the scraper service. |
 
 Do not create one Railway service per scraped site. Adding Autmog, Grimsmo, FH,
@@ -38,7 +39,7 @@ NTI, or future sources should add source definitions and handlers in
 
 ## Health Check
 
-Stage 1 exposes:
+The scraper still exposes this endpoint when started as a long-running server:
 
 ```txt
 GET /health
@@ -53,21 +54,40 @@ The response body is:
 }
 ```
 
-Use `/health` as the Railway healthcheck path for the scraper service.
+Do not configure a Railway healthcheck for the cron service. Railway cron
+deployments should run their start command to completion and exit. `/health` is
+only for the non-cron server command.
 
 ## Schedule Behavior
 
-The scraper service uses in-process schedules instead of Railway cron services.
-Autmog runs hourly by default, starting immediately after the service boots. The
-queue processor runs every 15 minutes by default, starting 30 seconds after boot.
+The scraper service uses Railway cron instead of in-process schedules. Railway
+runs the service every 15 minutes with:
 
-Schedules are guarded with Redis locks so a future multi-replica deployment does
-not run duplicate source fetches or processors at the same time. Keep handlers
-idempotent anyway; BullMQ delivery is at-least-once.
+```cron
+*/15 * * * *
+```
+
+Each cron execution runs `cron:run`. The queue processor runs every execution.
+Autmog runs when its configured interval has elapsed; by default that is hourly.
+The first cron execution after a fresh Redis state runs Autmog immediately.
+
+`railway.json` sets `deploy.cronSchedule`, so the value applies through
+Railway's config-as-code path. Railway's docs note that config-as-code values do
+not backfill the Settings form; verify the cron value in the deployment details,
+or set the same `*/15 * * * *` value manually in the Railway Settings page if
+you want the form itself populated.
+
+Railway cron services must exit after the job finishes. If a previous cron
+execution is still active when the next schedule is due, Railway skips the new
+execution.
+
+Source due state is stored in Redis. Keep handlers idempotent anyway; BullMQ
+delivery is at-least-once, and clearing Redis can cause a source producer to run
+earlier than its usual interval.
 
 Future source schedules should be added in `apps/scraper` and staggered in code
-or configuration. For example, Grimsmo Saga can run on the hour while knife
-sources run at offset minutes.
+or configuration inside the `cron:run` command. Do not add one Railway service
+per scraped site.
 
 Manual source runs use source keys. For local development, use the root command
 so local Docker/OrbStack Redis is started and `/apps/scraper` secrets are
@@ -76,6 +96,16 @@ injected from Infisical:
 ```sh
 pnpm scraper:scrape -- autmog
 ```
+
+To simulate one Railway cron execution locally, run:
+
+```sh
+pnpm scraper:cron
+```
+
+This starts or reuses local Docker/OrbStack Redis, injects `/apps/scraper`
+secrets, runs due source jobs and queue processing once, then exits. It does not
+start a local timer.
 
 Inside a Railway shell, the service already has its environment variables, so
 the package command can be used directly:
@@ -168,9 +198,11 @@ Required groups:
 ## Deployment Notes
 
 - Keep one Railway service for `apps/scraper`.
-- Run the scheduled service with `pnpm --filter @app/scraper run start:scheduled`.
-- Set `DATABASE_URL` and `REDIS_URL` before enabling `start:scheduled`; the
-  service validates scheduler dependencies before it starts the health server.
+- Run the scheduled service with `pnpm --filter @app/scraper run cron:run`.
+- Set the Railway cron schedule to `*/15 * * * *`.
+- Do not configure a Railway healthcheck for the cron service.
+- Set `DATABASE_URL` and `REDIS_URL` before enabling the cron service; cron
+  executions validate job dependencies before running.
 - Do not rely on Redis for historical state. Persist current state and
   idempotency markers in Postgres.
 - Make the processor safe to stop mid-run. Pending queue jobs and Postgres image

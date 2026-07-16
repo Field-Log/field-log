@@ -2,6 +2,12 @@ import { describe, expect, it } from "vitest";
 import { parseCommand } from "./cli.js";
 
 describe("scraper CLI", () => {
+  it("parses Railway cron commands", () => {
+    expect(parseCommand(["cron:run"])).toEqual({
+      type: "cron:run",
+    });
+  });
+
   it("parses source scrape commands", () => {
     expect(parseCommand(["scrape", "autmog"])).toEqual({
       source: "autmog",

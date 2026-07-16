@@ -80,9 +80,9 @@ Legend: `S` = server-only. `C` = client-visible.
 
 ### Scraper App: `/apps/scraper`
 
-`apps/scraper` runs as one Railway service. The service exposes `/health`, owns
-source schedules in process, enqueues scraped item work into BullMQ/Redis, and
-drains queued item and image work.
+`apps/scraper` runs as one Railway cron service. Railway starts it every 15
+minutes, the scraper runs due source jobs and queue processing, then the process
+exits.
 
 Use Infisical path `/apps/scraper` for local development and non-Railway secret
 source of truth. In Railway, prefer service references for platform-provided
@@ -101,21 +101,21 @@ values such as Redis connection strings.
 | `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint from the ImageKit dashboard, for example `https://ik.imagekit.io/<imagekit-id>` or a configured custom domain. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `C` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
-| `PORT` | HTTP port for the health service. Defaults to `4007` locally. | ? (All) | `S` |
+| `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |
 | `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
-| `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval. Defaults to `60`. | ? (All) | `S` |
-| `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape after service boot. Defaults to `0`. | ? (All) | `S` |
+| `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval used by `cron:run`. Defaults to `60`; the first cron execution after fresh Redis state runs Autmog immediately. | ? (All) | `S` |
+| `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape for the legacy in-process scheduler. Defaults to `0`; not used by Railway cron. | ? (All) | `S` |
 | `SCRAPER_DRY_RUN` | When `true`, processor jobs write DB/queue state but skip ImageKit upload/delete mutations. | ? (All) | `S` |
 | `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
 | `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
-| `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval. Defaults to `15`. | ? (All) | `S` |
-| `SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS` | Optional delay before the first queue processor run after service boot. Defaults to `30`. | ? (All) | `S` |
+| `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval for the legacy in-process scheduler. Railway cron uses the `*/15 * * * *` schedule in `railway.json`. | ? (All) | `S` |
+| `SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS` | Optional delay before the first queue processor run for the legacy in-process scheduler. Defaults to `30`; not used by Railway cron. | ? (All) | `S` |
 | `SCRAPER_QUEUE_CONCURRENCY` | Optional BullMQ worker concurrency cap. Recommended initial value: `3`. | ? (All) | `S` |
-| `SCRAPER_SCHEDULER_ENABLED` | Enables in-process scrape and processor schedules. Railway uses `start:scheduled`, which sets this to `true`; local `pnpm dev:scraper` leaves it disabled unless explicitly set. | ? (All) | `S` |
+| `SCRAPER_SCHEDULER_ENABLED` | Enables the legacy in-process scrape and processor schedules for the non-cron server command. Railway cron does not use this. | ? (All) | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
-See [railway.md](./railway.md) for Railway service and scheduler setup.
+See [railway.md](./railway.md) for Railway service and cron setup.
 
 For Railway preview and production, prefer a Railway service reference rather
 than storing the Redis URL in Infisical. If the Redis service is named

@@ -70,6 +70,15 @@ export const loggerMessages = {
       producerCompleted: "scraper.autmog.producer.completed",
       producerStarted: "scraper.autmog.producer.started",
     },
+    cron: {
+      completed: "scraper.cron.completed",
+      failed: "scraper.cron.failed",
+      started: "scraper.cron.started",
+      taskCompleted: "scraper.cron.task.completed",
+      taskFailed: "scraper.cron.task.failed",
+      taskSkipped: "scraper.cron.task.skipped",
+      taskStarted: "scraper.cron.task.started",
+    },
     database: {
       archiveCompleted: "scraper.database.archive.completed",
       mutationCompleted: "scraper.database.mutation.completed",

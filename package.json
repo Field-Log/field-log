@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "turbo run dev --filter='./apps/*' --filter=@package/logger",
     "dev:scraper": "node scripts/dev-scraper.mjs",
+    "scraper:cron": "node scripts/scraper-command.mjs cron:run",
     "scraper:process": "node scripts/scraper-command.mjs process:queue",
     "scraper:process:dead-letter": "node scripts/scraper-command.mjs process:dead-letter",
     "scraper:process:queue": "node scripts/scraper-command.mjs process:queue",
@@ -26,7 +27,7 @@
     "deploy:staging": "pnpm --filter @app/api run deploy:staging",
     "build": "turbo run build",
     "build:ci": "turbo run build:ci",
-    "start": "pnpm --filter @app/scraper run start:scheduled",
+    "start": "pnpm --filter @app/scraper run cron:run",
     "build:mobile:preview": "pnpm --filter @app/mobile run build:preview",
     "build:mobile:prod": "pnpm --filter @app/mobile run build:prod",
     "build:mobile:fastlane:android": "pnpm --filter @app/mobile run fastlane:build:android",

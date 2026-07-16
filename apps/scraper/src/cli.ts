@@ -1,5 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { type Logger, loggerMessages } from "@package/logger";
+import { runRailwayCronJob } from "./cron.js";
 import { readProcessScraperRuntimeEnv } from "./env.js";
 import { createScraperJobEnv } from "./env.schema.js";
 import {
@@ -13,6 +14,9 @@ import { createScraperLogger } from "./lib/logger.js";
 import type { ScraperSourceName } from "./scraper-types.js";
 
 type ScraperCommand =
+  | {
+      type: "cron:run";
+    }
   | {
       type: "process:dead-letter";
     }
@@ -41,6 +45,11 @@ async function main() {
       logLevel: env.LOG_LEVEL,
     });
     context = await createScraperJobContext(env);
+
+    if (command.type === "cron:run") {
+      await runRailwayCronJob({ context, env, logger });
+      return;
+    }
 
     if (command.type === "scrape") {
       await runSourceProducerJob({
@@ -77,6 +86,10 @@ export function parseCommand(args: string[]): ScraperCommand {
   const normalizedArgs = args.filter((arg) => arg !== "--");
   const [command, sourceArg] = normalizedArgs;
 
+  if (command === "cron:run") {
+    return { type: "cron:run" };
+  }
+
   if (command === "process:queue") {
     return { type: "process:queue" };
   }
@@ -102,12 +115,13 @@ export function parseCommand(args: string[]): ScraperCommand {
   }
 
   throw new Error(
-    `Unknown scraper command "${args.join(" ")}". Expected scrape <source>, scrape:<source>, process:queue, or process:dead-letter. Supported sources: ${scraperSourceKeys.join(", ")}.`,
+    `Unknown scraper command "${args.join(" ")}". Expected cron:run, scrape <source>, scrape:<source>, process:queue, or process:dead-letter. Supported sources: ${scraperSourceKeys.join(", ")}.`,
   );
 }
 
 function formatCommand(command: ScraperCommand): string {
   if (
+    command.type === "cron:run" ||
     command.type === "process:queue" ||
     command.type === "process:dead-letter"
   ) {
