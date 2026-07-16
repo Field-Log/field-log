@@ -159,6 +159,8 @@ Required groups:
 
 - Keep one Railway service for `apps/scraper`.
 - Run the scheduled service with `pnpm --filter @app/scraper run start:scheduled`.
+- Set `DATABASE_URL` and `REDIS_URL` before enabling `start:scheduled`; the
+  service validates scheduler dependencies before it starts the health server.
 - Do not rely on Redis for historical state. Persist current state and
   idempotency markers in Postgres.
 - Make the processor safe to stop mid-run. Pending queue jobs and Postgres image

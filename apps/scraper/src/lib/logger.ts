@@ -20,7 +20,6 @@ export type ScraperLoggerConfig = {
 export function createScraperLogger(config: ScraperLoggerConfig): Logger {
   const hasAxiomConfig = Boolean(config.axiomToken && config.axiomDataset);
   const environment = config.appEnv ?? "development";
-  const isDevelopment = environment === "development";
   const consoleTransport = createConsoleTransport({
     mode: normalizeConsoleTransportMode(config.loggerMode),
   });
@@ -34,7 +33,7 @@ export function createScraperLogger(config: ScraperLoggerConfig): Logger {
           }),
         ]
       : []),
-    ...(isDevelopment || !hasAxiomConfig ? [consoleTransport] : []),
+    consoleTransport,
   ];
 
   return createLogger({
