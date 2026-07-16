@@ -1,3 +1,5 @@
+import { fileURLToPath } from "node:url";
+import { type Logger, loggerMessages } from "@package/logger";
 import { readProcessScraperRuntimeEnv } from "./env.js";
 import { createScraperJobEnv } from "./env.schema.js";
 import {
@@ -19,19 +21,23 @@ type ScraperCommand =
     };
 
 async function main() {
-  const command = parseCommand(process.argv.slice(2));
-  const env = createScraperJobEnv(readProcessScraperRuntimeEnv());
-  const logger = createScraperLogger({
-    appEnv: env.APP_ENV,
-    axiomDataset: env.AXIOM_DATASET,
-    axiomEdgeDomain: env.AXIOM_EDGE_DOMAIN,
-    axiomToken: env.AXIOM_TOKEN,
-    loggerMode: env.LOGGER,
-    logLevel: env.LOG_LEVEL,
-  });
-  const context = await createScraperJobContext(env);
+  let logger: Logger | undefined;
+  let command: ScraperCommand | undefined;
+  let context: Awaited<ReturnType<typeof createScraperJobContext>> | undefined;
 
   try {
+    command = parseCommand(process.argv.slice(2));
+    const env = createScraperJobEnv(readProcessScraperRuntimeEnv());
+    logger = createScraperLogger({
+      appEnv: env.APP_ENV,
+      axiomDataset: env.AXIOM_DATASET,
+      axiomEdgeDomain: env.AXIOM_EDGE_DOMAIN,
+      axiomToken: env.AXIOM_TOKEN,
+      loggerMode: env.LOGGER,
+      logLevel: env.LOG_LEVEL,
+    });
+    context = await createScraperJobContext(env);
+
     if (command.type === "scrape") {
       await runSourceProducerJob({
         context,
@@ -42,14 +48,25 @@ async function main() {
     }
 
     await runQueueProcessorJob({ context, env, logger });
+  } catch (error) {
+    logger ??= createScraperLogger({});
+    logger.fatal(loggerMessages.scraper.run.failed, {
+      attributes: {
+        command: command ? formatCommand(command) : undefined,
+        commandArgs: process.argv.slice(2).join(" "),
+      },
+      error,
+    });
+    throw error;
   } finally {
-    await context.close();
-    await logger.flush();
+    await context?.close();
+    await logger?.flush();
   }
 }
 
-function parseCommand(args: string[]): ScraperCommand {
-  const [command, sourceArg] = args;
+export function parseCommand(args: string[]): ScraperCommand {
+  const normalizedArgs = args.filter((arg) => arg !== "--");
+  const [command, sourceArg] = normalizedArgs;
 
   if (command === "process:queue") {
     return { type: "process:queue" };
@@ -76,12 +93,22 @@ function parseCommand(args: string[]): ScraperCommand {
   );
 }
 
+function formatCommand(command: ScraperCommand): string {
+  if (command.type === "process:queue") {
+    return command.type;
+  }
+
+  return `${command.type}:${command.source}`;
+}
+
 function isScraperSourceKey(
   value: string | undefined,
 ): value is ScraperSourceName {
   return scraperSourceKeys.some((source) => source === value);
 }
 
-void main().catch(() => {
-  process.exitCode = 1;
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main().catch(() => {
+    process.exitCode = 1;
+  });
+}
