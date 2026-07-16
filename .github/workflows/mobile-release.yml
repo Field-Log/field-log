@@ -1,0 +1,110 @@
+name: Mobile Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to release, such as v0.0.1
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  android:
+    name: Android Release
+    runs-on: [macOS, mobile-release, android]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install fastlane bundle
+        working-directory: apps/mobile
+        run: bundle install
+
+      - name: Build and submit Android
+        run: pnpm release:mobile:fastlane:android
+
+  ios:
+    name: iOS Release
+    runs-on: [macOS, mobile-release, ios]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install fastlane bundle
+        working-directory: apps/mobile
+        run: bundle install
+
+      - name: Build and submit iOS
+        run: pnpm release:mobile:fastlane:ios
+
+  release-status:
+    name: Mobile Release Status
+    if: always()
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Update Android status
+        if: always()
+        env:
+          PLATFORM: Android
+          BUILD_STATUS: ${{ needs.android.result == 'success' && 'Succeeded' || 'Failed' }}
+          SUBMIT_STATUS: ${{ needs.android.result == 'success' && 'Succeeded' || 'Failed' }}
+          DESTINATION: Google Play track from /tools/fastlane
+          REVIEW_STATUS: ${{ needs.android.result == 'success' && 'Submitted for review' || 'Manual follow-up required' }}
+        run: node .github/scripts/update-mobile-release-status.mjs
+
+      - name: Update iOS status
+        if: always()
+        env:
+          PLATFORM: iOS
+          BUILD_STATUS: ${{ needs.ios.result == 'success' && 'Succeeded' || 'Failed' }}
+          SUBMIT_STATUS: ${{ needs.ios.result == 'success' && 'Succeeded' || 'Failed' }}
+          DESTINATION: App Store Connect / TestFlight
+          REVIEW_STATUS: ${{ needs.ios.result == 'success' && 'Submitted for review' || 'Manual follow-up required' }}
+        run: node .github/scripts/update-mobile-release-status.mjs

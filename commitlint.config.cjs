@@ -49,7 +49,7 @@ module.exports = {
   rules: {
     "header-max-length": [2, "always", 72],
     "scope-enum": [2, "always", scopes],
-    "subject-case": [2, "always", "lower-case"],
+    "subject-case": [0],
     "type-enum": [2, "always", types],
   },
 };

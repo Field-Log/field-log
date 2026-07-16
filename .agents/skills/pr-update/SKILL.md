@@ -36,17 +36,29 @@ suggest a branch, create a branch, push, fetch, or update a PR from `main`.
    - `git log --oneline origin/<base>..HEAD`
    - `git diff --stat origin/<base>...HEAD`
    - `git diff --name-only origin/<base>...HEAD`
-8. If there are no commits relative to the base branch, stop and report that
+8. Read `./docs/changesets.md`.
+9. If there are no commits relative to the base branch, stop and report that
    there is nothing to summarize.
-9. Generate a proposed title and body from the commits, changed files, and any
+10. Create or update a branch Changeset:
+    - Inspect changed `.changeset/*.md` files relative to the base.
+    - If none exists, create one under `.changeset/`.
+    - If one exists and no longer matches the branch, update it.
+    - Use `"field-log.app"` as the package name.
+    - Choose `patch`, `minor`, or `major` from the branch impact. Use `patch`
+      for docs, tests, internal tooling, chores, and compatible fixes. Use
+      `minor` for new compatible behavior. Use `major` for breaking API,
+      database, or mobile compatibility changes.
+    - Keep the Changeset description succinct, terse, human friendly, and
+      changelog-ready.
+11. Generate a proposed title and body from the commits, changed files, and any
    relevant test output already available in the conversation or shell history.
-10. Compare the proposed title and body with the current PR values.
-11. If neither value needs a meaningful update, report that the PR is already
+12. Compare the proposed title and body with the current PR values.
+13. If neither value needs a meaningful update, report that the PR is already
     current and do not call `gh pr edit`.
-12. If one or both values should change, update only those fields:
+14. If one or both values should change, update only those fields:
     - `gh pr edit <number-or-url> --title "<title>"`
     - `gh pr edit <number-or-url> --body "<body>"`
-13. Return the PR URL and a concise summary of what changed.
+15. Return the PR URL and a concise summary of what changed.
 
 ## Title
 
@@ -98,6 +110,23 @@ When updating an existing body:
 - Do not include uncommitted changes as completed work; mention them separately
   in the final response.
 - Do not include AI co-authorship or generated-by lines.
+
+## Changeset
+
+Each PR needs one release-impact marker:
+
+```markdown
+---
+"field-log.app": patch
+---
+
+Add release automation.
+```
+
+Use the smallest accurate bump. Keep the description one short sentence when
+possible. Prefer concrete human wording such as `Add release automation.` or
+`Fix mobile update prompts.` Avoid long implementation detail, issue IDs, and
+robotic phrasing.
 
 ## Error Cases
 

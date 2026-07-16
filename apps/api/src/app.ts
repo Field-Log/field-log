@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { AppDependencies } from "./routes/dependencies.js";
-import { apiV1Prefix, createApiV1Router } from "./routes/v1/index.js";
+import { apiV0Prefix, createApiV0Router } from "./routes/v0/index.js";
 
 export type {
   AppDependencies,
@@ -10,7 +10,7 @@ export type {
 export function createApp(dependencies: AppDependencies = {}) {
   const app = new Hono();
 
-  app.route(apiV1Prefix, createApiV1Router(dependencies));
+  app.route(apiV0Prefix, createApiV0Router(dependencies));
 
   return app;
 }

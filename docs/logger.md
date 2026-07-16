@@ -68,12 +68,13 @@ Client runtime folders provide their platform-specific API and proxy settings:
 - `/apps/web`: `API_URL`, `LOG_PROXY_CLIENT_KEY`, optional. The web build
   aliases these to `VITE_API_URL` and `VITE_LOG_PROXY_CLIENT_KEY` when the
   `VITE_*` names are absent.
-- `/apps/mobile`: `EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`,
-  optional
+- `/apps/mobile`: `API_URL`, `EXPO_PUBLIC_API_URL`,
+  `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional. The mobile Infisical runner
+  aliases `API_URL` to `EXPO_PUBLIC_API_URL` when the public name is absent.
 - `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
 
-Web and mobile derive the client log proxy URL by appending `/logs` to the API
-URL. Mobile does not alias API variables; use the `EXPO_PUBLIC_*` names there.
+Web and mobile derive the client log proxy URL by appending `/api/v0/logs` to
+the API URL.
 
 Local development:
 
@@ -285,10 +286,10 @@ Use the configured service instance in API code:
 import { s } from "./lib/services.js";
 import { loggerMessages } from "@package/logger";
 
-app.get("/api/v1/health", (context) => {
+app.get("/api/v0/health", (context) => {
   s.logger.info(loggerMessages.api.healthChecked, {
     attributes: {
-      route: "/api/v1/health",
+      route: "/api/v0/health",
     },
   });
 
@@ -362,7 +363,9 @@ The app-local module owns the browser proxy configuration:
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const apiUrl = import.meta.env.VITE_API_URL;
-const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
+const logProxyUrl = apiUrl
+  ? `${apiUrl.replace(/\/+$/, "")}/api/v0/logs`
+  : undefined;
 
 const transports = logProxyUrl
   ? [
@@ -401,7 +404,9 @@ The Expo app-local module owns the proxy configuration:
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-const logProxyUrl = apiUrl ? `${apiUrl.replace(/\/+$/, "")}/logs` : undefined;
+const logProxyUrl = apiUrl
+  ? `${apiUrl.replace(/\/+$/, "")}/api/v0/logs`
+  : undefined;
 
 const transports = logProxyUrl
   ? [
@@ -421,7 +426,7 @@ export const logger = createLogger({
 
 ## Log Proxy
 
-The API exposes `POST /api/v1/logs`. It accepts a single event, an array of
+The API exposes `POST /api/v0/logs`. It accepts a single event, an array of
 events, or `{ "events": [...] }`. Batches are capped at 25 events. The API
 validates the event shape, enriches the event with proxy metadata, redacts again
 server-side, and forwards through `s.logger`.

@@ -33,7 +33,30 @@ describe("api env", () => {
     expect(env.LOGGER).toBe("verbose");
     expect(env.LOG_LEVEL).toBe("debug");
     expect(env.LOG_PROXY_CLIENT_KEY).toBe("client-key");
+    expect(env.MOBILE_UPDATE_SEVERITY).toBe("none");
     expect(env.PORT).toBe(4000);
+  });
+
+  it("validates mobile version policy environment variables", () => {
+    const env = createApiEnv({
+      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      MOBILE_ANDROID_STORE_URL:
+        "https://play.google.com/store/apps/details?id=com.example.app",
+      MOBILE_IOS_STORE_URL: "https://apps.apple.com/app/example/id123456789",
+      MOBILE_LATEST_VERSION: "0.2.0",
+      MOBILE_MIN_SUPPORTED_VERSION: "0.1.0",
+      MOBILE_UPDATE_SEVERITY: "required",
+    });
+
+    expect(env.MOBILE_ANDROID_STORE_URL).toBe(
+      "https://play.google.com/store/apps/details?id=com.example.app",
+    );
+    expect(env.MOBILE_IOS_STORE_URL).toBe(
+      "https://apps.apple.com/app/example/id123456789",
+    );
+    expect(env.MOBILE_LATEST_VERSION).toBe("0.2.0");
+    expect(env.MOBILE_MIN_SUPPORTED_VERSION).toBe("0.1.0");
+    expect(env.MOBILE_UPDATE_SEVERITY).toBe("required");
   });
 
   it("defaults PORT to 4006", () => {
@@ -67,6 +90,22 @@ describe("api env", () => {
         LOGGER: "pretty",
       }),
     ).toThrow("Invalid environment variables: LOGGER");
+  });
+
+  it("rejects invalid mobile version policy values", () => {
+    expect(() =>
+      createApiEnv({
+        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        MOBILE_UPDATE_SEVERITY: "critical",
+      }),
+    ).toThrow("Invalid environment variables");
+
+    expect(() =>
+      createApiEnv({
+        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        MOBILE_IOS_STORE_URL: "not a url",
+      }),
+    ).toThrow("Invalid environment variables");
   });
 
   it("rejects missing DATABASE_URL", () => {
