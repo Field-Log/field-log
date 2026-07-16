@@ -109,6 +109,11 @@ export const commandSecrets = {
       databaseUrlUserOverride: true,
       paths: [apiSecretPath],
     },
+    "db:studio": {
+      allowServerSecrets: true,
+      databaseUrlUserOverride: true,
+      paths: [apiSecretPath],
+    },
   },
   github: {
     "discord-notify": {

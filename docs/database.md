@@ -30,7 +30,7 @@ packages/database/
 - Table schema files define Drizzle table objects and inferred row types.
 - `src/schema/scraper.ts` defines scraper-owned tables, including `makers`,
   `scraper_runs`, `tmp_autmog_pens`, `tmp_autmog_pen_images`, and
-  `tmp_autmog_pen_versions`.
+  `tmp_autmog_pen_versions`, and `tmp_products`.
 - `src/schema/enums.ts` defines TypeScript constants and types for allowed setting values.
 - `src/schema/relations.ts` defines Drizzle relationships between tables.
 - `src/schema/index.ts` re-exports all schema objects for Drizzle config and package consumers.
@@ -72,7 +72,8 @@ pnpm db:migrate
 ```
 
 `pnpm db:migrate` runs through the Infisical runner so `DATABASE_URL` is loaded
-from `/apps/api`.
+from `/apps/api`. Personal developer overrides such as `DATABASE_URL_RA` are
+looked up only from `/local/database`.
 
 Generated migration files are committed under `packages/database/drizzle/`. Schema source of truth remains in `packages/database/src/schema/`.
 
@@ -83,6 +84,93 @@ pnpm --filter @package/database exec drizzle-kit check --config=drizzle.config.t
 ```
 
 This fails inconsistent Drizzle migration history before merge.
+
+## Database Viewer
+
+Run Drizzle Studio, Drizzle Lab Visualizer, and Drizzle View together:
+
+```sh
+pnpm db:view
+```
+
+The root command delegates to `@package/database`, where the individual viewer
+commands live:
+
+| Command | Purpose | Port |
+| --- | --- | --- |
+| `pnpm --filter @package/database db:studio` | Runs `drizzle-kit studio` from `packages/database` through the Infisical runner. | `4009` |
+| `pnpm --filter @package/database db:visualizer` | Runs `drizzle-lab visualizer` against `packages/database/drizzle.config.ts`. | `4010` |
+| `pnpm --filter @package/database db:view:shell` | Runs `drizzle-view` with Studio and Visualizer URLs wired in. | `4011` |
+
+`pnpm db:view` starts Studio and Visualizer first, waits for both TCP ports with
+`wait-on`, then starts the Drizzle View shell. Open
+`http://127.0.0.1:4011` for the combined view.
+
+Drizzle Studio's browser UI is loaded through
+`https://local.drizzle.studio?port=4009`. Do not point Drizzle View at
+`http://127.0.0.1:4009`; that port is the local Studio bridge endpoint and can
+return an empty browser response.
+
+The Drizzle View npm package downloads its platform binary from GitHub on first
+run. The repo wrapper at `scripts/drizzle-view.mjs` removes incomplete zero-byte
+downloads and fixes executable permissions before delegating to the pinned
+`drizzle-view` CLI.
+
+## Schema Docs Metadata
+
+Generated schema documentation should combine Drizzle's generated schema
+metadata with a human-authored metadata map. Drizzle can supply table names,
+column names, data types, nullability, defaults, primary keys, foreign keys,
+indexes, and unique constraints. The metadata map supplies the business meaning
+that cannot be inferred from SQL.
+
+Recommended source file:
+
+```txt
+packages/database/src/schema/descriptions.ts
+```
+
+Recommended metadata shape:
+
+```ts
+export const schemaDescriptions = {
+  tmp_autmog_pen_images: {
+    description: "Images associated with the latest Autmog pen record.",
+    columns: {
+      id: {
+        description: "Internal image row identifier.",
+        example: 1000,
+      },
+      pen_id: {
+        description: "Autmog pen row this image belongs to.",
+        example: 1000,
+      },
+      source_hash: {
+        description: "Stable hash of the source image identity used to dedupe image rows for the pen.",
+        example: "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
+      },
+      image_kit_url: {
+        description: "ImageKit URL for the optimized uploaded image.",
+        example: "https://ik.imagekit.io/example/scrapers/autmog/pens/8158274388155/db2ef0e9.webp",
+      },
+    },
+  },
+} as const;
+```
+
+The generated Markdown should include one table per database table:
+
+| Column | Type | Required | Key | Relation | Description | Example |
+| --- | --- | --- | --- | --- | --- | --- |
+| `id` | `bigint` | yes | PK |  | Internal image row identifier. | `1000` |
+| `pen_id` | `bigint` | yes | FK | `tmp_autmog_pens.id` | Autmog pen row this image belongs to. | `1000` |
+| `source_hash` | `text` | yes |  |  | Stable hash of the source image identity used to dedupe image rows for the pen. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
+| `image_kit_url` | `text` | no |  |  | ImageKit URL for the optimized uploaded image. | `https://ik.imagekit.io/example/scrapers/autmog/pens/8158274388155/db2ef0e9.webp` |
+
+Foreign-key relations should be generated from Drizzle snapshot metadata. For
+example, `tmp_autmog_pen_images.pen_id` should render as a relation to
+`tmp_autmog_pens.id` without manually duplicating that relationship in the
+description map.
 
 ## Neon Branches
 

@@ -359,6 +359,44 @@ describe("buildInfisicalRunArgs", () => {
       secretPaths: ["/apps/api"],
     });
   });
+
+  it("builds database studio args with the database URL user override", () => {
+    const args = buildInfisicalRunArgs({
+      app: "database",
+      command: "db:studio",
+      commandArgs: [
+        "drizzle-kit",
+        "studio",
+        "--config=drizzle.config.ts",
+        "--host=127.0.0.1",
+        "--port=4009",
+      ],
+      repoRoot: "/repo",
+    });
+
+    expect(args).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/api",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "drizzle-kit",
+      "studio",
+      "--config=drizzle.config.ts",
+      "--host=127.0.0.1",
+      "--port=4009",
+    ]);
+    expect(getEnvAliasRunnerOptions(args)).toMatchObject({
+      databaseUrlUserOverride: true,
+      databaseUrlUserOverridePath: "/local/database",
+      environmentSlug: "dev",
+      secretPaths: ["/apps/api"],
+    });
+  });
 });
 
 describe("infisical auth checks", () => {
