@@ -101,8 +101,55 @@ jobs:
           env-slug: prod
           secret-path: /tools/cloudflare
 
+      - name: Fetch API runtime secrets from Infisical
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          env-slug: prod
+          secret-path: /apps/api
+
+      - name: Write staging API secrets file
+        shell: bash
+        env:
+          STAGING_DATABASE_URL: ${{ steps.staging_db.outputs.database_url }}
+        run: |
+          set -euo pipefail
+
+          jq -n \
+            --arg DATABASE_URL "$STAGING_DATABASE_URL" \
+            --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
+            --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
+            --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
+            --arg LOG_LEVEL "${LOG_LEVEL:-}" \
+            --arg LOGGER "${LOGGER:-}" \
+            --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
+            --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
+            --arg MOBILE_IOS_STORE_URL "${MOBILE_IOS_STORE_URL:-}" \
+            --arg MOBILE_LATEST_VERSION "${MOBILE_LATEST_VERSION:-}" \
+            --arg MOBILE_MIN_SUPPORTED_VERSION "${MOBILE_MIN_SUPPORTED_VERSION:-}" \
+            --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
+            '{
+              DATABASE_URL: $DATABASE_URL,
+              AXIOM_TOKEN: $AXIOM_TOKEN,
+              AXIOM_DATASET: $AXIOM_DATASET,
+              AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
+              LOG_LEVEL: $LOG_LEVEL,
+              LOGGER: $LOGGER,
+              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
+              MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
+              MOBILE_IOS_STORE_URL: $MOBILE_IOS_STORE_URL,
+              MOBILE_LATEST_VERSION: $MOBILE_LATEST_VERSION,
+              MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
+              MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
+            } | with_entries(select(.value != ""))' \
+            > "$RUNNER_TEMP/api-staging-secrets.json"
+
       - name: Deploy staging Worker
         run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env staging
 
       - name: Smoke test staging Worker
-        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.staging.field-log.app/api/v1/health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.staging.field-log.app/api/v0/health

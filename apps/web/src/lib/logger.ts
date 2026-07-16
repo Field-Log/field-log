@@ -6,7 +6,7 @@ import {
 import { clientEnv } from "@/env/client";
 
 function createLogProxyUrl(apiUrl: string) {
-  return `${apiUrl.replace(/\/+$/, "")}/api/v1/logs`;
+  return `${apiUrl.replace(/\/+$/, "")}/api/v0/logs`;
 }
 
 const logProxyUrl = clientEnv.VITE_API_URL

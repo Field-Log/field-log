@@ -7,7 +7,11 @@ import {
   normalizeLogLevel,
 } from "@package/logger";
 import { createApp } from "./app.js";
-import { ApiEnvValidationError, type ApiRuntimeEnv } from "./env.schema.js";
+import {
+  ApiEnvValidationError,
+  type ApiRuntimeEnv,
+  createMobileVersionPolicyFromApiEnv,
+} from "./env.schema.js";
 import { createApiLoggerRuntime } from "./lib/create-services.js";
 
 export type CloudflareApiBindings = ApiRuntimeEnv;
@@ -30,6 +34,7 @@ const app = createApp({
     return {
       clientLogKey: apiEnv.LOG_PROXY_CLIENT_KEY,
       logger,
+      mobileVersionPolicy: createMobileVersionPolicyFromApiEnv(apiEnv),
     };
   },
 });

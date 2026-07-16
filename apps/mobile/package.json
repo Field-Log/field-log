@@ -1,6 +1,6 @@
 {
   "name": "@app/mobile",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "main": "index.js",
   "scripts": {
@@ -15,6 +15,12 @@
     "build:preview": "tsx ../../packages/infisical-runner/src/cli.ts mobile build:preview -- expo export --platform all",
     "build:prod": "tsx ../../packages/infisical-runner/src/cli.ts mobile build:prod -- expo export --platform all",
     "build:ci": "expo export --platform all",
+    "fastlane:build:android": "tsx ../../packages/infisical-runner/src/cli.ts mobile fastlane:build:prod -- bundle exec fastlane android build",
+    "fastlane:build:ios": "tsx ../../packages/infisical-runner/src/cli.ts mobile fastlane:build:prod -- bundle exec fastlane ios build",
+    "fastlane:submit:android": "tsx ../../packages/infisical-runner/src/cli.ts mobile fastlane:submit:prod -- bundle exec fastlane android submit",
+    "fastlane:submit:ios": "tsx ../../packages/infisical-runner/src/cli.ts mobile fastlane:submit:prod -- bundle exec fastlane ios submit",
+    "fastlane:release:android": "tsx ../../packages/infisical-runner/src/cli.ts mobile fastlane:release:prod -- bundle exec fastlane android release",
+    "fastlane:release:ios": "tsx ../../packages/infisical-runner/src/cli.ts mobile fastlane:release:prod -- bundle exec fastlane ios release",
     "check": "biome check .",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",

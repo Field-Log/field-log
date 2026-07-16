@@ -129,6 +129,11 @@ AXIOM_EDGE_DOMAIN=
 LOG_LEVEL=debug
 LOGGER=compact
 LOG_PROXY_CLIENT_KEY=
+MOBILE_ANDROID_STORE_URL=
+MOBILE_IOS_STORE_URL=
+MOBILE_LATEST_VERSION=
+MOBILE_MIN_SUPPORTED_VERSION=
+MOBILE_UPDATE_SEVERITY=none
 ```
 
 Preview (`preview`):
@@ -141,6 +146,11 @@ AXIOM_EDGE_DOMAIN=
 LOG_LEVEL=debug
 LOGGER=
 LOG_PROXY_CLIENT_KEY=
+MOBILE_ANDROID_STORE_URL=
+MOBILE_IOS_STORE_URL=
+MOBILE_LATEST_VERSION=
+MOBILE_MIN_SUPPORTED_VERSION=
+MOBILE_UPDATE_SEVERITY=none
 ```
 
 Production (`prod`), used by production and staging for now:
@@ -153,6 +163,11 @@ AXIOM_EDGE_DOMAIN=
 LOG_LEVEL=info
 LOGGER=
 LOG_PROXY_CLIENT_KEY=
+MOBILE_ANDROID_STORE_URL=
+MOBILE_IOS_STORE_URL=
+MOBILE_LATEST_VERSION=
+MOBILE_MIN_SUPPORTED_VERSION=
+MOBILE_UPDATE_SEVERITY=none
 ```
 
 Do not store `APP_ENV` in `/apps/api` for Worker deploys. Wrangler owns it as a
@@ -323,9 +338,9 @@ Pull requests:
   `preview-pr-<number>`, and removes branch-specific Vercel `DATABASE_URL` when
   the pull request closes.
 
-Merges to `main`:
+Release tags:
 
-- Runs on pushes to `main` when API-relevant paths changed.
+- Runs on pushed `v*` tags created by `pnpm release`.
 - Runs committed Drizzle migrations against the Neon `production` branch before
   deploying.
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
@@ -333,7 +348,14 @@ Merges to `main`:
 - Does not write Cloudflare Worker runtime secrets. Production Worker secrets
   are owned by Infisical Secrets Sync.
 - Deploys `field-log-api` to `api.field-log.app`.
-- Smoke-tests `https://api.field-log.app/api/v1/health`.
+- Smoke-tests `https://api.field-log.app/api/v0/health`.
+- Validates `@app/web`, pulls the Vercel production environment, builds with
+  `vercel build --prod`, deploys with `vercel deploy --prebuilt --prod`, and
+  smoke-tests the resulting production deployment URL.
+- Vercel Git deployment gating is documented in [vercel.md](./vercel.md).
+
+Manual `workflow_dispatch` on `main` remains available for operational
+recovery, but normal production deploys should come from an annotated `v*` tag.
 
 Configure these GitHub repository variables:
 
@@ -426,9 +448,9 @@ redeploy the Vercel preview.
 
 The `Staging Refresh` workflow runs on a nightly schedule and by manual
 `workflow_dispatch`. It resets Neon `staging` from `production`, runs committed
-Drizzle migrations against `staging`, deploys `field-log-api-staging` without
-writing Worker runtime secrets, and smoke-tests
-`https://api.staging.field-log.app/api/v1/health`.
+Drizzle migrations against `staging`, deploys `field-log-api-staging` with an
+explicit staging `DATABASE_URL`, and smoke-tests
+`https://api.staging.field-log.app/api/v0/health`.
 
 Do not reset staging from production on every PR. The staging branch backs
 normal previews and may contain shared non-production data.
@@ -440,7 +462,7 @@ Run these checks after production, staging, or preview deploys.
 Health:
 
 ```sh
-curl --fail https://api.field-log.app/api/v1/health
+curl --fail https://api.field-log.app/api/v0/health
 ```
 
 Log proxy with a configured client key:
@@ -451,7 +473,7 @@ curl --fail \
   --header "content-type: application/json" \
   --header "x-log-client-key: $LOG_PROXY_CLIENT_KEY" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/api/v1/logs
+  https://api.field-log.app/api/v0/logs
 ```
 
 Log proxy rejection when a client key is configured:
@@ -461,7 +483,7 @@ curl --silent --output /dev/null --write-out "%{http_code}\n" \
   --request POST \
   --header "content-type: application/json" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/api/v1/logs
+  https://api.field-log.app/api/v0/logs
 ```
 
 The unauthenticated log proxy check should return `401` when

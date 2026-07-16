@@ -179,6 +179,60 @@ describe("buildInfisicalRunArgs", () => {
     ]);
   });
 
+  it("builds mobile fastlane production builds with tool and app secrets", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "mobile",
+        command: "fastlane:build:prod",
+        commandArgs: ["bundle", "exec", "fastlane", "android", "build"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=prod",
+      "--path=/tools/fastlane",
+      "--",
+      "infisical",
+      "run",
+      "--project-config-dir=/repo",
+      "--env=prod",
+      "--path=/apps/mobile",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("EXPO_PUBLIC_FIREBASE_API_KEY"),
+      "--",
+      "bundle",
+      "exec",
+      "fastlane",
+      "android",
+      "build",
+    ]);
+  });
+
+  it("builds mobile fastlane production submissions with tool secrets only", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "mobile",
+        command: "fastlane:submit:prod",
+        commandArgs: ["bundle", "exec", "fastlane", "ios", "submit"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=prod",
+      "--path=/tools/fastlane",
+      "--",
+      "bundle",
+      "exec",
+      "fastlane",
+      "ios",
+      "submit",
+    ]);
+  });
+
   it("builds logger live test args with automated Axiom and logging paths", () => {
     expect(
       buildInfisicalRunArgs({
