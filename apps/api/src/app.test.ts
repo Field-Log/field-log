@@ -19,7 +19,7 @@ type OpenApiDocument = {
 
 describe("api", () => {
   it("returns health status", async () => {
-    const response = await app.request("/api/v1/health");
+    const response = await app.request("/api/v0/health");
 
     await expect(response.json()).resolves.toEqual({
       ok: true,
@@ -40,8 +40,8 @@ describe("api", () => {
       title: "Field Log API",
       version: "0.0.0",
     });
-    expect(document.paths["/api/v1/health"]).toBeDefined();
-    expect(document.paths["/api/v1/logs"]).toBeDefined();
+    expect(document.paths["/api/v0/health"]).toBeDefined();
+    expect(document.paths["/api/v0/logs"]).toBeDefined();
   });
 
   it("serves the Scalar API reference", async () => {
@@ -50,6 +50,12 @@ describe("api", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
     await expect(response.text()).resolves.toContain("Field Log API Reference");
+  });
+
+  it("does not expose previous major version routes", async () => {
+    await expect(app.request("/api/v1/health")).resolves.toMatchObject({
+      status: 404,
+    });
   });
 
   it("does not expose unversioned routes", async () => {
@@ -91,7 +97,7 @@ describe("api", () => {
       logger,
     });
 
-    const response = await testApp.request("/api/v1/logs", {
+    const response = await testApp.request("/api/v0/logs", {
       body: JSON.stringify({
         events: [
           {
@@ -128,7 +134,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/api/v1/logs", {
+    const response = await testApp.request("/api/v0/logs", {
       body: JSON.stringify({
         level: "info",
       }),
@@ -143,7 +149,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/api/v1/logs", {
+    const response = await testApp.request("/api/v0/logs", {
       body: JSON.stringify({
         events: Array.from(
           { length: loggerValues.logProxy.maxBatchSize + 1 },
@@ -167,7 +173,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/api/v1/logs", {
+    const response = await testApp.request("/api/v0/logs", {
       body: JSON.stringify({
         events: [
           {
@@ -197,7 +203,7 @@ describe("api", () => {
       },
     });
 
-    const response = await testApp.request("/api/v1/logs", {
+    const response = await testApp.request("/api/v0/logs", {
       body: JSON.stringify({
         app: "web",
         environment: "test",
@@ -219,7 +225,7 @@ describe("api", () => {
       logger: createNoopLogger(),
     });
 
-    const response = await testApp.request("/api/v1/logs", {
+    const response = await testApp.request("/api/v0/logs", {
       body: JSON.stringify({
         app: "web",
         environment: "test",
@@ -233,5 +239,41 @@ describe("api", () => {
     });
 
     expect(response.status).toBe(401);
+  });
+
+  it("returns the default mobile version policy", async () => {
+    const response = await app.request("/api/v0/mobile-version");
+
+    await expect(response.json()).resolves.toEqual({
+      androidStoreUrl: null,
+      iosStoreUrl: null,
+      latestVersion: null,
+      minimumSupportedVersion: null,
+      severity: "none",
+    });
+  });
+
+  it("returns configured mobile version policy values", async () => {
+    const testApp = createApp({
+      mobileVersionPolicy: {
+        androidStoreUrl:
+          "https://play.google.com/store/apps/details?id=com.example.app",
+        iosStoreUrl: "https://apps.apple.com/app/example/id123456789",
+        latestVersion: "0.2.0",
+        minimumSupportedVersion: "0.1.0",
+        severity: "recommended",
+      },
+    });
+
+    const response = await testApp.request("/api/v0/mobile-version");
+
+    await expect(response.json()).resolves.toEqual({
+      androidStoreUrl:
+        "https://play.google.com/store/apps/details?id=com.example.app",
+      iosStoreUrl: "https://apps.apple.com/app/example/id123456789",
+      latestVersion: "0.2.0",
+      minimumSupportedVersion: "0.1.0",
+      severity: "recommended",
+    });
   });
 });

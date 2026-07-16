@@ -9,5 +9,5 @@ API documentation for Field Log services.
 
 ## Routes
 
-- [GET /api/v1/health](api/v1/health.md)
-- [POST /api/v1/logs](api/v1/logs.md)
+- [GET /api/v0/health](api/v0/health.md)
+- [POST /api/v0/logs](api/v0/logs.md)

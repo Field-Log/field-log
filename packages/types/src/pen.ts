@@ -1,4 +1,4 @@
-export interface AutmogProduct {
+export interface PenProduct {
   id: number;
   title: string;
   url: string;
@@ -34,6 +34,6 @@ export interface AutmogProduct {
   length_in: number | null;
 }
 
-export interface AutmogProductCollection {
-  products: AutmogProduct[];
+export interface PenProductCollection {
+  products: PenProduct[];
 }

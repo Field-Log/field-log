@@ -1,5 +1,7 @@
 import { loggerMessages } from "@package/logger";
 import * as React from "react";
+import { compactMediaQuery } from "@/lib/breakpoints";
+import { logger } from "@/lib/logger";
 import {
   baseCurrency,
   type CurrencyCode,
@@ -8,19 +10,17 @@ import {
   type DimensionUnit,
   todayUTCDateString,
   type WeightUnit,
-} from "@/lib/autmog-formatters";
-import { compactMediaQuery } from "@/lib/breakpoints";
-import { logger } from "@/lib/logger";
+} from "@/lib/pen-formatters";
 
 type StoredSettings = {
   units?: DimensionUnit;
   weight?: WeightUnit;
 };
 
-const settingsStorageKey = "autmog.settings";
-const currencyStorageKey = "autmog.currency";
-const filtersClosedStorageKey = "autmog.filtersClosed";
-const rateStorageKey = `autmog.fxRates.${baseCurrency}`;
+const settingsStorageKey = "field-log.settings";
+const currencyStorageKey = "field-log.currency";
+const filtersClosedStorageKey = "field-log.filtersClosed";
+const rateStorageKey = `field-log.fxRates.${baseCurrency}`;
 
 function readStoredSettings(): Required<StoredSettings> {
   if (typeof window === "undefined") return { units: "in", weight: "g" };
@@ -47,7 +47,7 @@ function readCurrency(): CurrencyCode {
     : baseCurrency;
 }
 
-export function useAutmogSettings() {
+export function usePenSettings() {
   const [units, setUnitsState] = React.useState<DimensionUnit>(
     () => readStoredSettings().units,
   );

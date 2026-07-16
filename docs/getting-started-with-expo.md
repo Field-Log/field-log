@@ -161,9 +161,10 @@ xcrun simctl list devices available
 ```
 
 To build with EAS instead, install and authenticate the EAS CLI, then use the
-development profiles from the repo root. EAS builds run on Expo's cloud build
-service and produce a development build artifact; `dev:*:no-api` builds run on
-your machine and install directly to a local simulator, emulator, or device.
+development profiles from the repo root. EAS builds run on Expo's paid cloud
+build service and produce a development build artifact; `dev:*:no-api` builds
+run on your machine and install directly to a local simulator, emulator, or
+device.
 
 ```sh
 pnpm dev:eas:android
@@ -174,6 +175,10 @@ The `development` Android profile can be installed on an Android device or
 emulator. The `development-simulator` iOS profile is for iOS Simulator. For a
 physical iPhone, create an iOS development build with the `development` profile
 and Apple signing credentials.
+
+Production mobile releases do not use EAS Build. See
+[mobile-release-fastlane.md](./mobile-release-fastlane.md) for the fastlane
+release path.
 
 ## Run the app
 

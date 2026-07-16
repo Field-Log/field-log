@@ -1,5 +1,5 @@
-import { type AutmogProduct, products } from "@/lib/autmog-data";
-import { normalizedHeadline } from "@/lib/autmog-filters";
+import { type PenProduct, products } from "@/lib/pen-data";
+import { normalizedHeadline } from "@/lib/pen-filters";
 
 function slugify(value: string): string {
   return value
@@ -44,7 +44,7 @@ export function entityIdFromParam(param: string): number | null {
  * `38-clipless-click-pen-bronze-titanium-conical-2zmtshtq3`. Slug is headline +
  * material(s) + tip (nose); the trailing code is the unique Shopify id.
  */
-export function penParam(product: AutmogProduct): string {
+export function penParam(product: PenProduct): string {
   return entityParam(
     [
       normalizedHeadline(product),
@@ -56,7 +56,7 @@ export function penParam(product: AutmogProduct): string {
 }
 
 /** Resolve a `/pens/$penId` param back to a pen via its trailing short code. */
-export function decodePenParam(penId: string): AutmogProduct | null {
+export function decodePenParam(penId: string): PenProduct | null {
   const id = entityIdFromParam(penId);
   if (id === null) return null;
   return products.find((product) => product.id === id) ?? null;

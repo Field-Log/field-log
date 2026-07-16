@@ -2,8 +2,8 @@ import type { OpenAPIGeneratorOptions } from "@hono/zod-openapi";
 import { z } from "@hono/zod-openapi";
 import { loggerValues, logLevels } from "@package/logger";
 
-export const openApiJsonPath = "/api/v1/openapi.json";
-export const apiDocsPath = "/api/v1/docs";
+export const openApiJsonPath = "/api/v0/openapi.json";
+export const apiDocsPath = "/api/v0/docs";
 
 export const openApiDocumentConfig = {
   openapi: "3.1.0",
