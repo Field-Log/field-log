@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 
 const containerName = "field-log-scraper-redis";
-const redisPort = process.env.SCRAPER_REDIS_PORT ?? "6379";
+const redisPort = process.env.SCRAPER_REDIS_PORT ?? "4008";
 const redisUrl = process.env.REDIS_URL ?? `redis://localhost:${redisPort}`;
 
 await ensureRedisContainer();

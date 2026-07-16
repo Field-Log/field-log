@@ -25,11 +25,11 @@ pnpm dev:scraper
 ```
 
 That command starts or reuses a Redis container named
-`field-log-scraper-redis`, maps host port `6379` to the container Redis port, and
+`field-log-scraper-redis`, maps host port `4008` to the container Redis port, and
 runs `apps/scraper` with:
 
 ```dotenv
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:4008
 ```
 
 Override the local Redis port when needed:

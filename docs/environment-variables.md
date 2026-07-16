@@ -19,6 +19,7 @@ Required values use these labels:
 | --- | --- | --- |
 | API Worker | `http://localhost:4006` | Wrangler dev server for `apps/api`. |
 | Scraper | `http://localhost:4007` | Railway-targeted health service in `apps/scraper`. |
+| Scraper Redis | `redis://localhost:4008` | Docker/OrbStack Redis for local scraper queues. |
 | Web | `http://localhost:4005` | TanStack Start app in `apps/web`. |
 
 Logging environment variables, Axiom setup, and client proxy configuration are
