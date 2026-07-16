@@ -60,6 +60,7 @@ request titles only, not the individual commits already present on the branch.
 
 - Use the most specific scope when one applies.
 - Use no scope only when a change is truly cross-cutting.
-- Keep the summary imperative, lowercase, and without a period.
+- Keep the summary imperative and without a period. Commitlint does not enforce
+  summary casing, and uppercase acronyms or product names are allowed.
 - Keep the header at or under 72 characters.
 - Do not include AI co-authorship or generated-by lines.

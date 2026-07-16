@@ -2,6 +2,7 @@ export const defaultEnvironmentSlug = "dev";
 
 const apiSecretPath = "/apps/api";
 const cloudflareToolsSecretPath = "/tools/cloudflare";
+const fastlaneToolsSecretPath = "/tools/fastlane";
 const mobileSecretPath = "/apps/mobile";
 const scraperSecretPath = "/apps/scraper";
 const webSecretPath = "/apps/web";
@@ -24,8 +25,8 @@ export type EnvironmentAlias = {
 
 const expoLoggingAliases = [
   {
-    from: "LOG_PROXY_URL",
-    to: "EXPO_PUBLIC_LOG_PROXY_URL",
+    from: "API_URL",
+    to: "EXPO_PUBLIC_API_URL",
   },
   {
     from: "LOG_PROXY_CLIENT_KEY",
@@ -176,6 +177,29 @@ export const commandSecrets = {
       envAliases: fieldLogExpoAliases,
       environmentSlug: "prod",
       paths: [mobileSecretPath],
+    },
+    "fastlane:build:preview": {
+      allowServerSecrets: true,
+      envAliases: fieldLogExpoAliases,
+      environmentSlug: "preview",
+      paths: [fastlaneToolsSecretPath, mobileSecretPath],
+    },
+    "fastlane:build:prod": {
+      allowServerSecrets: true,
+      envAliases: fieldLogExpoAliases,
+      environmentSlug: "prod",
+      paths: [fastlaneToolsSecretPath, mobileSecretPath],
+    },
+    "fastlane:submit:prod": {
+      allowServerSecrets: true,
+      environmentSlug: "prod",
+      paths: [fastlaneToolsSecretPath],
+    },
+    "fastlane:release:prod": {
+      allowServerSecrets: true,
+      envAliases: fieldLogExpoAliases,
+      environmentSlug: "prod",
+      paths: [fastlaneToolsSecretPath, mobileSecretPath],
     },
     dev: {
       allowServerSecrets: false,

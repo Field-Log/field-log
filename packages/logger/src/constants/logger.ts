@@ -60,6 +60,8 @@ export const loggerMessages = {
     exportFailed: "mobile.export.failed",
     screenViewed: "mobile.screen.viewed",
     syncUploadFailed: "mobile.sync.upload.failed",
+    versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",
+    versionPolicyStoreOpenFailed: "mobile.versionPolicy.storeOpen.failed",
   },
   scraper: {
     autmog: {

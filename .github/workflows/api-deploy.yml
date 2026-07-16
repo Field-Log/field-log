@@ -13,16 +13,8 @@ on:
       - pnpm-workspace.yaml
       - turbo.json
   push:
-    branches: [main]
-    paths:
-      - apps/api/**
-      - packages/**
-      - .github/scripts/**
-      - .github/workflows/api-deploy.yml
-      - package.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - turbo.json
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -318,6 +310,11 @@ jobs:
             --arg LOG_LEVEL "${LOG_LEVEL:-}" \
             --arg LOGGER "${LOGGER:-}" \
             --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
+            --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
+            --arg MOBILE_IOS_STORE_URL "${MOBILE_IOS_STORE_URL:-}" \
+            --arg MOBILE_LATEST_VERSION "${MOBILE_LATEST_VERSION:-}" \
+            --arg MOBILE_MIN_SUPPORTED_VERSION "${MOBILE_MIN_SUPPORTED_VERSION:-}" \
+            --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
             '{
               DATABASE_URL: $DATABASE_URL,
               AXIOM_TOKEN: $AXIOM_TOKEN,
@@ -325,7 +322,12 @@ jobs:
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
               LOG_LEVEL: $LOG_LEVEL,
               LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
+              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
+              MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
+              MOBILE_IOS_STORE_URL: $MOBILE_IOS_STORE_URL,
+              MOBILE_LATEST_VERSION: $MOBILE_LATEST_VERSION,
+              MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
+              MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
             } | with_entries(select(.value != ""))' \
             > "$RUNNER_TEMP/api-preview-secrets.json"
 
@@ -400,7 +402,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/api/v1/health"
+          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$PREVIEW_URL/api/v0/health"
 
       - name: Validate PR comment app configuration
         shell: bash
@@ -444,7 +446,7 @@ jobs:
           script: |
             const marker = process.env.API_PREVIEW_COMMENT_MARKER;
             const previewUrl = process.env.PREVIEW_URL;
-            const healthUrl = `${previewUrl}/api/v1/health`;
+            const healthUrl = `${previewUrl}/api/v0/health`;
             const databaseScope = process.env.DATABASE_ISOLATED === "true"
               ? `Neon branch \`${process.env.DATABASE_BRANCH_NAME}\``
               : "shared Neon staging branch";
@@ -642,7 +644,7 @@ jobs:
 
   production:
     name: API Production
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -663,6 +665,12 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Validate API app
+        run: |
+          pnpm --filter @app/api run test:ci
+          pnpm --filter @app/api run lint
+          pnpm --filter @app/api run typecheck
 
       - name: Resolve production database URL
         id: production_db
@@ -762,6 +770,11 @@ jobs:
             --arg LOG_LEVEL "${LOG_LEVEL:-}" \
             --arg LOGGER "${LOGGER:-}" \
             --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
+            --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
+            --arg MOBILE_IOS_STORE_URL "${MOBILE_IOS_STORE_URL:-}" \
+            --arg MOBILE_LATEST_VERSION "${MOBILE_LATEST_VERSION:-}" \
+            --arg MOBILE_MIN_SUPPORTED_VERSION "${MOBILE_MIN_SUPPORTED_VERSION:-}" \
+            --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
             '{
               DATABASE_URL: $DATABASE_URL,
               AXIOM_TOKEN: $AXIOM_TOKEN,
@@ -769,7 +782,12 @@ jobs:
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
               LOG_LEVEL: $LOG_LEVEL,
               LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY
+              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
+              MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
+              MOBILE_IOS_STORE_URL: $MOBILE_IOS_STORE_URL,
+              MOBILE_LATEST_VERSION: $MOBILE_LATEST_VERSION,
+              MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
+              MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
             } | with_entries(select(.value != ""))' \
             > "$RUNNER_TEMP/api-production-secrets.json"
 
@@ -777,4 +795,86 @@ jobs:
         run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env="" --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
-        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v1/health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v0/health
+
+  web-production:
+    name: Web Production
+    needs: production
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Vercel configuration
+        shell: bash
+        env:
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          for name in VERCEL_PROJECT_ID VERCEL_TEAM_ID VERCEL_TOKEN; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required." >&2
+              exit 1
+            fi
+          done
+
+      - name: Validate web app
+        run: |
+          pnpm --filter @app/web run test:ci
+          pnpm --filter @app/web run lint
+          pnpm --filter @app/web run typecheck
+
+      - name: Pull Vercel production environment
+        env:
+          NO_COLOR: "1"
+          VERCEL_ORG_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: pnpm dlx vercel pull --yes --environment=production --team "$VERCEL_ORG_ID"
+
+      - name: Build Vercel production output
+        env:
+          NO_COLOR: "1"
+          VERCEL_ORG_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: pnpm dlx vercel build --prod --team "$VERCEL_ORG_ID"
+
+      - name: Deploy Vercel production
+        id: vercel_deploy
+        shell: bash
+        env:
+          NO_COLOR: "1"
+          VERCEL_ORG_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          deployment_url="$(pnpm dlx vercel deploy --prebuilt --archive=tgz --prod --team "$VERCEL_ORG_ID")"
+          echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
+          printf 'Vercel production deployment: %s\n' "$deployment_url"
+
+      - name: Smoke test Vercel production deployment
+        env:
+          DEPLOYMENT_URL: ${{ steps.vercel_deploy.outputs.deployment_url }}
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$DEPLOYMENT_URL"

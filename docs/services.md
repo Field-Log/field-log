@@ -22,7 +22,7 @@ await s.db.userSettings.upsertForClerkId(clerkId, {
 
 s.logger.info("api.health.checked", {
   attributes: {
-    route: "/api/v1/health",
+    route: "/api/v0/health",
   },
 });
 ```

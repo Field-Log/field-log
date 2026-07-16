@@ -75,7 +75,7 @@ describe("api worker", () => {
     );
 
     const response = await worker.fetch(
-      new Request("https://api.field-log.app/api/v1/logs", {
+      new Request("https://api.field-log.app/api/v0/logs", {
         body: JSON.stringify({
           app: "web",
           environment: "production",
@@ -125,7 +125,7 @@ describe("api worker", () => {
           ],
           envValidationVariables: ["DATABASE_URL", "LOGGER", "LOG_LEVEL"],
           method: "POST",
-          path: "/api/v1/logs",
+          path: "/api/v0/logs",
           source: "cloudflare-worker",
           trigger: "fetch",
         },
