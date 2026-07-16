@@ -8,6 +8,23 @@ import {
   validateSecretPaths,
 } from "./runner.js";
 
+function getEnvAliasRunnerOptions(args: readonly string[]) {
+  const runnerIndex = args.findIndex((arg) =>
+    arg.endsWith("/packages/infisical-runner/src/env-alias-runner.ts"),
+  );
+
+  if (runnerIndex === -1) {
+    throw new Error("env-alias-runner was not included in args.");
+  }
+
+  return JSON.parse(args[runnerIndex + 1] ?? "{}") as {
+    databaseUrlUserOverride?: boolean;
+    databaseUrlUserOverridePath?: string;
+    environmentSlug?: string;
+    secretPaths?: string[];
+  };
+}
+
 describe("parseCliArguments", () => {
   it("parses the app, command, and wrapped command", () => {
     expect(parseCliArguments(["web", "dev", "--", "vite", "dev"])).toEqual({
@@ -26,14 +43,14 @@ describe("parseCliArguments", () => {
 
 describe("buildInfisicalRunArgs", () => {
   it("builds Infisical args with the API target path", () => {
-    expect(
-      buildInfisicalRunArgs({
-        app: "api",
-        command: "test",
-        commandArgs: ["vitest", "run"],
-        repoRoot: "/repo",
-      }),
-    ).toEqual([
+    const args = buildInfisicalRunArgs({
+      app: "api",
+      command: "test",
+      commandArgs: ["vitest", "run"],
+      repoRoot: "/repo",
+    });
+
+    expect(args).toEqual([
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
@@ -46,6 +63,12 @@ describe("buildInfisicalRunArgs", () => {
       "vitest",
       "run",
     ]);
+    expect(getEnvAliasRunnerOptions(args)).toMatchObject({
+      databaseUrlUserOverride: true,
+      databaseUrlUserOverridePath: "/local/database",
+      environmentSlug: "dev",
+      secretPaths: ["/apps/api"],
+    });
   });
 
   it("rejects unknown app commands", () => {
@@ -308,14 +331,14 @@ describe("buildInfisicalRunArgs", () => {
   });
 
   it("builds database migrate args with the database URL user override", () => {
-    expect(
-      buildInfisicalRunArgs({
-        app: "database",
-        command: "db:migrate",
-        commandArgs: ["drizzle-kit", "migrate", "--config=drizzle.config.ts"],
-        repoRoot: "/repo",
-      }),
-    ).toEqual([
+    const args = buildInfisicalRunArgs({
+      app: "database",
+      command: "db:migrate",
+      commandArgs: ["drizzle-kit", "migrate", "--config=drizzle.config.ts"],
+      repoRoot: "/repo",
+    });
+
+    expect(args).toEqual([
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
@@ -329,6 +352,12 @@ describe("buildInfisicalRunArgs", () => {
       "migrate",
       "--config=drizzle.config.ts",
     ]);
+    expect(getEnvAliasRunnerOptions(args)).toMatchObject({
+      databaseUrlUserOverride: true,
+      databaseUrlUserOverridePath: "/local/database",
+      environmentSlug: "dev",
+      secretPaths: ["/apps/api"],
+    });
   });
 });
 

@@ -6,8 +6,11 @@ type EnvironmentAlias = {
 };
 
 type EnvironmentRunnerOptions = {
+  databaseUrlUserOverridePath?: string;
   databaseUrlUserOverride?: boolean;
   envAliases?: EnvironmentAlias[];
+  environmentSlug?: string;
+  infisicalProjectId?: string;
   secretPaths?: string[];
 };
 
@@ -35,9 +38,11 @@ function applyAliases(aliases: readonly EnvironmentAlias[]): void {
   }
 }
 
-function applyDatabaseUrlUserOverride(
-  secretPaths: readonly string[] = [],
-): void {
+function applyDatabaseUrlUserOverride(options: {
+  environmentSlug?: string;
+  infisicalProjectId?: string;
+  secretPath?: string;
+}): void {
   const suffix = getDatabaseUrlUserOverrideSuffix();
 
   if (!suffix) {
@@ -45,23 +50,61 @@ function applyDatabaseUrlUserOverride(
   }
 
   const overrideName = `DATABASE_URL_${suffix}`;
-  const override = process.env[overrideName];
+  const secretPath = options.secretPath ?? "/local/database";
+  const override = getInfisicalSecret({
+    environmentSlug: options.environmentSlug,
+    infisicalProjectId: options.infisicalProjectId,
+    secretName: overrideName,
+    secretPath,
+  });
 
   if (!override) {
     process.stderr.write(
-      `Infisical runner: ${overrideName} not found in ${formatSecretPaths(secretPaths)}; using DATABASE_URL.\n`,
+      `Infisical runner: ${overrideName} not found in ${secretPath}; using DATABASE_URL.\n`,
     );
     return;
   }
 
   process.env.DATABASE_URL = override;
   process.stderr.write(
-    `Infisical runner: using ${overrideName} from ${formatSecretPaths(secretPaths)} instead of DATABASE_URL.\n`,
+    `Infisical runner: using ${overrideName} from ${secretPath} instead of DATABASE_URL.\n`,
   );
 }
 
-function formatSecretPaths(secretPaths: readonly string[]): string {
-  return secretPaths.length > 0 ? secretPaths.join(", ") : "configured paths";
+function getInfisicalSecret({
+  environmentSlug,
+  infisicalProjectId,
+  secretName,
+  secretPath,
+}: {
+  environmentSlug?: string;
+  infisicalProjectId?: string;
+  secretName: string;
+  secretPath: string;
+}): string | undefined {
+  const result = spawnSync(
+    "infisical",
+    [
+      "secrets",
+      "get",
+      secretName,
+      `--env=${environmentSlug ?? "dev"}`,
+      `--path=${secretPath}`,
+      "--plain",
+      "--silent",
+      ...(infisicalProjectId ? [`--projectId=${infisicalProjectId}`] : []),
+    ],
+    {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    },
+  );
+
+  if (result.status !== 0) {
+    return undefined;
+  }
+
+  return result.stdout.trim() || undefined;
 }
 
 function getDatabaseUrlUserOverrideSuffix(): string | undefined {
@@ -137,7 +180,11 @@ if (!optionsJson || separator !== "--" || !command) {
   applyAliases(options.envAliases ?? []);
 
   if (options.databaseUrlUserOverride) {
-    applyDatabaseUrlUserOverride(options.secretPaths);
+    applyDatabaseUrlUserOverride({
+      environmentSlug: options.environmentSlug,
+      infisicalProjectId: options.infisicalProjectId,
+      secretPath: options.databaseUrlUserOverridePath,
+    });
   }
 
   const child = spawn(command, commandArgs, {

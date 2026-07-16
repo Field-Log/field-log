@@ -7,6 +7,7 @@ const scraperSecretPath = "/apps/scraper";
 const webSecretPath = "/apps/web";
 const githubDiscordNotifierSecretPath = "/tools/github-discord-notifier";
 const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
+export const databaseUrlUserOverrideSecretPath = "/local/database";
 
 export type CommandSecretConfig = {
   allowServerSecrets: boolean;
