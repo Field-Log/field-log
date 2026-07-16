@@ -88,6 +88,9 @@ describe("logger", () => {
         syncUploadFailed: "mobile.sync.upload.failed",
       },
       scraper: {
+        processor: {
+          errorSummary: "scraper.processor.errors.summary",
+        },
         queue: {
           deadLetterCompleted: "scraper.queue.deadLetter.completed",
           deadLetterFailed: "scraper.queue.deadLetter.failed",

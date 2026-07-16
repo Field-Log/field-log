@@ -67,6 +67,16 @@ export type RunQueueDeadLetterProcessorResult = {
   items: QueueDeadLetterStats;
 };
 
+export type ProcessorErrorSummary = {
+  errorsByMessage: Record<string, number>;
+  totalErrors: number;
+};
+
+type ProcessorErrorCounter = {
+  record: (message: string) => void;
+  summary: () => ProcessorErrorSummary;
+};
+
 export async function runQueueProcessor({
   batchSize,
   concurrency,
@@ -77,6 +87,7 @@ export async function runQueueProcessor({
   queues,
 }: RunQueueProcessorOptions): Promise<RunQueueProcessorResult> {
   const startedAt = Date.now();
+  const errorCounter = createProcessorErrorCounter();
   logger.info(loggerMessages.scraper.processor.started, {
     attributes: {
       imageBatchSize: batchSize.images,
@@ -90,7 +101,8 @@ export async function runQueueProcessor({
       batchSize: batchSize.items,
       concurrency,
       connection,
-      handler: (job) => processItemJob({ db, job, logger, queues }),
+      handler: (job) =>
+        processItemJob({ db, errorCounter, job, logger, queues }),
       logger,
       queueName: scraperQueueNames.items,
     });
@@ -98,7 +110,8 @@ export async function runQueueProcessor({
       batchSize: batchSize.images,
       concurrency,
       connection,
-      handler: (job) => processImageJob({ db, imageStorage, job, logger }),
+      handler: (job) =>
+        processImageJob({ db, errorCounter, imageStorage, job, logger }),
       logger,
       queueName: scraperQueueNames.images,
     });
@@ -126,6 +139,14 @@ export async function runQueueProcessor({
       error,
     });
     throw error;
+  } finally {
+    logProcessorErrorSummary({
+      command: "process:queue",
+      durationMs: Date.now() - startedAt,
+      errorCounter,
+      logger,
+      processor: "queue",
+    });
   }
 }
 
@@ -185,11 +206,13 @@ export async function runQueueDeadLetterProcessor({
 
 async function processItemJob({
   db,
+  errorCounter,
   job,
   logger,
   queues,
 }: {
   db: Database;
+  errorCounter: ProcessorErrorCounter;
   job: Job<ScraperItemJob>;
   logger: Logger;
   queues: ScraperQueues;
@@ -227,6 +250,8 @@ async function processItemJob({
         data: {
           imageId: imageJob.imageId,
           source: scraperSources.autmog,
+          sourceImageId: imageJob.sourceImageId,
+          sourceUrl: imageJob.sourceUrl,
           type: "autmog.image.upload" as const,
         },
         name: "autmog.image.upload",
@@ -257,9 +282,17 @@ async function processItemJob({
         deleteImageJobs: result.deleteImageJobs.length,
         durationMs: Date.now() - startedAt,
         enqueuedImageJobs: imageJobs.length,
-        dbResponse: result.dbResponse,
         jobId: job.id,
-        mutationInput: result.mutationInput,
+        payload: {
+          dbResponse: {
+            images: {
+              upserted: result.dbResponse.images.upserted,
+            },
+          },
+          mutationInput: {
+            images: result.mutationInput.images,
+          },
+        },
         source: scraperSources.autmog,
         sourceProductId: job.data.item.sourceProductId,
         updated: result.updated,
@@ -277,6 +310,7 @@ async function processItemJob({
       },
     });
   } catch (error) {
+    errorCounter.record(loggerMessages.scraper.database.mutationFailed);
     logger.error(loggerMessages.scraper.database.mutationFailed, {
       attributes: {
         durationMs: Date.now() - startedAt,
@@ -301,11 +335,13 @@ async function processItemJob({
 
 async function processImageJob({
   db,
+  errorCounter,
   imageStorage,
   job,
   logger,
 }: {
   db: Database;
+  errorCounter: ProcessorErrorCounter;
   imageStorage: ImageStorage;
   job: Job<ScraperImageJob>;
   logger: Logger;
@@ -330,7 +366,7 @@ async function processImageJob({
     }
 
     if (job.data.type === "autmog.image.upload") {
-      if (row.image.status !== "pending_upload") {
+      if (!["pending_upload", "upload_failed"].includes(row.image.status)) {
         logger.info(loggerMessages.scraper.image.uploadSkipped, {
           attributes: {
             durationMs: Date.now() - startedAt,
@@ -344,9 +380,9 @@ async function processImageJob({
 
       const result = await imageStorage.uploadAutmogPenImage({
         sourceHash: row.image.sourceHash,
-        sourceImageId: row.image.sourceImageId,
+        sourceImageId: job.data.sourceImageId,
         sourceProductId: row.pen.sourceProductId,
-        sourceUrl: row.image.sourceUrl,
+        sourceUrl: job.data.sourceUrl,
       });
 
       if (!result) {
@@ -361,16 +397,21 @@ async function processImageJob({
         return "skipped";
       }
 
-      await markAutmogImageUploaded(db, {
+      const dbResponse = await markAutmogImageUploaded(db, {
+        height: result.height,
         imageId: row.image.id,
         imageKitFileId: result.fileId,
         imageKitPath: result.filePath,
+        imageKitThumbnailUrl: result.thumbnailUrl,
         imageKitUrl: result.url,
+        width: result.width,
       });
       logger.info(loggerMessages.scraper.image.uploadCompleted, {
         attributes: {
+          dbResponse,
           durationMs: Date.now() - startedAt,
           imageId: row.image.id,
+          imageKitResponse: result,
           jobId: job.id,
           sourceProductId: row.pen.sourceProductId,
         },
@@ -378,7 +419,7 @@ async function processImageJob({
       return "completed";
     }
 
-    if (row.image.status !== "pending_delete") {
+    if (!["pending_delete", "delete_failed"].includes(row.image.status)) {
       logger.info(loggerMessages.scraper.image.deleteSkipped, {
         attributes: {
           durationMs: Date.now() - startedAt,
@@ -426,20 +467,21 @@ async function processImageJob({
           ? "upload_failed"
           : "delete_failed",
     });
-    logger.error(
+    const primaryErrorMessage =
       job.data.type === "autmog.image.upload"
         ? loggerMessages.scraper.image.uploadFailed
-        : loggerMessages.scraper.image.deleteFailed,
-      {
-        attributes: {
-          durationMs: Date.now() - startedAt,
-          imageId: job.data.imageId,
-          jobId: job.id,
-          type: job.data.type,
-        },
-        error,
+        : loggerMessages.scraper.image.deleteFailed;
+
+    errorCounter.record(primaryErrorMessage);
+    logger.error(primaryErrorMessage, {
+      attributes: {
+        durationMs: Date.now() - startedAt,
+        imageId: job.data.imageId,
+        jobId: job.id,
+        type: job.data.type,
       },
-    );
+      error,
+    });
     logger.error(loggerMessages.scraper.processor.imageJobFailed, {
       attributes: {
         durationMs: Date.now() - startedAt,
@@ -451,6 +493,60 @@ async function processImageJob({
     });
     throw error;
   }
+}
+
+export function createProcessorErrorCounter(): ProcessorErrorCounter {
+  const errorsByMessage = new Map<string, number>();
+
+  return {
+    record(message) {
+      errorsByMessage.set(message, (errorsByMessage.get(message) ?? 0) + 1);
+    },
+    summary() {
+      const entries = [...errorsByMessage.entries()].sort(([left], [right]) =>
+        left.localeCompare(right),
+      );
+      const errors = Object.fromEntries(entries);
+
+      return {
+        errorsByMessage: errors,
+        totalErrors: Object.values(errors).reduce(
+          (total, count) => total + count,
+          0,
+        ),
+      };
+    },
+  };
+}
+
+function logProcessorErrorSummary({
+  command,
+  durationMs,
+  errorCounter,
+  logger,
+  processor,
+}: {
+  command: "process:queue";
+  durationMs: number;
+  errorCounter: ProcessorErrorCounter;
+  logger: Logger;
+  processor: "queue";
+}) {
+  const summary = errorCounter.summary();
+
+  if (summary.totalErrors === 0) {
+    return;
+  }
+
+  logger.error(loggerMessages.scraper.processor.errorSummary, {
+    attributes: {
+      command,
+      durationMs,
+      errorsByMessage: summary.errorsByMessage,
+      processor,
+      totalErrors: summary.totalErrors,
+    },
+  });
 }
 
 async function drainQueue<TJobData>({
@@ -476,35 +572,38 @@ async function drainQueue<TJobData>({
   };
 
   return new Promise((resolve, reject) => {
-    let closed = false;
+    let finishPromise: Promise<void> | null = null;
     let worker: Worker<TJobData> | null = null;
     const timeout = setTimeout(
       () => {
-        void closeWorker().then(() => resolve(stats), reject);
+        void finishDrain({ force: true }).then(() => resolve(stats), reject);
       },
       5 * 60 * 1000,
     );
-    const closeWorker = async () => {
-      if (closed) {
-        return;
+    const finishDrain = ({ force = false }: { force?: boolean } = {}) => {
+      if (finishPromise) {
+        return finishPromise;
       }
 
-      closed = true;
-      clearTimeout(timeout);
-      await worker?.close();
-      logger.info(loggerMessages.scraper.queue.drainCompleted, {
-        attributes: {
-          completedJobs: stats.completed,
-          durationMs: Date.now() - startedAt,
-          failedJobs: stats.failed,
-          queue: queueName,
-          skippedJobs: stats.skipped,
-        },
-      });
+      finishPromise = (async () => {
+        clearTimeout(timeout);
+        await closeWorkerWithDeadline(worker, force);
+        logger.info(loggerMessages.scraper.queue.drainCompleted, {
+          attributes: {
+            completedJobs: stats.completed,
+            durationMs: Date.now() - startedAt,
+            failedJobs: stats.failed,
+            queue: queueName,
+            skippedJobs: stats.skipped,
+          },
+        });
+      })();
+
+      return finishPromise;
     };
     const maybeCloseWorker = () => {
       if (stats.completed + stats.failed + stats.skipped >= batchSize) {
-        void closeWorker().then(() => resolve(stats), reject);
+        void finishDrain().then(() => resolve(stats), reject);
       }
     };
 
@@ -529,7 +628,7 @@ async function drainQueue<TJobData>({
     );
 
     worker.on("drained", () => {
-      void closeWorker().then(() => resolve(stats), reject);
+      void finishDrain().then(() => resolve(stats), reject);
     });
     worker.on("failed", () => {
       stats.failed += 1;
@@ -542,9 +641,36 @@ async function drainQueue<TJobData>({
         },
         error,
       });
-      void closeWorker().then(() => reject(error), reject);
+      void finishDrain({ force: true }).then(() => reject(error), reject);
     });
   });
+}
+
+async function closeWorkerWithDeadline<TJobData>(
+  worker: Worker<TJobData> | null,
+  force: boolean,
+) {
+  if (!worker) {
+    return;
+  }
+
+  if (force) {
+    await worker.close(true);
+    return;
+  }
+
+  let forceClose: NodeJS.Timeout | undefined;
+
+  await Promise.race([
+    worker.close(),
+    new Promise<void>((resolve) => {
+      forceClose = setTimeout(() => {
+        void worker.close(true).finally(resolve);
+      }, 30_000);
+    }),
+  ]);
+
+  clearTimeout(forceClose);
 }
 
 async function processDeadLetters<TJobData>({

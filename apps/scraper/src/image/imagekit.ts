@@ -10,7 +10,10 @@ export type ImageStorageUploadInput = {
 export type ImageStorageUploadResult = {
   fileId: string;
   filePath: string;
+  height: number;
+  thumbnailUrl: string;
   url: string;
+  width: number;
 };
 
 export type ImageStorage = {
@@ -73,7 +76,10 @@ export function createImageStorage(
       return {
         fileId: response.fileId,
         filePath: response.filePath,
+        height: response.height,
+        thumbnailUrl: response.thumbnailUrl,
         url: response.url,
+        width: response.width,
       };
     },
   };

@@ -36,6 +36,20 @@
       "when": 1784221934311,
       "tag": "0004_cultured_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784227288780,
+      "tag": "0005_remarkable_lord_tyger",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784229541019,
+      "tag": "0006_sour_energizer",
+      "breakpoints": true
     }
   ]
 }

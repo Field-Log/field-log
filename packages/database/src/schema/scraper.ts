@@ -212,9 +212,6 @@ export const tmpAutmogPenImages = pgTable(
     penId: bigint("pen_id", { mode: "number" })
       .notNull()
       .references(() => tmpAutmogPens.id, { onDelete: "cascade" }),
-    sourceImageId: text("source_image_id"),
-    sourceUrl: text("source_url").notNull(),
-    position: integer("position").notNull(),
     altText: text("alt_text"),
     width: integer("width"),
     height: integer("height"),
@@ -222,6 +219,7 @@ export const tmpAutmogPenImages = pgTable(
     imageKitFileId: text("image_kit_file_id"),
     imageKitPath: text("image_kit_path"),
     imageKitUrl: text("image_kit_url"),
+    imageKitThumbnailUrl: text("image_kit_thumbnail_url"),
     status: text("status").notNull().default("pending_upload"),
     uploadedAt: timestamp("uploaded_at", { mode: "date", withTimezone: true }),
     pendingDeleteAt: timestamp("pending_delete_at", {
@@ -241,10 +239,28 @@ export const tmpAutmogPenImages = pgTable(
   },
   (table) => ({
     penIdIdx: index("tmp_autmog_pen_images_pen_id_idx").on(table.penId),
-    penSourceUrlUnique: uniqueIndex(
-      "tmp_autmog_pen_images_pen_source_url_unique",
-    ).on(table.penId, table.sourceUrl),
+    penSourceHashUnique: uniqueIndex(
+      "tmp_autmog_pen_images_pen_source_hash_unique",
+    ).on(table.penId, table.sourceHash),
     statusIdx: index("tmp_autmog_pen_images_status_idx").on(table.status),
+  }),
+);
+
+export const tmpProducts = pgTable(
+  "tmp_products",
+  {
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
+    autmogPenId: bigint("autmog_pen_id", { mode: "number" }).references(
+      () => tmpAutmogPens.id,
+      { onDelete: "cascade" },
+    ),
+  },
+  (table) => ({
+    autmogPenIdUnique: uniqueIndex("tmp_products_autmog_pen_id_unique").on(
+      table.autmogPenId,
+    ),
   }),
 );
 
@@ -287,3 +303,5 @@ export type TmpAutmogPenImage = typeof tmpAutmogPenImages.$inferSelect;
 export type NewTmpAutmogPenImage = typeof tmpAutmogPenImages.$inferInsert;
 export type TmpAutmogPenVersion = typeof tmpAutmogPenVersions.$inferSelect;
 export type NewTmpAutmogPenVersion = typeof tmpAutmogPenVersions.$inferInsert;
+export type TmpProduct = typeof tmpProducts.$inferSelect;
+export type NewTmpProduct = typeof tmpProducts.$inferInsert;

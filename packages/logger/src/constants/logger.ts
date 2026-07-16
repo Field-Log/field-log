@@ -84,6 +84,7 @@ export const loggerMessages = {
     healthChecked: "scraper.health.checked",
     processor: {
       completed: "scraper.processor.completed",
+      errorSummary: "scraper.processor.errors.summary",
       failed: "scraper.processor.failed",
       imageJobCompleted: "scraper.processor.imageJob.completed",
       imageJobFailed: "scraper.processor.imageJob.failed",

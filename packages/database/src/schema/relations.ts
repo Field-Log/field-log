@@ -5,6 +5,7 @@ import {
   tmpAutmogPenImages,
   tmpAutmogPens,
   tmpAutmogPenVersions,
+  tmpProducts,
 } from "./scraper.js";
 import { userSettings } from "./user-settings.js";
 import { users } from "./users.js";
@@ -34,9 +35,17 @@ export const tmpAutmogPensRelations = relations(
       fields: [tmpAutmogPens.makerId],
       references: [makers.id],
     }),
+    product: one(tmpProducts),
     versions: many(tmpAutmogPenVersions),
   }),
 );
+
+export const tmpProductsRelations = relations(tmpProducts, ({ one }) => ({
+  autmogPen: one(tmpAutmogPens, {
+    fields: [tmpProducts.autmogPenId],
+    references: [tmpAutmogPens.id],
+  }),
+}));
 
 export const tmpAutmogPenImagesRelations = relations(
   tmpAutmogPenImages,
