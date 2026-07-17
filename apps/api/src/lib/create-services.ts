@@ -1,17 +1,30 @@
 import {
   createAxiomTransport,
   createConsoleTransport,
+  createLogger,
+  type Logger,
+  type LoggerConfig,
   loggerValues,
   normalizeConsoleTransportMode,
   normalizeLogLevel,
 } from "@package/logger";
 import type { Services } from "@package/services";
 import { createServices } from "@package/services";
-import { type ApiRuntimeEnv, createApiEnv } from "../env.schema.js";
+import {
+  type ApiLoggerRuntimeEnv,
+  type ApiRuntimeEnv,
+  createApiEnv,
+  createApiLoggerEnv,
+} from "../env.schema.js";
 
 export type ApiServicesRuntime = {
   apiEnv: ReturnType<typeof createApiEnv>;
   services: Services;
+};
+
+export type ApiLoggerRuntime = {
+  apiEnv: ReturnType<typeof createApiLoggerEnv>;
+  logger: Logger;
 };
 
 export function createApiServices(
@@ -28,10 +41,36 @@ export function createApiServices(
   };
 }
 
+export function createApiLoggerRuntime(
+  runtimeEnv: ApiLoggerRuntimeEnv,
+): ApiLoggerRuntime {
+  const configuredApiEnv = createApiLoggerEnv(runtimeEnv);
+
+  return {
+    apiEnv: configuredApiEnv,
+    logger: createLogger(createApiLoggerConfig(configuredApiEnv)),
+  };
+}
+
 export function configureApiServices(
   configuredServices: Services,
   configuredApiEnv: ReturnType<typeof createApiEnv>,
 ): void {
+  const logger = createApiLoggerConfig(configuredApiEnv);
+
+  configuredServices.configure({
+    db: {
+      databaseUrl: configuredApiEnv.DATABASE_URL,
+    },
+    logger,
+  });
+}
+
+function createApiLoggerConfig(
+  configuredApiEnv:
+    | ReturnType<typeof createApiEnv>
+    | ReturnType<typeof createApiLoggerEnv>,
+): LoggerConfig {
   const environment = getApiEnvironment(configuredApiEnv);
   const isDevelopment = environment === "development";
   const consoleTransport = createConsoleTransport({
@@ -54,22 +93,19 @@ export function configureApiServices(
       : []),
   ];
 
-  const logger = {
+  return {
     app: loggerValues.apps.api,
     environment,
     level: normalizeLogLevel(configuredApiEnv.LOG_LEVEL),
     transports,
   };
-
-  configuredServices.configure({
-    db: {
-      databaseUrl: configuredApiEnv.DATABASE_URL,
-    },
-    logger,
-  });
 }
 
-function getApiEnvironment(configuredApiEnv: ReturnType<typeof createApiEnv>) {
+function getApiEnvironment(
+  configuredApiEnv:
+    | ReturnType<typeof createApiEnv>
+    | ReturnType<typeof createApiLoggerEnv>,
+) {
   if (configuredApiEnv.APP_ENV) {
     return configuredApiEnv.APP_ENV;
   }

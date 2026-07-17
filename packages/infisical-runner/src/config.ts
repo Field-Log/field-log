@@ -20,6 +20,13 @@ export type EnvironmentAlias = {
   to: string;
 };
 
+const expoClerkAliases = [
+  {
+    from: "CLERK_PUBLISHABLE_KEY",
+    to: "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY",
+  },
+] as const satisfies readonly EnvironmentAlias[];
+
 const expoLoggingAliases = [
   {
     from: "API_URL",
@@ -68,6 +75,7 @@ const expoFieldLogAliases = [
 
 const fieldLogExpoAliases = [
   ...expoFieldLogAliases,
+  ...expoClerkAliases,
   ...expoLoggingAliases,
 ] as const satisfies readonly EnvironmentAlias[];
 

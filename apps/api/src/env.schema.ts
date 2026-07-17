@@ -20,6 +20,22 @@ export type ApiRuntimeEnv = {
   PORT?: string;
 };
 
+export type ApiLoggerRuntimeEnv = Pick<
+  ApiRuntimeEnv,
+  | "APP_ENV"
+  | "AXIOM_DATASET"
+  | "AXIOM_EDGE_DOMAIN"
+  | "AXIOM_TOKEN"
+  | "LOGGER"
+  | "LOG_LEVEL"
+  | "LOG_PROXY_CLIENT_KEY"
+  | "MOBILE_ANDROID_STORE_URL"
+  | "MOBILE_IOS_STORE_URL"
+  | "MOBILE_LATEST_VERSION"
+  | "MOBILE_MIN_SUPPORTED_VERSION"
+  | "MOBILE_UPDATE_SEVERITY"
+>;
+
 const mobileUpdateSeveritySchema = z.enum(mobileUpdateSeverities);
 
 export type ApiEnvValidationIssue = {
@@ -66,6 +82,21 @@ const apiServerSchema = {
   PORT: z.coerce.number().int().min(1).max(65_535).default(4006),
 } as const;
 
+const apiLoggerServerSchema = {
+  APP_ENV: apiServerSchema.APP_ENV,
+  AXIOM_DATASET: apiServerSchema.AXIOM_DATASET,
+  AXIOM_EDGE_DOMAIN: apiServerSchema.AXIOM_EDGE_DOMAIN,
+  AXIOM_TOKEN: apiServerSchema.AXIOM_TOKEN,
+  LOGGER: apiServerSchema.LOGGER,
+  LOG_LEVEL: apiServerSchema.LOG_LEVEL,
+  LOG_PROXY_CLIENT_KEY: apiServerSchema.LOG_PROXY_CLIENT_KEY,
+  MOBILE_ANDROID_STORE_URL: apiServerSchema.MOBILE_ANDROID_STORE_URL,
+  MOBILE_IOS_STORE_URL: apiServerSchema.MOBILE_IOS_STORE_URL,
+  MOBILE_LATEST_VERSION: apiServerSchema.MOBILE_LATEST_VERSION,
+  MOBILE_MIN_SUPPORTED_VERSION: apiServerSchema.MOBILE_MIN_SUPPORTED_VERSION,
+  MOBILE_UPDATE_SEVERITY: apiServerSchema.MOBILE_UPDATE_SEVERITY,
+} as const;
+
 export function createApiEnv(runtimeEnv: ApiRuntimeEnv) {
   return createEnv({
     emptyStringAsUndefined: true,
@@ -78,8 +109,35 @@ export function createApiEnv(runtimeEnv: ApiRuntimeEnv) {
   });
 }
 
+export function createApiLoggerEnv(runtimeEnv: ApiLoggerRuntimeEnv) {
+  return createEnv({
+    emptyStringAsUndefined: true,
+    isServer: true,
+    onValidationError(issues) {
+      throw new ApiEnvValidationError(issues);
+    },
+    runtimeEnvStrict: {
+      APP_ENV: runtimeEnv.APP_ENV,
+      AXIOM_DATASET: runtimeEnv.AXIOM_DATASET,
+      AXIOM_EDGE_DOMAIN: runtimeEnv.AXIOM_EDGE_DOMAIN,
+      AXIOM_TOKEN: runtimeEnv.AXIOM_TOKEN,
+      LOGGER: runtimeEnv.LOGGER,
+      LOG_LEVEL: runtimeEnv.LOG_LEVEL,
+      LOG_PROXY_CLIENT_KEY: runtimeEnv.LOG_PROXY_CLIENT_KEY,
+      MOBILE_ANDROID_STORE_URL: runtimeEnv.MOBILE_ANDROID_STORE_URL,
+      MOBILE_IOS_STORE_URL: runtimeEnv.MOBILE_IOS_STORE_URL,
+      MOBILE_LATEST_VERSION: runtimeEnv.MOBILE_LATEST_VERSION,
+      MOBILE_MIN_SUPPORTED_VERSION: runtimeEnv.MOBILE_MIN_SUPPORTED_VERSION,
+      MOBILE_UPDATE_SEVERITY: runtimeEnv.MOBILE_UPDATE_SEVERITY,
+    },
+    server: apiLoggerServerSchema,
+  });
+}
+
 export function createMobileVersionPolicyFromApiEnv(
-  apiEnv: ReturnType<typeof createApiEnv>,
+  apiEnv:
+    | ReturnType<typeof createApiEnv>
+    | ReturnType<typeof createApiLoggerEnv>,
 ): MobileVersionPolicy {
   return {
     androidStoreUrl: apiEnv.MOBILE_ANDROID_STORE_URL,
