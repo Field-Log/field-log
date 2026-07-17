@@ -22,6 +22,7 @@
     "build:ci": "turbo run build:ci",
     "build:mobile:preview": "pnpm --filter @app/mobile run build:preview",
     "build:mobile:prod": "pnpm --filter @app/mobile run build:prod",
+    "docs:generate": "pnpm --filter @app/api run docs:generate",
     "build:mobile:fastlane:android": "pnpm --filter @app/mobile run fastlane:build:android",
     "build:mobile:fastlane:ios": "pnpm --filter @app/mobile run fastlane:build:ios",
     "submit:mobile:fastlane:android": "pnpm --filter @app/mobile run fastlane:submit:android",
