@@ -260,16 +260,20 @@ Legend: `S` = server-only. `C` = client-visible.
 
 ## GitHub Repository Configuration
 
-Repository variables and secrets configure deploy automation, PR comments,
-Neon branch management, Vercel branch environment variables, and GitHub Discord
-notifications.
+GitHub repository configuration is stored in Infisical Production at
+`/tools/github/secrets` and synced to GitHub repository secrets. GitHub
+repository variables are not used because Infisical syncs to secrets only.
 
-### Repository Variables
+These secrets configure deploy automation, PR comments, Neon branch management,
+Vercel branch environment variables, Railway preview services, and GitHub
+Discord notifications.
 
-| Variable | What it is for | Required | Important notes |
+| Secret | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for API preview comments. | Stg | `S` |
+| `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Stg | `S` |
 | `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for DB preview comments. | Stg | `S` |
+| `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Stg | `S` |
 | `INFISICAL_CLOUDFLARE_IDENTITY_ID` | Infisical OIDC identity for Cloudflare/API deploy secrets. | Stg, Prod | `S` |
 | `INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID` | Infisical OIDC identity for Discord webhook delivery. | All | `S` |
 | `INFISICAL_DOMAIN` | Infisical API base URL. | ? (All) | `S` |
@@ -277,21 +281,15 @@ notifications.
 | `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Stg | `S` |
 | `INFISICAL_OIDC_AUDIENCE` | OIDC audience for Infisical auth. | ? (All) | `S` |
 | `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows. | All | `S` |
+| `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Stg, Prod | `S` |
 | `NEON_DATABASE_NAME` | Neon `PGDATABASE` value used for connection URI lookup. | Stg, Prod | `S` |
 | `NEON_DATABASE_USER` | Neon `PGUSER` value used for connection URI lookup. | Stg, Prod | `S` |
 | `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
-| `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg | `S` |
+| `RAILWAY_API_TOKEN` | Authenticates Railway CLI calls for scraper preview service variables. | Stg | `S` |
+| `RAILWAY_PROJECT_ID` | Railway project that owns scraper preview environments. | Stg | `S` |
+| `RAILWAY_SCRAPER_SERVICE_NAME` | Railway scraper cron service name inside preview environments. | Stg | `S` |
+| `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg, Prod | `S` |
 | `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls and as `VERCEL_ORG_ID` to Vercel CLI release deploys. | Stg, Prod | `S` |
-
-Legend: `S` = server-only. `C` = client-visible.
-
-### Repository Secrets
-
-| Secret | What it is for | Required | Important notes |
-| --- | --- | --- | --- |
-| `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Stg | `S` |
-| `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Stg | `S` |
-| `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Stg, Prod | `S` |
 | `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars, deployment lookup, and CLI production deploys. | Stg, Prod | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
@@ -300,9 +298,9 @@ Legend: `S` = server-only. `C` = client-visible.
 
 1. Open Vercel account settings and go to the Access Tokens area.[^6]
 2. Create a token for the team that owns the web project.
-3. Copy the token once and save it as the repository secret `VERCEL_TOKEN`.
-4. Keep `VERCEL_TEAM_ID` and `VERCEL_PROJECT_ID` as repository variables. Use
-   the exact `team_...` ID, not the team slug/name or surrounding label text.
+3. Copy the token once and save it in Infisical as `VERCEL_TOKEN`.
+4. Keep `VERCEL_TEAM_ID` and `VERCEL_PROJECT_ID` in the same Infisical path.
+   Use the exact `team_...` ID, not the team slug/name or surrounding label text.
 5. Make sure `VERCEL_PROJECT_ID` belongs to `VERCEL_TEAM_ID`; a token for a
    different account or team will receive `401` or `403` from the Vercel API.
 
@@ -316,9 +314,9 @@ GitHub workflows use the token as a bearer token against `https://api.vercel.com
 3. If project-scoped keys are not suitable, use an organization API key created
    by an organization admin.
 4. Copy the token immediately; Neon shows API key tokens only once.
-5. Save the token as the repository secret `NEON_API_KEY`.
+5. Save the token in Infisical as `NEON_API_KEY`.
 6. Keep `NEON_PROJECT_ID`, `NEON_DATABASE_NAME`, and `NEON_DATABASE_USER` as
-   repository variables.
+   GitHub secrets synced from Infisical.
 
 ## Platform-Provided Or Managed Values
 

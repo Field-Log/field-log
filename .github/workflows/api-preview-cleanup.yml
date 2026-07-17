@@ -30,9 +30,9 @@ jobs:
         shell: bash
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
-          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bash .github/scripts/neon-database-branch.sh cleanup-preview
 
@@ -41,8 +41,8 @@ jobs:
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove
 
@@ -50,8 +50,8 @@ jobs:
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove-image-folder-prefix
 
@@ -75,9 +75,9 @@ jobs:
       - name: Validate PR comment app configuration
         shell: bash
         env:
-          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
           FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
-          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
           FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
@@ -93,7 +93,7 @@ jobs:
         id: preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          client-id: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
           private-key: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
@@ -137,7 +137,7 @@ jobs:
         id: db-preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          client-id: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
           private-key: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}

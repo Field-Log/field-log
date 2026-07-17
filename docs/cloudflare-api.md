@@ -359,7 +359,8 @@ Release tags:
 Manual `workflow_dispatch` on `main` remains available for operational
 recovery, but normal production deploys should come from an annotated `v*` tag.
 
-Configure these GitHub repository variables:
+Configure these values in Infisical Production at `/tools/github/secrets`; they
+sync to GitHub repository secrets:
 
 - `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID`
 - `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID`
@@ -374,11 +375,12 @@ Configure these GitHub repository variables:
 - optional `INFISICAL_OIDC_AUDIENCE`, defaults to
   `https://github.com/{repository_owner}`
 
-Configure these GitHub repository secrets:
-
 - `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY`
 - `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY`
 - `NEON_API_KEY`
+- `RAILWAY_API_TOKEN`
+- `RAILWAY_PROJECT_ID`
+- `RAILWAY_SCRAPER_SERVICE_NAME`
 - `VERCEL_TOKEN`
 
 The `Field Log API Preview` GitHub App must be installed on this repository

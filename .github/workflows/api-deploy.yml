@@ -167,15 +167,15 @@ jobs:
         shell: bash
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
-          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
-          RAILWAY_SCRAPER_SERVICE_NAME: ${{ vars.RAILWAY_SCRAPER_SERVICE_NAME }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SCRAPER_SERVICE_NAME: ${{ secrets.RAILWAY_SCRAPER_SERVICE_NAME }}
         run: |
           set -euo pipefail
 
@@ -193,9 +193,9 @@ jobs:
           DB_CHANGING: ${{ steps.db_changes.outputs.database }}
           MAX_NEON_BRANCHES: 10
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
-          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bash .github/scripts/neon-database-branch.sh prepare-preview
 
@@ -206,8 +206,8 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
           DATABASE_URL: ${{ steps.db.outputs.database_url }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh set
 
@@ -217,8 +217,8 @@ jobs:
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove
 
@@ -229,8 +229,8 @@ jobs:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
           DB_CHANGING: ${{ steps.db_changes.outputs.database }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           set -euo pipefail
@@ -281,8 +281,8 @@ jobs:
           DATABASE_URL: ${{ steps.db.outputs.database_url }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
-          RAILWAY_SCRAPER_SERVICE_NAME: ${{ vars.RAILWAY_SCRAPER_SERVICE_NAME }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RAILWAY_SCRAPER_SERVICE_NAME: ${{ secrets.RAILWAY_SCRAPER_SERVICE_NAME }}
         run: |
           set -euo pipefail
 
@@ -339,18 +339,18 @@ jobs:
         if: steps.db.outputs.can_deploy == 'true'
         shell: bash
         env:
-          INFISICAL_CLOUDFLARE_IDENTITY_ID: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          INFISICAL_PROJECT_SLUG: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          INFISICAL_CLOUDFLARE_IDENTITY_ID: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          INFISICAL_PROJECT_SLUG: ${{ secrets.INFISICAL_PROJECT_SLUG }}
         run: |
           set -euo pipefail
 
           if [[ -z "${INFISICAL_CLOUDFLARE_IDENTITY_ID:-}" ]]; then
-            echo "Repository variable INFISICAL_CLOUDFLARE_IDENTITY_ID is required." >&2
+            echo "GitHub secret INFISICAL_CLOUDFLARE_IDENTITY_ID is required." >&2
             exit 1
           fi
 
           if [[ -z "${INFISICAL_PROJECT_SLUG:-}" ]]; then
-            echo "Repository variable INFISICAL_PROJECT_SLUG is required." >&2
+            echo "GitHub secret INFISICAL_PROJECT_SLUG is required." >&2
             exit 1
           fi
 
@@ -359,10 +359,10 @@ jobs:
         uses: Infisical/secrets-action@v1.0.16
         with:
           method: oidc
-          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
           env-slug: preview
           secret-path: /tools/cloudflare
 
@@ -371,10 +371,10 @@ jobs:
         uses: Infisical/secrets-action@v1.0.16
         with:
           method: oidc
-          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
           env-slug: preview
           secret-path: /apps/api
 
@@ -461,9 +461,9 @@ jobs:
       - name: Validate PR comment app configuration
         shell: bash
         env:
-          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
           FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
-          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
           FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
@@ -480,7 +480,7 @@ jobs:
         id: preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ vars.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
+          client-id: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
           private-key: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
@@ -545,7 +545,7 @@ jobs:
         id: db-preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ vars.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
+          client-id: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
           private-key: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
@@ -674,12 +674,12 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
-          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           set +e
@@ -735,9 +735,9 @@ jobs:
         env:
           BRANCH_NAME: production
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ vars.NEON_PROJECT_ID }}
-          NEON_DATABASE_NAME: ${{ vars.NEON_DATABASE_NAME }}
-          NEON_DATABASE_USER: ${{ vars.NEON_DATABASE_USER }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
         run: bash .github/scripts/neon-database-branch.sh branch-url
 
       - name: Run production migrations
@@ -775,18 +775,18 @@ jobs:
       - name: Validate Infisical OIDC configuration
         shell: bash
         env:
-          INFISICAL_CLOUDFLARE_IDENTITY_ID: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          INFISICAL_PROJECT_SLUG: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          INFISICAL_CLOUDFLARE_IDENTITY_ID: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          INFISICAL_PROJECT_SLUG: ${{ secrets.INFISICAL_PROJECT_SLUG }}
         run: |
           set -euo pipefail
 
           if [[ -z "${INFISICAL_CLOUDFLARE_IDENTITY_ID:-}" ]]; then
-            echo "Repository variable INFISICAL_CLOUDFLARE_IDENTITY_ID is required." >&2
+            echo "GitHub secret INFISICAL_CLOUDFLARE_IDENTITY_ID is required." >&2
             exit 1
           fi
 
           if [[ -z "${INFISICAL_PROJECT_SLUG:-}" ]]; then
-            echo "Repository variable INFISICAL_PROJECT_SLUG is required." >&2
+            echo "GitHub secret INFISICAL_PROJECT_SLUG is required." >&2
             exit 1
           fi
 
@@ -794,10 +794,10 @@ jobs:
         uses: Infisical/secrets-action@v1.0.16
         with:
           method: oidc
-          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
           env-slug: prod
           secret-path: /tools/cloudflare
 
@@ -805,10 +805,10 @@ jobs:
         uses: Infisical/secrets-action@v1.0.16
         with:
           method: oidc
-          identity-id: ${{ vars.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
+          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
           env-slug: prod
           secret-path: /apps/api
 
@@ -881,8 +881,8 @@ jobs:
       - name: Validate Vercel configuration
         shell: bash
         env:
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
-          VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           set -euo pipefail
@@ -903,16 +903,16 @@ jobs:
       - name: Pull Vercel production environment
         env:
           NO_COLOR: "1"
-          VERCEL_ORG_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: pnpm dlx vercel pull --yes --environment=production --team "$VERCEL_ORG_ID"
 
       - name: Build Vercel production output
         env:
           NO_COLOR: "1"
-          VERCEL_ORG_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: pnpm dlx vercel build --prod --team "$VERCEL_ORG_ID"
 
@@ -921,8 +921,8 @@ jobs:
         shell: bash
         env:
           NO_COLOR: "1"
-          VERCEL_ORG_ID: ${{ vars.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_TEAM_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           set -euo pipefail

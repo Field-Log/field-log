@@ -220,7 +220,8 @@ It runs the live check for same-repository pull requests that touch
 logger-relevant files and can also be run manually with `workflow_dispatch`.
 In CI, the workflow authenticates to Infisical with OIDC, fetches
 `/tools/logger-axiom-test`, then runs the live script directly.
-Configure these GitHub repository variables:
+Configure these values in Infisical Production at `/tools/github/secrets`; they
+sync to GitHub repository secrets:
 
 - `INFISICAL_LOGGER_IDENTITY_ID`
 - `INFISICAL_PROJECT_SLUG`
