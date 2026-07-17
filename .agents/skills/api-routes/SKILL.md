@@ -11,6 +11,18 @@ Keep the API route surface versioned and predictable. Public API routes are
 mounted under static `/api/v1`; do not add unversioned aliases unless the user
 explicitly asks for a migration window.
 
+## Generated API Docs
+
+Before adding, changing, reviewing, or documenting API routes, read
+`docs/api-docs/index.md`, then read the linked per-path file for every route you
+are touching. These files are generated from the Hono OpenAPI document and are
+the agent-facing reference for the current public API surface.
+
+When route behavior, request/response schemas, headers, status codes, or public
+paths change, regenerate the docs with
+`pnpm --filter @app/api run docs:generate`. The API test suite fails when
+`docs/api-docs/` is stale relative to the generated OpenAPI document.
+
 ## Route Structure
 
 - Keep `apps/api/src/app.ts` thin: create the Hono app and mount versioned

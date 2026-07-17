@@ -6,6 +6,16 @@ import {
 } from "@package/logger";
 import { describe, expect, it } from "vitest";
 import app, { createApp } from "./app.js";
+import { apiDocsPath, openApiJsonPath } from "./openapi.js";
+
+type OpenApiDocument = {
+  info: {
+    title: string;
+    version: string;
+  };
+  openapi: string;
+  paths: Record<string, unknown>;
+};
 
 describe("api", () => {
   it("returns health status", async () => {
@@ -15,6 +25,31 @@ describe("api", () => {
       ok: true,
       service: "api",
     });
+  });
+
+  it("serves the OpenAPI 3.1 document", async () => {
+    const response = await app.request(openApiJsonPath);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("application/json");
+
+    const document = (await response.json()) as OpenApiDocument;
+
+    expect(document.openapi).toBe("3.1.0");
+    expect(document.info).toMatchObject({
+      title: "Field Log API",
+      version: "0.0.0",
+    });
+    expect(document.paths["/api/v0/health"]).toBeDefined();
+    expect(document.paths["/api/v0/logs"]).toBeDefined();
+  });
+
+  it("serves the Scalar API reference", async () => {
+    const response = await app.request(apiDocsPath);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/html");
+    await expect(response.text()).resolves.toContain("Field Log API Reference");
   });
 
   it("does not expose previous major version routes", async () => {
@@ -35,6 +70,12 @@ describe("api", () => {
         method: "POST",
       }),
     ).resolves.toMatchObject({
+      status: 404,
+    });
+    await expect(app.request("/openapi.json")).resolves.toMatchObject({
+      status: 404,
+    });
+    await expect(app.request("/docs")).resolves.toMatchObject({
       status: 404,
     });
   });
