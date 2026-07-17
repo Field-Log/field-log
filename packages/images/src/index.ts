@@ -48,6 +48,8 @@ export type ImageStorage = {
   ) => Promise<ImageUploadResult | null>;
 };
 
+const imageKitListLimit = 100;
+
 export function createImageStorage(config: ImageStorageConfig): ImageStorage {
   if (config.dryRun) {
     return createDryRunImageStorage();
@@ -73,11 +75,23 @@ export function createImageStorage(config: ImageStorageConfig): ImageStorage {
       return mapUpdateResponse(response);
     },
     async uploadImage(input) {
+      const existingFile = await findExistingImage(imageKit, input);
+
+      if (existingFile) {
+        return existingFile;
+      }
+
       const response = await imageKit.files.upload(input);
 
       return mapUploadResponse(response);
     },
     async uploadRemoteImage(input) {
+      const existingFile = await findExistingImage(imageKit, input);
+
+      if (existingFile) {
+        return existingFile;
+      }
+
       const { sourceUrl, ...uploadInput } = input;
       const uploadResponse = await imageKit.files.upload({
         ...uploadInput,
@@ -87,6 +101,41 @@ export function createImageStorage(config: ImageStorageConfig): ImageStorage {
       return mapUploadResponse(uploadResponse);
     },
   };
+}
+
+async function findExistingImage(
+  imageKit: ImageKit,
+  input: Pick<ImageUploadInput, "fileName" | "folder">,
+): Promise<ImageUploadResult | null> {
+  const targetFilePath = buildImageKitFilePath(input);
+  const folderPath = normalizeImageKitFolder(input.folder);
+  const assets = await imageKit.assets.list({
+    fileType: "image",
+    limit: imageKitListLimit,
+    path: folderPath,
+    type: "file",
+  });
+  const existingFile = assets
+    .filter(isCompleteImageFile)
+    .find((asset) => asset.filePath === targetFilePath);
+
+  return existingFile ? mapExistingFile(existingFile) : null;
+}
+
+function buildImageKitFilePath(
+  input: Pick<ImageUploadInput, "fileName" | "folder">,
+): string {
+  return `${normalizeImageKitFolder(input.folder)}${input.fileName}`;
+}
+
+function normalizeImageKitFolder(folder: string | undefined): string {
+  const trimmedFolder = folder?.trim();
+
+  if (!trimmedFolder) {
+    return "/";
+  }
+
+  return `/${trimmedFolder.replace(/^\/+|\/+$/g, "")}/`;
 }
 
 function createDryRunImageStorage(): ImageStorage {
@@ -116,6 +165,17 @@ function mapUploadResponse(
     filePath: response.filePath,
     height: response.height,
     thumbnailUrl: response.thumbnailUrl,
+    url: response.url,
+    width: response.width,
+  };
+}
+
+function mapExistingFile(response: CompleteImageKitFile): ImageUploadResult {
+  return {
+    fileId: response.fileId,
+    filePath: response.filePath,
+    height: response.height,
+    thumbnailUrl: response.thumbnail,
     url: response.url,
     width: response.width,
   };
@@ -168,4 +228,26 @@ function assertUpdateResponse(
   if (!response.fileId || !response.filePath || !response.url) {
     throw new Error("ImageKit update response did not include image details.");
   }
+}
+
+type CompleteImageKitFile = ImageKit.File & {
+  fileId: string;
+  filePath: string;
+  height: number;
+  thumbnail: string;
+  url: string;
+  width: number;
+};
+
+function isCompleteImageFile(
+  response: ImageKit.File,
+): response is CompleteImageKitFile {
+  return (
+    Boolean(response.fileId) &&
+    Boolean(response.filePath) &&
+    typeof response.height === "number" &&
+    Boolean(response.thumbnail) &&
+    Boolean(response.url) &&
+    typeof response.width === "number"
+  );
 }
