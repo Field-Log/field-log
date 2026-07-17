@@ -173,10 +173,13 @@ jobs:
           VERCEL_TEAM_ID: ${{ vars.VERCEL_TEAM_ID }}
           VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_SCRAPER_SERVICE_NAME: ${{ vars.RAILWAY_SCRAPER_SERVICE_NAME }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           set -euo pipefail
 
-          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_USER VERCEL_TEAM_ID VERCEL_PROJECT_ID VERCEL_TOKEN; do
+          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_USER VERCEL_TEAM_ID VERCEL_PROJECT_ID VERCEL_TOKEN RAILWAY_PROJECT_ID RAILWAY_SCRAPER_SERVICE_NAME RAILWAY_TOKEN; do
             if [[ -z "${!name:-}" ]]; then
               echo "$name is required." >&2
               exit 1
@@ -247,7 +250,35 @@ jobs:
                 branchName: $branch_name,
                 branchId: $branch_id
               }
-            }'
+          }'
+
+      - name: Configure Railway scraper preview database
+        if: steps.db.outputs.can_deploy == 'true'
+        shell: bash
+        env:
+          DATABASE_URL: ${{ steps.db.outputs.database_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_SCRAPER_SERVICE_NAME: ${{ vars.RAILWAY_SCRAPER_SERVICE_NAME }}
+          RAILWAY_WORKSPACE_ID: ${{ vars.RAILWAY_WORKSPACE_ID }}
+        run: |
+          set -euo pipefail
+
+          printf '::add-mask::%s\n' "$DATABASE_URL"
+
+          railway_environment="preview-pr-${PR_NUMBER}"
+          link_args=(--project "$RAILWAY_PROJECT_ID" --environment "$railway_environment")
+          if [[ -n "${RAILWAY_WORKSPACE_ID:-}" ]]; then
+            link_args+=(--workspace "$RAILWAY_WORKSPACE_ID")
+          fi
+
+          pnpm dlx @railway/cli link "${link_args[@]}"
+
+          pnpm dlx @railway/cli environment edit \
+            --service-config "$RAILWAY_SCRAPER_SERVICE_NAME" variables.DATABASE_URL.value "$DATABASE_URL" \
+            --message "Set scraper preview database for ${railway_environment}" \
+            --yes
 
       - name: Build Worker dependencies
         if: steps.db.outputs.can_deploy == 'true'

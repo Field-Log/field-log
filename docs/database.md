@@ -191,11 +191,15 @@ a PR with schema changes, generate committed migrations with `pnpm db:generate`.
 PR branches are disposable. On each DB-changing PR update, the API deploy
 workflow recreates `preview-pr-<number>` from `production`, runs committed
 migrations against it, deploys the API preview with that `DATABASE_URL`, and sets
-a branch-specific Vercel Preview `DATABASE_URL` for the web preview branch.
+a branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
+same selected `DATABASE_URL` is also pushed into the Railway scraper preview
+environment so scraper cron executions use the same database branch as the API
+and web previews.
 
 When a PR has no DB changes, the API preview uses the shared `staging` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch
-database overrides.
+database overrides. The Railway scraper preview environment is updated to the
+selected shared `staging` `DATABASE_URL` in that case.
 
 ## Parallel DB PRs
 

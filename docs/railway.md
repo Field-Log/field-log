@@ -196,6 +196,39 @@ Required groups:
 - Stage 2 Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL`
   first; add `GRIMSMO_PROXY_URL` only if Railway/direct IP fetches are blocked
 
+## Preview Database Sync
+
+The Railway scraper preview service must use the same Neon branch selected for
+the API and web previews. Branch code running against the shared staging
+database can fail with misleading type errors when the PR contains database
+schema changes.
+
+The API Deploy workflow configures this handoff after it prepares the Neon
+preview database:
+
+- DB-changing PRs use the isolated `preview-pr-<number>` branch after committed
+  migrations are applied.
+- Non-DB-changing PRs use the shared `staging` branch.
+- The selected `DATABASE_URL` is upserted into the Railway scraper preview
+  service through the Railway CLI.
+
+GitHub Actions requires:
+
+| Name | Type | Purpose |
+| --- | --- | --- |
+| `RAILWAY_TOKEN` | Secret | Railway account or workspace token that can link to PR environments. The workflow maps this GitHub secret into the Railway CLI's `RAILWAY_API_TOKEN` environment variable. |
+| `RAILWAY_PROJECT_ID` | Variable | Railway project ID that owns the scraper PR environments. |
+| `RAILWAY_SCRAPER_SERVICE_NAME` | Variable | Stable Railway service name for the scraper cron service, for example `apps-scraper`. |
+| `RAILWAY_WORKSPACE_ID` | Variable | Optional Railway workspace ID, required only when linking to a workspace project. |
+
+The workflow links to the Railway environment named
+`preview-pr-<pull-request-number>` before editing variables. For example, PR 53
+uses `preview-pr-53`.
+
+Keep `REDIS_URL` as a Railway service reference such as
+`${{scraper-queue.REDIS_URL}}`; only the external Neon `DATABASE_URL` is synced
+from the preview database workflow.
+
 ## Deployment Notes
 
 - Keep one Railway service for `apps/scraper`.
