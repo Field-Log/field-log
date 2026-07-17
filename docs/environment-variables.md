@@ -97,8 +97,8 @@ values such as Redis connection strings.
 | `DATABASE_URL` | Scraper database connection string. | All | `S` |
 | `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
 | `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key for uploads/deletes. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `S` |
-| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key paired with the private key. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `C` |
-| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint from the ImageKit dashboard, for example `https://ik.imagekit.io/<imagekit-id>` or a configured custom domain. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `C` |
+| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key paired with the private key. Optional for current server-side upload/delete jobs; keep available for future signed client upload flows. | All | `C` |
+| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint from the ImageKit dashboard, for example `https://ik.imagekit.io/<imagekit-id>` or a configured custom domain. Optional for current server-side upload/delete jobs; required only for future URL generation features. | All | `C` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |

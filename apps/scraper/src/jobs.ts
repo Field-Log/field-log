@@ -32,9 +32,6 @@ export async function createScraperJobContext(
   env: ScraperJobEnv,
   logger: Logger,
 ): Promise<ScraperJobContext> {
-  const db = createScraperDb(env.DATABASE_URL);
-  const redis = createRedisConnection(env.REDIS_URL);
-  const queues = createScraperQueues(redis);
   const services = createServices();
   services.configure({
     images: {
@@ -45,8 +42,19 @@ export async function createScraperJobContext(
     },
     logger,
   });
+  const db = createScraperDb(env.DATABASE_URL);
+  const redis = createRedisConnection(env.REDIS_URL);
 
-  await redis.ping();
+  try {
+    await redis.ping();
+  } catch (error) {
+    redis.disconnect();
+    throw new Error("Failed to connect to Redis.", {
+      cause: error,
+    });
+  }
+
+  const queues = createScraperQueues(redis);
 
   return {
     async close() {

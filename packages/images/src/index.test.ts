@@ -17,7 +17,7 @@ describe("createImageStorage", () => {
 
   it("requires ImageKit config outside dry-run mode", () => {
     expect(() => createImageStorage({})).toThrow(
-      "ImageKit configuration is required unless dry-run is on.",
+      "ImageKit private key is required unless dry-run is on.",
     );
   });
 });

@@ -188,8 +188,9 @@ Required groups:
 
 - Database: `DATABASE_URL`
 - Queue: `REDIS_URL`
-- ImageKit: `IMAGE_KIT_PRIVATE_KEY`, `IMAGE_KIT_PUBLIC_KEY`, and any endpoint
-  value required by the selected ImageKit client
+- ImageKit: `IMAGE_KIT_PRIVATE_KEY` for server-side uploads/deletes; keep
+  `IMAGE_KIT_PUBLIC_KEY` and `IMAGE_KIT_URL_ENDPOINT` available only for future
+  signed upload or URL generation work
 - Logger: `AXIOM_TOKEN`, `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`,
   `LOG_LEVEL`, and `LOGGER`
 - Stage 2 Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL`

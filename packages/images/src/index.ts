@@ -53,8 +53,8 @@ export function createImageStorage(config: ImageStorageConfig): ImageStorage {
     return createDryRunImageStorage();
   }
 
-  if (!config.privateKey || !config.publicKey || !config.urlEndpoint) {
-    throw new Error("ImageKit configuration is required unless dry-run is on.");
+  if (!config.privateKey) {
+    throw new Error("ImageKit private key is required unless dry-run is on.");
   }
 
   const imageKit = new ImageKit({
