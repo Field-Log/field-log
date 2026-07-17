@@ -149,7 +149,7 @@ jobs:
             > "$RUNNER_TEMP/api-staging-secrets.json"
 
       - name: Deploy staging Worker
-        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env staging --secrets-file "$RUNNER_TEMP/api-staging-secrets.json"
+        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env staging
 
       - name: Smoke test staging Worker
         run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.staging.field-log.app/api/v0/health

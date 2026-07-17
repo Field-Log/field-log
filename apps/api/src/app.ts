@@ -1,6 +1,6 @@
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import type { AppDependencies } from "./routes/dependencies.js";
-import { apiV0Prefix, createApiV0Router } from "./routes/v0/index.js";
+import { mountApiV0Routes } from "./routes/v0/index.js";
 
 export type {
   AppDependencies,
@@ -8,9 +8,9 @@ export type {
 } from "./routes/dependencies.js";
 
 export function createApp(dependencies: AppDependencies = {}) {
-  const app = new Hono();
+  const app = new OpenAPIHono();
 
-  app.route(apiV0Prefix, createApiV0Router(dependencies));
+  mountApiV0Routes(app, dependencies);
 
   return app;
 }

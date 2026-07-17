@@ -15,8 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dsabh.fieldlog",
-      "usesAppleSignIn": true
+      "bundleIdentifier": "com.dsabh.fieldlog"
     },
     "android": {
       "package": "com.dsabh.fieldlog",
@@ -33,11 +32,11 @@
     "plugins": [
       "expo-sqlite",
       "expo-web-browser",
-      "expo-apple-authentication",
+      "expo-secure-store",
       [
-        "expo-notifications",
+        "@clerk/expo",
         {
-          "iosDisplayInForeground": true
+          "appleSignIn": false
         }
       ]
     ]

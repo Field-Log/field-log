@@ -195,7 +195,9 @@ a branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
 same selected `DATABASE_URL` is also pushed into the Railway scraper preview
 environment so scraper cron executions use the same database branch as the API
 and web previews. See [ImageKit](./image-kit.md) for the matching preview image
-folder namespace.
+folder namespace. The API preview Worker uses the preview runtime secrets
+managed by Infisical Secrets Sync; the workflow does not write PR-specific
+`DATABASE_URL` values to Cloudflare Worker secrets.
 
 When a PR has no DB changes, the API preview uses the shared `staging` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch

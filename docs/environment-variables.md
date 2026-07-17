@@ -59,8 +59,9 @@ Legend: `S` = server-only. `C` = client-visible.
 
 ### API App: `/apps/api`
 
-`apps/api` runs on Cloudflare Workers. Local development uses Wrangler, and
-deployment secrets are written to Workers through Wrangler `--secrets-file`.
+`apps/api` runs on Cloudflare Workers. Local development uses Wrangler. Deployed
+Worker runtime secrets are owned by Infisical Secrets Sync for preview, staging,
+and production; deploy commands must not write Worker secrets with Wrangler.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
@@ -186,6 +187,8 @@ JavaScript must use Expo's `EXPO_PUBLIC_` prefix.
 | --- | --- | --- | --- |
 | `API_URL` | API origin aliased to `EXPO_PUBLIC_API_URL` by the Infisical runner. | ? (All) | `C` |
 | `EXPO_PUBLIC_API_URL` | API origin used by mobile requests and client log proxy posts. | ? (All) | `C` |
+| `CLERK_PUBLISHABLE_KEY` | Clerk mobile SDK publishable key. The Infisical runner aliases this to `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` before Expo commands run. | All | `C` |
+| `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Expo-visible Clerk publishable key consumed by app JavaScript. Prefer setting `CLERK_PUBLISHABLE_KEY` in Infisical and letting the runner alias it. | All | `C` |
 | `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY` | Client key sent to the API log proxy. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.

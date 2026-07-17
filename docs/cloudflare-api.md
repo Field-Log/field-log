@@ -320,9 +320,8 @@ Pull requests:
   [ImageKit](./image-kit.md).
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `preview`, path `/tools/cloudflare`.
-- Reads Infisical environment `preview`, path `/apps/api`, then writes a
-  Wrangler secrets file with an explicit `DATABASE_URL` for that preview
-  version.
+- Does not write Cloudflare Worker runtime secrets. Preview Worker secrets are
+  owned by Infisical Secrets Sync.
 - Uploads a preview Worker version with alias `pr-<number>`.
 - If `field-log-api-preview` does not exist yet, bootstraps it with
   `wrangler deploy --env preview`, then retries the aliased version upload.
@@ -348,8 +347,8 @@ Release tags:
   deploying.
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `prod`, path `/tools/cloudflare`.
-- Reads Infisical environment `prod`, path `/apps/api`, then writes a Wrangler
-  secrets file with an explicit production `DATABASE_URL`.
+- Does not write Cloudflare Worker runtime secrets. Production Worker secrets
+  are owned by Infisical Secrets Sync.
 - Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/api/v0/health`.
 - Validates `@app/web`, pulls the Vercel production environment, builds with
@@ -439,7 +438,11 @@ override points the web preview server runtime at the matching
 `preview-pr-<number>` Neon branch. The workflow also applies the ImageKit
 preview folder namespace from [ImageKit](./image-kit.md). When DB changes are
 removed or the PR closes, the workflow removes the branch-specific
-`DATABASE_URL`; PR close also removes the branch-specific image folder prefix.
+`DATABASE_URL` so the web preview falls back to the shared Preview
+`DATABASE_URL`, which should point at Neon `staging`; PR close also removes the
+branch-specific image folder prefix. The Cloudflare preview Worker always uses
+the runtime secrets managed by Infisical Secrets Sync; PR-specific database URLs
+are not written to Worker secrets by this workflow.
 
 Vercel environment changes apply to new deployments. If the latest Vercel
 preview build started before the branch-specific database override was updated,

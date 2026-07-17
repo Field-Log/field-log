@@ -1,5 +1,12 @@
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { type LogData, loggerValues } from "@package/logger";
-import { Hono } from "hono";
+import {
+  ClientLogAcceptedResponseSchema,
+  ClientLogHeadersSchema,
+  ClientLogRequestSchema,
+  ErrorResponseSchema,
+  jsonContent,
+} from "../../../openapi.js";
 import {
   type AppDependencies,
   getConfiguredLogger,
@@ -8,7 +15,44 @@ import {
 import { parseClientLogEvents } from "./parse-client-log-events.js";
 
 export function createLogsRouter(dependencies: AppDependencies = {}) {
-  const router = new Hono();
+  const router = new OpenAPIHono();
+
+  router.openAPIRegistry.registerPath({
+    method: "post",
+    path: "/logs",
+    operationId: "createClientLogs",
+    summary: "Accept client log events",
+    description:
+      "Accepts a single client log event, an array of log events, or an object with an events array.",
+    tags: ["Logs"],
+    request: {
+      headers: ClientLogHeadersSchema,
+      body: {
+        required: true,
+        description:
+          "A client log event, an array of client log events, or an event batch object.",
+        content: jsonContent(ClientLogRequestSchema),
+      },
+    },
+    responses: {
+      200: {
+        description: "The client log events were accepted.",
+        content: jsonContent(ClientLogAcceptedResponseSchema),
+      },
+      400: {
+        description: "The request body was not valid JSON or log event data.",
+        content: jsonContent(ErrorResponseSchema),
+      },
+      401: {
+        description: "The configured client log key did not match.",
+        content: jsonContent(ErrorResponseSchema),
+      },
+      500: {
+        description: "The API could not process the request.",
+        content: jsonContent(ErrorResponseSchema),
+      },
+    },
+  });
 
   router.post("/logs", async (context) => {
     const runtimeConfig = await getRuntimeConfig(context, dependencies);
