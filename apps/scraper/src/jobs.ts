@@ -89,6 +89,7 @@ export async function runAutmogProducerJob({
       return {
         enqueuedItemJobs: result.enqueuedCount,
         fetchedCount: result.fetchedCount,
+        removedCompletedItemJobs: result.removedCompletedItemJobs,
       };
     },
     jobType: "producer",

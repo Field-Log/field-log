@@ -45,3 +45,23 @@ export function createScraperQueues(connection: Redis): ScraperQueues {
     items,
   };
 }
+
+export async function removeCompletedJobsById<TJobData>(
+  queue: Queue<TJobData>,
+  jobIds: readonly string[],
+) {
+  let removed = 0;
+
+  for (const jobId of new Set(jobIds)) {
+    const job = await queue.getJob(jobId);
+
+    if (!job || (await job.getState()) !== "completed") {
+      continue;
+    }
+
+    await job.remove();
+    removed += 1;
+  }
+
+  return removed;
+}

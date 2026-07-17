@@ -6,10 +6,22 @@ import { runAutmogProducer } from "./producer.js";
 describe("runAutmogProducer", () => {
   it("fetches Autmog products and enqueues item and archive jobs", async () => {
     const addBulk = vi.fn().mockResolvedValue([]);
+    const completedJob = {
+      getState: vi.fn().mockResolvedValue("completed"),
+      remove: vi.fn().mockResolvedValue(undefined),
+    };
+    const waitingJob = {
+      getState: vi.fn().mockResolvedValue("waiting"),
+      remove: vi.fn().mockResolvedValue(undefined),
+    };
+    const getJob = vi
+      .fn()
+      .mockResolvedValueOnce(completedJob)
+      .mockResolvedValueOnce(waitingJob);
     const queues = {
       close: vi.fn(),
       images: { addBulk: vi.fn() },
-      items: { addBulk },
+      items: { addBulk, getJob },
     } as unknown as ScraperQueues;
     const fetcher = vi.fn().mockResolvedValue(
       new Response(
@@ -42,6 +54,9 @@ describe("runAutmogProducer", () => {
     });
 
     expect(result.fetchedCount).toBe(1);
+    expect(result.removedCompletedItemJobs).toBe(1);
+    expect(completedJob.remove).toHaveBeenCalledTimes(1);
+    expect(waitingJob.remove).not.toHaveBeenCalled();
     expect(addBulk).toHaveBeenCalledTimes(1);
     const [jobs] = addBulk.mock.calls[0] ?? [];
     expect(jobs).toHaveLength(2);

@@ -21,7 +21,7 @@ import {
   getAutmogImageDeleteJobId,
   getAutmogImageUploadJobId,
 } from "./job-ids.js";
-import type { ScraperQueues } from "./queues.js";
+import { removeCompletedJobsById, type ScraperQueues } from "./queues.js";
 
 export type QueueDrainStats = {
   completed: number;
@@ -282,7 +282,15 @@ async function processItemJob({
       })),
     ];
 
+    let removedCompletedImageJobs = 0;
+
     if (imageJobs.length > 0) {
+      removedCompletedImageJobs = await removeCompletedJobsById(
+        queues.images,
+        imageJobs
+          .map((imageJob) => imageJob.opts.jobId)
+          .filter((jobId): jobId is string => Boolean(jobId)),
+      );
       await queues.images.addBulk(imageJobs);
     }
 
@@ -305,6 +313,7 @@ async function processItemJob({
         },
         source: scraperSources.autmog,
         sourceProductId: job.data.item.sourceProductId,
+        removedCompletedImageJobs,
         updated: result.updated,
         uploadImageJobs: result.uploadImageJobs.length,
         versioned: result.versioned,

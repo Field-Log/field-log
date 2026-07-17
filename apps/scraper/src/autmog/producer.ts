@@ -1,6 +1,9 @@
 import { type Logger, loggerMessages } from "@package/logger";
 import { getAutmogArchiveJobId, getAutmogPenJobId } from "../queue/job-ids.js";
-import type { ScraperQueues } from "../queue/queues.js";
+import {
+  removeCompletedJobsById,
+  type ScraperQueues,
+} from "../queue/queues.js";
 import {
   type NormalizedAutmogPen,
   type ScraperItemJob,
@@ -21,6 +24,7 @@ export type RunAutmogProducerResult = {
   enqueuedCount: number;
   fetchedCount: number;
   items: NormalizedAutmogPen[];
+  removedCompletedItemJobs: number;
 };
 
 export async function runAutmogProducer({
@@ -70,6 +74,11 @@ export async function runAutmogProducer({
       name: "autmog.archiveMissing",
     });
 
+    const removedCompletedItemJobs = await removeCompletedJobsById(
+      queues.items,
+      jobs.map((job) => job.jobId),
+    );
+
     await queues.items.addBulk(
       jobs.map((job) => ({
         data: job.data,
@@ -84,6 +93,7 @@ export async function runAutmogProducer({
       attributes: {
         enqueuedItemJobs: jobs.length,
         queue: "scraper-items",
+        removedCompletedItemJobs,
         source: scraperSources.autmog,
       },
     });
@@ -92,6 +102,7 @@ export async function runAutmogProducer({
         durationMs: Date.now() - startedAt,
         enqueuedItemJobs: jobs.length,
         fetchedCount: products.length,
+        removedCompletedItemJobs,
         source: scraperSources.autmog,
       },
     });
@@ -100,6 +111,7 @@ export async function runAutmogProducer({
       enqueuedCount: jobs.length,
       fetchedCount: products.length,
       items,
+      removedCompletedItemJobs,
     };
   } catch (error) {
     logger.error(loggerMessages.scraper.autmog.fetchFailed, {
