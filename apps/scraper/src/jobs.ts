@@ -23,6 +23,7 @@ export const scraperSourceKeys = Object.values(scraperSources);
 export type ScraperJobContext = {
   close: () => Promise<void>;
   db: Database;
+  imageFolderPrefix?: string;
   imageStorage: ImagesService;
   redis: ReturnType<typeof createRedisConnection>;
   queues: ScraperQueues;
@@ -62,6 +63,7 @@ export async function createScraperJobContext(
       redis.disconnect();
     },
     db,
+    imageFolderPrefix: env.IMAGE_KIT_FOLDER_PREFIX,
     imageStorage: services.images,
     queues,
     redis,
@@ -133,6 +135,7 @@ export async function runQueueProcessorJob({
         concurrency: env.SCRAPER_QUEUE_CONCURRENCY,
         connection: context.redis,
         db: context.db,
+        imageFolderPrefix: context.imageFolderPrefix,
         imageStorage: context.imageStorage,
         logger,
         queues: context.queues,

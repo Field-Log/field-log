@@ -9,6 +9,7 @@ export type ScraperRuntimeEnv = {
   DATABASE_URL?: string;
   IMAGE_KIT_PRIVATE_KEY?: string;
   IMAGE_KIT_PUBLIC_KEY?: string;
+  IMAGE_KIT_FOLDER_PREFIX?: string;
   IMAGE_KIT_URL_ENDPOINT?: string;
   LOGGER?: string;
   LOG_LEVEL?: string;
@@ -89,6 +90,7 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
       DATABASE_URL: z.string().min(1).url(),
       IMAGE_KIT_PRIVATE_KEY: z.string().min(1).optional(),
       IMAGE_KIT_PUBLIC_KEY: z.string().min(1).optional(),
+      IMAGE_KIT_FOLDER_PREFIX: z.string().min(1).optional(),
       IMAGE_KIT_URL_ENDPOINT: z.string().min(1).url().optional(),
       REDIS_URL: z.string().min(1).url(),
       SCRAPER_AUTMOG_INTERVAL_MINUTES: z.coerce
@@ -150,6 +152,7 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     DATABASE_URL: runtimeEnv.DATABASE_URL,
     IMAGE_KIT_PRIVATE_KEY: runtimeEnv.IMAGE_KIT_PRIVATE_KEY,
     IMAGE_KIT_PUBLIC_KEY: runtimeEnv.IMAGE_KIT_PUBLIC_KEY,
+    IMAGE_KIT_FOLDER_PREFIX: runtimeEnv.IMAGE_KIT_FOLDER_PREFIX,
     IMAGE_KIT_URL_ENDPOINT: runtimeEnv.IMAGE_KIT_URL_ENDPOINT,
     LOGGER: runtimeEnv.LOGGER,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,

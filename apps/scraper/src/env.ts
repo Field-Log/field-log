@@ -9,6 +9,7 @@ export function readProcessScraperRuntimeEnv() {
     DATABASE_URL: process.env.DATABASE_URL,
     IMAGE_KIT_PRIVATE_KEY: process.env.IMAGE_KIT_PRIVATE_KEY,
     IMAGE_KIT_PUBLIC_KEY: process.env.IMAGE_KIT_PUBLIC_KEY,
+    IMAGE_KIT_FOLDER_PREFIX: process.env.IMAGE_KIT_FOLDER_PREFIX,
     IMAGE_KIT_URL_ENDPOINT: process.env.IMAGE_KIT_URL_ENDPOINT,
     LOGGER: process.env.LOGGER,
     LOG_LEVEL: process.env.LOG_LEVEL,

@@ -67,6 +67,7 @@ describe("scraper env", () => {
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
       IMAGE_KIT_PRIVATE_KEY: "private",
       IMAGE_KIT_PUBLIC_KEY: "public",
+      IMAGE_KIT_FOLDER_PREFIX: "preview/pr-52",
       IMAGE_KIT_URL_ENDPOINT: "https://ik.imagekit.io/example",
       REDIS_URL: "redis://localhost:4008",
       SCRAPER_AUTMOG_INTERVAL_MINUTES: "45",
@@ -82,6 +83,7 @@ describe("scraper env", () => {
     expect(env.DATABASE_URL).toBe(
       "postgres://user:password@example.com:5432/field_log",
     );
+    expect(env.IMAGE_KIT_FOLDER_PREFIX).toBe("preview/pr-52");
     expect(env.REDIS_URL).toBe("redis://localhost:4008");
     expect(env.SCRAPER_AUTMOG_INTERVAL_MINUTES).toBe(45);
     expect(env.SCRAPER_AUTMOG_START_DELAY_SECONDS).toBe(5);

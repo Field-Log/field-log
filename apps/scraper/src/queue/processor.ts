@@ -37,6 +37,7 @@ export type RunQueueProcessorOptions = {
   concurrency: number;
   connection: Redis;
   db: Database;
+  imageFolderPrefix?: string;
   imageStorage: ImagesService;
   logger: Logger;
   queues: ScraperQueues;
@@ -82,6 +83,7 @@ export async function runQueueProcessor({
   concurrency,
   connection,
   db,
+  imageFolderPrefix,
   imageStorage,
   logger,
   queues,
@@ -111,7 +113,14 @@ export async function runQueueProcessor({
       concurrency,
       connection,
       handler: (job) =>
-        processImageJob({ db, errorCounter, imageStorage, job, logger }),
+        processImageJob({
+          db,
+          errorCounter,
+          imageFolderPrefix,
+          imageStorage,
+          job,
+          logger,
+        }),
       logger,
       queueName: scraperQueueNames.images,
     });
@@ -336,12 +345,14 @@ async function processItemJob({
 async function processImageJob({
   db,
   errorCounter,
+  imageFolderPrefix,
   imageStorage,
   job,
   logger,
 }: {
   db: Database;
   errorCounter: ProcessorErrorCounter;
+  imageFolderPrefix?: string;
   imageStorage: ImagesService;
   job: Job<ScraperImageJob>;
   logger: Logger;
@@ -383,7 +394,11 @@ async function processImageJob({
           sourceHash: row.image.sourceHash,
           sourceImageId: job.data.sourceImageId,
         }),
-        folder: `/scrapers/autmog/pens/${row.pen.sourceProductId}`,
+        folder: buildImageKitFolder({
+          entityId: row.pen.sourceProductId,
+          prefix: imageFolderPrefix,
+          type: "pens",
+        }),
         overwriteFile: true,
         overwriteTags: true,
         sourceUrl: job.data.sourceUrl,
@@ -543,6 +558,27 @@ export function createProcessorErrorCounter(): ProcessorErrorCounter {
       };
     },
   };
+}
+
+export function buildImageKitFolder({
+  entityId,
+  prefix,
+  type,
+}: {
+  entityId: string;
+  prefix?: string;
+  type: string;
+}) {
+  const normalizedPrefix = normalizeImageKitFolderPrefix(prefix);
+  const pathSegments = [normalizedPrefix, "products", type, entityId].filter(
+    Boolean,
+  );
+
+  return `/${pathSegments.join("/")}`;
+}
+
+function normalizeImageKitFolderPrefix(prefix: string | undefined) {
+  return prefix?.replace(/^\/+|\/+$/g, "");
 }
 
 function logProcessorErrorSummary({

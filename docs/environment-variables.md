@@ -46,6 +46,7 @@ secret syncs.
 | `AXIOM_TOKEN` | Axiom ingest token for server-side web logs. | ? (All) | `S` |
 | `CLERK_SECRET_KEY` | Clerk server SDK secret key. | All | `S` |
 | `DATABASE_URL`[^1] | Web server runtime database connection. | All | `S` |
+| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY`[^2] | Client key aliased into the web client log proxy config. | ? (All) | `C` |
@@ -96,16 +97,17 @@ values such as Redis connection strings.
 | `AXIOM_TOKEN` | Axiom ingest token for scraper logs. | ? (All) | `S` |
 | `DATABASE_URL` | Scraper database connection string. | All | `S` |
 | `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
-| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key for uploads/deletes. Required for processor jobs unless `SCRAPER_DRY_RUN=true`. | All | `S` |
-| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key paired with the private key. Optional for current server-side upload/delete jobs; keep available for future signed client upload flows. | All | `C` |
-| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint from the ImageKit dashboard, for example `https://ik.imagekit.io/<imagekit-id>` or a configured custom domain. Optional for current server-side upload/delete jobs; required only for future URL generation features. | All | `C` |
+| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key. See [ImageKit](./image-kit.md). | All | `S` |
+| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key. See [ImageKit](./image-kit.md). | All | `C` |
+| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
+| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint. See [ImageKit](./image-kit.md). | All | `C` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |
 | `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
 | `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval used by `cron:run`. Defaults to `60`; the first cron execution after fresh Redis state runs Autmog immediately. | ? (All) | `S` |
 | `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape for the legacy in-process scheduler. Defaults to `0`; not used by Railway cron. | ? (All) | `S` |
-| `SCRAPER_DRY_RUN` | When `true`, processor jobs write DB/queue state but skip ImageKit upload/delete mutations. | ? (All) | `S` |
+| `SCRAPER_DRY_RUN` | When `true`, processor jobs write DB/queue state but skip image upload/delete mutations. | ? (All) | `S` |
 | `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
 | `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
 | `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval for the legacy in-process scheduler. Railway cron uses the `*/15 * * * *` schedule in `railway.json`. | ? (All) | `S` |

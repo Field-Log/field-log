@@ -55,6 +55,7 @@ function createContext(): ScraperJobContext {
   return {
     close: vi.fn(),
     db: {} as ScraperJobContext["db"],
+    imageFolderPrefix: undefined,
     imageStorage: {} as ScraperJobContext["imageStorage"],
     queues: {
       close: vi.fn(),

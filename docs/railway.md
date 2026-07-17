@@ -127,14 +127,14 @@ Queues:
 
 - `scraper-items`: normalized item work for pens, knives, or future product
   types.
-- `scraper-images`: ImageKit upload/delete work.
+- `scraper-images`: image upload/delete work.
 
 Producer jobs fetch upstream data, normalize enough to identify each item, and
 enqueue item jobs. They do not upload images directly.
 
 The processor job drains queued work, upserts Postgres tables, writes version
-snapshots, enqueues or processes image jobs, uploads ImageKit images, and handles
-pending deletes.
+snapshots, enqueues or processes image jobs, uploads images, and handles pending
+deletes.
 
 Use deterministic job IDs so retries and duplicate scrape runs are idempotent:
 
@@ -154,8 +154,8 @@ Recommended initial processor tuning:
 | Variable | Initial value | Notes |
 | --- | --- | --- |
 | `SCRAPER_ITEM_BATCH_SIZE` | `100` | Enough to drain current Autmog in a small number of processor runs without making each run too large. |
-| `SCRAPER_IMAGE_BATCH_SIZE` | `25` | Keeps ImageKit/network work bounded; increase after observing runtime and failure rate. |
-| `SCRAPER_QUEUE_CONCURRENCY` | `3` | Conservative starting point for DB, Redis, ImageKit, and upstream friendliness. |
+| `SCRAPER_IMAGE_BATCH_SIZE` | `25` | Keeps image/network work bounded; increase after observing runtime and failure rate. |
+| `SCRAPER_QUEUE_CONCURRENCY` | `3` | Conservative starting point for DB, Redis, image storage, and upstream friendliness. |
 
 Tune these from production logs after the first successful runs. Prefer raising
 batch sizes before raising concurrency.
@@ -188,9 +188,8 @@ Required groups:
 
 - Database: `DATABASE_URL`
 - Queue: `REDIS_URL`
-- ImageKit: `IMAGE_KIT_PRIVATE_KEY` for server-side uploads/deletes; keep
-  `IMAGE_KIT_PUBLIC_KEY` and `IMAGE_KIT_URL_ENDPOINT` available only for future
-  signed upload or URL generation work
+- ImageKit: see [ImageKit](./image-kit.md) for endpoint, upload path, and
+  preview namespace rules
 - Logger: `AXIOM_TOKEN`, `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`,
   `LOG_LEVEL`, and `LOGGER`
 - Stage 2 Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL`

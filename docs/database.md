@@ -150,8 +150,8 @@ export const schemaDescriptions = {
         example: "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
       },
       image_kit_url: {
-        description: "ImageKit URL for the optimized uploaded image.",
-        example: "https://ik.imagekit.io/example/scrapers/autmog/pens/8158274388155/db2ef0e9.webp",
+        description: "Optimized uploaded image URL.",
+        example: "https://example.invalid/uploaded-image.webp",
       },
     },
   },
@@ -165,7 +165,7 @@ The generated Markdown should include one table per database table:
 | `id` | `bigint` | yes | PK |  | Internal image row identifier. | `1000` |
 | `pen_id` | `bigint` | yes | FK | `tmp_autmog_pens.id` | Autmog pen row this image belongs to. | `1000` |
 | `source_hash` | `text` | yes |  |  | Stable hash of the source image identity used to dedupe image rows for the pen. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
-| `image_kit_url` | `text` | no |  |  | ImageKit URL for the optimized uploaded image. | `https://ik.imagekit.io/example/scrapers/autmog/pens/8158274388155/db2ef0e9.webp` |
+| `image_kit_url` | `text` | no |  |  | Optimized uploaded image URL. | `https://example.invalid/uploaded-image.webp` |
 
 Foreign-key relations should be generated from Drizzle snapshot metadata. For
 example, `tmp_autmog_pen_images.pen_id` should render as a relation to
@@ -194,7 +194,8 @@ migrations against it, deploys the API preview with that `DATABASE_URL`, and set
 a branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
 same selected `DATABASE_URL` is also pushed into the Railway scraper preview
 environment so scraper cron executions use the same database branch as the API
-and web previews.
+and web previews. See [ImageKit](./image-kit.md) for the matching preview image
+folder namespace.
 
 When a PR has no DB changes, the API preview uses the shared `staging` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch

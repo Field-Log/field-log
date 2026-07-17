@@ -7,6 +7,7 @@ export const serverEnv = createWebServerEnv({
   AXIOM_TOKEN: process.env.AXIOM_TOKEN,
   CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
   DATABASE_URL: process.env.DATABASE_URL,
+  IMAGE_KIT_FOLDER_PREFIX: process.env.IMAGE_KIT_FOLDER_PREFIX,
   LOGGER: process.env.LOGGER,
   LOG_LEVEL: process.env.LOG_LEVEL,
 });
