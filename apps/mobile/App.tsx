@@ -1,5 +1,10 @@
+import { ClerkProvider, useAuth as useClerkAuth, useUser } from "@clerk/expo";
+import { tokenCache } from "@clerk/expo/token-cache";
 import { loggerMessages } from "@package/logger";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  type BottomTabBarButtonProps,
+  createBottomTabNavigator,
+} from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { type ReactElement, useCallback, useEffect, useState } from "react";
 import {
@@ -13,9 +18,13 @@ import {
   Text,
   View,
 } from "react-native";
-import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
+import { AccountMenuButton } from "./src/components/AccountMenuButton";
 import { initDatabase } from "./src/db/database";
-import { syncCurrentUserDataBestEffort } from "./src/db/sync";
+import {
+  setCurrentSyncUserId,
+  syncCurrentUserDataBestEffort,
+} from "./src/db/sync";
+import { mobileEnv } from "./src/env";
 import { logger } from "./src/lib/logger";
 import {
   fetchMobileVersionPolicy,
@@ -23,26 +32,47 @@ import {
   type MobileUpdateDecision,
   type MobileVersionPolicy,
 } from "./src/lib/mobile-version-policy";
+import { type MainTabParamList } from "./src/navigation/types";
 import AddScreen from "./src/screens/AddScreen";
 import AuthScreen from "./src/screens/AuthScreen";
+import CollectionsScreen from "./src/screens/CollectionsScreen";
 import LibraryScreen from "./src/screens/LibraryScreen";
 import LogScreen from "./src/screens/LogScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
 import StatsScreen from "./src/screens/StatsScreen";
 import { C } from "./src/theme/colors";
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
-function MainTabs() {
+function MainTabs(): ReactElement {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Library" component={LibraryScreen} />
       <Tab.Screen name="Log" component={LogScreen} />
       <Tab.Screen name="Stats" component={StatsScreen} />
       <Tab.Screen name="Add" component={AddScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen
+        name="Collections"
+        component={CollectionsScreen}
+        options={{
+          tabBarButton: () => null,
+          title: "Collections",
+        }}
+      />
+      <Tab.Screen
+        name="Account"
+        component={AccountTabPlaceholder}
+        options={{
+          tabBarButton: (props: BottomTabBarButtonProps) => (
+            <AccountMenuButton tabBarButtonProps={props} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
+}
+
+function AccountTabPlaceholder(): ReactElement {
+  return <View style={styles.accountTabPlaceholder} />;
 }
 
 function isAbortError(error: unknown) {
@@ -140,14 +170,17 @@ function MobileUpdateBanner({
   );
 }
 
-function AppGate() {
-  const { user, loading } = useAuth();
+function AppGate(): ReactElement {
+  const { isLoaded: authLoaded, isSignedIn } = useClerkAuth({
+    treatPendingAsSignedOut: false,
+  });
+  const { isLoaded: userLoaded, user } = useUser();
   const [databaseReady, setDatabaseReady] = useState(false);
   const [mobileUpdateDecision, setMobileUpdateDecision] =
     useState<MobileUpdateDecision | null>(null);
   const [recommendedUpdateDismissed, setRecommendedUpdateDismissed] =
     useState(false);
-  const userId = user?.uid;
+  const userId = user?.id;
 
   const refreshMobileVersionPolicy = useCallback(
     async (signal?: AbortSignal) => {
@@ -179,6 +212,11 @@ function AppGate() {
   }, []);
 
   useEffect(() => {
+    setCurrentSyncUserId(userId ?? null);
+    return () => setCurrentSyncUserId(null);
+  }, [userId]);
+
+  useEffect(() => {
     const abortController = new AbortController();
 
     refreshMobileVersionPolicy(abortController.signal);
@@ -208,7 +246,7 @@ function AppGate() {
     return <MobileUpdateRequiredScreen policy={mobileUpdateDecision.policy} />;
   }
 
-  if (loading || !databaseReady) {
+  if (!authLoaded || !userLoaded || !databaseReady) {
     return (
       <View style={styles.loadingShell}>
         <ActivityIndicator size="large" />
@@ -229,7 +267,7 @@ function AppGate() {
         />
       ) : null}
       <View style={styles.appContent}>
-        {user ? <MainTabs /> : <AuthScreen />}
+        {isSignedIn && user ? <MainTabs /> : <AuthScreen />}
       </View>
     </View>
   );
@@ -237,15 +275,22 @@ function AppGate() {
 
 export default function App(): ReactElement {
   return (
-    <AuthProvider>
+    <ClerkProvider
+      publishableKey={mobileEnv.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      tokenCache={tokenCache}
+    >
       <NavigationContainer>
         <AppGate />
       </NavigationContainer>
-    </AuthProvider>
+    </ClerkProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  accountTabPlaceholder: {
+    backgroundColor: C.bg,
+    flex: 1,
+  },
   appContent: {
     flex: 1,
   },

@@ -1,3 +1,4 @@
+import { loggerValues } from "@package/logger";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import worker, { runHourlyCron, runScheduled } from "./worker.js";
 
@@ -56,7 +57,31 @@ describe("api worker", () => {
     ]);
   });
 
-  it("captures request-time failures when only Axiom env is usable", async () => {
+  it("handles client log requests without database bindings", async () => {
+    const response = await worker.fetch(
+      new Request("https://api.example.test/api/v0/logs", {
+        body: "not-json",
+        headers: {
+          [loggerValues.logProxy.clientKeyHeader]: "runtime-key",
+        },
+        method: "POST",
+      }),
+      {
+        APP_ENV: "preview",
+        LOG_PROXY_CLIENT_KEY: "runtime-key",
+      },
+      {
+        waitUntil: vi.fn(),
+      },
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      error: "Expected a JSON request body.",
+    });
+  });
+
+  it("captures request-time logger env failures when only Axiom env is usable", async () => {
     const requests: Array<{ body: unknown; input: string }> = [];
 
     vi.stubGlobal(
@@ -112,10 +137,6 @@ describe("api worker", () => {
           envValidationIssues: [
             {
               message: expect.any(String),
-              variable: "DATABASE_URL",
-            },
-            {
-              message: expect.any(String),
               variable: "LOGGER",
             },
             {
@@ -123,7 +144,7 @@ describe("api worker", () => {
               variable: "LOG_LEVEL",
             },
           ],
-          envValidationVariables: ["DATABASE_URL", "LOGGER", "LOG_LEVEL"],
+          envValidationVariables: ["LOGGER", "LOG_LEVEL"],
           method: "POST",
           path: "/api/v0/logs",
           source: "cloudflare-worker",
@@ -131,18 +152,16 @@ describe("api worker", () => {
         },
         environment: "unknown",
         error: {
-          message:
-            "Invalid environment variables: DATABASE_URL, LOGGER, LOG_LEVEL",
+          message: "Invalid environment variables: LOGGER, LOG_LEVEL",
           name: "ApiEnvValidationError",
           stack: expect.any(String),
         },
         level: "error",
-        message: "api.worker.unhandledException",
       }),
     ]);
   });
 
-  it("captures scheduled failures when only Axiom env is usable", async () => {
+  it("captures scheduled logger env failures when only Axiom env is usable", async () => {
     const requests: Array<{ body: unknown; input: string }> = [];
 
     vi.stubGlobal(
@@ -184,10 +203,6 @@ describe("api worker", () => {
           envValidationIssues: [
             {
               message: expect.any(String),
-              variable: "DATABASE_URL",
-            },
-            {
-              message: expect.any(String),
               variable: "LOGGER",
             },
             {
@@ -195,20 +210,18 @@ describe("api worker", () => {
               variable: "LOG_LEVEL",
             },
           ],
-          envValidationVariables: ["DATABASE_URL", "LOGGER", "LOG_LEVEL"],
+          envValidationVariables: ["LOGGER", "LOG_LEVEL"],
           scheduledAt: "2026-07-07T12:00:00.000Z",
           source: "cloudflare-cron",
           trigger: "scheduled",
         },
         environment: "unknown",
         error: {
-          message:
-            "Invalid environment variables: DATABASE_URL, LOGGER, LOG_LEVEL",
+          message: "Invalid environment variables: LOGGER, LOG_LEVEL",
           name: "ApiEnvValidationError",
           stack: expect.any(String),
         },
         level: "error",
-        message: "api.worker.unhandledException",
       }),
     ]);
   });

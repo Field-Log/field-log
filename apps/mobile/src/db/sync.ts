@@ -11,7 +11,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { auth, db as firestore } from "../config/firebase";
+import { db as firestore } from "../config/firebase";
 import { logger } from "../lib/logger";
 import {
   fetchAllLogEntries,
@@ -34,8 +34,14 @@ function userDoc(uid: string, colName: string, docId: string) {
   return doc(firestore, "users", uid, colName, docId);
 }
 
+let currentSyncUserId: string | null = null;
+
+export function setCurrentSyncUserId(uid: string | null): void {
+  currentSyncUserId = uid;
+}
+
 function currentUserId(): string | null {
-  return auth.currentUser?.uid ?? null;
+  return currentSyncUserId;
 }
 
 function logSyncFailure(operation: string, error: unknown): void {

@@ -1,6 +1,5 @@
 import type { FirebaseApp } from "firebase/app";
 import { getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { fieldLogEnv } from "./env";
 
@@ -15,7 +14,5 @@ const firebaseConfig = {
 
 const existingApp = getApps()[0];
 const app: FirebaseApp = existingApp ?? initializeApp(firebaseConfig);
-
-export const auth = getAuth(app);
 
 export const db = getFirestore(app);
