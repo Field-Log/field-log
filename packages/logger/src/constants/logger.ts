@@ -16,8 +16,7 @@ export const loggerMessages = {
           "ci.database.preview.changeDetection.completed",
         migrationsApplied: "ci.database.preview.migrations.applied",
         noPrBranchNeeded: "ci.database.preview.noPrBranch.needed",
-        prBranchRecreateRequested:
-          "ci.database.preview.prBranchRecreate.requested",
+        prBranchReused: "ci.database.preview.prBranch.reused",
         stagingDatabaseSelected: "ci.database.preview.stagingDatabase.selected",
       },
       production: {

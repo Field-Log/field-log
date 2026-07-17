@@ -291,6 +291,7 @@ prepare_preview() {
   write_output target_branch "$target_branch"
   write_output production_branch_id "$production_branch_id"
   write_output staging_branch_id "$staging_branch_id"
+  write_output branch_created false
 
   if [[ "$DB_CHANGING" != "true" ]]; then
     emit_ci_log info "ci.database.preview.noPrBranch.needed" "$(jq -n \
@@ -334,12 +335,18 @@ prepare_preview() {
   fi
 
   if [[ -n "$target_branch_id" ]]; then
-    emit_ci_log info "ci.database.preview.prBranchRecreate.requested" "$(jq -n \
+    local preview_uri
+    preview_uri="$(connection_uri "$target_branch_id")"
+    write_output can_deploy true
+    write_output cleanup_performed false
+    write_branch_metadata "$target_branch" "$target_branch_id" "$PRODUCTION_BRANCH_NAME"
+    emit_ci_log info "ci.database.preview.prBranch.reused" "$(jq -n \
       --arg branch_name "$target_branch" \
       --arg branch_id "$target_branch_id" \
       --arg parent_branch "$PRODUCTION_BRANCH_NAME" \
       '{branchName: $branch_name, branchId: $branch_id, parentBranch: $parent_branch}')"
-    delete_branch_if_exists "$target_branch" "$branches_json"
+    mask_and_output_database_url "$preview_uri"
+    return
   else
     write_output cleanup_performed false
   fi
@@ -370,6 +377,7 @@ prepare_preview() {
   trap - ERR
 
   write_output can_deploy true
+  write_output branch_created true
   write_branch_metadata "$target_branch" "$created_branch_id" "$PRODUCTION_BRANCH_NAME"
   emit_ci_log info "ci.database.preview.branch.created" "$(jq -n \
     --arg branch_name "$target_branch" \

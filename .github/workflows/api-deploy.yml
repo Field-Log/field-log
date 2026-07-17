@@ -669,7 +669,7 @@ jobs:
             }
 
       - name: Cleanup failed DB preview resources
-        if: ${{ always() && steps.db_changes.outputs.database == 'true' && steps.db.outcome != 'skipped' && (failure() || cancelled()) }}
+        if: ${{ always() && steps.db_changes.outputs.database == 'true' && steps.db.outputs.branch_created == 'true' && (failure() || cancelled()) }}
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
