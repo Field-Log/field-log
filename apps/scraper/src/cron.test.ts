@@ -1,7 +1,29 @@
-import { describe, expect, it } from "vitest";
-import { getRecurringTaskDueState } from "./cron.js";
+import { createNoopLogger } from "@package/logger";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { getRecurringTaskDueState, runRailwayCronJob } from "./cron.js";
+import {
+  runQueueProcessorJob,
+  runSourceProducerJob,
+  type ScraperJobContext,
+  type ScraperJobEnv,
+} from "./jobs.js";
+
+vi.mock("./jobs.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./jobs.js")>();
+
+  return {
+    ...actual,
+    runQueueProcessorJob: vi.fn(),
+    runSourceProducerJob: vi.fn(),
+  };
+});
 
 describe("Railway scraper cron", () => {
+  afterEach(() => {
+    vi.mocked(runQueueProcessorJob).mockReset();
+    vi.mocked(runSourceProducerJob).mockReset();
+  });
+
   it("runs a recurring task that has never completed", () => {
     expect(
       getRecurringTaskDueState({
@@ -46,4 +68,47 @@ describe("Railway scraper cron", () => {
       reason: "interval-elapsed",
     });
   });
+
+  it("logs task failures without rejecting the cron run", async () => {
+    vi.mocked(runSourceProducerJob).mockRejectedValueOnce(
+      new Error("producer failed"),
+    );
+    vi.mocked(runQueueProcessorJob).mockResolvedValueOnce(undefined);
+
+    await expect(
+      runRailwayCronJob({
+        context: createContext(),
+        env: createEnv(),
+        logger: createNoopLogger(),
+        now: new Date("2026-07-16T12:00:00.000Z"),
+      }),
+    ).resolves.toBeUndefined();
+    expect(runSourceProducerJob).toHaveBeenCalledOnce();
+    expect(runQueueProcessorJob).toHaveBeenCalledOnce();
+  });
 });
+
+function createContext(): ScraperJobContext {
+  return {
+    close: vi.fn(),
+    db: {} as ScraperJobContext["db"],
+    imageFolderPrefix: undefined,
+    imageStorage: {} as ScraperJobContext["imageStorage"],
+    queues: {
+      close: vi.fn(),
+      images: {} as ScraperJobContext["queues"]["images"],
+      items: {} as ScraperJobContext["queues"]["items"],
+    },
+    redis: {
+      get: vi.fn(async () => null),
+      set: vi.fn(async () => "OK"),
+    } as unknown as ScraperJobContext["redis"],
+  };
+}
+
+function createEnv(): ScraperJobEnv {
+  return {
+    SCRAPER_AUTMOG_INTERVAL_MINUTES: 60,
+    SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES: 15,
+  } as ScraperJobEnv;
+}

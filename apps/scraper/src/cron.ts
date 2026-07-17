@@ -69,9 +69,7 @@ export async function runRailwayCronJob({
       attributes,
       error: new AggregateError(failures, "Railway cron run failed."),
     });
-    throw failures.length === 1
-      ? failures[0]
-      : new AggregateError(failures, "Railway cron run failed.");
+    return;
   }
 
   logger.info(loggerMessages.scraper.cron.completed, {
