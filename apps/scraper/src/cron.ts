@@ -48,6 +48,7 @@ export async function runRailwayCronJob({
   logger.info(loggerMessages.scraper.cron.started, {
     attributes: {
       autmogIntervalMinutes: env.SCRAPER_AUTMOG_INTERVAL_MINUTES,
+      imageFolderPrefix: context.imageFolderPrefix,
       queueProcessorIntervalMinutes:
         env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES,
       scheduledAt: now.toISOString(),

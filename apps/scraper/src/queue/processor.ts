@@ -92,6 +92,7 @@ export async function runQueueProcessor({
   const errorCounter = createProcessorErrorCounter();
   logger.info(loggerMessages.scraper.processor.started, {
     attributes: {
+      imageFolderPrefix,
       imageBatchSize: batchSize.images,
       itemBatchSize: batchSize.items,
       queueConcurrency: concurrency,
