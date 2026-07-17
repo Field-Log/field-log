@@ -1,0 +1,447 @@
+export type SchemaDescription = {
+  columns?: Record<
+    string,
+    {
+      description?: string;
+      example?: unknown;
+    }
+  >;
+  description?: string;
+};
+
+export const schemaDescriptions = {
+  makers: {
+    description:
+      "Canonical source makers that scraped or user-created products can belong to.",
+    columns: {
+      id: {
+        description: "Internal maker row identifier.",
+        example: 1000,
+      },
+      name: {
+        description: "Human-readable maker name.",
+        example: "Autmog",
+      },
+      root_url: {
+        description: "Canonical root URL for the maker source.",
+        example: "https://www.autmog.com",
+      },
+      created_at: {
+        description: "Timestamp when the maker row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the maker row was last updated.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+    },
+  },
+  scraper_runs: {
+    description:
+      "Execution log for scraper producer, processor, and dead-letter jobs.",
+    columns: {
+      id: {
+        description: "Internal scraper run row identifier.",
+        example: 1000,
+      },
+      source: {
+        description: "Scraper source or subsystem that ran.",
+        example: "autmog",
+      },
+      job_type: {
+        description: "Kind of scraper job that ran.",
+        example: "producer",
+      },
+      status: {
+        description: "Current lifecycle state for the run.",
+        example: "completed",
+      },
+      started_at: {
+        description: "Timestamp when the run started.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      finished_at: {
+        description: "Timestamp when the run finished.",
+        example: "2026-07-17T20:45:42.000Z",
+      },
+      heartbeat_at: {
+        description: "Timestamp of the latest run heartbeat, when present.",
+        example: "2026-07-17T20:45:20.000Z",
+      },
+      error_message: {
+        description: "Failure summary captured for failed runs.",
+        example: "Run marked failed after exceeding stale lock threshold.",
+      },
+      stats: {
+        description: "Structured counters emitted by the scraper job.",
+        example: {
+          enqueuedItemJobs: 142,
+          fetchedCount: 141,
+        },
+      },
+    },
+  },
+  tmp_autmog_pen_images: {
+    description: "Images associated with the latest Autmog pen record.",
+    columns: {
+      id: {
+        description: "Internal image row identifier.",
+        example: 1000,
+      },
+      pen_id: {
+        description: "Autmog pen row this image belongs to.",
+        example: 1000,
+      },
+      alt_text: {
+        description: "Source image alt text, when provided by Shopify.",
+        example: "Titanium click pen side profile",
+      },
+      width: {
+        description: "Uploaded ImageKit image width in pixels.",
+        example: 2000,
+      },
+      height: {
+        description: "Uploaded ImageKit image height in pixels.",
+        example: 1333,
+      },
+      source_hash: {
+        description:
+          "Stable hash of the source image identity used to dedupe image rows for the pen.",
+        example:
+          "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
+      },
+      image_kit_file_id: {
+        description: "ImageKit file identifier used for updates and deletes.",
+        example: "68f5b2d5e4f9012a3b4c5d6e",
+      },
+      image_kit_path: {
+        description: "ImageKit media-library file path.",
+        example: "/preview/pr-52/products/pens/8383420301499/image.webp",
+      },
+      image_kit_url: {
+        description: "Optimized uploaded image URL.",
+        example:
+          "https://ik.imagekit.io/fieldlog/preview/pr-52/products/pens/8383420301499/image.webp",
+      },
+      image_kit_thumbnail_url: {
+        description: "ImageKit thumbnail URL returned with the upload.",
+        example: "https://ik.imagekit.io/fieldlog/tr:n-thumbnail/image.webp",
+      },
+      status: {
+        description: "Image upload/delete lifecycle status.",
+        example: "uploaded",
+      },
+      uploaded_at: {
+        description: "Timestamp when the image upload completed.",
+        example: "2026-07-17T20:45:42.000Z",
+      },
+      pending_delete_at: {
+        description: "Timestamp when the image was marked for deletion.",
+        example: "2026-07-18T20:45:42.000Z",
+      },
+      deleted_at: {
+        description: "Timestamp when the image delete completed.",
+        example: "2026-07-18T20:46:12.000Z",
+      },
+      last_seen_at: {
+        description: "Timestamp when the source image last appeared upstream.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      created_at: {
+        description: "Timestamp when the image row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the image row was last updated.",
+        example: "2026-07-17T20:45:42.000Z",
+      },
+    },
+  },
+  tmp_autmog_pen_versions: {
+    description: "Version history for meaningful Autmog pen changes.",
+    columns: {
+      id: {
+        description: "Internal version row identifier.",
+        example: 1000,
+      },
+      pen_id: {
+        description: "Autmog pen row this version belongs to.",
+        example: 1000,
+      },
+      source_product_id: {
+        description: "Shopify product ID from Autmog.",
+        example: "8383420301499",
+      },
+      previous_details_hash: {
+        description: "Previous non-image product details hash.",
+        example:
+          "sha256:6a5a79355c7cd75eb8ba0837d306f002c90ff349dcb1ba04f45f69e4b7f3f6f5",
+      },
+      next_details_hash: {
+        description: "New non-image product details hash.",
+        example:
+          "sha256:5dcbd8f834f8b952cf7d8d86ed3273dd6b77cf83ea78f982096a9de7ded135fc",
+      },
+      previous_image_set_hash: {
+        description: "Previous product image set hash.",
+        example:
+          "sha256:fb4c1136e5580a42246f988d3e8d18e2fc356d48fb687f6192fb797071dd55dc",
+      },
+      next_image_set_hash: {
+        description: "New product image set hash.",
+        example:
+          "sha256:711b0aab8eff464076516f1d74aedb65efe7f91a680babe4a2c9f3b0ce317fc0",
+      },
+      snapshot: {
+        description: "Normalized product snapshot captured for this version.",
+        example: {
+          category: "pen",
+          title: "40 Clipless Click Pen",
+        },
+      },
+      change_reason: {
+        description: "Reason this version row was captured.",
+        example: "details_changed",
+      },
+      captured_at: {
+        description: "Timestamp when the version was captured.",
+        example: "2026-07-17T20:45:42.000Z",
+      },
+      replaced_at: {
+        description: "Timestamp when this version was superseded.",
+        example: "2026-07-18T20:45:42.000Z",
+      },
+    },
+  },
+  tmp_autmog_pens: {
+    description: "Latest normalized Autmog pen product records.",
+    columns: {
+      id: {
+        description: "Internal Autmog pen row identifier.",
+        example: 1000,
+      },
+      maker_id: {
+        description: "Maker row for Autmog.",
+        example: 1000,
+      },
+      source_product_id: {
+        description: "Shopify product ID from Autmog.",
+        example: "8383420301499",
+      },
+      source_handle: {
+        description: "Shopify product handle from Autmog.",
+        example: "36-click-pen-6al-4v-titanium",
+      },
+      title: {
+        description: "Normalized product title.",
+        example: "36 Click Pen - 6Al-4V Titanium",
+      },
+      product_url: {
+        description: "Canonical Autmog product URL.",
+        example: "https://www.autmog.com/products/36-click-pen",
+      },
+      vendor: {
+        description: "Shopify vendor value.",
+        example: "Autmog",
+      },
+      product_type: {
+        description: "Shopify product type value.",
+        example: "Pens",
+      },
+      body_html: {
+        description: "Raw Shopify HTML product description.",
+        example: "<p>36 click pen clipless Pilot G2.</p>",
+      },
+      body_text: {
+        description: "Plain-text product description extracted from HTML.",
+        example: "36 click pen clipless Pilot G2.",
+      },
+      category: {
+        description: "Normalized product category.",
+        example: "pen",
+      },
+      size: {
+        description: "Normalized Autmog body diameter size.",
+        example: "36",
+      },
+      mechanism: {
+        description: "Normalized pen mechanism.",
+        example: "click",
+      },
+      refill: {
+        description: "Normalized refill family.",
+        example: "Pilot G2",
+      },
+      nose: {
+        description: "Normalized nose shape.",
+        example: "cone",
+      },
+      clip: {
+        description: "Normalized clip configuration.",
+        example: "clipless",
+      },
+      grip: {
+        description: "Normalized grip style.",
+        example: "grip lines",
+      },
+      finish: {
+        description: "Normalized finish.",
+        example: "machined",
+      },
+      body_shape: {
+        description: "Normalized body shape.",
+        example: "round",
+      },
+      materials: {
+        description: "Normalized product material list.",
+        example: ["6al-4v titanium", "aluminum"],
+      },
+      body_details: {
+        description: "Normalized body-detail descriptors.",
+        example: ["grip lines", "rings"],
+      },
+      tags: {
+        description: "Shopify product tags.",
+        example: ["pen"],
+      },
+      variants: {
+        description: "Normalized Shopify variants.",
+        example: [
+          { available: false, price: "176.00", title: "Default Title" },
+        ],
+      },
+      normalized_data: {
+        description:
+          "Full normalized Autmog product payload used by app features.",
+        example: {
+          category: "pen",
+          title: "36 Click Pen - 6Al-4V Titanium",
+        },
+      },
+      raw_shopify_data: {
+        description: "Raw Shopify product payload used for traceability.",
+        example: { id: 8383420301499, vendor: "Autmog" },
+      },
+      raw_payload_hash: {
+        description: "Stable hash of the raw Shopify product payload.",
+        example:
+          "sha256:756dce90e2f94415704865bf7714e5d53f9242de86db0f54e559d7b6357b1fbb",
+      },
+      details_hash: {
+        description: "Stable hash of normalized non-image product details.",
+        example:
+          "sha256:abbdf3a59195b10307ec3c49d11e5d4359a165dc79b0b1cd27a748b9ef34e3d8",
+      },
+      image_set_hash: {
+        description: "Stable hash of normalized product image identities.",
+        example:
+          "sha256:711b0aab8eff464076516f1d74aedb65efe7f91a680babe4a2c9f3b0ce317fc0",
+      },
+      price_min_cents: {
+        description: "Minimum variant price in cents.",
+        example: 17600,
+      },
+      price_max_cents: {
+        description: "Maximum variant price in cents.",
+        example: 17600,
+      },
+      currency_code: {
+        description: "ISO currency code for scraped prices.",
+        example: "USD",
+      },
+      available_for_sale: {
+        description: "Whether any source variant is currently available.",
+        example: false,
+      },
+      source_created_at: {
+        description: "Shopify product creation timestamp.",
+        example: "2024-05-29T18:38:32.000Z",
+      },
+      source_updated_at: {
+        description: "Shopify product update timestamp.",
+        example: "2026-07-17T01:53:15.000Z",
+      },
+      source_published_at: {
+        description: "Shopify product publication timestamp.",
+        example: "2024-05-29T19:46:14.000Z",
+      },
+      first_seen_at: {
+        description: "Timestamp when the scraper first saw this product.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      last_seen_at: {
+        description: "Timestamp when the scraper last saw this product.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      is_archived: {
+        description:
+          "Whether the scraper no longer sees this product upstream.",
+        example: false,
+      },
+      archived_at: {
+        description: "Timestamp when the product was archived.",
+        example: "2026-08-17T20:45:00.000Z",
+      },
+      created_at: {
+        description: "Timestamp when the pen row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the pen row was last updated.",
+        example: "2026-07-17T20:45:42.000Z",
+      },
+    },
+  },
+  tmp_products: {
+    description:
+      "Temporary product aggregate rows that connect normalized source records to product-facing data.",
+    columns: {
+      id: {
+        description: "Internal product row identifier.",
+        example: 1000,
+      },
+      autmog_pen_id: {
+        description: "Autmog pen backing this product row.",
+        example: 1000,
+      },
+    },
+  },
+  user_settings: {
+    description: "Per-user display and preference settings.",
+    columns: {
+      user_id: {
+        description: "User row this settings record belongs to.",
+        example: 1000,
+      },
+      currency_code: {
+        description: "Preferred currency for display.",
+        example: "USD",
+      },
+      dimension_unit: {
+        description: "Preferred dimension unit for display.",
+        example: "in",
+      },
+      theme: {
+        description: "Preferred interface theme.",
+        example: "dark",
+      },
+      weight_unit: {
+        description: "Preferred weight unit for display.",
+        example: "g",
+      },
+    },
+  },
+  users: {
+    description: "Application users mirrored from Clerk identity records.",
+    columns: {
+      id: {
+        description: "Internal user row identifier.",
+        example: 1000,
+      },
+      clerk_id: {
+        description: "Clerk user identifier.",
+        example: "user_2abc123",
+      },
+    },
+  },
+} satisfies Record<string, SchemaDescription>;

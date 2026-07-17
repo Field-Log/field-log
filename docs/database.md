@@ -116,21 +116,22 @@ run. The repo wrapper at `scripts/drizzle-view.mjs` removes incomplete zero-byte
 downloads and fixes executable permissions before delegating to the pinned
 `drizzle-view` CLI.
 
-## Schema Docs Metadata
+## Schema Docs
 
-Generated schema documentation should combine Drizzle's generated schema
-metadata with a human-authored metadata map. Drizzle can supply table names,
-column names, data types, nullability, defaults, primary keys, foreign keys,
-indexes, and unique constraints. The metadata map supplies the business meaning
-that cannot be inferred from SQL.
+`pnpm db:generate` refreshes both Drizzle migration artifacts and generated
+Markdown schema docs. The docs generator reads the latest committed Drizzle
+snapshot metadata, combines it with the human-authored description map, and
+writes one Markdown file per table under `docs/database-schema/`.
 
-Recommended source file:
+Drizzle supplies table names, column names, data types, nullability, defaults,
+primary keys, foreign keys, indexes, and unique constraints. The metadata map
+supplies the business meaning that cannot be inferred from SQL:
 
 ```txt
 packages/database/src/schema/descriptions.ts
 ```
 
-Recommended metadata shape:
+Metadata shape:
 
 ```ts
 export const schemaDescriptions = {
@@ -158,19 +159,25 @@ export const schemaDescriptions = {
 } as const;
 ```
 
-The generated Markdown should include one table per database table:
+Generated table docs include column metadata like this:
 
-| Column | Type | Required | Key | Relation | Description | Example |
-| --- | --- | --- | --- | --- | --- | --- |
-| `id` | `bigint` | yes | PK |  | Internal image row identifier. | `1000` |
-| `pen_id` | `bigint` | yes | FK | `tmp_autmog_pens.id` | Autmog pen row this image belongs to. | `1000` |
-| `source_hash` | `text` | yes |  |  | Stable hash of the source image identity used to dedupe image rows for the pen. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
-| `image_kit_url` | `text` | no |  |  | Optimized uploaded image URL. | `https://example.invalid/uploaded-image.webp` |
+| Column | Type | Required | Key | Default | Relation | Description | Example |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `id` | `bigint` | yes | PK |  |  | Internal image row identifier. | `1000` |
+| `pen_id` | `bigint` | yes | FK |  | `tmp_autmog_pens.id` | Autmog pen row this image belongs to. | `1000` |
+| `source_hash` | `text` | yes |  |  |  | Stable hash of the source image identity used to dedupe image rows for the pen. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
+| `image_kit_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://example.invalid/uploaded-image.webp` |
 
 Foreign-key relations should be generated from Drizzle snapshot metadata. For
 example, `tmp_autmog_pen_images.pen_id` should render as a relation to
 `tmp_autmog_pens.id` without manually duplicating that relationship in the
 description map.
+
+Refresh only the Markdown schema docs without generating migrations:
+
+```sh
+pnpm --filter @package/database db:generate:docs
+```
 
 ## Neon Branches
 
@@ -188,10 +195,11 @@ Local development should use a developer branch. `drizzle-kit push` is allowed
 only against developer branches for rapid iteration. Before opening or updating
 a PR with schema changes, generate committed migrations with `pnpm db:generate`.
 
-PR branches are disposable. On each DB-changing PR update, the API deploy
-workflow recreates `preview-pr-<number>` from `production`, runs committed
-migrations against it, deploys the API preview with that `DATABASE_URL`, and sets
-a branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
+PR branches are disposable, but DB-changing PR updates reuse the existing
+`preview-pr-<number>` branch when it already exists. The API deploy workflow
+creates the branch from `production` only when missing, runs committed migrations
+against it, deploys the API preview with that `DATABASE_URL`, and sets a
+branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
 same selected `DATABASE_URL` is also pushed into the Railway scraper preview
 environment so scraper cron executions use the same database branch as the API
 and web previews. See [ImageKit](./image-kit.md) for the matching preview image

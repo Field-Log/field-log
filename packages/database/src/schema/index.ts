@@ -1,3 +1,4 @@
+export * from "./descriptions.js";
 export * from "./enums.js";
 export * from "./relations.js";
 export * from "./scraper.js";
