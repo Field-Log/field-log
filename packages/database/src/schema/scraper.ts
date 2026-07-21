@@ -6,6 +6,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -115,6 +116,69 @@ export const scraperRuns = pgTable(
   }),
 );
 
+export const materials = pgTable(
+  "materials",
+  {
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    nameUnique: uniqueIndex("materials_name_unique").on(table.name),
+    slugUnique: uniqueIndex("materials_slug_unique").on(table.slug),
+  }),
+);
+
+export const mechanisms = pgTable(
+  "mechanisms",
+  {
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    nameUnique: uniqueIndex("mechanisms_name_unique").on(table.name),
+    slugUnique: uniqueIndex("mechanisms_slug_unique").on(table.slug),
+  }),
+);
+
+export const productTypes = pgTable(
+  "product_types",
+  {
+    id: bigint("id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity({ startWith: 1000 }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    nameUnique: uniqueIndex("product_types_name_unique").on(table.name),
+    slugUnique: uniqueIndex("product_types_slug_unique").on(table.slug),
+  }),
+);
+
 export const tmpAutmogPens = pgTable(
   "tmp_autmog_pens",
   {
@@ -124,27 +188,21 @@ export const tmpAutmogPens = pgTable(
     makerId: bigint("maker_id", { mode: "number" })
       .notNull()
       .references(() => makers.id, { onDelete: "restrict" }),
+    mechanismId: bigint("mechanism_id", { mode: "number" }).references(
+      () => mechanisms.id,
+      { onDelete: "restrict" },
+    ),
     sourceProductId: text("source_product_id").notNull(),
     sourceHandle: text("source_handle").notNull(),
     title: text("title").notNull(),
     productUrl: text("product_url").notNull(),
-    vendor: text("vendor"),
-    productType: text("product_type"),
-    bodyHtml: text("body_html"),
-    bodyText: text("body_text"),
-    category: text("category"),
+    description: text("description"),
     size: text("size"),
-    mechanism: text("mechanism"),
     refill: text("refill"),
     nose: text("nose"),
     clip: text("clip"),
     grip: text("grip"),
     finish: text("finish"),
-    bodyShape: text("body_shape"),
-    materials: jsonb("materials")
-      .$type<string[]>()
-      .default(sql`'[]'::jsonb`)
-      .notNull(),
     bodyDetails: jsonb("body_details")
       .$type<string[]>()
       .default(sql`'[]'::jsonb`)
@@ -157,36 +215,12 @@ export const tmpAutmogPens = pgTable(
     normalizedData: jsonb("normalized_data")
       .$type<AutmogPenNormalizedData>()
       .notNull(),
-    rawShopifyData: jsonb("raw_shopify_data").$type<unknown>().notNull(),
-    rawPayloadHash: text("raw_payload_hash").notNull(),
     detailsHash: text("details_hash").notNull(),
     imageSetHash: text("image_set_hash").notNull(),
     priceMinCents: integer("price_min_cents"),
     priceMaxCents: integer("price_max_cents"),
     currencyCode: text("currency_code").notNull().default("USD"),
     availableForSale: boolean("available_for_sale").notNull().default(false),
-    sourceCreatedAt: timestamp("source_created_at", {
-      mode: "date",
-      withTimezone: true,
-    }),
-    sourceUpdatedAt: timestamp("source_updated_at", {
-      mode: "date",
-      withTimezone: true,
-    }),
-    sourcePublishedAt: timestamp("source_published_at", {
-      mode: "date",
-      withTimezone: true,
-    }),
-    firstSeenAt: timestamp("first_seen_at", {
-      mode: "date",
-      withTimezone: true,
-    })
-      .defaultNow()
-      .notNull(),
-    lastSeenAt: timestamp("last_seen_at", { mode: "date", withTimezone: true })
-      .defaultNow()
-      .notNull(),
-    isArchived: boolean("is_archived").notNull().default(false),
     archivedAt: timestamp("archived_at", { mode: "date", withTimezone: true }),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
       .defaultNow()
@@ -197,9 +231,36 @@ export const tmpAutmogPens = pgTable(
   },
   (table) => ({
     makerIdIdx: index("tmp_autmog_pens_maker_id_idx").on(table.makerId),
+    mechanismIdIdx: index("tmp_autmog_pens_mechanism_id_idx").on(
+      table.mechanismId,
+    ),
     sourceProductIdUnique: uniqueIndex(
       "tmp_autmog_pens_source_product_id_unique",
     ).on(table.sourceProductId),
+  }),
+);
+
+export const tmpAutmogPenMaterials = pgTable(
+  "tmp_autmog_pen_materials",
+  {
+    penId: bigint("pen_id", { mode: "number" })
+      .notNull()
+      .references(() => tmpAutmogPens.id, { onDelete: "cascade" }),
+    materialId: bigint("material_id", { mode: "number" })
+      .notNull()
+      .references(() => materials.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    materialIdIdx: index("tmp_autmog_pen_materials_material_id_idx").on(
+      table.materialId,
+    ),
+    pk: primaryKey({
+      columns: [table.penId, table.materialId],
+      name: "tmp_autmog_pen_materials_pk",
+    }),
   }),
 );
 
@@ -264,6 +325,30 @@ export const tmpProducts = pgTable(
   }),
 );
 
+export const tmpProductProductTypes = pgTable(
+  "tmp_product_product_types",
+  {
+    productId: bigint("product_id", { mode: "number" })
+      .notNull()
+      .references(() => tmpProducts.id, { onDelete: "cascade" }),
+    productTypeId: bigint("product_type_id", { mode: "number" })
+      .notNull()
+      .references(() => productTypes.id, { onDelete: "restrict" }),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.productId, table.productTypeId],
+      name: "tmp_product_product_types_pk",
+    }),
+    productTypeIdIdx: index("tmp_product_product_types_product_type_id_idx").on(
+      table.productTypeId,
+    ),
+  }),
+);
+
 export const tmpAutmogPenVersions = pgTable(
   "tmp_autmog_pen_versions",
   {
@@ -295,13 +380,24 @@ export const tmpAutmogPenVersions = pgTable(
 
 export type Maker = typeof makers.$inferSelect;
 export type NewMaker = typeof makers.$inferInsert;
+export type Material = typeof materials.$inferSelect;
+export type NewMaterial = typeof materials.$inferInsert;
+export type Mechanism = typeof mechanisms.$inferSelect;
+export type NewMechanism = typeof mechanisms.$inferInsert;
+export type ProductType = typeof productTypes.$inferSelect;
+export type NewProductType = typeof productTypes.$inferInsert;
 export type ScraperRun = typeof scraperRuns.$inferSelect;
 export type NewScraperRun = typeof scraperRuns.$inferInsert;
 export type TmpAutmogPen = typeof tmpAutmogPens.$inferSelect;
 export type NewTmpAutmogPen = typeof tmpAutmogPens.$inferInsert;
+export type TmpAutmogPenMaterial = typeof tmpAutmogPenMaterials.$inferSelect;
+export type NewTmpAutmogPenMaterial = typeof tmpAutmogPenMaterials.$inferInsert;
 export type TmpAutmogPenImage = typeof tmpAutmogPenImages.$inferSelect;
 export type NewTmpAutmogPenImage = typeof tmpAutmogPenImages.$inferInsert;
 export type TmpAutmogPenVersion = typeof tmpAutmogPenVersions.$inferSelect;
 export type NewTmpAutmogPenVersion = typeof tmpAutmogPenVersions.$inferInsert;
 export type TmpProduct = typeof tmpProducts.$inferSelect;
 export type NewTmpProduct = typeof tmpProducts.$inferInsert;
+export type TmpProductProductType = typeof tmpProductProductTypes.$inferSelect;
+export type NewTmpProductProductType =
+  typeof tmpProductProductTypes.$inferInsert;

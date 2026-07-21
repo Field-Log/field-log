@@ -36,6 +36,84 @@ export const schemaDescriptions = {
       },
     },
   },
+  materials: {
+    description:
+      "Canonical material values shared across scraped and user-created products.",
+    columns: {
+      id: {
+        description: "Internal material row identifier.",
+        example: 1000,
+      },
+      name: {
+        description: "Canonical display name for the material.",
+        example: "6al-4v titanium",
+      },
+      slug: {
+        description: "Stable slug for material deduplication and lookups.",
+        example: "6al-4v-titanium",
+      },
+      created_at: {
+        description: "Timestamp when the material row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the material row was last updated.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+    },
+  },
+  mechanisms: {
+    description:
+      "Canonical pen mechanism values shared across scraped and user-created products.",
+    columns: {
+      id: {
+        description: "Internal mechanism row identifier.",
+        example: 1000,
+      },
+      name: {
+        description: "Canonical display name for the mechanism.",
+        example: "click",
+      },
+      slug: {
+        description: "Stable slug for mechanism deduplication and lookups.",
+        example: "click",
+      },
+      created_at: {
+        description: "Timestamp when the mechanism row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the mechanism row was last updated.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+    },
+  },
+  product_types: {
+    description:
+      "Canonical product type values used to classify product aggregate rows.",
+    columns: {
+      id: {
+        description: "Internal product type row identifier.",
+        example: 1000,
+      },
+      name: {
+        description: "Canonical display name for the product type.",
+        example: "pen",
+      },
+      slug: {
+        description: "Stable slug for product type deduplication and lookups.",
+        example: "pen",
+      },
+      created_at: {
+        description: "Timestamp when the product type row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the product type row was last updated.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+    },
+  },
   scraper_runs: {
     description:
       "Execution log for scraper producer, processor, and dead-letter jobs.",
@@ -157,6 +235,24 @@ export const schemaDescriptions = {
       },
     },
   },
+  tmp_autmog_pen_materials: {
+    description:
+      "Join table connecting Autmog pens to canonical material values.",
+    columns: {
+      pen_id: {
+        description: "Autmog pen row that uses the material.",
+        example: 1000,
+      },
+      material_id: {
+        description: "Canonical material assigned to the pen.",
+        example: 1000,
+      },
+      created_at: {
+        description: "Timestamp when the material assignment was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+    },
+  },
   tmp_autmog_pen_versions: {
     description: "Version history for meaningful Autmog pen changes.",
     columns: {
@@ -224,6 +320,10 @@ export const schemaDescriptions = {
         description: "Maker row for Autmog.",
         example: 1000,
       },
+      mechanism_id: {
+        description: "Canonical mechanism assigned to the pen.",
+        example: 1000,
+      },
       source_product_id: {
         description: "Shopify product ID from Autmog.",
         example: "8383420301499",
@@ -240,33 +340,14 @@ export const schemaDescriptions = {
         description: "Canonical Autmog product URL.",
         example: "https://www.autmog.com/products/36-click-pen",
       },
-      vendor: {
-        description: "Shopify vendor value.",
-        example: "Autmog",
-      },
-      product_type: {
-        description: "Shopify product type value.",
-        example: "Pens",
-      },
-      body_html: {
-        description: "Raw Shopify HTML product description.",
-        example: "<p>36 click pen clipless Pilot G2.</p>",
-      },
-      body_text: {
-        description: "Plain-text product description extracted from HTML.",
+      description: {
+        description:
+          "Editable product description stored as Markdown, initially converted from source HTML.",
         example: "36 click pen clipless Pilot G2.",
-      },
-      category: {
-        description: "Normalized product category.",
-        example: "pen",
       },
       size: {
         description: "Normalized Autmog body diameter size.",
         example: "36",
-      },
-      mechanism: {
-        description: "Normalized pen mechanism.",
-        example: "click",
       },
       refill: {
         description: "Normalized refill family.",
@@ -287,14 +368,6 @@ export const schemaDescriptions = {
       finish: {
         description: "Normalized finish.",
         example: "machined",
-      },
-      body_shape: {
-        description: "Normalized body shape.",
-        example: "round",
-      },
-      materials: {
-        description: "Normalized product material list.",
-        example: ["6al-4v titanium", "aluminum"],
       },
       body_details: {
         description: "Normalized body-detail descriptors.",
@@ -317,15 +390,6 @@ export const schemaDescriptions = {
           category: "pen",
           title: "36 Click Pen - 6Al-4V Titanium",
         },
-      },
-      raw_shopify_data: {
-        description: "Raw Shopify product payload used for traceability.",
-        example: { id: 8383420301499, vendor: "Autmog" },
-      },
-      raw_payload_hash: {
-        description: "Stable hash of the raw Shopify product payload.",
-        example:
-          "sha256:756dce90e2f94415704865bf7714e5d53f9242de86db0f54e559d7b6357b1fbb",
       },
       details_hash: {
         description: "Stable hash of normalized non-image product details.",
@@ -353,31 +417,6 @@ export const schemaDescriptions = {
         description: "Whether any source variant is currently available.",
         example: false,
       },
-      source_created_at: {
-        description: "Shopify product creation timestamp.",
-        example: "2024-05-29T18:38:32.000Z",
-      },
-      source_updated_at: {
-        description: "Shopify product update timestamp.",
-        example: "2026-07-17T01:53:15.000Z",
-      },
-      source_published_at: {
-        description: "Shopify product publication timestamp.",
-        example: "2024-05-29T19:46:14.000Z",
-      },
-      first_seen_at: {
-        description: "Timestamp when the scraper first saw this product.",
-        example: "2026-07-17T20:45:00.000Z",
-      },
-      last_seen_at: {
-        description: "Timestamp when the scraper last saw this product.",
-        example: "2026-07-17T20:45:00.000Z",
-      },
-      is_archived: {
-        description:
-          "Whether the scraper no longer sees this product upstream.",
-        example: false,
-      },
       archived_at: {
         description: "Timestamp when the product was archived.",
         example: "2026-08-17T20:45:00.000Z",
@@ -403,6 +442,24 @@ export const schemaDescriptions = {
       autmog_pen_id: {
         description: "Autmog pen backing this product row.",
         example: 1000,
+      },
+    },
+  },
+  tmp_product_product_types: {
+    description:
+      "Join table connecting product aggregate rows to canonical product types.",
+    columns: {
+      product_id: {
+        description: "Product row being classified.",
+        example: 1000,
+      },
+      product_type_id: {
+        description: "Canonical product type assigned to the product.",
+        example: 1000,
+      },
+      created_at: {
+        description: "Timestamp when the product type assignment was created.",
+        example: "2026-07-17T20:45:00.000Z",
       },
     },
   },

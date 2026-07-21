@@ -1,4 +1,4 @@
-import { parseDate } from "../lib/dates.js";
+import { htmlToMarkdown } from "@package/markdown";
 import { hashObject, hashString } from "../lib/hash.js";
 import { htmlToText, normalizeWhitespace } from "../lib/text.js";
 import type {
@@ -35,6 +35,7 @@ export function normalizeAutmogProduct(
 ): NormalizedAutmogPen {
   const bodyHtml = product.body_html ?? null;
   const bodyText = htmlToText(bodyHtml);
+  const description = htmlToMarkdown(bodyHtml);
   const searchText = normalizeWhitespace(
     `${product.title} ${product.product_type ?? ""} ${product.tags.join(" ")} ${
       bodyText ?? ""
@@ -65,11 +66,12 @@ export function normalizeAutmogProduct(
     product.variants.some((variant) => variant.available === true);
   const materials = findMatches(searchText, materialPatterns);
   const bodyDetails = normalizeBodyDetails(searchText);
+  const category = getCategory(searchText);
   const normalizedData = {
     availableForSale,
     bodyDetails,
     bodyShape: getBodyShape(searchText),
-    category: getCategory(searchText),
+    category,
     clip: getClip(searchText),
     finish: findFirstMatch(searchText, finishPatterns),
     grip: getGrip(searchText),
@@ -86,9 +88,9 @@ export function normalizeAutmogProduct(
     title: product.title,
     variants,
   };
-  const rawPayloadHash = hashObject(product);
   const detailsHash = hashObject({
     ...normalizedData,
+    description,
     images: undefined,
     imageSetHash: undefined,
   });
@@ -96,12 +98,9 @@ export function normalizeAutmogProduct(
   return {
     availableForSale,
     bodyDetails,
-    bodyHtml,
-    bodyShape: normalizedData.bodyShape,
-    bodyText,
-    category: normalizedData.category,
     clip: normalizedData.clip,
     currencyCode: "USD",
+    description,
     detailsHash,
     finish: normalizedData.finish,
     grip: normalizedData.grip,
@@ -113,21 +112,18 @@ export function normalizeAutmogProduct(
     nose: normalizedData.nose,
     priceMaxCents: normalizedData.priceMaxCents,
     priceMinCents: normalizedData.priceMinCents,
-    productType: product.product_type ?? null,
+    productTypes: getProductTypes({
+      category: normalizedData.category,
+      sourceProductType: product.product_type ?? null,
+    }),
     productUrl,
-    rawPayloadHash,
-    rawShopifyData: product,
     refill: normalizedData.refill,
     size: normalizedData.size,
-    sourceCreatedAt: toIsoString(product.created_at),
     sourceHandle: product.handle,
     sourceProductId,
-    sourcePublishedAt: toIsoString(product.published_at),
-    sourceUpdatedAt: toIsoString(product.updated_at),
     tags: product.tags,
     title: product.title,
     variants,
-    vendor: product.vendor ?? null,
   };
 }
 
@@ -168,10 +164,6 @@ function parsePriceCents(value: string | number | null | undefined) {
   return Number.isFinite(numberValue) ? Math.round(numberValue * 100) : null;
 }
 
-function toIsoString(value: string | null | undefined): string | null {
-  return parseDate(value)?.toISOString() ?? null;
-}
-
 function getSize(value: string): string | null {
   const match = value.match(/\b(36|40|42|47)\b(?:\s*(?:clipless|click|pen))?/i);
 
@@ -184,6 +176,25 @@ function getCategory(value: string): string | null {
   }
 
   return null;
+}
+
+function getProductTypes(input: {
+  category: string | null;
+  sourceProductType: string | null;
+}): string[] {
+  if (input.category) {
+    return [input.category];
+  }
+
+  if (!input.sourceProductType) {
+    return [];
+  }
+
+  const productType = normalizeWhitespace(
+    input.sourceProductType,
+  ).toLowerCase();
+
+  return productType.length > 0 ? [productType] : [];
 }
 
 function getMechanism(value: string): string | null {

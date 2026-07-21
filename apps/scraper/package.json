@@ -26,6 +26,7 @@
     "@hono/node-server": "latest",
     "@package/database": "workspace:*",
     "@package/logger": "workspace:*",
+    "@package/markdown": "workspace:*",
     "@package/services": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "bullmq": "^5.80.4",

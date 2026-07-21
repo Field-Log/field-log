@@ -45,12 +45,9 @@ export type ScraperImageJob =
 export type NormalizedAutmogPen = {
   availableForSale: boolean;
   bodyDetails: string[];
-  bodyHtml: string | null;
-  bodyShape: string | null;
-  bodyText: string | null;
-  category: string | null;
   clip: string | null;
   currencyCode: string;
+  description: string | null;
   detailsHash: string;
   finish: string | null;
   grip: string | null;
@@ -62,21 +59,15 @@ export type NormalizedAutmogPen = {
   nose: string | null;
   priceMaxCents: number | null;
   priceMinCents: number | null;
-  productType: string | null;
+  productTypes: string[];
   productUrl: string;
-  rawPayloadHash: string;
-  rawShopifyData: unknown;
   refill: string | null;
   size: string | null;
-  sourceCreatedAt: string | null;
   sourceHandle: string;
   sourceProductId: string;
-  sourcePublishedAt: string | null;
-  sourceUpdatedAt: string | null;
   tags: string[];
   title: string;
   variants: unknown[];
-  vendor: string | null;
 };
 
 export type NormalizedAutmogPenImage = {

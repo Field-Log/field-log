@@ -14,13 +14,15 @@ describe("normalizeAutmogProduct", () => {
 
     expect(item).toMatchObject({
       availableForSale: true,
-      category: "pen",
       clip: null,
+      description:
+        "40 click pen with tumbled titanium body, cone nose, and Pilot G2 refill.",
       finish: "tumbled",
       mechanism: "click",
       nose: "cone",
       priceMaxCents: 15000,
       priceMinCents: 12500,
+      productTypes: ["pen"],
       productUrl: "https://www.autmog.com/products/40-click-pen",
       refill: "Pilot G2",
       size: "40",
@@ -31,7 +33,6 @@ describe("normalizeAutmogProduct", () => {
     expect(item.images).toHaveLength(1);
     expect(item.detailsHash).toMatch(/^sha256:/);
     expect(item.imageSetHash).toMatch(/^sha256:/);
-    expect(item.rawPayloadHash).toMatch(/^sha256:/);
   });
 
   it("leaves visual classification null when source text is inconclusive", () => {
@@ -44,7 +45,6 @@ describe("normalizeAutmogProduct", () => {
 
     expect(item.clip).toBeNull();
     expect(item.grip).toBeNull();
-    expect(item.bodyShape).toBeNull();
     expect(item.bodyDetails).toEqual([]);
   });
 });

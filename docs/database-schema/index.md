@@ -5,10 +5,15 @@
 Generated schema documentation for committed Drizzle tables.
 
 - [`makers`](./makers.md)
+- [`materials`](./materials.md)
+- [`mechanisms`](./mechanisms.md)
+- [`product_types`](./product-types.md)
 - [`scraper_runs`](./scraper-runs.md)
 - [`tmp_autmog_pen_images`](./tmp-autmog-pen-images.md)
+- [`tmp_autmog_pen_materials`](./tmp-autmog-pen-materials.md)
 - [`tmp_autmog_pen_versions`](./tmp-autmog-pen-versions.md)
 - [`tmp_autmog_pens`](./tmp-autmog-pens.md)
+- [`tmp_product_product_types`](./tmp-product-product-types.md)
 - [`tmp_products`](./tmp-products.md)
 - [`user_settings`](./user-settings.md)
 - [`users`](./users.md)

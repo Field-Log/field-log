@@ -4,8 +4,7 @@ import {
   type ScraperRunStats,
   schema,
 } from "@package/database";
-import { and, eq, lt, notInArray } from "drizzle-orm";
-import { parseDate } from "../lib/dates.js";
+import { and, eq, isNull, lt, notInArray } from "drizzle-orm";
 import type { NormalizedAutmogPen } from "../scraper-types.js";
 
 const autmogMaker = {
@@ -41,10 +40,9 @@ export type AutmogPenSyncMutationInput = {
   pen: {
     availableForSale: boolean;
     bodyDetails: string[];
-    bodyShape: string | null;
-    category: string | null;
     clip: string | null;
     currencyCode: string;
+    description: string | null;
     detailsHash: string;
     finish: string | null;
     grip: string | null;
@@ -52,19 +50,18 @@ export type AutmogPenSyncMutationInput = {
     makerId: number;
     materials: string[];
     mechanism: string | null;
+    mechanismId: number | null;
     nose: string | null;
     priceMaxCents: number | null;
     priceMinCents: number | null;
-    productType: string | null;
+    productTypes: string[];
     productUrl: string;
-    rawPayloadHash: string;
     refill: string | null;
     size: string | null;
     sourceHandle: string;
     sourceProductId: string;
     tags: string[];
     title: string;
-    vendor: string | null;
   };
 };
 
@@ -88,9 +85,9 @@ export type AutmogPenSyncDbResponse = {
   };
   pen: {
     detailsHash: string;
+    archivedAt: Date | null;
     id: number;
     imageSetHash: string;
-    isArchived: boolean;
     makerId: number;
     sourceHandle: string;
     sourceProductId: string;
@@ -199,8 +196,13 @@ export async function syncAutmogPen(
   item: NormalizedAutmogPen,
 ): Promise<AutmogPenSyncResult> {
   const maker = await ensureAutmogMaker(db);
+  const mechanism = await ensureAutmogMechanism(db, item.mechanism);
   const now = new Date();
-  const mutationInput = getAutmogPenSyncMutationInput(item, maker.id);
+  const mutationInput = getAutmogPenSyncMutationInput(
+    item,
+    maker.id,
+    mechanism?.id ?? null,
+  );
   const [existing] = await db
     .select()
     .from(schema.tmpAutmogPens)
@@ -230,79 +232,54 @@ export async function syncAutmogPen(
     .values({
       availableForSale: item.availableForSale,
       bodyDetails: item.bodyDetails,
-      bodyHtml: item.bodyHtml,
-      bodyShape: item.bodyShape,
-      bodyText: item.bodyText,
-      category: item.category,
       clip: item.clip,
       currencyCode: item.currencyCode,
+      description: item.description,
       detailsHash: item.detailsHash,
       finish: item.finish,
       grip: item.grip,
       imageSetHash: item.imageSetHash,
-      isArchived: false,
       makerId: maker.id,
-      materials: item.materials,
-      mechanism: item.mechanism,
+      mechanismId: mechanism?.id ?? null,
       normalizedData: item.normalizedData,
       nose: item.nose,
       priceMaxCents: item.priceMaxCents,
       priceMinCents: item.priceMinCents,
-      productType: item.productType,
       productUrl: item.productUrl,
-      rawPayloadHash: item.rawPayloadHash,
-      rawShopifyData: item.rawShopifyData,
       refill: item.refill,
       size: item.size,
-      sourceCreatedAt: parseDate(item.sourceCreatedAt),
       sourceHandle: item.sourceHandle,
       sourceProductId: item.sourceProductId,
-      sourcePublishedAt: parseDate(item.sourcePublishedAt),
-      sourceUpdatedAt: parseDate(item.sourceUpdatedAt),
       tags: item.tags,
       title: item.title,
       variants: item.variants,
-      vendor: item.vendor,
     })
     .onConflictDoUpdate({
       set: {
         availableForSale: item.availableForSale,
         archivedAt: null,
         bodyDetails: item.bodyDetails,
-        bodyHtml: item.bodyHtml,
-        bodyShape: item.bodyShape,
-        bodyText: item.bodyText,
-        category: item.category,
         clip: item.clip,
         currencyCode: item.currencyCode,
+        description: item.description,
         detailsHash: item.detailsHash,
         finish: item.finish,
         grip: item.grip,
         imageSetHash: item.imageSetHash,
-        isArchived: false,
-        lastSeenAt: now,
         makerId: maker.id,
-        materials: item.materials,
-        mechanism: item.mechanism,
+        mechanismId: mechanism?.id ?? null,
         normalizedData: item.normalizedData,
         nose: item.nose,
         priceMaxCents: item.priceMaxCents,
         priceMinCents: item.priceMinCents,
-        productType: item.productType,
         productUrl: item.productUrl,
-        rawPayloadHash: item.rawPayloadHash,
-        rawShopifyData: item.rawShopifyData,
         refill: item.refill,
         size: item.size,
-        sourceCreatedAt: parseDate(item.sourceCreatedAt),
         sourceHandle: item.sourceHandle,
-        sourcePublishedAt: parseDate(item.sourcePublishedAt),
-        sourceUpdatedAt: parseDate(item.sourceUpdatedAt),
         tags: item.tags,
         title: item.title,
         updatedAt: now,
         variants: item.variants,
-        vendor: item.vendor,
       },
       target: schema.tmpAutmogPens.sourceProductId,
     })
@@ -311,6 +288,8 @@ export async function syncAutmogPen(
   if (!pen) {
     throw new Error(`Failed to upsert Autmog pen ${item.sourceProductId}.`);
   }
+
+  await syncAutmogPenMaterials(db, pen.id, item.materials);
 
   const [product] = await db
     .insert(schema.tmpProducts)
@@ -331,6 +310,8 @@ export async function syncAutmogPen(
   if (!product) {
     throw new Error(`Failed to upsert product for Autmog pen ${pen.id}.`);
   }
+
+  await syncTmpProductProductTypes(db, product.id, item.productTypes);
 
   const [existingImages, uploadImageJobs, deleteImageJobs] = await Promise.all([
     db
@@ -462,9 +443,9 @@ export async function syncAutmogPen(
       },
       pen: {
         detailsHash: pen.detailsHash,
+        archivedAt: pen.archivedAt,
         id: pen.id,
         imageSetHash: pen.imageSetHash,
-        isArchived: pen.isArchived,
         makerId: pen.makerId,
         sourceHandle: pen.sourceHandle,
         sourceProductId: pen.sourceProductId,
@@ -488,17 +469,16 @@ export async function archiveMissingAutmogPens(
   const where =
     seenSourceProductIds.length > 0
       ? and(
-          eq(schema.tmpAutmogPens.isArchived, false),
+          isNull(schema.tmpAutmogPens.archivedAt),
           notInArray(schema.tmpAutmogPens.sourceProductId, [
             ...seenSourceProductIds,
           ]),
         )
-      : eq(schema.tmpAutmogPens.isArchived, false);
+      : isNull(schema.tmpAutmogPens.archivedAt);
   const archived = await db
     .update(schema.tmpAutmogPens)
     .set({
       archivedAt: now,
-      isArchived: true,
       updatedAt: now,
     })
     .where(where)
@@ -597,6 +577,152 @@ export async function markAutmogImageFailed(
     .where(eq(schema.tmpAutmogPenImages.id, input.imageId));
 }
 
+async function syncAutmogPenMaterials(
+  db: Database,
+  penId: number,
+  materialNames: readonly string[],
+) {
+  const names = [...new Set(materialNames.map((name) => name.trim()))].filter(
+    (name) => name.length > 0,
+  );
+  const materialRows = [];
+
+  for (const name of names) {
+    const [material] = await db
+      .insert(schema.materials)
+      .values({
+        name,
+        slug: slugifyCanonicalName(name),
+      })
+      .onConflictDoUpdate({
+        set: {
+          name,
+          updatedAt: new Date(),
+        },
+        target: schema.materials.slug,
+      })
+      .returning({
+        id: schema.materials.id,
+      });
+
+    if (!material) {
+      throw new Error(`Failed to ensure material ${name}.`);
+    }
+
+    materialRows.push(material);
+  }
+
+  await db
+    .delete(schema.tmpAutmogPenMaterials)
+    .where(eq(schema.tmpAutmogPenMaterials.penId, penId));
+
+  if (materialRows.length === 0) {
+    return;
+  }
+
+  await db.insert(schema.tmpAutmogPenMaterials).values(
+    materialRows.map((material) => ({
+      materialId: material.id,
+      penId,
+    })),
+  );
+}
+
+async function ensureAutmogMechanism(
+  db: Database,
+  mechanismName: string | null,
+) {
+  const name = mechanismName?.trim();
+
+  if (!name) {
+    return null;
+  }
+
+  const [mechanism] = await db
+    .insert(schema.mechanisms)
+    .values({
+      name,
+      slug: slugifyCanonicalName(name),
+    })
+    .onConflictDoUpdate({
+      set: {
+        name,
+        updatedAt: new Date(),
+      },
+      target: schema.mechanisms.slug,
+    })
+    .returning({
+      id: schema.mechanisms.id,
+    });
+
+  if (!mechanism) {
+    throw new Error(`Failed to ensure mechanism ${name}.`);
+  }
+
+  return mechanism;
+}
+
+async function syncTmpProductProductTypes(
+  db: Database,
+  productId: number,
+  productTypeNames: readonly string[],
+) {
+  const names = [
+    ...new Set(productTypeNames.map((name) => name.trim())),
+  ].filter((name) => name.length > 0);
+  const productTypeRows = [];
+
+  for (const name of names) {
+    const [productType] = await db
+      .insert(schema.productTypes)
+      .values({
+        name,
+        slug: slugifyCanonicalName(name),
+      })
+      .onConflictDoUpdate({
+        set: {
+          name,
+          updatedAt: new Date(),
+        },
+        target: schema.productTypes.slug,
+      })
+      .returning({
+        id: schema.productTypes.id,
+      });
+
+    if (!productType) {
+      throw new Error(`Failed to ensure product type ${name}.`);
+    }
+
+    productTypeRows.push(productType);
+  }
+
+  await db
+    .delete(schema.tmpProductProductTypes)
+    .where(eq(schema.tmpProductProductTypes.productId, productId));
+
+  if (productTypeRows.length === 0) {
+    return;
+  }
+
+  await db.insert(schema.tmpProductProductTypes).values(
+    productTypeRows.map((productType) => ({
+      productId,
+      productTypeId: productType.id,
+    })),
+  );
+}
+
+function slugifyCanonicalName(name: string): string {
+  return (
+    name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "value"
+  );
+}
+
 async function ensureAutmogMaker(db: Database) {
   const [maker] = await db
     .insert(schema.makers)
@@ -637,6 +763,7 @@ function getChangeReason(
 function getAutmogPenSyncMutationInput(
   item: NormalizedAutmogPen,
   makerId: number,
+  mechanismId: number | null,
 ): AutmogPenSyncMutationInput {
   return {
     images: item.images.map((image) => ({
@@ -651,10 +778,9 @@ function getAutmogPenSyncMutationInput(
     pen: {
       availableForSale: item.availableForSale,
       bodyDetails: item.bodyDetails,
-      bodyShape: item.bodyShape,
-      category: item.category,
       clip: item.clip,
       currencyCode: item.currencyCode,
+      description: item.description,
       detailsHash: item.detailsHash,
       finish: item.finish,
       grip: item.grip,
@@ -662,19 +788,18 @@ function getAutmogPenSyncMutationInput(
       makerId,
       materials: item.materials,
       mechanism: item.mechanism,
+      mechanismId,
       nose: item.nose,
       priceMaxCents: item.priceMaxCents,
       priceMinCents: item.priceMinCents,
-      productType: item.productType,
+      productTypes: item.productTypes,
       productUrl: item.productUrl,
-      rawPayloadHash: item.rawPayloadHash,
       refill: item.refill,
       size: item.size,
       sourceHandle: item.sourceHandle,
       sourceProductId: item.sourceProductId,
       tags: item.tags,
       title: item.title,
-      vendor: item.vendor,
     },
   };
 }
