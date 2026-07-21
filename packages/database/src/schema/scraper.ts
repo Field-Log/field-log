@@ -132,7 +132,6 @@ export const materials = pgTable(
       .notNull(),
   },
   (table) => ({
-    nameUnique: uniqueIndex("materials_name_unique").on(table.name),
     slugUnique: uniqueIndex("materials_slug_unique").on(table.slug),
   }),
 );
@@ -153,7 +152,6 @@ export const mechanisms = pgTable(
       .notNull(),
   },
   (table) => ({
-    nameUnique: uniqueIndex("mechanisms_name_unique").on(table.name),
     slugUnique: uniqueIndex("mechanisms_slug_unique").on(table.slug),
   }),
 );
@@ -174,7 +172,6 @@ export const productTypes = pgTable(
       .notNull(),
   },
   (table) => ({
-    nameUnique: uniqueIndex("product_types_name_unique").on(table.name),
     slugUnique: uniqueIndex("product_types_slug_unique").on(table.slug),
   }),
 );

@@ -588,28 +588,23 @@ async function syncAutmogPenMaterials(
   const materialRows = [];
 
   for (const name of names) {
+    const slug = slugifyCanonicalName(name);
     const [material] = await db
       .insert(schema.materials)
       .values({
         name,
-        slug: slugifyCanonicalName(name),
+        slug,
       })
-      .onConflictDoUpdate({
-        set: {
-          name,
-          updatedAt: new Date(),
-        },
+      .onConflictDoNothing({
         target: schema.materials.slug,
       })
       .returning({
         id: schema.materials.id,
       });
+    const materialRow =
+      material ?? (await getMaterialBySlug(db, slug, `material ${name}`));
 
-    if (!material) {
-      throw new Error(`Failed to ensure material ${name}.`);
-    }
-
-    materialRows.push(material);
+    materialRows.push(materialRow);
   }
 
   await db
@@ -638,28 +633,63 @@ async function ensureAutmogMechanism(
     return null;
   }
 
+  const slug = slugifyCanonicalName(name);
   const [mechanism] = await db
     .insert(schema.mechanisms)
     .values({
       name,
-      slug: slugifyCanonicalName(name),
+      slug,
     })
-    .onConflictDoUpdate({
-      set: {
-        name,
-        updatedAt: new Date(),
-      },
+    .onConflictDoNothing({
       target: schema.mechanisms.slug,
     })
     .returning({
       id: schema.mechanisms.id,
     });
 
+  return mechanism ?? (await getMechanismBySlug(db, slug, `mechanism ${name}`));
+}
+
+async function getMaterialBySlug(db: Database, slug: string, label: string) {
+  const [material] = await db
+    .select({ id: schema.materials.id })
+    .from(schema.materials)
+    .where(eq(schema.materials.slug, slug))
+    .limit(1);
+
+  if (!material) {
+    throw new Error(`Failed to ensure ${label}.`);
+  }
+
+  return material;
+}
+
+async function getMechanismBySlug(db: Database, slug: string, label: string) {
+  const [mechanism] = await db
+    .select({ id: schema.mechanisms.id })
+    .from(schema.mechanisms)
+    .where(eq(schema.mechanisms.slug, slug))
+    .limit(1);
+
   if (!mechanism) {
-    throw new Error(`Failed to ensure mechanism ${name}.`);
+    throw new Error(`Failed to ensure ${label}.`);
   }
 
   return mechanism;
+}
+
+async function getProductTypeBySlug(db: Database, slug: string, label: string) {
+  const [productType] = await db
+    .select({ id: schema.productTypes.id })
+    .from(schema.productTypes)
+    .where(eq(schema.productTypes.slug, slug))
+    .limit(1);
+
+  if (!productType) {
+    throw new Error(`Failed to ensure ${label}.`);
+  }
+
+  return productType;
 }
 
 async function syncTmpProductProductTypes(
@@ -673,28 +703,24 @@ async function syncTmpProductProductTypes(
   const productTypeRows = [];
 
   for (const name of names) {
+    const slug = slugifyCanonicalName(name);
     const [productType] = await db
       .insert(schema.productTypes)
       .values({
         name,
-        slug: slugifyCanonicalName(name),
+        slug,
       })
-      .onConflictDoUpdate({
-        set: {
-          name,
-          updatedAt: new Date(),
-        },
+      .onConflictDoNothing({
         target: schema.productTypes.slug,
       })
       .returning({
         id: schema.productTypes.id,
       });
+    const productTypeRow =
+      productType ??
+      (await getProductTypeBySlug(db, slug, `product type ${name}`));
 
-    if (!productType) {
-      throw new Error(`Failed to ensure product type ${name}.`);
-    }
-
-    productTypeRows.push(productType);
+    productTypeRows.push(productTypeRow);
   }
 
   await db

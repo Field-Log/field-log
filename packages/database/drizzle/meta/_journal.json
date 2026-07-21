@@ -64,6 +64,13 @@
       "when": 1784668585143,
       "tag": "0008_silly_carnage",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784672093885,
+      "tag": "0009_black_pandemic",
+      "breakpoints": true
     }
   ]
 }

@@ -9,7 +9,7 @@ Canonical material values shared across scraped and user-created products.
 | Column | Type | Required | Key | Default | Relation | Description | Example |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `bigint` | yes | PK |  |  | Internal material row identifier. | `1000` |
-| `name` | `text` | yes | unique |  |  | Canonical display name for the material. | `6al-4v titanium` |
+| `name` | `text` | yes |  |  |  | Canonical display name for the material. | `6al-4v titanium` |
 | `slug` | `text` | yes | unique |  |  | Stable slug for material deduplication and lookups. | `6al-4v-titanium` |
 | `created_at` | `timestamp with time zone` | yes |  | `now()` |  | Timestamp when the material row was created. | `2026-07-17T20:45:00.000Z` |
 | `updated_at` | `timestamp with time zone` | yes |  | `now()` |  | Timestamp when the material row was last updated. | `2026-07-17T20:45:00.000Z` |
@@ -18,5 +18,4 @@ Canonical material values shared across scraped and user-created products.
 
 | Name | Unique | Method | Columns |
 | --- | --- | --- | --- |
-| `materials_name_unique` | yes | `btree` | `name` |
 | `materials_slug_unique` | yes | `btree` | `slug` |

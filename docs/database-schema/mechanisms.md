@@ -9,7 +9,7 @@ Canonical pen mechanism values shared across scraped and user-created products.
 | Column | Type | Required | Key | Default | Relation | Description | Example |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `bigint` | yes | PK |  |  | Internal mechanism row identifier. | `1000` |
-| `name` | `text` | yes | unique |  |  | Canonical display name for the mechanism. | `click` |
+| `name` | `text` | yes |  |  |  | Canonical display name for the mechanism. | `click` |
 | `slug` | `text` | yes | unique |  |  | Stable slug for mechanism deduplication and lookups. | `click` |
 | `created_at` | `timestamp with time zone` | yes |  | `now()` |  | Timestamp when the mechanism row was created. | `2026-07-17T20:45:00.000Z` |
 | `updated_at` | `timestamp with time zone` | yes |  | `now()` |  | Timestamp when the mechanism row was last updated. | `2026-07-17T20:45:00.000Z` |
@@ -18,5 +18,4 @@ Canonical pen mechanism values shared across scraped and user-created products.
 
 | Name | Unique | Method | Columns |
 | --- | --- | --- | --- |
-| `mechanisms_name_unique` | yes | `btree` | `name` |
 | `mechanisms_slug_unique` | yes | `btree` | `slug` |
