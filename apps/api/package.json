@@ -28,6 +28,7 @@
     "test:watch:no-infisical": "vitest"
   },
   "dependencies": {
+    "@clerk/hono": "^0.1.54",
     "@hono/node-server": "latest",
     "@hono/zod-openapi": "^1.5.1",
     "@package/logger": "workspace:*",

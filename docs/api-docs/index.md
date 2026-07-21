@@ -9,5 +9,8 @@ API documentation for Field Log services.
 
 ## Routes
 
+- [GET /api/v0/feature-flags/beta](api/v0/feature-flags/beta.md)
+- [PUT /api/v0/feature-flags/beta/{slug}](api/v0/feature-flags/beta/slug.md)
+- [POST /api/v0/feature-flags/evaluate](api/v0/feature-flags/evaluate.md)
 - [GET /api/v0/health](api/v0/health.md)
 - [POST /api/v0/logs](api/v0/logs.md)

@@ -46,18 +46,35 @@ export const loggerMessages = {
   },
   common: {},
   database: {
+    featureFlags: {
+      archive: "database.featureFlags.archive",
+      create: "database.featureFlags.create",
+      evaluate: "database.featureFlags.evaluate",
+      listAdmin: "database.featureFlags.listAdmin",
+      listAdminTargetingForUser:
+        "database.featureFlags.listAdminTargetingForUser",
+      listUserBeta: "database.featureFlags.listUserBeta",
+      setAdminOverride: "database.featureFlags.setAdminOverride",
+      setUserPreference: "database.featureFlags.setUserPreference",
+      update: "database.featureFlags.update",
+    },
     userSettings: {
       getByClerkId: "database.userSettings.getByClerkId",
       upsertForClerkId: "database.userSettings.upsertForClerkId",
     },
     users: {
       ensure: "database.users.ensure",
+      getByClerkId: "database.users.getByClerkId",
     },
+  },
+  featureFlags: {
+    evaluationFailedClosed: "featureFlags.evaluation.failedClosed",
   },
   mobile: {
     authSignInFailed: "mobile.auth.signIn.failed",
     databaseInitFailed: "mobile.database.init.failed",
     exportFailed: "mobile.export.failed",
+    featureFlagsFetchFailed: "mobile.featureFlags.fetch.failed",
     screenViewed: "mobile.screen.viewed",
     syncUploadFailed: "mobile.sync.upload.failed",
     versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",

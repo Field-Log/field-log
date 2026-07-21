@@ -8,6 +8,8 @@ export type ApiRuntimeEnv = {
   AXIOM_DATASET?: string;
   AXIOM_EDGE_DOMAIN?: string;
   AXIOM_TOKEN?: string;
+  CLERK_PUBLISHABLE_KEY?: string;
+  CLERK_SECRET_KEY?: string;
   DATABASE_URL?: string;
   LOGGER?: string;
   LOG_LEVEL?: string;
@@ -68,6 +70,8 @@ const apiServerSchema = {
   AXIOM_DATASET: z.string().min(1).optional(),
   AXIOM_EDGE_DOMAIN: z.string().min(1).optional(),
   AXIOM_TOKEN: z.string().min(1).optional(),
+  CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  CLERK_SECRET_KEY: z.string().min(1).optional(),
   DATABASE_URL: z.string().min(1).url(),
   LOGGER: z.enum(["compact", "verbose"]).optional(),
   LOG_LEVEL: z
@@ -154,6 +158,8 @@ function getApiRuntimeEnvStrict(runtimeEnv: ApiRuntimeEnv) {
     AXIOM_DATASET: runtimeEnv.AXIOM_DATASET,
     AXIOM_EDGE_DOMAIN: runtimeEnv.AXIOM_EDGE_DOMAIN,
     AXIOM_TOKEN: runtimeEnv.AXIOM_TOKEN,
+    CLERK_PUBLISHABLE_KEY: runtimeEnv.CLERK_PUBLISHABLE_KEY,
+    CLERK_SECRET_KEY: runtimeEnv.CLERK_SECRET_KEY,
     DATABASE_URL: runtimeEnv.DATABASE_URL,
     LOGGER: runtimeEnv.LOGGER,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,

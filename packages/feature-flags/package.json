@@ -1,5 +1,5 @@
 {
-  "name": "@package/services",
+  "name": "@package/feature-flags",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -21,12 +21,6 @@
     "test:ci": "vitest run --passWithNoTests --exclude \"dist/**\"",
     "test:watch": "vitest --passWithNoTests --exclude \"dist/**\"",
     "test:watch:no-infisical": "vitest --passWithNoTests --exclude \"dist/**\""
-  },
-  "dependencies": {
-    "@package/database": "workspace:*",
-    "@package/feature-flags": "workspace:*",
-    "@package/logger": "workspace:*",
-    "drizzle-orm": "latest"
   },
   "devDependencies": {
     "@package/eslint": "workspace:*",

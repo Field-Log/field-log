@@ -2,6 +2,10 @@ export * from "./client.js";
 export type {
   CurrencyCode,
   DimensionUnit,
+  FeatureFlag,
+  FeatureFlagUserOverride,
+  NewFeatureFlag,
+  NewFeatureFlagUserOverride,
   NewUser,
   NewUserSettings,
   ThemeMode,
