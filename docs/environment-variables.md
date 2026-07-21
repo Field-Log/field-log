@@ -57,14 +57,16 @@ Legend: `S` = server-only. `C` = client-visible.
 ### API App: `/apps/api`
 
 `apps/api` runs on Cloudflare Workers. Local development uses Wrangler. Deployed
-Worker runtime secrets are owned by Infisical Secrets Sync for preview, staging,
-and production; deploy commands must not write Worker secrets with Wrangler.
+Worker runtime secrets are read from Infisical and written by deployment
+workflows through Wrangler secret files.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `AXIOM_DATASET` | Axiom dataset for API logs. | ? (All) | `S` |
 | `AXIOM_EDGE_DOMAIN` | Axiom edge domain. | ? (All) | `S` |
 | `AXIOM_TOKEN` | Axiom ingest token for API logs. | ? (All) | `S` |
+| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key used by API Clerk middleware. | All | `C` |
+| `CLERK_SECRET_KEY` | Clerk secret key used by API Clerk middleware. | All | `S` |
 | `DATABASE_URL`[^4] | API database connection string. | All | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |

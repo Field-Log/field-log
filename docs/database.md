@@ -98,9 +98,9 @@ a PR with schema changes, generate committed migrations with `pnpm db:generate`.
 PR branches are disposable. On each DB-changing PR update, the API deploy
 workflow recreates `preview-pr-<number>` from `production`, runs committed
 migrations against it, and sets a branch-specific Vercel Preview `DATABASE_URL`
-for the web preview branch. The API preview Worker uses the preview runtime
-secrets managed by Infisical Secrets Sync; the workflow does not write
-PR-specific `DATABASE_URL` values to Cloudflare Worker secrets.
+for the web preview branch. The API preview Worker uses runtime secrets written
+by the API deploy workflow from Infisical, so DB-changing PRs receive the
+matching PR-specific `DATABASE_URL`.
 
 When a PR has no DB changes, the API preview uses the shared `staging` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch
