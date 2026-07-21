@@ -27,7 +27,7 @@
 ```json
 {
   "slugs": [
-    ""
+    "new-library-filters"
   ]
 }
 ```

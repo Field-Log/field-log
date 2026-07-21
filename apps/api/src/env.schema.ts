@@ -70,8 +70,8 @@ const apiServerSchema = {
   AXIOM_DATASET: z.string().min(1).optional(),
   AXIOM_EDGE_DOMAIN: z.string().min(1).optional(),
   AXIOM_TOKEN: z.string().min(1).optional(),
-  CLERK_PUBLISHABLE_KEY: z.string().min(1).optional(),
-  CLERK_SECRET_KEY: z.string().min(1).optional(),
+  CLERK_PUBLISHABLE_KEY: z.string().min(1),
+  CLERK_SECRET_KEY: z.string().min(1),
   DATABASE_URL: z.string().min(1).url(),
   LOGGER: z.enum(["compact", "verbose"]).optional(),
   LOG_LEVEL: z

@@ -1,9 +1,33 @@
 import { clerkMiddleware, getAuth } from "@clerk/hono";
 import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { isFeatureFlagSlug } from "@package/feature-flags";
 import type { FeatureFlagsService } from "@package/services";
 import type { Context } from "hono";
 import { ErrorResponseSchema, jsonContent } from "../../../openapi.js";
 import type { AppDependencies } from "../../dependencies.js";
+
+const featureFlagSlugError =
+  "Feature flag slug must use lowercase letters, numbers, and hyphens.";
+
+const FeatureFlagSlugSchema = z
+  .string()
+  .min(1)
+  .refine(isFeatureFlagSlug, {
+    message: featureFlagSlugError,
+  })
+  .openapi({
+    example: "new-library-filters",
+  });
+
+const FeatureFlagSlugParamSchema = z.object({
+  slug: FeatureFlagSlugSchema.openapi({
+    param: {
+      name: "slug",
+      in: "path",
+      required: true,
+    },
+  }),
+});
 
 const FeatureFlagBetaItemSchema = z
   .object({
@@ -16,9 +40,7 @@ const FeatureFlagBetaItemSchema = z
     name: z.string().openapi({
       example: "New library filters",
     }),
-    slug: z.string().openapi({
-      example: "new-library-filters",
-    }),
+    slug: FeatureFlagSlugSchema,
   })
   .openapi("FeatureFlagBetaItem");
 
@@ -37,13 +59,13 @@ const FeatureFlagToggleRequestSchema = z
 const FeatureFlagToggleResponseSchema = z
   .object({
     enabled: z.boolean(),
-    slug: z.string(),
+    slug: FeatureFlagSlugSchema,
   })
   .openapi("FeatureFlagToggleResponse");
 
 const FeatureFlagEvaluateRequestSchema = z
   .object({
-    slugs: z.array(z.string().min(1)).min(1).max(50),
+    slugs: z.array(FeatureFlagSlugSchema).min(1).max(50),
   })
   .openapi("FeatureFlagEvaluateRequest");
 
@@ -99,15 +121,7 @@ export function createFeatureFlagsRouter(dependencies: AppDependencies = {}) {
     summary: "Set a user beta feature flag preference",
     tags: ["Feature Flags"],
     request: {
-      params: z.object({
-        slug: z.string().openapi({
-          param: {
-            name: "slug",
-            in: "path",
-            required: true,
-          },
-        }),
-      }),
+      params: FeatureFlagSlugParamSchema,
       body: {
         required: true,
         content: jsonContent(FeatureFlagToggleRequestSchema),
@@ -119,7 +133,7 @@ export function createFeatureFlagsRouter(dependencies: AppDependencies = {}) {
         content: jsonContent(FeatureFlagToggleResponseSchema),
       },
       400: {
-        description: "The request body was not valid.",
+        description: "The request path or body was not valid.",
         content: jsonContent(ErrorResponseSchema),
       },
       401: {
@@ -147,19 +161,25 @@ export function createFeatureFlagsRouter(dependencies: AppDependencies = {}) {
       );
     }
 
-    const slug = context.req.param("slug");
+    const params = FeatureFlagSlugParamSchema.safeParse({
+      slug: context.req.param("slug"),
+    });
+
+    if (!params.success) {
+      return context.json({ error: featureFlagSlugError }, 400);
+    }
 
     await (
       await getFeatureFlagsService(context, dependencies)
     ).setUserPreference({
       actorClerkId: auth.clerkId,
       enabled: body.data.enabled,
-      slug,
+      slug: params.data.slug,
     });
 
     return context.json({
       enabled: body.data.enabled,
-      slug,
+      slug: params.data.slug,
     });
   });
 

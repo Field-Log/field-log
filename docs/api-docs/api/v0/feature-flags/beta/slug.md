@@ -53,11 +53,11 @@
 ```json
 {
   "enabled": true,
-  "slug": ""
+  "slug": "new-library-filters"
 }
 ```
 
-##### Status: 400 The request body was not valid.
+##### Status: 400 The request path or body was not valid.
 
 ###### Content-Type: application/json
 

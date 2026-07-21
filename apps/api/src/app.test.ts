@@ -348,6 +348,27 @@ describe("api", () => {
     });
   });
 
+  it("rejects malformed beta feature flag preference slugs", async () => {
+    const setUserPreference = vi.fn(async () => undefined);
+    const testApp = createApp({
+      getFeatureFlagAuth: () => ({ clerkId: "user_123" }),
+      getFeatureFlagsService: () =>
+        createFeatureFlagsServiceMock({ setUserPreference }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request(
+      "/api/v0/feature-flags/beta/bad_slug",
+      {
+        body: JSON.stringify({ enabled: true }),
+        method: "PUT",
+      },
+    );
+
+    expect(response.status).toBe(400);
+    expect(setUserPreference).not.toHaveBeenCalled();
+  });
+
   it("evaluates requested feature flags for authenticated users", async () => {
     const evaluateMany = vi.fn(async () => ({
       "new-library-filters": true,
@@ -374,6 +395,24 @@ describe("api", () => {
       clerkId: "user_123",
       slugs: ["new-library-filters"],
     });
+  });
+
+  it("rejects malformed feature flag evaluation slugs", async () => {
+    const evaluateMany = vi.fn(async () => ({}));
+    const testApp = createApp({
+      getFeatureFlagAuth: () => ({ clerkId: "user_123" }),
+      getFeatureFlagsService: () =>
+        createFeatureFlagsServiceMock({ evaluateMany }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/api/v0/feature-flags/evaluate", {
+      body: JSON.stringify({ slugs: ["bad_slug"] }),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    expect(evaluateMany).not.toHaveBeenCalled();
   });
 });
 
