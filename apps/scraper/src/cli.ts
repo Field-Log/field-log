@@ -8,6 +8,7 @@ import {
   runQueueDeadLetterProcessorJob,
   runQueueProcessorJob,
   runSourceProducerJob,
+  ScraperCommandInterruptedError,
   scraperSourceKeys,
 } from "./jobs.js";
 import { createScraperLogger } from "./lib/logger.js";
@@ -68,6 +69,11 @@ async function main() {
 
     await runQueueProcessorJob({ context, env, logger });
   } catch (error) {
+    if (error instanceof ScraperCommandInterruptedError) {
+      process.exitCode = 130;
+      return;
+    }
+
     logger ??= createScraperLogger({});
     logger.fatal(loggerMessages.scraper.run.failed, {
       attributes: {

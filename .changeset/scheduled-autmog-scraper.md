@@ -12,4 +12,5 @@
 - Replace obsolete Autmog scraper columns with canonical maker and product metadata relationships.
 - Add Grimsmo Saga, Rask, Fjell, and Norseman scraping with product variation records.
 - Store scraper images through shared product and optional variation image ownership.
+- Bound Shopify fetch waits and fail interrupted scraper runs so local retries do not stay locked.
 - Add Railway, environment variable, and database documentation for the scraper workflow.

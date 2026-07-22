@@ -53,7 +53,9 @@ export type FetchShopifyCollectionProductsOptions = {
   pageLimit?: number;
   pagePauseMs?: number;
   proxyUrl?: string;
+  requestTimeoutMs?: number;
   retries?: number;
+  signal?: AbortSignal;
   userAgent?: string;
 };
 
@@ -64,7 +66,9 @@ export async function fetchShopifyCollectionProducts({
   pageLimit = 25,
   pagePauseMs = 0,
   proxyUrl,
+  requestTimeoutMs = 10_000,
   retries = 1,
+  signal,
   userAgent = "field-log-scraper/1.0",
 }: FetchShopifyCollectionProductsOptions): Promise<ShopifyProduct[]> {
   const products: ShopifyProduct[] = [];
@@ -77,7 +81,9 @@ export async function fetchShopifyCollectionProducts({
     const response = await fetchWithRetry({
       fetcher,
       proxyUrl,
+      requestTimeoutMs,
       retries,
+      signal,
       url,
       userAgent,
     });
@@ -101,7 +107,7 @@ export async function fetchShopifyCollectionProducts({
     }
 
     if (pagePauseMs > 0) {
-      await sleep(pagePauseMs);
+      await sleep(pagePauseMs, undefined, { signal });
     }
   }
 
@@ -111,13 +117,17 @@ export async function fetchShopifyCollectionProducts({
 async function fetchWithRetry({
   fetcher,
   proxyUrl,
+  requestTimeoutMs,
   retries,
+  signal,
   url,
   userAgent,
 }: {
   fetcher: typeof fetch;
   proxyUrl?: string;
+  requestTimeoutMs: number;
   retries: number;
+  signal?: AbortSignal;
   url: URL;
   userAgent: string;
 }) {
@@ -125,10 +135,20 @@ async function fetchWithRetry({
   const attempts = Math.max(1, retries);
 
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const requestSignal = createRequestSignal({
+      requestTimeoutMs,
+      signal,
+      url,
+    });
+
     try {
       const response = await fetcher(
         url,
-        await getFetchInit({ proxyUrl, userAgent }),
+        await getFetchInit({
+          proxyUrl,
+          signal: requestSignal.signal,
+          userAgent,
+        }),
       );
 
       if (response.ok || attempt === attempts) {
@@ -144,9 +164,11 @@ async function fetchWithRetry({
       if (attempt === attempts) {
         throw error;
       }
+    } finally {
+      requestSignal.cleanup();
     }
 
-    await sleep(1_000 * attempt);
+    await sleep(1_000 * attempt, undefined, { signal });
   }
 
   throw lastError instanceof Error
@@ -156,9 +178,11 @@ async function fetchWithRetry({
 
 async function getFetchInit({
   proxyUrl,
+  signal,
   userAgent,
 }: {
   proxyUrl?: string;
+  signal?: AbortSignal;
   userAgent: string;
 }): Promise<RequestInit> {
   const headers = {
@@ -167,11 +191,49 @@ async function getFetchInit({
   };
 
   if (!proxyUrl) {
-    return { headers };
+    return { headers, signal };
   }
 
   return {
     dispatcher: new ProxyAgent(proxyUrl),
     headers,
+    signal,
   } as RequestInit;
+}
+
+function createRequestSignal({
+  requestTimeoutMs,
+  signal,
+  url,
+}: {
+  requestTimeoutMs: number;
+  signal?: AbortSignal;
+  url: URL;
+}) {
+  const timeoutMs = Math.max(1, requestTimeoutMs);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort(
+      new Error(
+        `Shopify products fetch timed out after ${timeoutMs}ms for ${url.href}.`,
+      ),
+    );
+  }, timeoutMs);
+  const abortRequest = () => {
+    controller.abort(signal?.reason);
+  };
+
+  if (signal?.aborted) {
+    abortRequest();
+  } else {
+    signal?.addEventListener("abort", abortRequest, { once: true });
+  }
+
+  return {
+    cleanup() {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", abortRequest);
+    },
+    signal: controller.signal,
+  };
 }

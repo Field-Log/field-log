@@ -38,7 +38,9 @@ export type FetchGrimsmoProductsOptions = {
   pageLimit?: number;
   pagePauseMs?: number;
   proxyUrl?: string;
+  requestTimeoutMs?: number;
   retries?: number;
+  signal?: AbortSignal;
   source: GrimsmoSourceName;
 };
 
@@ -103,7 +105,9 @@ export async function fetchGrimsmoProducts({
   pageLimit = 30,
   pagePauseMs = 500,
   proxyUrl,
-  retries = 5,
+  requestTimeoutMs,
+  retries = 3,
+  signal,
   source,
 }: FetchGrimsmoProductsOptions): Promise<GrimsmoFetchedProduct[]> {
   const handles = collectionHandles[source];
@@ -120,7 +124,9 @@ export async function fetchGrimsmoProducts({
       pageLimit,
       pagePauseMs,
       proxyUrl,
+      requestTimeoutMs,
       retries,
+      signal,
       userAgent: "python-requests/2.33.1",
     }),
     fetchShopifyCollectionProducts({
@@ -130,7 +136,9 @@ export async function fetchGrimsmoProducts({
       pageLimit,
       pagePauseMs,
       proxyUrl,
+      requestTimeoutMs,
       retries,
+      signal,
       userAgent: "python-requests/2.33.1",
     }),
   ]);

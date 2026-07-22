@@ -12,17 +12,20 @@ export type FetchAutmogProductsOptions = {
   fetch?: typeof fetch;
   limit?: number;
   pageLimit?: number;
+  signal?: AbortSignal;
 };
 
 export async function fetchAutmogProducts({
   fetch: fetcher,
   limit,
   pageLimit,
+  signal,
 }: FetchAutmogProductsOptions = {}): Promise<ShopifyProduct[]> {
   return fetchShopifyCollectionProducts({
     collectionUrl: autmogProductsUrl,
     fetch: fetcher,
     limit,
     pageLimit,
+    signal,
   });
 }

@@ -34,6 +34,16 @@ export type ScraperJobContext = {
   queues: ScraperQueues;
 };
 
+export class ScraperCommandInterruptedError extends Error {
+  readonly signal: NodeJS.Signals;
+
+  constructor(signal: NodeJS.Signals) {
+    super(`Scraper command interrupted by ${signal}.`);
+    this.name = "ScraperCommandInterruptedError";
+    this.signal = signal;
+  }
+}
+
 export async function createScraperJobContext(
   env: ScraperJobEnv,
   logger: Logger,
@@ -85,10 +95,11 @@ export async function runAutmogProducerJob({
   await runLoggedCommand({
     command: "scrape:autmog",
     db: context.db,
-    execute: async () => {
+    execute: async (signal) => {
       const result = await runAutmogProducer({
         logger,
         queues: context.queues,
+        signal,
       });
 
       return {
@@ -146,11 +157,12 @@ export async function runGrimsmoProducerJob({
   await runLoggedCommand({
     command: `scrape:${source}`,
     db: context.db,
-    execute: async () => {
+    execute: async (signal) => {
       const result = await runGrimsmoProducer({
         logger,
         proxyUrl,
         queues: context.queues,
+        signal,
         source,
       });
 
@@ -265,13 +277,28 @@ async function runLoggedCommand({
     | "process:queue"
     | `scrape:${ScraperSourceName}`;
   db: Database;
-  execute: () => Promise<Record<string, number | undefined>>;
+  execute: (signal: AbortSignal) => Promise<Record<string, number | undefined>>;
   jobType: string;
   logger: Logger;
   source: string;
 }) {
   const run = await startScraperRun(db, { jobType, source });
   const startedAt = Date.now();
+  const abortController = new AbortController();
+  let interruptError: ScraperCommandInterruptedError | undefined;
+  const interruptListeners = new Map<NodeJS.Signals, () => void>();
+  const interruptPromise = new Promise<never>((_, reject) => {
+    for (const signal of ["SIGINT", "SIGTERM"] as const) {
+      const listener = () => {
+        interruptError ??= new ScraperCommandInterruptedError(signal);
+        abortController.abort(interruptError);
+        reject(interruptError);
+      };
+
+      interruptListeners.set(signal, listener);
+      process.once(signal, listener);
+    }
+  });
 
   if (!run) {
     throw new Error(`Failed to create scraper run for ${source}:${jobType}.`);
@@ -287,7 +314,10 @@ async function runLoggedCommand({
   });
 
   try {
-    const stats = await execute();
+    const stats = await Promise.race([
+      execute(abortController.signal),
+      interruptPromise,
+    ]);
     await finishScraperRun(db, run.id, {
       stats,
       status: "completed",
@@ -303,8 +333,11 @@ async function runLoggedCommand({
       },
     });
   } catch (error) {
+    const runError = interruptError ?? error;
+
     await finishScraperRun(db, run.id, {
-      errorMessage: error instanceof Error ? error.message : String(error),
+      errorMessage:
+        runError instanceof Error ? runError.message : String(runError),
       status: "failed",
     });
     logger.error(loggerMessages.scraper.run.failed, {
@@ -315,8 +348,12 @@ async function runLoggedCommand({
         runId: run.id,
         source,
       },
-      error,
+      error: runError,
     });
-    throw error;
+    throw runError;
+  } finally {
+    for (const [signal, listener] of interruptListeners) {
+      process.removeListener(signal, listener);
+    }
   }
 }
