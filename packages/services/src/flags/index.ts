@@ -40,7 +40,6 @@ export type CreateFeatureFlagInput = {
 
 export type UpdateFeatureFlagInput = {
   actorClerkId: string;
-  audience?: FeatureFlagAudience;
   defaultEnabled?: boolean;
   description?: string | null;
   name?: string;
@@ -300,13 +299,20 @@ export function createFeatureFlagsService(
             throw new Error("Feature flag not found.");
           }
 
-          const nextAudience = input.audience ?? current.audience;
+          const requestedAudience = requestedUpdateAudience(input);
+
+          if (
+            requestedAudience !== undefined &&
+            requestedAudience !== current.audience
+          ) {
+            throw new Error("Feature flag audience cannot be changed.");
+          }
+
           const [flag] = await db
             .update(schema.featureFlags)
             .set({
-              audience: input.audience,
               defaultEnabled:
-                nextAudience === "global"
+                current.audience === "global"
                   ? (input.defaultEnabled ?? current.defaultEnabled)
                   : false,
               description: input.description,
@@ -392,6 +398,16 @@ function normalizedDefaultEnabled(input: {
   defaultEnabled?: boolean;
 }) {
   return input.audience === "global" ? (input.defaultEnabled ?? false) : false;
+}
+
+function requestedUpdateAudience(
+  input: UpdateFeatureFlagInput,
+): FeatureFlagAudience | undefined {
+  const value = (input as { audience?: unknown }).audience;
+
+  return value === "global" || value === "admin" || value === "user"
+    ? value
+    : undefined;
 }
 
 async function getFlagBySlug(db: Database, slug: string) {

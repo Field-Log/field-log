@@ -57,7 +57,6 @@ export const updateAdminFeatureFlag = createServerFn({ method: "POST" })
 
     return await s.flags.update({
       actorClerkId,
-      audience: data.audience,
       defaultEnabled: data.defaultEnabled,
       description: data.description,
       name: data.name,
@@ -185,8 +184,6 @@ function parseUpdateFeatureFlagInput(input: unknown) {
   const value = parseRecord(input);
 
   return {
-    audience:
-      value.audience === undefined ? undefined : parseAudience(value.audience),
     defaultEnabled: parseOptionalBoolean(value.defaultEnabled),
     description: parseOptionalString(value.description),
     name: parseOptionalRequiredString(value.name),

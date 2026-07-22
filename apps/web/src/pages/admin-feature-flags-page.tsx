@@ -68,7 +68,6 @@ export function AdminFeatureFlagsPage() {
     if (editingSlug) {
       await updateAdminFeatureFlag({
         data: {
-          audience: form.audience,
           defaultEnabled: form.defaultEnabled,
           description: form.description || null,
           name: form.name,
@@ -228,6 +227,7 @@ export function AdminFeatureFlagsPage() {
               />
               <select
                 className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                disabled={Boolean(editingSlug)}
                 onChange={(event) =>
                   setForm((current) => ({
                     ...current,
