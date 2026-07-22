@@ -83,8 +83,43 @@ describe("Railway scraper cron", () => {
         now: new Date("2026-07-16T12:00:00.000Z"),
       }),
     ).resolves.toBeUndefined();
-    expect(runSourceProducerJob).toHaveBeenCalledOnce();
+    expect(runSourceProducerJob).toHaveBeenCalledTimes(2);
+    expect(
+      vi.mocked(runSourceProducerJob).mock.calls.map(([input]) => input.source),
+    ).toEqual(["autmog", "grimsmo-saga"]);
     expect(runQueueProcessorJob).toHaveBeenCalledOnce();
+  });
+
+  it("waits for Grimsmo stagger offsets on first run", async () => {
+    vi.mocked(runSourceProducerJob).mockResolvedValue(undefined);
+    vi.mocked(runQueueProcessorJob).mockResolvedValue(undefined);
+
+    await runRailwayCronJob({
+      context: createContext(),
+      env: createEnv(),
+      logger: createNoopLogger(),
+      now: new Date("2026-07-16T12:14:00.000Z"),
+    });
+
+    expect(
+      vi.mocked(runSourceProducerJob).mock.calls.map(([input]) => input.source),
+    ).toEqual(["autmog", "grimsmo-saga"]);
+  });
+
+  it("runs a staggered Grimsmo knife source once its offset is reached", async () => {
+    vi.mocked(runSourceProducerJob).mockResolvedValue(undefined);
+    vi.mocked(runQueueProcessorJob).mockResolvedValue(undefined);
+
+    await runRailwayCronJob({
+      context: createContext(),
+      env: createEnv(),
+      logger: createNoopLogger(),
+      now: new Date("2026-07-16T12:15:00.000Z"),
+    });
+
+    expect(
+      vi.mocked(runSourceProducerJob).mock.calls.map(([input]) => input.source),
+    ).toEqual(["autmog", "grimsmo-saga", "grimsmo-rask"]);
   });
 });
 
@@ -109,6 +144,11 @@ function createContext(): ScraperJobContext {
 function createEnv(): ScraperJobEnv {
   return {
     SCRAPER_AUTMOG_INTERVAL_MINUTES: 60,
+    SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS: 30 * 60,
+    SCRAPER_GRIMSMO_INTERVAL_MINUTES: 60,
+    SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS: 45 * 60,
+    SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS: 15 * 60,
+    SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS: 0,
     SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES: 15,
   } as ScraperJobEnv;
 }

@@ -54,6 +54,7 @@ async function main() {
     if (command.type === "scrape") {
       await runSourceProducerJob({
         context,
+        env,
         logger,
         source: command.source,
       });

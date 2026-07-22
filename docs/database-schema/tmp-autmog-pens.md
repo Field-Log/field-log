@@ -9,6 +9,7 @@ Latest normalized Autmog pen product records.
 | Column | Type | Required | Key | Default | Relation | Description | Example |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `bigint` | yes | PK |  |  | Internal Autmog pen row identifier. | `1000` |
+| `product_id` | `bigint` | yes | unique, FK |  | `tmp_products.id` (on delete cascade) | Generic temporary product row for this source-specific Autmog pen row. | `1000` |
 | `maker_id` | `bigint` | yes | FK |  | `makers.id` (on delete restrict) | Maker row for Autmog. | `1000` |
 | `mechanism_id` | `bigint` | no | FK |  | `mechanisms.id` (on delete restrict) | Canonical mechanism assigned to the pen. | `1000` |
 | `source_product_id` | `text` | yes | unique |  |  | Shopify product ID from Autmog. | `8383420301499` |
@@ -42,4 +43,5 @@ Latest normalized Autmog pen product records.
 | --- | --- | --- | --- |
 | `tmp_autmog_pens_maker_id_idx` | no | `btree` | `maker_id` |
 | `tmp_autmog_pens_mechanism_id_idx` | no | `btree` | `mechanism_id` |
+| `tmp_autmog_pens_product_id_unique` | yes | `btree` | `product_id` |
 | `tmp_autmog_pens_source_product_id_unique` | yes | `btree` | `source_product_id` |

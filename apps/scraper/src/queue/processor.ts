@@ -3,24 +3,28 @@ import { type Logger, loggerMessages } from "@package/logger";
 import type { ImagesService } from "@package/services";
 import { type Job, type Queue, Worker } from "bullmq";
 import type { Redis } from "ioredis";
+import { archiveMissingAutmogPens, syncAutmogPen } from "../db/autmog.js";
 import {
-  archiveMissingAutmogPens,
-  getAutmogImageForProcessing,
-  markAutmogImageDeleted,
-  markAutmogImageFailed,
-  markAutmogImageUploaded,
-  syncAutmogPen,
-} from "../db/autmog.js";
+  reconcileGrimsmoKnifeVariationBatch,
+  reconcileGrimsmoPenVariationBatch,
+  syncGrimsmoKnifeVariation,
+  syncGrimsmoPenVariation,
+} from "../db/grimsmo.js";
 import {
+  getTmpImageForProcessing,
+  markTmpImageDeleted,
+  markTmpImageFailed,
+  markTmpImageUploaded,
+} from "../db/images.js";
+import {
+  type GrimsmoKnifeSourceName,
+  type GrimsmoPenSourceName,
   type ScraperImageJob,
   type ScraperItemJob,
   scraperQueueNames,
   scraperSources,
 } from "../scraper-types.js";
-import {
-  getAutmogImageDeleteJobId,
-  getAutmogImageUploadJobId,
-} from "./job-ids.js";
+import { getTmpImageDeleteJobId, getTmpImageUploadJobId } from "./job-ids.js";
 import { removeCompletedJobsById, type ScraperQueues } from "./queues.js";
 
 export type QueueDrainStats = {
@@ -77,6 +81,7 @@ type ProcessorErrorCounter = {
   record: (message: string) => void;
   summary: () => ProcessorErrorSummary;
 };
+type ImageJobResult = "completed" | "skipped";
 
 export async function runQueueProcessor({
   batchSize,
@@ -254,30 +259,211 @@ async function processItemJob({
       return;
     }
 
-    const result = await syncAutmogPen(db, job.data.item);
+    if (job.data.type === "grimsmo.penVariationBatch") {
+      const archivedCount = await reconcileGrimsmoPenVariationBatch(db, {
+        items: job.data.items,
+        source: job.data.source,
+      });
+      logger.info(loggerMessages.scraper.database.archiveCompleted, {
+        attributes: {
+          archivedCount,
+          durationMs: Date.now() - startedAt,
+          jobId: job.id,
+          source: job.data.source,
+        },
+      });
+      logger.info(loggerMessages.scraper.processor.itemJobCompleted, {
+        attributes: {
+          durationMs: Date.now() - startedAt,
+          jobId: job.id,
+          source: job.data.source,
+          type: job.data.type,
+        },
+      });
+      return;
+    }
+
+    if (job.data.type === "grimsmo.knifeVariationBatch") {
+      const archivedCount = await reconcileGrimsmoKnifeVariationBatch(db, {
+        items: job.data.items,
+        source: job.data.source,
+      });
+      logger.info(loggerMessages.scraper.database.archiveCompleted, {
+        attributes: {
+          archivedCount,
+          durationMs: Date.now() - startedAt,
+          jobId: job.id,
+          source: job.data.source,
+        },
+      });
+      logger.info(loggerMessages.scraper.processor.itemJobCompleted, {
+        attributes: {
+          durationMs: Date.now() - startedAt,
+          jobId: job.id,
+          source: job.data.source,
+          type: job.data.type,
+        },
+      });
+      return;
+    }
+
+    if (job.data.type === "grimsmo.penVariation") {
+      const data = job.data;
+      const source: GrimsmoPenSourceName = data.source;
+      const result = await syncGrimsmoPenVariation(db, data.item);
+      const imageJobs = [
+        ...result.uploadImageJobs.map((imageJob) => ({
+          data: {
+            imageId: imageJob.imageId,
+            source,
+            sourceHash: imageJob.sourceHash,
+            type: "tmp.image.upload" as const,
+          },
+          name: "tmp.image.upload",
+          opts: {
+            jobId: getTmpImageUploadJobId({
+              imageId: imageJob.imageId,
+              source,
+              sourceHash: imageJob.sourceHash,
+            }),
+          },
+        })),
+        ...result.deleteImageJobs.map((imageJob) => ({
+          data: {
+            imageId: imageJob.imageId,
+            source,
+            type: "tmp.image.delete" as const,
+          },
+          name: "tmp.image.delete",
+          opts: {
+            jobId: getTmpImageDeleteJobId({
+              imageId: imageJob.imageId,
+              source,
+            }),
+          },
+        })),
+      ];
+      const removedCompletedImageJobs = await enqueueImageJobs(
+        queues,
+        imageJobs,
+      );
+
+      logItemMutationCompleted({
+        durationMs: Date.now() - startedAt,
+        imageJobs: imageJobs.length,
+        jobId: job.id,
+        logger,
+        result,
+        source,
+        sourceProductId: data.item.sourceProductId,
+        removedCompletedImageJobs,
+      });
+      logger.info(loggerMessages.scraper.processor.itemJobCompleted, {
+        attributes: {
+          durationMs: Date.now() - startedAt,
+          jobId: job.id,
+          source,
+          sourceProductId: data.item.sourceProductId,
+          type: data.type,
+        },
+      });
+      return;
+    }
+
+    if (job.data.type === "grimsmo.knifeVariation") {
+      const data = job.data;
+      const source: GrimsmoKnifeSourceName = data.source;
+      const result = await syncGrimsmoKnifeVariation(db, data.item);
+      const imageJobs = [
+        ...result.uploadImageJobs.map((imageJob) => ({
+          data: {
+            imageId: imageJob.imageId,
+            source,
+            sourceHash: imageJob.sourceHash,
+            type: "tmp.image.upload" as const,
+          },
+          name: "tmp.image.upload",
+          opts: {
+            jobId: getTmpImageUploadJobId({
+              imageId: imageJob.imageId,
+              source,
+              sourceHash: imageJob.sourceHash,
+            }),
+          },
+        })),
+        ...result.deleteImageJobs.map((imageJob) => ({
+          data: {
+            imageId: imageJob.imageId,
+            source,
+            type: "tmp.image.delete" as const,
+          },
+          name: "tmp.image.delete",
+          opts: {
+            jobId: getTmpImageDeleteJobId({
+              imageId: imageJob.imageId,
+              source,
+            }),
+          },
+        })),
+      ];
+      const removedCompletedImageJobs = await enqueueImageJobs(
+        queues,
+        imageJobs,
+      );
+
+      logItemMutationCompleted({
+        durationMs: Date.now() - startedAt,
+        imageJobs: imageJobs.length,
+        jobId: job.id,
+        logger,
+        result,
+        source,
+        sourceProductId: data.item.sourceProductId,
+        removedCompletedImageJobs,
+      });
+      logger.info(loggerMessages.scraper.processor.itemJobCompleted, {
+        attributes: {
+          durationMs: Date.now() - startedAt,
+          jobId: job.id,
+          source,
+          sourceProductId: data.item.sourceProductId,
+          type: data.type,
+        },
+      });
+      return;
+    }
+
+    const data = job.data;
+    const result = await syncAutmogPen(db, data.item);
     const imageJobs = [
       ...result.uploadImageJobs.map((imageJob) => ({
         data: {
           imageId: imageJob.imageId,
           source: scraperSources.autmog,
-          sourceImageId: imageJob.sourceImageId,
-          sourceUrl: imageJob.sourceUrl,
-          type: "autmog.image.upload" as const,
+          sourceHash: imageJob.sourceHash,
+          type: "tmp.image.upload" as const,
         },
-        name: "autmog.image.upload",
+        name: "tmp.image.upload",
         opts: {
-          jobId: getAutmogImageUploadJobId(imageJob),
+          jobId: getTmpImageUploadJobId({
+            imageId: imageJob.imageId,
+            source: scraperSources.autmog,
+            sourceHash: imageJob.sourceHash,
+          }),
         },
       })),
       ...result.deleteImageJobs.map((imageJob) => ({
         data: {
           imageId: imageJob.imageId,
           source: scraperSources.autmog,
-          type: "autmog.image.delete" as const,
+          type: "tmp.image.delete" as const,
         },
-        name: "autmog.image.delete",
+        name: "tmp.image.delete",
         opts: {
-          jobId: getAutmogImageDeleteJobId(imageJob),
+          jobId: getTmpImageDeleteJobId({
+            imageId: imageJob.imageId,
+            source: scraperSources.autmog,
+          }),
         },
       })),
     ];
@@ -312,7 +498,7 @@ async function processItemJob({
           },
         },
         source: scraperSources.autmog,
-        sourceProductId: job.data.item.sourceProductId,
+        sourceProductId: data.item.sourceProductId,
         removedCompletedImageJobs,
         updated: result.updated,
         uploadImageJobs: result.uploadImageJobs.length,
@@ -324,8 +510,8 @@ async function processItemJob({
         durationMs: Date.now() - startedAt,
         jobId: job.id,
         source: scraperSources.autmog,
-        sourceProductId: job.data.item.sourceProductId,
-        type: job.data.type,
+        sourceProductId: data.item.sourceProductId,
+        type: data.type,
       },
     });
   } catch (error) {
@@ -366,27 +552,112 @@ async function processImageJob({
   imageStorage: ImagesService;
   job: Job<ScraperImageJob>;
   logger: Logger;
-}) {
+}): Promise<ImageJobResult> {
   const startedAt = Date.now();
 
+  return processTmpImageJob({
+    db,
+    errorCounter,
+    imageFolderPrefix,
+    imageStorage,
+    job,
+    logger,
+    startedAt,
+  });
+}
+
+async function enqueueImageJobs(
+  queues: ScraperQueues,
+  imageJobs: {
+    data: ScraperImageJob;
+    name: string;
+    opts: {
+      jobId: string;
+    };
+  }[],
+) {
+  if (imageJobs.length === 0) {
+    return 0;
+  }
+
+  const removedCompletedImageJobs = await removeCompletedJobsById(
+    queues.images,
+    imageJobs.map((imageJob) => imageJob.opts.jobId),
+  );
+  await queues.images.addBulk(imageJobs);
+
+  return removedCompletedImageJobs;
+}
+
+function logItemMutationCompleted({
+  durationMs,
+  imageJobs,
+  jobId,
+  logger,
+  removedCompletedImageJobs,
+  result,
+  source,
+  sourceProductId,
+}: {
+  durationMs: number;
+  imageJobs: number;
+  jobId: string | undefined;
+  logger: Logger;
+  removedCompletedImageJobs: number;
+  result: {
+    archived?: boolean;
+    created: boolean;
+    deleteImageJobs: readonly unknown[];
+    updated: boolean;
+    uploadImageJobs: readonly unknown[];
+    versioned: boolean;
+  };
+  source: string;
+  sourceProductId: string;
+}) {
+  logger.info(loggerMessages.scraper.database.mutationCompleted, {
+    attributes: {
+      archived: result.archived,
+      created: result.created,
+      deleteImageJobs: result.deleteImageJobs.length,
+      durationMs,
+      enqueuedImageJobs: imageJobs,
+      jobId,
+      removedCompletedImageJobs,
+      source,
+      sourceProductId,
+      updated: result.updated,
+      uploadImageJobs: result.uploadImageJobs.length,
+      versioned: result.versioned,
+    },
+  });
+}
+
+async function processTmpImageJob({
+  db,
+  errorCounter,
+  imageFolderPrefix,
+  imageStorage,
+  job,
+  logger,
+  startedAt,
+}: {
+  db: Database;
+  errorCounter: ProcessorErrorCounter;
+  imageFolderPrefix?: string;
+  imageStorage: ImagesService;
+  job: Job<ScraperImageJob>;
+  logger: Logger;
+  startedAt: number;
+}): Promise<ImageJobResult> {
   try {
-    const row = await getAutmogImageForProcessing(db, job.data.imageId);
+    const row = await getTmpImageForProcessing(db, job.data.imageId);
 
     if (!row) {
-      logger.warn(loggerMessages.scraper.processor.imageJobCompleted, {
-        attributes: {
-          durationMs: Date.now() - startedAt,
-          imageId: job.data.imageId,
-          jobId: job.id,
-          skipped: true,
-          skipReason: "missing-image-row",
-          type: job.data.type,
-        },
-      });
-      return "skipped";
+      return logMissingImageRow({ job, logger, startedAt });
     }
 
-    if (job.data.type === "autmog.image.upload") {
+    if (job.data.type === "tmp.image.upload") {
       if (!["pending_upload", "upload_failed"].includes(row.image.status)) {
         logger.info(loggerMessages.scraper.image.uploadSkipped, {
           attributes: {
@@ -400,24 +671,25 @@ async function processImageJob({
       }
 
       const result = await imageStorage.uploadRemoteImage({
-        fileName: getAutmogImageFileName({
+        fileName: getTmpImageFileName({
           sourceHash: row.image.sourceHash,
-          sourceImageId: job.data.sourceImageId,
+          sourceImageId: row.image.sourceImageId,
         }),
         folder: buildImageKitFolder({
-          entityId: row.pen.sourceProductId,
+          entityId: getTmpImageFolderKey({
+            productId: row.image.productId,
+            productVariationId: row.image.productVariationId,
+          }),
           prefix: imageFolderPrefix,
-          type: "pens",
         }),
         overwriteFile: true,
         overwriteTags: true,
-        sourceUrl: job.data.sourceUrl,
-        tags: [
-          "scraper",
-          "autmog",
-          "autmog-pen",
-          `source-product:${row.pen.sourceProductId}`,
-        ],
+        sourceUrl: row.image.sourceUrl,
+        tags: getTmpImageTags({
+          productId: row.product.id,
+          productVariationId: row.productVariation?.id ?? null,
+          source: row.product.source,
+        }),
         transformation: {
           pre: "w-2000,h-2000,c-at_max,q-85,f-webp",
         },
@@ -436,7 +708,7 @@ async function processImageJob({
         return "skipped";
       }
 
-      const dbResponse = await markAutmogImageUploaded(db, {
+      const dbResponse = await markTmpImageUploaded(db, {
         height: result.height,
         imageId: row.image.id,
         imageKitFileId: result.fileId,
@@ -452,7 +724,9 @@ async function processImageJob({
           imageId: row.image.id,
           imageKitResponse: result,
           jobId: job.id,
-          sourceProductId: row.pen.sourceProductId,
+          productId: row.product.id,
+          productVariationId: row.productVariation?.id,
+          source: row.product.source,
         },
       });
       return "completed";
@@ -488,53 +762,92 @@ async function processImageJob({
       }
     }
 
-    await markAutmogImageDeleted(db, row.image.id);
+    await markTmpImageDeleted(db, row.image.id);
     logger.info(loggerMessages.scraper.image.deleteCompleted, {
       attributes: {
         durationMs: Date.now() - startedAt,
         imageId: row.image.id,
         jobId: job.id,
-        sourceProductId: row.pen.sourceProductId,
+        productId: row.product.id,
+        productVariationId: row.productVariation?.id,
+        source: row.product.source,
       },
     });
     return "completed";
   } catch (error) {
-    await markAutmogImageFailed(db, {
+    await markTmpImageFailed(db, {
       imageId: job.data.imageId,
       status:
-        job.data.type === "autmog.image.upload"
+        job.data.type === "tmp.image.upload"
           ? "upload_failed"
           : "delete_failed",
     });
-    const primaryErrorMessage =
-      job.data.type === "autmog.image.upload"
-        ? loggerMessages.scraper.image.uploadFailed
-        : loggerMessages.scraper.image.deleteFailed;
-
-    errorCounter.record(primaryErrorMessage);
-    logger.error(primaryErrorMessage, {
-      attributes: {
-        durationMs: Date.now() - startedAt,
-        imageId: job.data.imageId,
-        jobId: job.id,
-        type: job.data.type,
-      },
-      error,
-    });
-    logger.error(loggerMessages.scraper.processor.imageJobFailed, {
-      attributes: {
-        durationMs: Date.now() - startedAt,
-        imageId: job.data.imageId,
-        jobId: job.id,
-        type: job.data.type,
-      },
-      error,
-    });
+    logImageJobError({ error, errorCounter, job, logger, startedAt });
     throw error;
   }
 }
 
-function getAutmogImageFileName({
+function logMissingImageRow({
+  job,
+  logger,
+  startedAt,
+}: {
+  job: Job<ScraperImageJob>;
+  logger: Logger;
+  startedAt: number;
+}): ImageJobResult {
+  logger.warn(loggerMessages.scraper.processor.imageJobCompleted, {
+    attributes: {
+      durationMs: Date.now() - startedAt,
+      imageId: job.data.imageId,
+      jobId: job.id,
+      skipped: true,
+      skipReason: "missing-image-row",
+      type: job.data.type,
+    },
+  });
+  return "skipped";
+}
+
+function logImageJobError({
+  error,
+  errorCounter,
+  job,
+  logger,
+  startedAt,
+}: {
+  error: unknown;
+  errorCounter: ProcessorErrorCounter;
+  job: Job<ScraperImageJob>;
+  logger: Logger;
+  startedAt: number;
+}) {
+  const primaryErrorMessage = job.data.type.includes(".upload")
+    ? loggerMessages.scraper.image.uploadFailed
+    : loggerMessages.scraper.image.deleteFailed;
+
+  errorCounter.record(primaryErrorMessage);
+  logger.error(primaryErrorMessage, {
+    attributes: {
+      durationMs: Date.now() - startedAt,
+      imageId: job.data.imageId,
+      jobId: job.id,
+      type: job.data.type,
+    },
+    error,
+  });
+  logger.error(loggerMessages.scraper.processor.imageJobFailed, {
+    attributes: {
+      durationMs: Date.now() - startedAt,
+      imageId: job.data.imageId,
+      jobId: job.id,
+      type: job.data.type,
+    },
+    error,
+  });
+}
+
+function getTmpImageFileName({
   sourceHash,
   sourceImageId,
 }: {
@@ -544,6 +857,37 @@ function getAutmogImageFileName({
   const suffix = sourceImageId ?? sourceHash.replace("sha256:", "");
 
   return `${suffix}.webp`;
+}
+
+export function getTmpImageFolderKey({
+  productId,
+  productVariationId,
+}: {
+  productId: number;
+  productVariationId: number | null;
+}) {
+  return productVariationId === null
+    ? String(productId)
+    : `${productId}-${productVariationId}`;
+}
+
+function getTmpImageTags({
+  productId,
+  productVariationId,
+  source,
+}: {
+  productId: number;
+  productVariationId: number | null;
+  source: string;
+}) {
+  return [
+    "scraper",
+    source,
+    `product:${productId}`,
+    ...(productVariationId === null
+      ? []
+      : [`product-variation:${productVariationId}`]),
+  ];
 }
 
 export function createProcessorErrorCounter(): ProcessorErrorCounter {
@@ -573,16 +917,12 @@ export function createProcessorErrorCounter(): ProcessorErrorCounter {
 export function buildImageKitFolder({
   entityId,
   prefix,
-  type,
 }: {
   entityId: string;
   prefix?: string;
-  type: string;
 }) {
   const normalizedPrefix = normalizeImageKitFolderPrefix(prefix);
-  const pathSegments = [normalizedPrefix, "products", type, entityId].filter(
-    Boolean,
-  );
+  const pathSegments = [normalizedPrefix, "products", entityId].filter(Boolean);
 
   return `/${pathSegments.join("/")}`;
 }

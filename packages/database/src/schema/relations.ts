@@ -5,12 +5,21 @@ import {
   mechanisms,
   productTypes,
   scraperRuns,
-  tmpAutmogPenImages,
   tmpAutmogPenMaterials,
   tmpAutmogPens,
   tmpAutmogPenVersions,
+  tmpGrimsmoKnifeVariations,
+  tmpGrimsmoKnifeVariationVersions,
+  tmpGrimsmoKnifeVersions,
+  tmpGrimsmoKnives,
+  tmpGrimsmoPens,
+  tmpGrimsmoPenVariations,
+  tmpGrimsmoPenVariationVersions,
+  tmpGrimsmoPenVersions,
+  tmpImages,
   tmpProductProductTypes,
   tmpProducts,
+  tmpProductVariations,
 } from "./scraper.js";
 import { userSettings } from "./user-settings.js";
 import { users } from "./users.js";
@@ -28,6 +37,8 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
 
 export const makersRelations = relations(makers, ({ many }) => ({
   autmogPens: many(tmpAutmogPens),
+  grimsmoKnives: many(tmpGrimsmoKnives),
+  grimsmoPens: many(tmpGrimsmoPens),
 }));
 
 export const materialsRelations = relations(materials, ({ many }) => ({
@@ -47,7 +58,6 @@ export const scraperRunsRelations = relations(scraperRuns, () => ({}));
 export const tmpAutmogPensRelations = relations(
   tmpAutmogPens,
   ({ many, one }) => ({
-    images: many(tmpAutmogPenImages),
     maker: one(makers, {
       fields: [tmpAutmogPens.makerId],
       references: [makers.id],
@@ -57,7 +67,10 @@ export const tmpAutmogPensRelations = relations(
       fields: [tmpAutmogPens.mechanismId],
       references: [mechanisms.id],
     }),
-    product: one(tmpProducts),
+    product: one(tmpProducts, {
+      fields: [tmpAutmogPens.productId],
+      references: [tmpProducts.id],
+    }),
     versions: many(tmpAutmogPenVersions),
   }),
 );
@@ -78,11 +91,40 @@ export const tmpAutmogPenMaterialsRelations = relations(
 
 export const tmpProductsRelations = relations(tmpProducts, ({ many, one }) => ({
   autmogPen: one(tmpAutmogPens, {
-    fields: [tmpProducts.autmogPenId],
-    references: [tmpAutmogPens.id],
+    fields: [tmpProducts.id],
+    references: [tmpAutmogPens.productId],
   }),
+  grimsmoKnife: one(tmpGrimsmoKnives, {
+    fields: [tmpProducts.id],
+    references: [tmpGrimsmoKnives.productId],
+  }),
+  grimsmoPen: one(tmpGrimsmoPens, {
+    fields: [tmpProducts.id],
+    references: [tmpGrimsmoPens.productId],
+  }),
+  images: many(tmpImages),
   productTypes: many(tmpProductProductTypes),
+  variations: many(tmpProductVariations),
 }));
+
+export const tmpProductVariationsRelations = relations(
+  tmpProductVariations,
+  ({ many, one }) => ({
+    grimsmoKnifeVariation: one(tmpGrimsmoKnifeVariations, {
+      fields: [tmpProductVariations.id],
+      references: [tmpGrimsmoKnifeVariations.productVariationId],
+    }),
+    grimsmoPenVariation: one(tmpGrimsmoPenVariations, {
+      fields: [tmpProductVariations.id],
+      references: [tmpGrimsmoPenVariations.productVariationId],
+    }),
+    images: many(tmpImages),
+    product: one(tmpProducts, {
+      fields: [tmpProductVariations.productId],
+      references: [tmpProducts.id],
+    }),
+  }),
+);
 
 export const tmpProductProductTypesRelations = relations(
   tmpProductProductTypes,
@@ -98,15 +140,16 @@ export const tmpProductProductTypesRelations = relations(
   }),
 );
 
-export const tmpAutmogPenImagesRelations = relations(
-  tmpAutmogPenImages,
-  ({ one }) => ({
-    pen: one(tmpAutmogPens, {
-      fields: [tmpAutmogPenImages.penId],
-      references: [tmpAutmogPens.id],
-    }),
+export const tmpImagesRelations = relations(tmpImages, ({ one }) => ({
+  product: one(tmpProducts, {
+    fields: [tmpImages.productId],
+    references: [tmpProducts.id],
   }),
-);
+  productVariation: one(tmpProductVariations, {
+    fields: [tmpImages.productVariationId],
+    references: [tmpProductVariations.id],
+  }),
+}));
 
 export const tmpAutmogPenVersionsRelations = relations(
   tmpAutmogPenVersions,
@@ -114,6 +157,108 @@ export const tmpAutmogPenVersionsRelations = relations(
     pen: one(tmpAutmogPens, {
       fields: [tmpAutmogPenVersions.penId],
       references: [tmpAutmogPens.id],
+    }),
+  }),
+);
+
+export const tmpGrimsmoPensRelations = relations(
+  tmpGrimsmoPens,
+  ({ many, one }) => ({
+    maker: one(makers, {
+      fields: [tmpGrimsmoPens.makerId],
+      references: [makers.id],
+    }),
+    product: one(tmpProducts, {
+      fields: [tmpGrimsmoPens.productId],
+      references: [tmpProducts.id],
+    }),
+    variations: many(tmpGrimsmoPenVariations),
+    versions: many(tmpGrimsmoPenVersions),
+  }),
+);
+
+export const tmpGrimsmoPenVariationsRelations = relations(
+  tmpGrimsmoPenVariations,
+  ({ many, one }) => ({
+    pen: one(tmpGrimsmoPens, {
+      fields: [tmpGrimsmoPenVariations.penId],
+      references: [tmpGrimsmoPens.id],
+    }),
+    productVariation: one(tmpProductVariations, {
+      fields: [tmpGrimsmoPenVariations.productVariationId],
+      references: [tmpProductVariations.id],
+    }),
+    versions: many(tmpGrimsmoPenVariationVersions),
+  }),
+);
+
+export const tmpGrimsmoPenVersionsRelations = relations(
+  tmpGrimsmoPenVersions,
+  ({ one }) => ({
+    pen: one(tmpGrimsmoPens, {
+      fields: [tmpGrimsmoPenVersions.penId],
+      references: [tmpGrimsmoPens.id],
+    }),
+  }),
+);
+
+export const tmpGrimsmoPenVariationVersionsRelations = relations(
+  tmpGrimsmoPenVariationVersions,
+  ({ one }) => ({
+    variation: one(tmpGrimsmoPenVariations, {
+      fields: [tmpGrimsmoPenVariationVersions.variationId],
+      references: [tmpGrimsmoPenVariations.id],
+    }),
+  }),
+);
+
+export const tmpGrimsmoKnivesRelations = relations(
+  tmpGrimsmoKnives,
+  ({ many, one }) => ({
+    maker: one(makers, {
+      fields: [tmpGrimsmoKnives.makerId],
+      references: [makers.id],
+    }),
+    product: one(tmpProducts, {
+      fields: [tmpGrimsmoKnives.productId],
+      references: [tmpProducts.id],
+    }),
+    variations: many(tmpGrimsmoKnifeVariations),
+    versions: many(tmpGrimsmoKnifeVersions),
+  }),
+);
+
+export const tmpGrimsmoKnifeVariationsRelations = relations(
+  tmpGrimsmoKnifeVariations,
+  ({ many, one }) => ({
+    knife: one(tmpGrimsmoKnives, {
+      fields: [tmpGrimsmoKnifeVariations.knifeId],
+      references: [tmpGrimsmoKnives.id],
+    }),
+    productVariation: one(tmpProductVariations, {
+      fields: [tmpGrimsmoKnifeVariations.productVariationId],
+      references: [tmpProductVariations.id],
+    }),
+    versions: many(tmpGrimsmoKnifeVariationVersions),
+  }),
+);
+
+export const tmpGrimsmoKnifeVersionsRelations = relations(
+  tmpGrimsmoKnifeVersions,
+  ({ one }) => ({
+    knife: one(tmpGrimsmoKnives, {
+      fields: [tmpGrimsmoKnifeVersions.knifeId],
+      references: [tmpGrimsmoKnives.id],
+    }),
+  }),
+);
+
+export const tmpGrimsmoKnifeVariationVersionsRelations = relations(
+  tmpGrimsmoKnifeVariationVersions,
+  ({ one }) => ({
+    variation: one(tmpGrimsmoKnifeVariations, {
+      fields: [tmpGrimsmoKnifeVariationVersions.variationId],
+      references: [tmpGrimsmoKnifeVariations.id],
     }),
   }),
 );

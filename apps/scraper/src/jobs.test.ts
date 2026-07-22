@@ -15,6 +15,17 @@ vi.mock("./autmog/producer.js", () => ({
   })),
 }));
 
+vi.mock("./grimsmo/producer.js", () => ({
+  runGrimsmoProducer: vi.fn(async () => ({
+    archivedFetchedCount: 0,
+    enqueuedCount: 0,
+    fetchedCount: 0,
+    inventoryFetchedCount: 0,
+    items: [],
+    removedCompletedItemJobs: 0,
+  })),
+}));
+
 vi.mock("./db/autmog.js", () => ({
   createScraperDb: vi.fn(),
   finishScraperRun: vi.fn(),
@@ -40,14 +51,17 @@ describe("scraper jobs", () => {
     ).resolves.toBeUndefined();
   });
 
-  it("rejects source keys without implemented producers", async () => {
+  it("runs Grimsmo source producers", async () => {
     await expect(
       runSourceProducerJob({
         context: createContext(),
+        env: {
+          GRIMSMO_PROXY_URL: "https://proxy.example.com",
+        } as Parameters<typeof runSourceProducerJob>[0]["env"],
         logger: createNoopLogger(),
         source: scraperSources.grimsmoSaga,
       }),
-    ).rejects.toThrow('Scraper source "grimsmo-saga" is not implemented yet.');
+    ).resolves.toBeUndefined();
   });
 });
 

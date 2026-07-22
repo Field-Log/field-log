@@ -114,10 +114,11 @@ the package command can be used directly:
 pnpm --filter @app/scraper run scrape -- autmog
 ```
 
-Future source keys should follow the same shape, for example `grimsmo-saga` or
-`grimsmo-fjell`, once their producers are implemented. The older
-`pnpm scraper:scrape:autmog` and `pnpm --filter @app/scraper run scrape:autmog`
-aliases remain available.
+Implemented source keys are `autmog`, `grimsmo-saga`, `grimsmo-rask`,
+`grimsmo-fjell`, and `grimsmo-norseman`. The Grimsmo sources fetch unprefixed
+`https://grimsmoknives.com` Shopify collection URLs so prices normalize as USD.
+The older `pnpm scraper:scrape:autmog` and
+`pnpm --filter @app/scraper run scrape:autmog` aliases remain available.
 
 ## Queue Design
 
@@ -139,10 +140,12 @@ deletes.
 Use deterministic job IDs so retries and duplicate scrape runs are idempotent:
 
 ```txt
-autmog:pen:<sourceProductId>:<detailsHash>
-autmog:image:<sourceProductId>:<imageHash>
-grimsmo-saga:pen:<sourceProductId>:<detailsHash>
-grimsmo-knife:knife:<sourceProductId>:<detailsHash>
+autmog--pen--<sourceProductId>--<detailsHash>
+autmog--image--upload--<imageId>--<sourceHash>
+grimsmo-saga--pen-variation--<sourceHandle>--<detailsHash>
+grimsmo-rask--knife-variation--<sourceHandle>--<detailsHash>
+grimsmo-fjell--knife-variation--<sourceHandle>--<detailsHash>
+grimsmo-norseman--knife-variation--<sourceHandle>--<detailsHash>
 ```
 
 Configure retries with exponential backoff and conservative concurrency. Treat
@@ -192,8 +195,13 @@ Required groups:
   preview namespace rules
 - Logger: `AXIOM_TOKEN`, `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`,
   `LOG_LEVEL`, and `LOGGER`
-- Stage 2 Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL`
-  first; add `GRIMSMO_PROXY_URL` only if Railway/direct IP fetches are blocked
+- Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL` first; add
+  `GRIMSMO_PROXY_URL` only if Railway/direct IP fetches are blocked
+
+Grimsmo producers run hourly and are staggered by default: Saga at the top of
+the hour, Rask around `:15`, Fjell around `:30`, and Norseman around `:45`.
+Railway still invokes the single cron service every 15 minutes; the scraper
+checks Redis state and runs only due producers.
 
 ## Preview Database Sync
 

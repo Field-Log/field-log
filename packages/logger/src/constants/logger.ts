@@ -74,6 +74,12 @@ export const loggerMessages = {
       producerCompleted: "scraper.autmog.producer.completed",
       producerStarted: "scraper.autmog.producer.started",
     },
+    grimsmo: {
+      fetchCompleted: "scraper.grimsmo.fetch.completed",
+      fetchFailed: "scraper.grimsmo.fetch.failed",
+      producerCompleted: "scraper.grimsmo.producer.completed",
+      producerStarted: "scraper.grimsmo.producer.started",
+    },
     cron: {
       completed: "scraper.cron.completed",
       failed: "scraper.cron.failed",

@@ -109,6 +109,11 @@ values such as Redis connection strings.
 | `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval used by `cron:run`. Defaults to `60`; the first cron execution after fresh Redis state runs Autmog immediately. | ? (All) | `S` |
 | `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape for the legacy in-process scheduler. Defaults to `0`; not used by Railway cron. | ? (All) | `S` |
 | `SCRAPER_DRY_RUN` | When `true`, processor jobs write DB/queue state but skip image upload/delete mutations. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS` | Optional Grimsmo Fjell first-run offset. Defaults to `1800`; Railway cron and the legacy scheduler use it to stagger Fjell around 30 minutes past the hour. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_INTERVAL_MINUTES` | Optional Grimsmo scrape interval for Saga, Rask, Fjell, and Norseman. Defaults to `60`. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS` | Optional Grimsmo Norseman first-run offset. Defaults to `2700`; Railway cron and the legacy scheduler use it to stagger Norseman around 45 minutes past the hour. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS` | Optional Grimsmo Rask first-run offset. Defaults to `900`; Railway cron and the legacy scheduler use it to stagger Rask around 15 minutes past the hour. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS` | Optional Grimsmo Saga first-run offset. Defaults to `0`; Railway cron and the legacy scheduler use it to run Saga at the top of the hour. | ? (All) | `S` |
 | `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
 | `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
 | `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval for the legacy in-process scheduler. Railway cron uses the `*/15 * * * *` schedule in `railway.json`. | ? (All) | `S` |

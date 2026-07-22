@@ -2,17 +2,19 @@
 
 # tmp_products
 
-Temporary product aggregate rows that connect normalized source records to product-facing data.
+Generic temporary product rows that source-specific product tables point to.
 
 ## Columns
 
 | Column | Type | Required | Key | Default | Relation | Description | Example |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `bigint` | yes | PK |  |  | Internal product row identifier. | `1000` |
-| `autmog_pen_id` | `bigint` | no | unique, FK |  | `tmp_autmog_pens.id` (on delete cascade) | Autmog pen backing this product row. | `1000` |
+| `source` | `text` | yes |  |  |  | Scraper source key that created the product row, such as autmog or grimsmo-saga. | `grimsmo-saga` |
+| `created_at` | `timestamp with time zone` | yes |  | `now()` |  | Timestamp when the product row was created. | `2026-07-17T20:45:00.000Z` |
+| `updated_at` | `timestamp with time zone` | yes |  | `now()` |  | Timestamp when the product row was last updated. | `2026-07-17T20:45:42.000Z` |
 
 ## Indexes
 
 | Name | Unique | Method | Columns |
 | --- | --- | --- | --- |
-| `tmp_products_autmog_pen_id_unique` | yes | `btree` | `autmog_pen_id` |
+| `tmp_products_source_idx` | no | `btree` | `source` |

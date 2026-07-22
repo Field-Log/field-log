@@ -71,6 +71,13 @@
       "when": 1784672093885,
       "tag": "0009_black_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784754985817,
+      "tag": "0010_outgoing_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

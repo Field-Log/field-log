@@ -29,8 +29,8 @@ packages/database/
 
 - Table schema files define Drizzle table objects and inferred row types.
 - `src/schema/scraper.ts` defines scraper-owned tables, including `makers`,
-  `scraper_runs`, `tmp_autmog_pens`, `tmp_autmog_pen_images`, and
-  `tmp_autmog_pen_versions`, and `tmp_products`.
+  `scraper_runs`, source-specific temporary product tables, `tmp_products`,
+  `tmp_product_variations`, `tmp_images`, and version history tables.
 - `src/schema/enums.ts` defines TypeScript constants and types for allowed setting values.
 - `src/schema/relations.ts` defines Drizzle relationships between tables.
 - `src/schema/index.ts` re-exports all schema objects for Drizzle config and package consumers.
@@ -135,19 +135,25 @@ Metadata shape:
 
 ```ts
 export const schemaDescriptions = {
-  tmp_autmog_pen_images: {
-    description: "Images associated with the latest Autmog pen record.",
+  tmp_images: {
+    description:
+      "Temporary scraper image rows shared by all scraped products and variations.",
     columns: {
       id: {
         description: "Internal image row identifier.",
         example: 1000,
       },
-      pen_id: {
-        description: "Autmog pen row this image belongs to.",
+      product_id: {
+        description: "Generic temporary product row this image belongs to.",
         example: 1000,
       },
+      product_variation_id: {
+        description:
+          "Generic temporary variation row this image belongs to, when present.",
+        example: 1001,
+      },
       source_hash: {
-        description: "Stable hash of the source image identity used to dedupe image rows for the pen.",
+        description: "Stable hash of the source image identity used to dedupe image rows.",
         example: "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
       },
       image_kit_url: {
@@ -164,13 +170,14 @@ Generated table docs include column metadata like this:
 | Column | Type | Required | Key | Default | Relation | Description | Example |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `bigint` | yes | PK |  |  | Internal image row identifier. | `1000` |
-| `pen_id` | `bigint` | yes | FK |  | `tmp_autmog_pens.id` | Autmog pen row this image belongs to. | `1000` |
-| `source_hash` | `text` | yes |  |  |  | Stable hash of the source image identity used to dedupe image rows for the pen. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
+| `product_id` | `bigint` | yes | FK |  | `tmp_products.id` | Generic temporary product row this image belongs to. | `1000` |
+| `product_variation_id` | `bigint` | no | FK |  | `tmp_product_variations.id` | Generic temporary variation row this image belongs to, when present. | `1001` |
+| `source_hash` | `text` | yes |  |  |  | Stable hash of the source image identity used to dedupe image rows. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
 | `image_kit_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://example.invalid/uploaded-image.webp` |
 
 Foreign-key relations should be generated from Drizzle snapshot metadata. For
-example, `tmp_autmog_pen_images.pen_id` should render as a relation to
-`tmp_autmog_pens.id` without manually duplicating that relationship in the
+example, `tmp_images.product_id` should render as a relation to
+`tmp_products.id` without manually duplicating that relationship in the
 description map.
 
 Refresh only the Markdown schema docs without generating migrations:

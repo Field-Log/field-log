@@ -1,4 +1,7 @@
-import type { AutmogPenNormalizedData } from "@package/database";
+import type {
+  AutmogPenNormalizedData,
+  GrimsmoVariationImageRecord,
+} from "@package/database";
 
 export const scraperSources = {
   autmog: "autmog",
@@ -10,6 +13,12 @@ export const scraperSources = {
 
 export type ScraperSourceName =
   (typeof scraperSources)[keyof typeof scraperSources];
+export type GrimsmoPenSourceName = typeof scraperSources.grimsmoSaga;
+export type GrimsmoKnifeSourceName =
+  | typeof scraperSources.grimsmoFjell
+  | typeof scraperSources.grimsmoNorseman
+  | typeof scraperSources.grimsmoRask;
+export type GrimsmoSourceName = GrimsmoKnifeSourceName | GrimsmoPenSourceName;
 
 export const scraperQueueNames = {
   images: "scraper-images",
@@ -26,20 +35,45 @@ export type ScraperItemJob =
       seenSourceProductIds: string[];
       source: typeof scraperSources.autmog;
       type: "autmog.archiveMissing";
+    }
+  | {
+      item: NormalizedGrimsmoPenVariation;
+      source: typeof scraperSources.grimsmoSaga;
+      type: "grimsmo.penVariation";
+    }
+  | {
+      items: NormalizedGrimsmoKnifeVariation[];
+      source:
+        | typeof scraperSources.grimsmoFjell
+        | typeof scraperSources.grimsmoNorseman
+        | typeof scraperSources.grimsmoRask;
+      type: "grimsmo.knifeVariationBatch";
+    }
+  | {
+      items: NormalizedGrimsmoPenVariation[];
+      source: typeof scraperSources.grimsmoSaga;
+      type: "grimsmo.penVariationBatch";
+    }
+  | {
+      item: NormalizedGrimsmoKnifeVariation;
+      source:
+        | typeof scraperSources.grimsmoFjell
+        | typeof scraperSources.grimsmoNorseman
+        | typeof scraperSources.grimsmoRask;
+      type: "grimsmo.knifeVariation";
     };
 
 export type ScraperImageJob =
   | {
       imageId: number;
-      source: typeof scraperSources.autmog;
-      sourceImageId: string | null;
-      sourceUrl: string;
-      type: "autmog.image.upload";
+      source: ScraperSourceName;
+      sourceHash: string;
+      type: "tmp.image.upload";
     }
   | {
       imageId: number;
-      source: typeof scraperSources.autmog;
-      type: "autmog.image.delete";
+      source: ScraperSourceName;
+      type: "tmp.image.delete";
     };
 
 export type NormalizedAutmogPen = {
@@ -79,3 +113,84 @@ export type NormalizedAutmogPenImage = {
   sourceUrl: string;
   width: number | null;
 };
+
+export type NormalizedGrimsmoProduct = {
+  detailsHash: string;
+  productHandle: string;
+  productUrl: string;
+  title: string;
+};
+
+export type NormalizedGrimsmoPenVariation = {
+  availableForSale: boolean;
+  bodyColors: string[];
+  bodyFinishes: string[];
+  bodyMaterials: string[];
+  bodyText: string | null;
+  book: string | null;
+  bullets: string[];
+  bulletsByCategory: Record<string, string[]>;
+  case: string | null;
+  currencyCode: string;
+  description: string | null;
+  detailsHash: string;
+  engraving: string | null;
+  imageSetHash: string;
+  images: GrimsmoVariationImageRecord[];
+  priceMaxCents: number | null;
+  priceMinCents: number | null;
+  product: NormalizedGrimsmoProduct;
+  productUrl: string;
+  refill: string | null;
+  sagaNumber: string | null;
+  sliderColors: string[];
+  sliderMaterials: string[];
+  sliderStyle: string | null;
+  sourceCollection: GrimsmoCollectionKind;
+  sourceHandle: string;
+  sourceProductId: string;
+  tags: string[];
+  tipLogo: string | null;
+  title: string;
+  titleFull: string;
+  variants: unknown[];
+  visibleBullets: string[];
+};
+
+export type GrimsmoKnifeType = "fjell" | "norseman" | "rask";
+
+export type NormalizedGrimsmoKnifeVariation = {
+  availableForSale: boolean;
+  bladeFinishes: string[];
+  bladeSteels: string[];
+  bodyText: string | null;
+  bullets: string[];
+  bulletsByCategory: Record<string, string[]>;
+  case: string | null;
+  currencyCode: string;
+  description: string | null;
+  detailsHash: string;
+  handleColors: string[];
+  handleFinishes: string[];
+  handleMaterials: string[];
+  hardwareColors: string[];
+  imageSetHash: string;
+  images: GrimsmoVariationImageRecord[];
+  knifeNumber: string | null;
+  knifeType: GrimsmoKnifeType;
+  mechanisms: string[];
+  patterns: string[];
+  priceMaxCents: number | null;
+  priceMinCents: number | null;
+  product: NormalizedGrimsmoProduct;
+  productUrl: string;
+  sourceCollection: GrimsmoCollectionKind;
+  sourceHandle: string;
+  sourceProductId: string;
+  tags: string[];
+  title: string;
+  titleFull: string;
+  variants: unknown[];
+};
+
+export type GrimsmoCollectionKind = "archive" | "inventory";

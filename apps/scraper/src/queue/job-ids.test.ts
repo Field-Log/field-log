@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   getAutmogArchiveJobId,
-  getAutmogImageDeleteJobId,
-  getAutmogImageUploadJobId,
+  getGrimsmoKnifeVariationJobId,
+  getGrimsmoPenVariationJobId,
+  getGrimsmoVariationBatchJobId,
+  getTmpImageDeleteJobId,
+  getTmpImageUploadJobId,
 } from "./job-ids.js";
 
 describe("scraper job ids", () => {
@@ -14,12 +17,13 @@ describe("scraper job ids", () => {
 
   it("creates deterministic image job ids", () => {
     expect(
-      getAutmogImageUploadJobId({
+      getTmpImageUploadJobId({
         imageId: 1000,
+        source: "autmog",
         sourceHash: "sha256:image",
       }),
     ).toBe("autmog--image--upload--1000--sha256%3Aimage");
-    expect(getAutmogImageDeleteJobId({ imageId: 1000 })).toBe(
+    expect(getTmpImageDeleteJobId({ imageId: 1000, source: "autmog" })).toBe(
       "autmog--image--delete--1000",
     );
   });
@@ -27,13 +31,51 @@ describe("scraper job ids", () => {
   it("creates BullMQ-safe job ids without colon separators", () => {
     const jobIds = [
       getAutmogArchiveJobId(["2", "1"]),
-      getAutmogImageUploadJobId({
+      getTmpImageUploadJobId({
         imageId: 1000,
+        source: "autmog",
         sourceHash: "sha256:image",
       }),
-      getAutmogImageDeleteJobId({ imageId: 1000 }),
+      getTmpImageDeleteJobId({ imageId: 1000, source: "autmog" }),
+      getGrimsmoPenVariationJobId("grimsmo-saga", {
+        detailsHash: "sha256:pen",
+        sourceHandle: "saga-1234",
+      } as Parameters<typeof getGrimsmoPenVariationJobId>[1]),
+      getGrimsmoKnifeVariationJobId("grimsmo-rask", {
+        detailsHash: "sha256:knife",
+        sourceHandle: "rask-1234",
+      } as Parameters<typeof getGrimsmoKnifeVariationJobId>[1]),
+      getGrimsmoVariationBatchJobId({
+        inventorySourceHandles: ["b", "a"],
+        source: "grimsmo-saga",
+        sourceHandles: ["c", "b", "a"],
+      }),
+      getTmpImageUploadJobId({
+        imageId: 2000,
+        source: "grimsmo-rask",
+        sourceHash: "sha256:image",
+      }),
+      getTmpImageDeleteJobId({
+        imageId: 2000,
+        source: "grimsmo-rask",
+      }),
     ];
 
     expect(jobIds.every((jobId) => !jobId.includes(":"))).toBe(true);
+  });
+
+  it("keys Grimsmo variation jobs by source handle and details hash", () => {
+    expect(
+      getGrimsmoPenVariationJobId("grimsmo-saga", {
+        detailsHash: "sha256:details",
+        sourceHandle: "saga-1234",
+      } as Parameters<typeof getGrimsmoPenVariationJobId>[1]),
+    ).toBe("grimsmo-saga--pen-variation--saga-1234--sha256%3Adetails");
+    expect(
+      getGrimsmoKnifeVariationJobId("grimsmo-rask", {
+        detailsHash: "sha256:details",
+        sourceHandle: "rask-1234",
+      } as Parameters<typeof getGrimsmoKnifeVariationJobId>[1]),
+    ).toBe("grimsmo-rask--knife-variation--rask-1234--sha256%3Adetails");
   });
 });

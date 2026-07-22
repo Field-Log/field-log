@@ -8,13 +8,18 @@ import {
   startScraperRun,
 } from "./db/autmog.js";
 import type { createScraperJobEnv } from "./env.schema.js";
+import { runGrimsmoProducer } from "./grimsmo/producer.js";
 import {
   runQueueDeadLetterProcessor,
   runQueueProcessor,
 } from "./queue/processor.js";
 import { createScraperQueues, type ScraperQueues } from "./queue/queues.js";
 import { createRedisConnection } from "./queue/redis.js";
-import { type ScraperSourceName, scraperSources } from "./scraper-types.js";
+import {
+  type GrimsmoSourceName,
+  type ScraperSourceName,
+  scraperSources,
+} from "./scraper-types.js";
 
 export type ScraperJobEnv = ReturnType<typeof createScraperJobEnv>;
 
@@ -100,10 +105,12 @@ export async function runAutmogProducerJob({
 
 export async function runSourceProducerJob({
   context,
+  env,
   logger,
   source,
 }: {
   context: ScraperJobContext;
+  env?: ScraperJobEnv;
   logger: Logger;
   source: ScraperSourceName;
 }) {
@@ -112,7 +119,59 @@ export async function runSourceProducerJob({
     return;
   }
 
+  if (isGrimsmoSource(source)) {
+    await runGrimsmoProducerJob({
+      context,
+      logger,
+      proxyUrl: env?.GRIMSMO_PROXY_URL,
+      source,
+    });
+    return;
+  }
+
   throw new Error(`Scraper source "${source}" is not implemented yet.`);
+}
+
+export async function runGrimsmoProducerJob({
+  context,
+  logger,
+  proxyUrl,
+  source,
+}: {
+  context: ScraperJobContext;
+  logger: Logger;
+  proxyUrl?: string;
+  source: GrimsmoSourceName;
+}) {
+  await runLoggedCommand({
+    command: `scrape:${source}`,
+    db: context.db,
+    execute: async () => {
+      const result = await runGrimsmoProducer({
+        logger,
+        proxyUrl,
+        queues: context.queues,
+        source,
+      });
+
+      return {
+        archivedFetchedCount: result.archivedFetchedCount,
+        enqueuedItemJobs: result.enqueuedCount,
+        fetchedCount: result.fetchedCount,
+        inventoryFetchedCount: result.inventoryFetchedCount,
+        removedCompletedItemJobs: result.removedCompletedItemJobs,
+      };
+    },
+    jobType: "producer",
+    logger,
+    source,
+  });
+}
+
+function isGrimsmoSource(
+  source: ScraperSourceName,
+): source is GrimsmoSourceName {
+  return source.startsWith("grimsmo-");
 }
 
 export async function runQueueProcessorJob({

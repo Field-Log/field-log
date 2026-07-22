@@ -70,9 +70,15 @@ describe("scraper env", () => {
       IMAGE_KIT_FOLDER_PREFIX: "preview/pr-52",
       IMAGE_KIT_URL_ENDPOINT: "https://ik.imagekit.io/example",
       REDIS_URL: "redis://localhost:4008",
+      GRIMSMO_PROXY_URL: "https://proxy.example.com",
       SCRAPER_AUTMOG_INTERVAL_MINUTES: "45",
       SCRAPER_AUTMOG_START_DELAY_SECONDS: "5",
       SCRAPER_DRY_RUN: "true",
+      SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS: "1800",
+      SCRAPER_GRIMSMO_INTERVAL_MINUTES: "30",
+      SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS: "2700",
+      SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS: "900",
+      SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS: "10",
       SCRAPER_IMAGE_BATCH_SIZE: "10",
       SCRAPER_ITEM_BATCH_SIZE: "20",
       SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES: "10",
@@ -85,9 +91,15 @@ describe("scraper env", () => {
     );
     expect(env.IMAGE_KIT_FOLDER_PREFIX).toBe("preview/pr-52");
     expect(env.REDIS_URL).toBe("redis://localhost:4008");
+    expect(env.GRIMSMO_PROXY_URL).toBe("https://proxy.example.com");
     expect(env.SCRAPER_AUTMOG_INTERVAL_MINUTES).toBe(45);
     expect(env.SCRAPER_AUTMOG_START_DELAY_SECONDS).toBe(5);
     expect(env.SCRAPER_DRY_RUN).toBe(true);
+    expect(env.SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS).toBe(1800);
+    expect(env.SCRAPER_GRIMSMO_INTERVAL_MINUTES).toBe(30);
+    expect(env.SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS).toBe(2700);
+    expect(env.SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS).toBe(900);
+    expect(env.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS).toBe(10);
     expect(env.SCRAPER_IMAGE_BATCH_SIZE).toBe(10);
     expect(env.SCRAPER_ITEM_BATCH_SIZE).toBe(20);
     expect(env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES).toBe(10);
@@ -109,6 +121,11 @@ describe("scraper env", () => {
 
     expect(env.SCRAPER_AUTMOG_INTERVAL_MINUTES).toBe(60);
     expect(env.SCRAPER_AUTMOG_START_DELAY_SECONDS).toBe(0);
+    expect(env.SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS).toBe(30 * 60);
+    expect(env.SCRAPER_GRIMSMO_INTERVAL_MINUTES).toBe(60);
+    expect(env.SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS).toBe(45 * 60);
+    expect(env.SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS).toBe(15 * 60);
+    expect(env.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS).toBe(0);
     expect(env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES).toBe(15);
     expect(env.SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS).toBe(30);
   });

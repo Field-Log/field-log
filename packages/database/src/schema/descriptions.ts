@@ -159,19 +159,39 @@ export const schemaDescriptions = {
       },
     },
   },
-  tmp_autmog_pen_images: {
-    description: "Images associated with the latest Autmog pen record.",
+  tmp_images: {
+    description:
+      "Temporary scraper image rows shared by all scraped products and variations.",
     columns: {
       id: {
         description: "Internal image row identifier.",
         example: 1000,
       },
-      pen_id: {
-        description: "Autmog pen row this image belongs to.",
+      product_id: {
+        description:
+          "Generic temporary product row this image belongs to. Product-level images use this id as the ImageKit folder key.",
         example: 1000,
       },
+      product_variation_id: {
+        description:
+          "Generic temporary variation row this image belongs to, when the source image is variation-specific.",
+        example: 1001,
+      },
+      source_image_id: {
+        description:
+          "Source-provided image identifier when available from the scraped site.",
+        example: "40219471790203",
+      },
+      source_url: {
+        description: "Remote source URL fetched and uploaded to ImageKit.",
+        example: "https://cdn.shopify.com/s/files/example/image.jpg",
+      },
+      position: {
+        description: "Source image order within the product or variation.",
+        example: 1,
+      },
       alt_text: {
-        description: "Source image alt text, when provided by Shopify.",
+        description: "Source image alt text, when provided by the source site.",
         example: "Titanium click pen side profile",
       },
       width: {
@@ -184,7 +204,7 @@ export const schemaDescriptions = {
       },
       source_hash: {
         description:
-          "Stable hash of the source image identity used to dedupe image rows for the pen.",
+          "Stable hash of the source image identity used to dedupe image rows within a product or variation.",
         example:
           "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
       },
@@ -194,12 +214,12 @@ export const schemaDescriptions = {
       },
       image_kit_path: {
         description: "ImageKit media-library file path.",
-        example: "/preview/pr-52/products/pens/8383420301499/image.webp",
+        example: "/preview/pr-52/products/1000-1001/image.webp",
       },
       image_kit_url: {
         description: "Optimized uploaded image URL.",
         example:
-          "https://ik.imagekit.io/fieldlog/preview/pr-52/products/pens/8383420301499/image.webp",
+          "https://ik.imagekit.io/fieldlog/preview/pr-52/products/1000-1001/image.webp",
       },
       image_kit_thumbnail_url: {
         description: "ImageKit thumbnail URL returned with the upload.",
@@ -314,6 +334,11 @@ export const schemaDescriptions = {
     columns: {
       id: {
         description: "Internal Autmog pen row identifier.",
+        example: 1000,
+      },
+      product_id: {
+        description:
+          "Generic temporary product row for this source-specific Autmog pen row.",
         example: 1000,
       },
       maker_id: {
@@ -433,15 +458,51 @@ export const schemaDescriptions = {
   },
   tmp_products: {
     description:
-      "Temporary product aggregate rows that connect normalized source records to product-facing data.",
+      "Generic temporary product rows that source-specific product tables point to.",
     columns: {
       id: {
         description: "Internal product row identifier.",
         example: 1000,
       },
-      autmog_pen_id: {
-        description: "Autmog pen backing this product row.",
+      source: {
+        description:
+          "Scraper source key that created the product row, such as autmog or grimsmo-saga.",
+        example: "grimsmo-saga",
+      },
+      created_at: {
+        description: "Timestamp when the product row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the product row was last updated.",
+        example: "2026-07-17T20:45:42.000Z",
+      },
+    },
+  },
+  tmp_product_variations: {
+    description:
+      "Generic temporary variation rows for source listings that are variations of a stable product.",
+    columns: {
+      id: {
+        description: "Internal product variation row identifier.",
+        example: 1001,
+      },
+      product_id: {
+        description: "Generic temporary product row this variation belongs to.",
         example: 1000,
+      },
+      source_key: {
+        description:
+          "Stable variation key from the scraper source. Grimsmo uses the listing handle.",
+        example: "saga-1234-5678",
+      },
+      created_at: {
+        description: "Timestamp when the variation row was created.",
+        example: "2026-07-17T20:45:00.000Z",
+      },
+      updated_at: {
+        description: "Timestamp when the variation row was last updated.",
+        example: "2026-07-17T20:45:42.000Z",
       },
     },
   },

@@ -18,6 +18,12 @@ export type ScraperRuntimeEnv = {
   SCRAPER_AUTMOG_INTERVAL_MINUTES?: string;
   SCRAPER_AUTMOG_START_DELAY_SECONDS?: string;
   SCRAPER_DRY_RUN?: string;
+  GRIMSMO_PROXY_URL?: string;
+  SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS?: string;
+  SCRAPER_GRIMSMO_INTERVAL_MINUTES?: string;
+  SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS?: string;
+  SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS?: string;
+  SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS?: string;
   SCRAPER_IMAGE_BATCH_SIZE?: string;
   SCRAPER_ITEM_BATCH_SIZE?: string;
   SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES?: string;
@@ -93,6 +99,7 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
       IMAGE_KIT_FOLDER_PREFIX: z.string().min(1).optional(),
       IMAGE_KIT_URL_ENDPOINT: z.string().min(1).url().optional(),
       REDIS_URL: z.string().min(1).url(),
+      GRIMSMO_PROXY_URL: z.string().min(1).url().optional(),
       SCRAPER_AUTMOG_INTERVAL_MINUTES: z.coerce
         .number()
         .int()
@@ -109,6 +116,36 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
         .enum(["true", "false"])
         .optional()
         .transform((value) => value === "true"),
+      SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS: z.coerce
+        .number()
+        .int()
+        .min(0)
+        .max(60 * 60)
+        .default(30 * 60),
+      SCRAPER_GRIMSMO_INTERVAL_MINUTES: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(24 * 60)
+        .default(60),
+      SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS: z.coerce
+        .number()
+        .int()
+        .min(0)
+        .max(60 * 60)
+        .default(45 * 60),
+      SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS: z.coerce
+        .number()
+        .int()
+        .min(0)
+        .max(60 * 60)
+        .default(15 * 60),
+      SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS: z.coerce
+        .number()
+        .int()
+        .min(0)
+        .max(60 * 60)
+        .default(0),
       SCRAPER_IMAGE_BATCH_SIZE: z.coerce
         .number()
         .int()
@@ -154,6 +191,7 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     IMAGE_KIT_PUBLIC_KEY: runtimeEnv.IMAGE_KIT_PUBLIC_KEY,
     IMAGE_KIT_FOLDER_PREFIX: runtimeEnv.IMAGE_KIT_FOLDER_PREFIX,
     IMAGE_KIT_URL_ENDPOINT: runtimeEnv.IMAGE_KIT_URL_ENDPOINT,
+    GRIMSMO_PROXY_URL: runtimeEnv.GRIMSMO_PROXY_URL,
     LOGGER: runtimeEnv.LOGGER,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,
     PORT: runtimeEnv.PORT,
@@ -162,6 +200,16 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     SCRAPER_AUTMOG_START_DELAY_SECONDS:
       runtimeEnv.SCRAPER_AUTMOG_START_DELAY_SECONDS,
     SCRAPER_DRY_RUN: runtimeEnv.SCRAPER_DRY_RUN,
+    SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS:
+      runtimeEnv.SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS,
+    SCRAPER_GRIMSMO_INTERVAL_MINUTES:
+      runtimeEnv.SCRAPER_GRIMSMO_INTERVAL_MINUTES,
+    SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS:
+      runtimeEnv.SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS,
+    SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS:
+      runtimeEnv.SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS,
+    SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS:
+      runtimeEnv.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS,
     SCRAPER_IMAGE_BATCH_SIZE: runtimeEnv.SCRAPER_IMAGE_BATCH_SIZE,
     SCRAPER_ITEM_BATCH_SIZE: runtimeEnv.SCRAPER_ITEM_BATCH_SIZE,
     SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES:

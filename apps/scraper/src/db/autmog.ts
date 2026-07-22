@@ -5,7 +5,12 @@ import {
   schema,
 } from "@package/database";
 import { and, eq, isNull, lt, notInArray } from "drizzle-orm";
-import type { NormalizedAutmogPen } from "../scraper-types.js";
+import { type NormalizedAutmogPen, scraperSources } from "../scraper-types.js";
+import {
+  createTmpProduct,
+  syncTmpImages,
+  type TmpImageUploadJobCandidate,
+} from "./images.js";
 
 const autmogMaker = {
   name: "Autmog",
@@ -17,12 +22,7 @@ export type AutmogPenSyncResult = {
   dbResponse: AutmogPenSyncDbResponse;
   deleteImageJobs: { imageId: number }[];
   mutationInput: AutmogPenSyncMutationInput;
-  uploadImageJobs: {
-    imageId: number;
-    sourceHash: string;
-    sourceImageId: string | null;
-    sourceUrl: string;
-  }[];
+  uploadImageJobs: TmpImageUploadJobCandidate[];
   updated: boolean;
   versioned: boolean;
 };
@@ -77,7 +77,8 @@ export type AutmogPenSyncDbResponse = {
       imageKitPath: string | null;
       imageKitThumbnailUrl: string | null;
       imageKitUrl: string | null;
-      penId: number;
+      productId: number;
+      productVariationId: number | null;
       sourceHash: string;
       status: string;
       width: number | null;
@@ -94,8 +95,8 @@ export type AutmogPenSyncDbResponse = {
     title: string;
   };
   product: {
-    autmogPenId: number | null;
     id: number;
+    source: string;
   };
 };
 
@@ -213,6 +214,18 @@ export async function syncAutmogPen(
       (existing.detailsHash !== item.detailsHash ||
         existing.imageSetHash !== item.imageSetHash),
   );
+  const [existingProduct] = existing
+    ? await db
+        .select({
+          id: schema.tmpProducts.id,
+          source: schema.tmpProducts.source,
+        })
+        .from(schema.tmpProducts)
+        .where(eq(schema.tmpProducts.id, existing.productId))
+        .limit(1)
+    : [];
+  const tmpProduct =
+    existingProduct ?? (await createTmpProduct(db, scraperSources.autmog));
 
   if (existing && versioned) {
     await db.insert(schema.tmpAutmogPenVersions).values({
@@ -245,6 +258,7 @@ export async function syncAutmogPen(
       nose: item.nose,
       priceMaxCents: item.priceMaxCents,
       priceMinCents: item.priceMinCents,
+      productId: tmpProduct.id,
       productUrl: item.productUrl,
       refill: item.refill,
       size: item.size,
@@ -291,155 +305,22 @@ export async function syncAutmogPen(
 
   await syncAutmogPenMaterials(db, pen.id, item.materials);
 
-  const [product] = await db
-    .insert(schema.tmpProducts)
-    .values({
-      autmogPenId: pen.id,
-    })
-    .onConflictDoUpdate({
-      set: {
-        autmogPenId: pen.id,
-      },
-      target: schema.tmpProducts.autmogPenId,
-    })
-    .returning({
-      autmogPenId: schema.tmpProducts.autmogPenId,
-      id: schema.tmpProducts.id,
-    });
+  await syncTmpProductProductTypes(db, tmpProduct.id, item.productTypes);
 
-  if (!product) {
-    throw new Error(`Failed to upsert product for Autmog pen ${pen.id}.`);
-  }
-
-  await syncTmpProductProductTypes(db, product.id, item.productTypes);
-
-  const [existingImages, uploadImageJobs, deleteImageJobs] = await Promise.all([
-    db
-      .select()
-      .from(schema.tmpAutmogPenImages)
-      .where(eq(schema.tmpAutmogPenImages.penId, pen.id)),
-    Promise.resolve(
-      [] as {
-        imageId: number;
-        sourceHash: string;
-        sourceImageId: string | null;
-        sourceUrl: string;
-      }[],
-    ),
-    Promise.resolve([] as { imageId: number }[]),
-  ]);
-  const currentSourceHashes = new Set(
-    item.images.map((image) => image.sourceHash),
-  );
-  const existingBySourceHash = new Map(
-    existingImages.map((image) => [image.sourceHash, image]),
-  );
-  const upsertedImages: AutmogPenSyncDbResponse["images"]["upserted"] = [];
-
-  for (const image of item.images) {
-    const existingImage = existingBySourceHash.get(image.sourceHash);
-    const shouldUpload =
-      !existingImage ||
-      existingImage.status === "deleted" ||
-      existingImage.status === "pending_delete" ||
-      existingImage.status === "upload_failed";
-    const [row] = await db
-      .insert(schema.tmpAutmogPenImages)
-      .values({
-        altText: image.altText,
-        lastSeenAt: now,
-        penId: pen.id,
-        sourceHash: image.sourceHash,
-        status: shouldUpload ? "pending_upload" : existingImage.status,
-      })
-      .onConflictDoUpdate({
-        set: {
-          altText: image.altText,
-          deletedAt: null,
-          lastSeenAt: now,
-          pendingDeleteAt: null,
-          status: shouldUpload ? "pending_upload" : existingImage?.status,
-          updatedAt: now,
-        },
-        target: [
-          schema.tmpAutmogPenImages.penId,
-          schema.tmpAutmogPenImages.sourceHash,
-        ],
-      })
-      .returning();
-
-    if (!row) {
-      throw new Error(`Failed to upsert Autmog image ${image.sourceUrl}.`);
-    }
-
-    if (shouldUpload) {
-      uploadImageJobs.push({
-        imageId: row.id,
-        sourceHash: image.sourceHash,
-        sourceImageId: image.sourceImageId,
-        sourceUrl: image.sourceUrl,
-      });
-    }
-
-    upsertedImages.push({
-      altText: row.altText,
-      height: row.height,
-      id: row.id,
-      imageKitFileId: row.imageKitFileId,
-      imageKitPath: row.imageKitPath,
-      imageKitThumbnailUrl: row.imageKitThumbnailUrl,
-      imageKitUrl: row.imageKitUrl,
-      penId: row.penId,
-      sourceHash: row.sourceHash,
-      status: row.status,
-      width: row.width,
-    });
-  }
-
-  for (const existingImage of existingImages) {
-    if (currentSourceHashes.has(existingImage.sourceHash)) {
-      continue;
-    }
-
-    if (
-      existingImage.status === "pending_delete" &&
-      existingImage.pendingDeleteAt
-    ) {
-      deleteImageJobs.push({ imageId: existingImage.id });
-      continue;
-    }
-
-    if (existingImage.status === "pending_upload") {
-      await db
-        .update(schema.tmpAutmogPenImages)
-        .set({
-          deletedAt: now,
-          status: "deleted",
-          updatedAt: now,
-        })
-        .where(eq(schema.tmpAutmogPenImages.id, existingImage.id));
-      continue;
-    }
-
-    if (existingImage.status !== "deleted") {
-      await db
-        .update(schema.tmpAutmogPenImages)
-        .set({
-          pendingDeleteAt: now,
-          status: "pending_delete",
-          updatedAt: now,
-        })
-        .where(eq(schema.tmpAutmogPenImages.id, existingImage.id));
-    }
-  }
+  const imageSync = await syncTmpImages(db, {
+    images: item.images,
+    now,
+    productId: tmpProduct.id,
+    productVariationId: null,
+  });
 
   return {
     created: !existing,
     dbResponse: {
       images: {
-        deleteJobImageIds: deleteImageJobs.map((job) => job.imageId),
-        uploadJobImageIds: uploadImageJobs.map((job) => job.imageId),
-        upserted: upsertedImages,
+        deleteJobImageIds: imageSync.deleteImageJobs.map((job) => job.imageId),
+        uploadJobImageIds: imageSync.uploadImageJobs.map((job) => job.imageId),
+        upserted: imageSync.upsertedImages,
       },
       pen: {
         detailsHash: pen.detailsHash,
@@ -451,12 +332,12 @@ export async function syncAutmogPen(
         sourceProductId: pen.sourceProductId,
         title: pen.title,
       },
-      product,
+      product: tmpProduct,
     },
-    deleteImageJobs,
+    deleteImageJobs: imageSync.deleteImageJobs,
     mutationInput,
     updated: Boolean(existing && existing.detailsHash !== item.detailsHash),
-    uploadImageJobs,
+    uploadImageJobs: imageSync.uploadImageJobs,
     versioned,
   };
 }
@@ -485,96 +366,6 @@ export async function archiveMissingAutmogPens(
     .returning({ id: schema.tmpAutmogPens.id });
 
   return archived.length;
-}
-
-export async function getAutmogImageForProcessing(
-  db: Database,
-  imageId: number,
-) {
-  const [row] = await db
-    .select({
-      image: schema.tmpAutmogPenImages,
-      pen: schema.tmpAutmogPens,
-    })
-    .from(schema.tmpAutmogPenImages)
-    .innerJoin(
-      schema.tmpAutmogPens,
-      eq(schema.tmpAutmogPenImages.penId, schema.tmpAutmogPens.id),
-    )
-    .where(eq(schema.tmpAutmogPenImages.id, imageId))
-    .limit(1);
-
-  return row ?? null;
-}
-
-export async function markAutmogImageUploaded(
-  db: Database,
-  input: {
-    height: number;
-    imageId: number;
-    imageKitFileId: string;
-    imageKitPath: string;
-    imageKitThumbnailUrl: string;
-    imageKitUrl: string;
-    width: number;
-  },
-) {
-  const [image] = await db
-    .update(schema.tmpAutmogPenImages)
-    .set({
-      height: input.height,
-      imageKitFileId: input.imageKitFileId,
-      imageKitPath: input.imageKitPath,
-      imageKitThumbnailUrl: input.imageKitThumbnailUrl,
-      imageKitUrl: input.imageKitUrl,
-      status: "uploaded",
-      updatedAt: new Date(),
-      uploadedAt: new Date(),
-      width: input.width,
-    })
-    .where(eq(schema.tmpAutmogPenImages.id, input.imageId))
-    .returning({
-      height: schema.tmpAutmogPenImages.height,
-      id: schema.tmpAutmogPenImages.id,
-      imageKitFileId: schema.tmpAutmogPenImages.imageKitFileId,
-      imageKitPath: schema.tmpAutmogPenImages.imageKitPath,
-      imageKitThumbnailUrl: schema.tmpAutmogPenImages.imageKitThumbnailUrl,
-      imageKitUrl: schema.tmpAutmogPenImages.imageKitUrl,
-      status: schema.tmpAutmogPenImages.status,
-      width: schema.tmpAutmogPenImages.width,
-    });
-
-  if (!image) {
-    throw new Error(`Failed to mark Autmog image ${input.imageId} uploaded.`);
-  }
-
-  return image;
-}
-
-export async function markAutmogImageDeleted(db: Database, imageId: number) {
-  const now = new Date();
-
-  await db
-    .update(schema.tmpAutmogPenImages)
-    .set({
-      deletedAt: now,
-      status: "deleted",
-      updatedAt: now,
-    })
-    .where(eq(schema.tmpAutmogPenImages.id, imageId));
-}
-
-export async function markAutmogImageFailed(
-  db: Database,
-  input: { imageId: number; status: "delete_failed" | "upload_failed" },
-) {
-  await db
-    .update(schema.tmpAutmogPenImages)
-    .set({
-      status: input.status,
-      updatedAt: new Date(),
-    })
-    .where(eq(schema.tmpAutmogPenImages.id, input.imageId));
 }
 
 async function syncAutmogPenMaterials(

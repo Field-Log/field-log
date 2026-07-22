@@ -3,6 +3,7 @@ import { type Logger, loggerMessages } from "@package/logger";
 import {
   createScraperJobContext,
   runAutmogProducerJob,
+  runGrimsmoProducerJob,
   runQueueProcessorJob,
   type ScraperJobContext,
   type ScraperJobEnv,
@@ -46,6 +47,71 @@ export async function startScraperScheduler({
         env.SCRAPER_AUTMOG_START_DELAY_SECONDS * millisecondsPerSecond,
     },
     {
+      intervalMs: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute,
+      lockKey: `scraper:scheduler:${scraperSources.grimsmoSaga}`,
+      lockTtlMs:
+        env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute * 2,
+      name: scraperSources.grimsmoSaga,
+      run: () =>
+        runGrimsmoProducerJob({
+          context,
+          logger,
+          proxyUrl: env.GRIMSMO_PROXY_URL,
+          source: scraperSources.grimsmoSaga,
+        }),
+      startDelayMs:
+        env.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS * millisecondsPerSecond,
+    },
+    {
+      intervalMs: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute,
+      lockKey: `scraper:scheduler:${scraperSources.grimsmoRask}`,
+      lockTtlMs:
+        env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute * 2,
+      name: scraperSources.grimsmoRask,
+      run: () =>
+        runGrimsmoProducerJob({
+          context,
+          logger,
+          proxyUrl: env.GRIMSMO_PROXY_URL,
+          source: scraperSources.grimsmoRask,
+        }),
+      startDelayMs:
+        env.SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS * millisecondsPerSecond,
+    },
+    {
+      intervalMs: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute,
+      lockKey: `scraper:scheduler:${scraperSources.grimsmoFjell}`,
+      lockTtlMs:
+        env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute * 2,
+      name: scraperSources.grimsmoFjell,
+      run: () =>
+        runGrimsmoProducerJob({
+          context,
+          logger,
+          proxyUrl: env.GRIMSMO_PROXY_URL,
+          source: scraperSources.grimsmoFjell,
+        }),
+      startDelayMs:
+        env.SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS * millisecondsPerSecond,
+    },
+    {
+      intervalMs: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute,
+      lockKey: `scraper:scheduler:${scraperSources.grimsmoNorseman}`,
+      lockTtlMs:
+        env.SCRAPER_GRIMSMO_INTERVAL_MINUTES * millisecondsPerMinute * 2,
+      name: scraperSources.grimsmoNorseman,
+      run: () =>
+        runGrimsmoProducerJob({
+          context,
+          logger,
+          proxyUrl: env.GRIMSMO_PROXY_URL,
+          source: scraperSources.grimsmoNorseman,
+        }),
+      startDelayMs:
+        env.SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS *
+        millisecondsPerSecond,
+    },
+    {
       intervalMs:
         env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES * millisecondsPerMinute,
       lockKey: "scraper:scheduler:queue-processor",
@@ -65,6 +131,15 @@ export async function startScraperScheduler({
     attributes: {
       autmogIntervalMinutes: env.SCRAPER_AUTMOG_INTERVAL_MINUTES,
       autmogStartDelaySeconds: env.SCRAPER_AUTMOG_START_DELAY_SECONDS,
+      grimsmoFjellStartDelaySeconds:
+        env.SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS,
+      grimsmoIntervalMinutes: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES,
+      grimsmoNorsemanStartDelaySeconds:
+        env.SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS,
+      grimsmoRaskStartDelaySeconds:
+        env.SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS,
+      grimsmoSagaStartDelaySeconds:
+        env.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS,
       queueProcessorIntervalMinutes:
         env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES,
       queueProcessorStartDelaySeconds:

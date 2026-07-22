@@ -29,6 +29,10 @@ type RecurringTaskDueState = {
 const millisecondsPerMinute = 60_000;
 const cronStateKeys = {
   autmogLastSuccess: `scraper:cron:last-success:${scraperSources.autmog}`,
+  grimsmoFjellLastSuccess: `scraper:cron:last-success:${scraperSources.grimsmoFjell}`,
+  grimsmoNorsemanLastSuccess: `scraper:cron:last-success:${scraperSources.grimsmoNorseman}`,
+  grimsmoRaskLastSuccess: `scraper:cron:last-success:${scraperSources.grimsmoRask}`,
+  grimsmoSagaLastSuccess: `scraper:cron:last-success:${scraperSources.grimsmoSaga}`,
 } as const;
 
 export async function runRailwayCronJob({
@@ -48,6 +52,7 @@ export async function runRailwayCronJob({
   logger.info(loggerMessages.scraper.cron.started, {
     attributes: {
       autmogIntervalMinutes: env.SCRAPER_AUTMOG_INTERVAL_MINUTES,
+      grimsmoIntervalMinutes: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES,
       imageFolderPrefix: context.imageFolderPrefix,
       queueProcessorIntervalMinutes:
         env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES,
@@ -56,6 +61,46 @@ export async function runRailwayCronJob({
   });
 
   await runAutmogWhenDue({ context, env, failures, logger, now });
+  await runGrimsmoWhenDue({
+    context,
+    env,
+    failures,
+    logger,
+    now,
+    redisKey: cronStateKeys.grimsmoSagaLastSuccess,
+    source: scraperSources.grimsmoSaga,
+    startDelaySeconds: env.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS,
+  });
+  await runGrimsmoWhenDue({
+    context,
+    env,
+    failures,
+    logger,
+    now,
+    redisKey: cronStateKeys.grimsmoRaskLastSuccess,
+    source: scraperSources.grimsmoRask,
+    startDelaySeconds: env.SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS,
+  });
+  await runGrimsmoWhenDue({
+    context,
+    env,
+    failures,
+    logger,
+    now,
+    redisKey: cronStateKeys.grimsmoFjellLastSuccess,
+    source: scraperSources.grimsmoFjell,
+    startDelaySeconds: env.SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS,
+  });
+  await runGrimsmoWhenDue({
+    context,
+    env,
+    failures,
+    logger,
+    now,
+    redisKey: cronStateKeys.grimsmoNorsemanLastSuccess,
+    source: scraperSources.grimsmoNorseman,
+    startDelaySeconds: env.SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS,
+  });
   await runQueueProcessor({ context, env, failures, logger });
 
   const attributes = {
@@ -163,6 +208,7 @@ async function runAutmogWhenDue({
     run: async () => {
       await runSourceProducerJob({
         context,
+        env,
         logger,
         source: scraperSources.autmog,
       });
@@ -170,6 +216,76 @@ async function runAutmogWhenDue({
         cronStateKeys.autmogLastSuccess,
         now.toISOString(),
       );
+    },
+    failures,
+  });
+}
+
+async function runGrimsmoWhenDue({
+  context,
+  env,
+  failures,
+  logger,
+  now,
+  redisKey,
+  source,
+  startDelaySeconds,
+}: {
+  context: ScraperJobContext;
+  env: ScraperJobEnv;
+  failures: Error[];
+  logger: Logger;
+  now: Date;
+  redisKey: string;
+  source:
+    | typeof scraperSources.grimsmoFjell
+    | typeof scraperSources.grimsmoNorseman
+    | typeof scraperSources.grimsmoRask
+    | typeof scraperSources.grimsmoSaga;
+  startDelaySeconds: number;
+}) {
+  const lastRunAt = await context.redis.get(redisKey);
+  const secondsIntoHour = now.getUTCMinutes() * 60 + now.getUTCSeconds();
+  const firstRunWaitsForOffset =
+    !lastRunAt && secondsIntoHour < startDelaySeconds;
+  const shiftedNow = new Date(now.getTime() - startDelaySeconds * 1_000);
+  const dueState = getRecurringTaskDueState({
+    intervalMinutes: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES,
+    lastRunAt,
+    now: shiftedNow,
+  });
+  const attributes = {
+    ...dueState,
+    intervalMinutes: env.SCRAPER_GRIMSMO_INTERVAL_MINUTES,
+    source,
+    startDelaySeconds,
+    task: `scrape:${source}`,
+  };
+
+  if (!dueState.due || firstRunWaitsForOffset) {
+    logger.info(loggerMessages.scraper.cron.taskSkipped, {
+      attributes: {
+        ...attributes,
+        due: false,
+        reason: firstRunWaitsForOffset
+          ? "waiting-for-start-offset"
+          : attributes.reason,
+      },
+    });
+    return;
+  }
+
+  await runCronTask({
+    attributes,
+    logger,
+    run: async () => {
+      await runSourceProducerJob({
+        context,
+        env,
+        logger,
+        source,
+      });
+      await context.redis.set(redisKey, shiftedNow.toISOString());
     },
     failures,
   });

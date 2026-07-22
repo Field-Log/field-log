@@ -24,7 +24,7 @@ folder named `fieldlog` or `fieldlog/main`.
 Upload folders are built from:
 
 ```text
-/<IMAGE_KIT_FOLDER_PREFIX>/<area>/<type>/<entity-id>
+/<IMAGE_KIT_FOLDER_PREFIX>/products/<image-owner-key>
 ```
 
 When `IMAGE_KIT_FOLDER_PREFIX` is empty or unset, omit that segment.
@@ -40,29 +40,39 @@ Examples:
 
 | Environment | Upload folder | Served path |
 | --- | --- | --- |
-| Production Autmog pen | `/products/pens/7283715047611` | `/fieldlog/main/products/pens/7283715047611/image.jpg` |
-| Preview PR 52 Autmog pen | `/preview/pr-52/products/pens/7283715047611` | `/fieldlog/preview/pr-52/products/pens/7283715047611/image.jpg` |
-| Shared staging preview Autmog pen | `/preview/products/pens/7283715047611` | `/fieldlog/preview/products/pens/7283715047611/image.jpg` |
+| Production product image | `/products/1000` | `/fieldlog/main/products/1000/image.jpg` |
+| Production variation image | `/products/1000-1001` | `/fieldlog/main/products/1000-1001/image.jpg` |
+| Preview PR 52 product image | `/preview/pr-52/products/1000` | `/fieldlog/preview/pr-52/products/1000/image.jpg` |
+| Shared staging preview product image | `/preview/products/1000` | `/fieldlog/preview/products/1000/image.jpg` |
 
 ## Product Paths
 
 Products should use:
 
 ```text
-/<prefix>/products/<type>/<source-or-entity-id>
+/<prefix>/products/<tmp-products-id>
 ```
 
-Autmog pens use:
+Variation images should use:
 
 ```text
-/<prefix>/products/pens/<shopify-product-id>
+/<prefix>/products/<tmp-products-id>-<tmp-product-variations-id>
 ```
+
+Autmog pen images are product-level images and use `tmp_products.id` as the
+ImageKit folder key. Grimsmo images are variation-level images because each
+scraped listing handle is a product variation under a stable Grimsmo product.
+
+Scraper uploads are tagged with `scraper`, the scraper source key such as
+`autmog`, `grimsmo-saga`, or `grimsmo-rask`, `product:<tmp-products-id>`, and
+`product-variation:<tmp-product-variations-id>` when the image belongs to a
+variation.
 
 Future app uploads should use the same shape for first-party entities:
 
 ```text
-/<prefix>/products/<type>/<product-id>
-/<prefix>/collections/<type>/<collection-id>
+/<prefix>/products/<product-id>
+/<prefix>/products/<product-id>-<variation-id>
 ```
 
 ## CI Behavior
