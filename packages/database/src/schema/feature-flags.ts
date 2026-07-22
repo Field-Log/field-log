@@ -1,8 +1,4 @@
 import {
-  featureFlagAudiences,
-  featureFlagOverrideSources,
-} from "@package/feature-flags";
-import {
   boolean,
   pgEnum,
   pgTable,
@@ -11,6 +7,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { featureFlagAudiences, featureFlagOverrideSources } from "./enums.js";
 import { users } from "./users.js";
 
 export const featureFlagAudienceEnum = pgEnum(
