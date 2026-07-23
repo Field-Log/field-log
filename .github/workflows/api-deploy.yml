@@ -321,12 +321,36 @@ jobs:
 
           printf '%s' "$DATABASE_URL" | pnpm dlx @railway/cli variable set DATABASE_URL \
             --stdin \
+            --skip-deploys \
             --project "$RAILWAY_PROJECT_ID" \
             --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
             --environment "$railway_environment"
 
           printf '%s' "$image_kit_folder_prefix" | pnpm dlx @railway/cli variable set IMAGE_KIT_FOLDER_PREFIX \
             --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
+            --environment "$railway_environment"
+
+          railway_image_kit_folder_prefix="$(
+            pnpm dlx @railway/cli variable list \
+              --kv \
+              --project "$RAILWAY_PROJECT_ID" \
+              --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
+              --environment "$railway_environment" |
+              awk -F= '$1 == "IMAGE_KIT_FOLDER_PREFIX" {print substr($0, index($0, "=") + 1)}'
+          )"
+
+          if [[ "$railway_image_kit_folder_prefix" != "$image_kit_folder_prefix" ]]; then
+            echo "Railway IMAGE_KIT_FOLDER_PREFIX did not match expected preview prefix." >&2
+            echo "Expected: ${image_kit_folder_prefix}" >&2
+            echo "Actual: ${railway_image_kit_folder_prefix:-<unset>}" >&2
+            exit 1
+          fi
+
+          pnpm dlx @railway/cli redeploy \
+            --yes \
             --project "$RAILWAY_PROJECT_ID" \
             --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
             --environment "$railway_environment"
