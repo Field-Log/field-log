@@ -28,18 +28,24 @@ suggest a branch, create a branch, push, fetch, or update a PR from `main`.
 3. Look up the existing PR for the current branch:
    - `gh pr list --head <branch> --json number,url,title,body,state,baseRefName`
 4. If no PR exists for the branch, stop and tell the user to create one first.
-5. Determine the base branch from `baseRefName`; default to `main` only if the
+5. Read `./.github/pull_request_template.md`.
+6. If the existing PR body is empty, use a blank copy of
+   `./.github/pull_request_template.md` as the starting body.
+7. If the existing PR body is not empty and does not contain both AI section
+   markers, stop and ask before editing the PR title or body. Do not call
+   `gh pr edit`.
+8. Determine the base branch from `baseRefName`; default to `main` only if the
    PR lookup does not return a base.
-6. Fetch the base branch if needed:
+9. Fetch the base branch if needed:
    - `git fetch origin <base>`
-7. Inspect committed branch changes:
+10. Inspect committed branch changes:
    - `git log --oneline origin/<base>..HEAD`
    - `git diff --stat origin/<base>...HEAD`
    - `git diff --name-only origin/<base>...HEAD`
-8. Read `./docs/changesets.md`.
-9. If there are no commits relative to the base branch, stop and report that
+11. Read `./docs/changesets.md`.
+12. If there are no commits relative to the base branch, stop and report that
    there is nothing to summarize.
-10. Create or update a branch Changeset:
+13. Create or update a branch Changeset:
     - Inspect changed `.changeset/*.md` files relative to the base.
     - If none exists, create one under `.changeset/`.
     - If one exists and no longer matches the branch, update it.
@@ -50,15 +56,15 @@ suggest a branch, create a branch, push, fetch, or update a PR from `main`.
       database, or mobile compatibility changes.
     - Keep the Changeset description succinct, terse, human friendly, and
       changelog-ready.
-11. Generate a proposed title and body from the commits, changed files, and any
+14. Generate a proposed title and body from the commits, changed files, and any
    relevant test output already available in the conversation or shell history.
-12. Compare the proposed title and body with the current PR values.
-13. If neither value needs a meaningful update, report that the PR is already
+15. Compare the proposed title and body with the current PR values.
+16. If neither value needs a meaningful update, report that the PR is already
     current and do not call `gh pr edit`.
-14. If one or both values should change, update only those fields:
+17. If one or both values should change, update only those fields:
     - `gh pr edit <number-or-url> --title "<title>"`
     - `gh pr edit <number-or-url> --body "<body>"`
-15. Return the PR URL and a concise summary of what changed.
+18. Return the PR URL and a concise summary of what changed.
 
 ## Title
 
@@ -86,15 +92,25 @@ Write the PR title using the same conventional commit subject format as
 
 ## Body
 
-Write the PR body in this format:
+Write the PR body by replacing only the content between these markers:
 
 ```markdown
+<!-- AI SECTION START -->
+<!-- AI SECTION END -->
+```
+
+Use this AI section format:
+
+```markdown
+<!-- AI SECTION START -->
 ## Summary
 - point form summary
 - point form summary
 
-## Testing
+## Validation
 - command run, or "Not run (reason)"
+
+<!-- AI SECTION END -->
 ```
 
 Keep the body factual. Prefer commit messages, diffs, changed file paths, and
@@ -102,11 +118,13 @@ test output over guessing.
 
 When updating an existing body:
 
-- Replace an empty body.
-- Replace a body that already uses the standard `## Summary` and `## Testing`
-  structure.
-- Preserve custom sections that are not part of the standard template whenever
-  practical.
+- Replace an empty body with a blank copy of `./.github/pull_request_template.md`
+  plus generated AI section content.
+- Replace only the AI section when the existing body contains both AI section
+  markers.
+- Stop and ask before editing anything when a non-empty body does not contain
+  both AI section markers.
+- Preserve all content outside the AI section markers exactly.
 - Do not include uncommitted changes as completed work; mention them separately
   in the final response.
 - Do not include AI co-authorship or generated-by lines.
