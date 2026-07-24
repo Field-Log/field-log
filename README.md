@@ -122,7 +122,7 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Starts every app dev server: API, Autmog archive, Expo mobile, and TanStack Start web. |
+| `pnpm dev` | Starts every app dev server: API, scraper, Expo mobile, and TanStack Start web. |
 | `pnpm dev:web` | Starts the Hono API and the TanStack Start web app. |
 | `pnpm dev:ios` | Starts the Hono API and launches the Expo app for iOS. |
 | `pnpm dev:android` | Starts the Hono API and launches the Expo app for Android. |

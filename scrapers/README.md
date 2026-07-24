@@ -112,8 +112,7 @@ download, the append-only merge, or publishing.
 - **Committed:** all code, each `config.toml`, the override CSVs, and each site's
   `data/archive.json` (the dataset history).
 - **Gitignored:** `data/data.json` (rebuilt from the archive), `data/images/`
-  (live on Hostinger; also under `apps/autmog/images`), `data/raw_latest.json`,
-  and `archive.json.bak`.
+  (live on Hostinger), `data/raw_latest.json`, and `archive.json.bak`.
 
 ## Scheduling
 
