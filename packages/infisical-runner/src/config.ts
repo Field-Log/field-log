@@ -97,10 +97,6 @@ export const commandSecrets = {
       allowServerSecrets: true,
       paths: [cloudflareToolsSecretPath],
     },
-    "deploy:staging": {
-      allowServerSecrets: true,
-      paths: [cloudflareToolsSecretPath],
-    },
     test: {
       allowServerSecrets: true,
       databaseUrlUserOverride: true,

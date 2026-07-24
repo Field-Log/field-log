@@ -1,4 +1,4 @@
-name: Staging Refresh
+name: Preview Refresh
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   refresh:
-    name: Refresh Staging
+    name: Refresh Preview
     runs-on: ubuntu-latest
 
     steps:
@@ -30,20 +30,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Reset staging from production
-        id: staging_db
+      - name: Reset preview from production
+        id: preview_db
         shell: bash
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
           NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
           NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
-        run: bash .github/scripts/neon-database-branch.sh refresh-staging
+        run: bash .github/scripts/neon-database-branch.sh refresh-preview
 
-      - name: Run staging migrations
+      - name: Run preview migrations
         working-directory: packages/database
         env:
-          DATABASE_URL: ${{ steps.staging_db.outputs.database_url }}
+          DATABASE_URL: ${{ steps.preview_db.outputs.database_url }}
         run: |
           set -euo pipefail
 
@@ -53,10 +53,10 @@ jobs:
             --arg app "ci" \
             --arg environment "github-actions" \
             --arg level "info" \
-            --arg message "ci.database.staging.migrations.applied" \
+            --arg message "ci.database.preview.migrations.applied" \
             --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-            --arg branch_name "${{ steps.staging_db.outputs.branch_name }}" \
-            --arg branch_id "${{ steps.staging_db.outputs.branch_id }}" \
+            --arg branch_name "${{ steps.preview_db.outputs.branch_name }}" \
+            --arg branch_id "${{ steps.preview_db.outputs.branch_id }}" \
             '{
               app: $app,
               environment: $environment,
@@ -98,7 +98,7 @@ jobs:
           oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
           domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
           project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-          env-slug: prod
+          env-slug: preview
           secret-path: /tools/cloudflare
 
       - name: Fetch API runtime secrets from Infisical
@@ -109,13 +109,13 @@ jobs:
           oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
           domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
           project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-          env-slug: prod
+          env-slug: preview
           secret-path: /apps/api
 
-      - name: Write staging API secrets file
+      - name: Write preview API secrets file
         shell: bash
         env:
-          STAGING_DATABASE_URL: ${{ steps.staging_db.outputs.database_url }}
+          PREVIEW_DATABASE_URL: ${{ steps.preview_db.outputs.database_url }}
         run: |
           set -euo pipefail
 
@@ -127,7 +127,7 @@ jobs:
           done
 
           jq -n \
-            --arg DATABASE_URL "$STAGING_DATABASE_URL" \
+            --arg DATABASE_URL "$PREVIEW_DATABASE_URL" \
             --arg CLERK_PUBLISHABLE_KEY "${CLERK_PUBLISHABLE_KEY:-}" \
             --arg CLERK_SECRET_KEY "${CLERK_SECRET_KEY:-}" \
             --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
@@ -157,14 +157,31 @@ jobs:
               MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
               MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
             } | with_entries(select(.value != ""))' \
-            > "$RUNNER_TEMP/api-staging-secrets.json"
+            > "$RUNNER_TEMP/api-preview-refresh-secrets.json"
 
-      - name: Deploy staging Worker
+      - name: Deploy and smoke test preview Worker
+        working-directory: apps/api
         run: |
-          pnpm dlx wrangler deploy \
-            --config apps/api/wrangler.jsonc \
-            --env staging \
-            --secrets-file "$RUNNER_TEMP/api-staging-secrets.json"
+          set -euo pipefail
 
-      - name: Smoke test staging Worker
-        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.staging.field-log.app/api/v0/health
+          set +e
+          deploy_output="$(bash scripts/deploy-preview.sh \
+            --preview-alias refresh-smoke \
+            --secrets-file "$RUNNER_TEMP/api-preview-refresh-secrets.json" 2>&1)"
+          deploy_status=$?
+          set -e
+
+          printf '%s\n' "$deploy_output"
+
+          if [[ "$deploy_status" -ne 0 ]]; then
+            exit "$deploy_status"
+          fi
+
+          if [[ "$deploy_output" =~ Version[[:space:]]Preview[[:space:]]Alias[[:space:]]URL:[[:space:]](https://[^[:space:]]+) ]]; then
+            preview_url="${BASH_REMATCH[1]}"
+          else
+            echo "Wrangler did not print a Version Preview Alias URL for refresh-smoke." >&2
+            exit 1
+          fi
+
+          curl --fail --retry 5 --retry-all-errors --retry-delay 3 "$preview_url/api/v0/health"

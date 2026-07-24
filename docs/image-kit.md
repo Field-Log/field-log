@@ -33,7 +33,7 @@ When `IMAGE_KIT_FOLDER_PREFIX` is empty or unset, omit that segment.
 | --- | --- | --- | --- |
 | Production | `/fieldlog/main/` | unset | Long term. |
 | Preview with isolated PR DB | `/fieldlog/` | `preview/pr-<number>` | Ephemeral. Delete when the PR closes or merges. |
-| Preview using shared staging DB | `/fieldlog/` | `preview` | Long term non-production. |
+| Preview using shared preview DB | `/fieldlog/` | `preview` | Long term non-production. |
 | Local dev | `/fieldlog/` | `dev` | Shared local development namespace. |
 
 Examples:
@@ -43,7 +43,7 @@ Examples:
 | Production product image | `/products/1000` | `/fieldlog/main/products/1000/image.jpg` |
 | Production variation image | `/products/1000-1001` | `/fieldlog/main/products/1000-1001/image.jpg` |
 | Preview PR 52 product image | `/preview/pr-52/products/1000` | `/fieldlog/preview/pr-52/products/1000/image.jpg` |
-| Shared staging preview product image | `/preview/products/1000` | `/fieldlog/preview/products/1000/image.jpg` |
+| Shared preview product image | `/preview/products/1000` | `/fieldlog/preview/products/1000/image.jpg` |
 
 ## Product Paths
 

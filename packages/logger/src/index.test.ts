@@ -40,17 +40,14 @@ describe("logger", () => {
             migrationsApplied: "ci.database.preview.migrations.applied",
             noPrBranchNeeded: "ci.database.preview.noPrBranch.needed",
             prBranchReused: "ci.database.preview.prBranch.reused",
-            stagingDatabaseSelected:
-              "ci.database.preview.stagingDatabase.selected",
+            databaseSelected: "ci.database.preview.database.selected",
+            reset: "ci.database.preview.reset",
+            sharedDatabaseSelected:
+              "ci.database.preview.sharedDatabase.selected",
           },
           production: {
             databaseSelected: "ci.database.production.database.selected",
             migrationsApplied: "ci.database.production.migrations.applied",
-          },
-          staging: {
-            databaseSelected: "ci.database.staging.database.selected",
-            migrationsApplied: "ci.database.staging.migrations.applied",
-            reset: "ci.database.staging.reset",
           },
         },
         github: {
