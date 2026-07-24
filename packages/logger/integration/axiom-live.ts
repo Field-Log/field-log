@@ -27,7 +27,8 @@ type AxiomTabularResponse = {
   tables?: AxiomTable[];
 };
 
-const requiredDataset = "testing";
+const requiredDataset =
+  process.env.LOGGER_AXIOM_EXPECTED_DATASET ?? "development";
 const requiredLogLevel = "trace";
 const defaultTimeoutMs = 90_000;
 const defaultPollIntervalMs = 5_000;

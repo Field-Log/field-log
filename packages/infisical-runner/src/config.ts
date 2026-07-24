@@ -97,10 +97,6 @@ export const commandSecrets = {
       allowServerSecrets: true,
       paths: [cloudflareToolsSecretPath],
     },
-    "deploy:staging": {
-      allowServerSecrets: true,
-      paths: [cloudflareToolsSecretPath],
-    },
     test: {
       allowServerSecrets: true,
       databaseUrlUserOverride: true,
@@ -160,6 +156,7 @@ export const commandSecrets = {
   logger: {
     "test:axiom": {
       allowServerSecrets: true,
+      environmentSlug: "development",
       paths: [loggerAxiomTestSecretPath],
     },
   },
