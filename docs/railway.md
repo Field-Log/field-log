@@ -191,8 +191,8 @@ Required groups:
 
 - Database: `DATABASE_URL`
 - Queue: `REDIS_URL`
-- ImageKit: see [ImageKit](./image-kit.md) for endpoint, upload path, and
-  preview namespace rules
+- Image CDN: see [Image CDN](./image-cdn.md) for Bunny setup, upload path,
+  and preview namespace rules
 - Logger: `AXIOM_TOKEN`, `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`,
   `LOG_LEVEL`, and `LOGGER`
 - Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL` first; add

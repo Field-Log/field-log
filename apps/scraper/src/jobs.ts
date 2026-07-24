@@ -52,10 +52,12 @@ export async function createScraperJobContext(
   const services = createServices();
   services.configure({
     images: {
+      bunnyStorageAccessKey: env.BUNNY_STORAGE_ACCESS_KEY,
+      bunnyStorageEndpoint: env.BUNNY_STORAGE_ENDPOINT,
+      bunnyStorageZoneName: env.BUNNY_STORAGE_ZONE_NAME,
+      cdnBaseUrl: env.IMAGE_CDN_BASE_URL,
       dryRun: env.SCRAPER_DRY_RUN,
-      privateKey: env.IMAGE_KIT_PRIVATE_KEY,
-      publicKey: env.IMAGE_KIT_PUBLIC_KEY,
-      urlEndpoint: env.IMAGE_KIT_URL_ENDPOINT,
+      provider: env.IMAGE_STORAGE_PROVIDER,
     },
     logger,
   });
@@ -79,7 +81,7 @@ export async function createScraperJobContext(
       redis.disconnect();
     },
     db,
-    imageFolderPrefix: env.IMAGE_KIT_FOLDER_PREFIX,
+    imageFolderPrefix: env.IMAGE_FOLDER_PREFIX,
     imageStorage: services.images,
     queues,
     redis,

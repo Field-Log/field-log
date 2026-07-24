@@ -702,7 +702,7 @@ async function processTmpImageJob({
           sourceHash: row.image.sourceHash,
           sourceImageId: row.image.sourceImageId,
         }),
-        folder: buildImageKitFolder({
+        folder: buildImageFolder({
           entityId: getTmpImageFolderKey({
             productId: row.image.productId,
             productVariationId: row.image.productVariationId,
@@ -717,9 +717,6 @@ async function processTmpImageJob({
           productVariationId: row.productVariation?.id ?? null,
           source: row.product.source,
         }),
-        transformation: {
-          pre: "w-2000,h-2000,c-at_max,q-85,f-webp",
-        },
         useUniqueFileName: false,
       });
 
@@ -738,10 +735,11 @@ async function processTmpImageJob({
       const dbResponse = await markTmpImageUploaded(db, {
         height: result.height,
         imageId: row.image.id,
-        imageKitFileId: result.fileId,
-        imageKitPath: result.filePath,
-        imageKitThumbnailUrl: result.thumbnailUrl,
-        imageKitUrl: result.url,
+        imageFileId: result.fileId,
+        imagePath: result.filePath,
+        imageProvider: result.provider,
+        imageThumbnailUrl: result.thumbnailUrl,
+        imageUrl: result.url,
         width: result.width,
       });
       logger.info(loggerMessages.scraper.image.uploadCompleted, {
@@ -749,7 +747,7 @@ async function processTmpImageJob({
           dbResponse,
           durationMs: Date.now() - startedAt,
           imageId: row.image.id,
-          imageKitResponse: result,
+          imageResponse: result,
           jobId: job.id,
           productId: row.product.id,
           productVariationId: row.productVariation?.id,
@@ -771,10 +769,8 @@ async function processTmpImageJob({
       return "skipped";
     }
 
-    if (row.image.imageKitFileId) {
-      const deleteResult = await imageStorage.deleteFile(
-        row.image.imageKitFileId,
-      );
+    if (row.image.imageFileId) {
+      const deleteResult = await imageStorage.deleteFile(row.image.imageFileId);
 
       if (deleteResult === "skipped") {
         logger.info(loggerMessages.scraper.image.deleteSkipped, {
@@ -981,20 +977,20 @@ function formatProcessorErrorForAttributes(error: unknown) {
   };
 }
 
-export function buildImageKitFolder({
+export function buildImageFolder({
   entityId,
   prefix,
 }: {
   entityId: string;
   prefix?: string;
 }) {
-  const normalizedPrefix = normalizeImageKitFolderPrefix(prefix);
+  const normalizedPrefix = normalizeImageFolderPrefix(prefix);
   const pathSegments = [normalizedPrefix, "products", entityId].filter(Boolean);
 
   return `/${pathSegments.join("/")}`;
 }
 
-function normalizeImageKitFolderPrefix(prefix: string | undefined) {
+function normalizeImageFolderPrefix(prefix: string | undefined) {
   return prefix?.replace(/^\/+|\/+$/g, "");
 }
 

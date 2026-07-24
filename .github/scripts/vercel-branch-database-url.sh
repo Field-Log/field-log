@@ -216,15 +216,15 @@ set_database_url() {
     "ci.vercel.preview.databaseOverride.removed"
 }
 
-delete_existing_image_kit_folder_prefix() {
-  delete_existing_env_var IMAGE_KIT_FOLDER_PREFIX \
+delete_existing_image_folder_prefix() {
+  delete_existing_env_var IMAGE_FOLDER_PREFIX \
     "ci.vercel.preview.imageFolderPrefix.missing" \
     "ci.vercel.preview.imageFolderPrefix.removed"
 }
 
-set_image_kit_folder_prefix() {
-  require_env IMAGE_KIT_FOLDER_PREFIX
-  set_branch_env_var IMAGE_KIT_FOLDER_PREFIX "$IMAGE_KIT_FOLDER_PREFIX" \
+set_image_folder_prefix() {
+  require_env IMAGE_FOLDER_PREFIX
+  set_branch_env_var IMAGE_FOLDER_PREFIX "$IMAGE_FOLDER_PREFIX" \
     "ci.vercel.preview.imageFolderPrefix.set" \
     "ci.vercel.preview.imageFolderPrefix.missing" \
     "ci.vercel.preview.imageFolderPrefix.removed"
@@ -279,11 +279,11 @@ case "${1:-}" in
     latest_preview_url
     ;;
   set-image-folder-prefix)
-    set_image_kit_folder_prefix
+    set_image_folder_prefix
     latest_preview_url
     ;;
   remove-image-folder-prefix)
-    delete_existing_image_kit_folder_prefix
+    delete_existing_image_folder_prefix
     latest_preview_url
     ;;
   *)

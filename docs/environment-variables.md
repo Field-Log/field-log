@@ -46,7 +46,7 @@ secret syncs.
 | `AXIOM_TOKEN` | Axiom ingest token for server-side web logs. | ? (All) | `S` |
 | `CLERK_SECRET_KEY` | Clerk server SDK secret key. | All | `S` |
 | `DATABASE_URL`[^1] | Web server runtime database connection. | All | `S` |
-| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
+| `IMAGE_FOLDER_PREFIX` | Optional image upload folder namespace. See [Image CDN](./image-cdn.md). | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY`[^2] | Client key aliased into the web client log proxy config. | ? (All) | `C` |
@@ -100,10 +100,12 @@ values such as Redis connection strings.
 | `AXIOM_TOKEN` | Axiom ingest token for scraper logs. | ? (All) | `S` |
 | `DATABASE_URL` | Scraper database connection string. | All | `S` |
 | `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
-| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key. See [ImageKit](./image-kit.md). | All | `S` |
-| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key. See [ImageKit](./image-kit.md). | All | `C` |
-| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
-| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint. See [ImageKit](./image-kit.md). | All | `C` |
+| `BUNNY_STORAGE_ACCESS_KEY` | Bunny Storage Zone password used by server-side uploads, deletes, and preview cleanup. See [Image CDN](./image-cdn.md). | All | `S` |
+| `BUNNY_STORAGE_ENDPOINT` | Bunny Storage API endpoint, usually `https://ny.storage.bunnycdn.com`. See [Image CDN](./image-cdn.md). | All | `S` |
+| `BUNNY_STORAGE_ZONE_NAME` | Bunny Storage Zone name, suggested `field-log-images`. See [Image CDN](./image-cdn.md). | All | `S` |
+| `IMAGE_CDN_BASE_URL` | Public image CDN base URL, suggested `https://cdn.field-log.app`. See [Image CDN](./image-cdn.md). | All | `C` |
+| `IMAGE_FOLDER_PREFIX` | Optional image upload folder namespace. See [Image CDN](./image-cdn.md). | ? (All) | `S` |
+| `IMAGE_STORAGE_PROVIDER` | Optional image storage provider override. Defaults to `bunny` when unset. | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |

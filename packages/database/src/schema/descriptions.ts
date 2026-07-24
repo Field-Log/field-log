@@ -169,7 +169,7 @@ export const schemaDescriptions = {
       },
       product_id: {
         description:
-          "Generic temporary product row this image belongs to. Product-level images use this id as the ImageKit folder key.",
+          "Generic temporary product row this image belongs to. Product-level images use this id as the image folder key.",
         example: 1000,
       },
       product_variation_id: {
@@ -183,7 +183,7 @@ export const schemaDescriptions = {
         example: "40219471790203",
       },
       source_url: {
-        description: "Remote source URL fetched and uploaded to ImageKit.",
+        description: "Remote source URL fetched and uploaded to image storage.",
         example: "https://cdn.shopify.com/s/files/example/image.jpg",
       },
       position: {
@@ -195,11 +195,11 @@ export const schemaDescriptions = {
         example: "Titanium click pen side profile",
       },
       width: {
-        description: "Uploaded ImageKit image width in pixels.",
+        description: "Uploaded optimized image width in pixels.",
         example: 2000,
       },
       height: {
-        description: "Uploaded ImageKit image height in pixels.",
+        description: "Uploaded optimized image height in pixels.",
         example: 1333,
       },
       source_hash: {
@@ -208,22 +208,28 @@ export const schemaDescriptions = {
         example:
           "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
       },
-      image_kit_file_id: {
-        description: "ImageKit file identifier used for updates and deletes.",
-        example: "68f5b2d5e4f9012a3b4c5d6e",
+      image_provider: {
+        description: "Image storage provider that owns the uploaded file.",
+        example: "bunny",
       },
-      image_kit_path: {
-        description: "ImageKit media-library file path.",
+      image_file_id: {
+        description:
+          "Image storage file identifier used for updates and deletes.",
         example: "/preview/pr-52/products/1000-1001/image.webp",
       },
-      image_kit_url: {
+      image_path: {
+        description: "Image storage object path.",
+        example: "/preview/pr-52/products/1000-1001/image.webp",
+      },
+      image_url: {
         description: "Optimized uploaded image URL.",
         example:
-          "https://ik.imagekit.io/fieldlog/preview/pr-52/products/1000-1001/image.webp",
+          "https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp",
       },
-      image_kit_thumbnail_url: {
-        description: "ImageKit thumbnail URL returned with the upload.",
-        example: "https://ik.imagekit.io/fieldlog/tr:n-thumbnail/image.webp",
+      image_thumbnail_url: {
+        description: "Thumbnail transform URL for the uploaded image.",
+        example:
+          "https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp?width=500&format=webp&quality=85",
       },
       status: {
         description: "Image upload/delete lifecycle status.",

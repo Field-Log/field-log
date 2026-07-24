@@ -272,8 +272,8 @@ Pull requests:
   can be reused.
 - Removes stale `preview-pr-*` branches and stale branch-specific Vercel
   `DATABASE_URL` overrides when a PR no longer contains DB changes.
-- Applies the matching ImageKit preview folder namespace documented in
-  [ImageKit](./image-kit.md).
+- Applies the matching image preview folder namespace documented in
+  [Image CDN](./image-cdn.md).
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
 - Reads Infisical environment `preview`, paths `/tools/cloudflare` and
   `/apps/api`.
@@ -396,8 +396,8 @@ existed, redeploy that Vercel preview after the pull request exists so
 For DB-changing PRs, the API deploy workflow also creates or replaces a
 branch-specific Vercel Preview `DATABASE_URL` scoped to the PR Git branch. That
 override points the web preview server runtime at the matching
-`preview-pr-<number>` Neon branch. The workflow also applies the ImageKit
-preview folder namespace from [ImageKit](./image-kit.md). When DB changes are
+`preview-pr-<number>` Neon branch. The workflow also applies the image preview folder namespace from
+[Image CDN](./image-cdn.md). When DB changes are
 removed or the PR closes, the workflow removes the branch-specific
 `DATABASE_URL` so the web preview falls back to the shared Preview
 `DATABASE_URL`, which should point at Neon `staging`; PR close also removes the

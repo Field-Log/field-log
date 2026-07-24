@@ -6,11 +6,13 @@ export type ScraperRuntimeEnv = {
   AXIOM_DATASET?: string;
   AXIOM_EDGE_DOMAIN?: string;
   AXIOM_TOKEN?: string;
+  BUNNY_STORAGE_ACCESS_KEY?: string;
+  BUNNY_STORAGE_ENDPOINT?: string;
+  BUNNY_STORAGE_ZONE_NAME?: string;
   DATABASE_URL?: string;
-  IMAGE_KIT_PRIVATE_KEY?: string;
-  IMAGE_KIT_PUBLIC_KEY?: string;
-  IMAGE_KIT_FOLDER_PREFIX?: string;
-  IMAGE_KIT_URL_ENDPOINT?: string;
+  IMAGE_CDN_BASE_URL?: string;
+  IMAGE_FOLDER_PREFIX?: string;
+  IMAGE_STORAGE_PROVIDER?: string;
   LOGGER?: string;
   LOG_LEVEL?: string;
   PORT?: string;
@@ -102,11 +104,13 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
     runtimeEnvStrict: getScraperRuntimeEnvStrict(runtimeEnv),
     server: {
       ...scraperServerSchema,
+      BUNNY_STORAGE_ACCESS_KEY: z.string().min(1).optional(),
+      BUNNY_STORAGE_ENDPOINT: z.string().min(1).url().optional(),
+      BUNNY_STORAGE_ZONE_NAME: z.string().min(1).optional(),
       DATABASE_URL: z.string().min(1).url(),
-      IMAGE_KIT_PRIVATE_KEY: z.string().min(1).optional(),
-      IMAGE_KIT_PUBLIC_KEY: z.string().min(1).optional(),
-      IMAGE_KIT_FOLDER_PREFIX: z.string().min(1).optional(),
-      IMAGE_KIT_URL_ENDPOINT: z.string().min(1).url().optional(),
+      IMAGE_CDN_BASE_URL: z.string().min(1).url().optional(),
+      IMAGE_FOLDER_PREFIX: z.string().min(1).optional(),
+      IMAGE_STORAGE_PROVIDER: z.string().min(1).default("bunny"),
       REDIS_URL: redisUrlSchema,
       GRIMSMO_PROXY_URL: z.string().min(1).url().optional(),
       SCRAPER_AUTMOG_INTERVAL_MINUTES: z.coerce
@@ -195,11 +199,13 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     AXIOM_DATASET: runtimeEnv.AXIOM_DATASET,
     AXIOM_EDGE_DOMAIN: runtimeEnv.AXIOM_EDGE_DOMAIN,
     AXIOM_TOKEN: runtimeEnv.AXIOM_TOKEN,
+    BUNNY_STORAGE_ACCESS_KEY: runtimeEnv.BUNNY_STORAGE_ACCESS_KEY,
+    BUNNY_STORAGE_ENDPOINT: runtimeEnv.BUNNY_STORAGE_ENDPOINT,
+    BUNNY_STORAGE_ZONE_NAME: runtimeEnv.BUNNY_STORAGE_ZONE_NAME,
     DATABASE_URL: runtimeEnv.DATABASE_URL,
-    IMAGE_KIT_PRIVATE_KEY: runtimeEnv.IMAGE_KIT_PRIVATE_KEY,
-    IMAGE_KIT_PUBLIC_KEY: runtimeEnv.IMAGE_KIT_PUBLIC_KEY,
-    IMAGE_KIT_FOLDER_PREFIX: runtimeEnv.IMAGE_KIT_FOLDER_PREFIX,
-    IMAGE_KIT_URL_ENDPOINT: runtimeEnv.IMAGE_KIT_URL_ENDPOINT,
+    IMAGE_CDN_BASE_URL: runtimeEnv.IMAGE_CDN_BASE_URL,
+    IMAGE_FOLDER_PREFIX: runtimeEnv.IMAGE_FOLDER_PREFIX,
+    IMAGE_STORAGE_PROVIDER: runtimeEnv.IMAGE_STORAGE_PROVIDER,
     GRIMSMO_PROXY_URL: runtimeEnv.GRIMSMO_PROXY_URL,
     LOGGER: runtimeEnv.LOGGER,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,
