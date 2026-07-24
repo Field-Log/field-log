@@ -305,6 +305,7 @@ jobs:
           else
             image_kit_folder_prefix="preview"
           fi
+          redis_url_reference='$'"{{${RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME}.REDIS_URL}}"
 
           jq -cn \
             --arg app "ci" \
@@ -344,6 +345,13 @@ jobs:
             --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
+          printf '%s' "$redis_url_reference" | pnpm dlx @railway/cli variable set REDIS_URL \
+            --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
+            --environment "$railway_environment"
+
           railway_image_kit_folder_prefix="$(
             pnpm dlx @railway/cli variable list \
               --kv \
@@ -359,6 +367,31 @@ jobs:
             echo "Actual: ${railway_image_kit_folder_prefix:-<unset>}" >&2
             exit 1
           fi
+
+          pnpm dlx @railway/cli run \
+            --project "$RAILWAY_PROJECT_ID" \
+            --environment "$railway_environment" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
+            --no-local \
+            node -e '
+              const expectedProtocols = {
+                DATABASE_URL: new Set(["postgres:", "postgresql:"]),
+                REDIS_URL: new Set(["redis:", "rediss:"]),
+              };
+
+              for (const [name, protocols] of Object.entries(expectedProtocols)) {
+                const value = process.env[name] ?? "";
+                try {
+                  const url = new URL(value);
+                  if (!protocols.has(url.protocol)) {
+                    throw new Error("Unexpected protocol.");
+                  }
+                } catch {
+                  process.stderr.write(`Railway ${name} did not resolve to a valid runtime URL.\n`);
+                  process.exit(1);
+                }
+              }
+            '
 
       - name: Deploy Railway scraper queue preview
         if: steps.db.outputs.can_deploy == 'true'
