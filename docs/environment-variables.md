@@ -107,6 +107,7 @@ values such as Redis connection strings.
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |
+| `REDIS` | Optional fallback BullMQ Redis connection string. Railway previews may use this as a shared Redis reference when `REDIS_URL` is not resolved. | ? (All) | `S` |
 | `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
 | `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval used by `cron:run`. Defaults to `60`; the first cron execution after fresh Redis state runs Autmog immediately. | ? (All) | `S` |
 | `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape for the legacy in-process scheduler. Defaults to `0`; not used by Railway cron. | ? (All) | `S` |
@@ -134,6 +135,10 @@ than storing the Redis URL in Infisical. If the Redis service is named
 ```dotenv
 REDIS_URL=${{scraper-queue.REDIS_URL}}
 ```
+
+If Railway preview environments provide Redis through a shared variable instead,
+the scraper also accepts `REDIS` as a fallback. `REDIS_URL` remains the canonical
+application variable and is preferred when it resolves to a valid Redis URL.
 
 For local development, use Docker/OrbStack and `pnpm dev:scraper`; see
 [docker.md](./docker.md).

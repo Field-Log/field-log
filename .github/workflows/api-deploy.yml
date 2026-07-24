@@ -374,13 +374,29 @@ jobs:
             --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --no-local \
             node -e '
-              const expectedProtocols = {
-                DATABASE_URL: new Set(["postgres:", "postgresql:"]),
-                REDIS_URL: new Set(["redis:", "rediss:"]),
-              };
+              const checks = [
+                {
+                  name: "DATABASE_URL",
+                  protocols: new Set(["postgres:", "postgresql:"]),
+                  value: process.env.DATABASE_URL ?? "",
+                },
+                {
+                  name: "REDIS_URL",
+                  protocols: new Set(["redis:", "rediss:"]),
+                  value: [process.env.REDIS_URL, process.env.REDIS].find(
+                    (candidate) => {
+                      try {
+                        const url = new URL(candidate ?? "");
+                        return url.protocol === "redis:" || url.protocol === "rediss:";
+                      } catch {
+                        return false;
+                      }
+                    },
+                  ) ?? "",
+                },
+              ];
 
-              for (const [name, protocols] of Object.entries(expectedProtocols)) {
-                const value = process.env[name] ?? "";
+              for (const { name, protocols, value } of checks) {
                 try {
                   const url = new URL(value);
                   if (!protocols.has(url.protocol)) {
