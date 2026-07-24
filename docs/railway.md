@@ -234,11 +234,15 @@ to the `scraper-queue` service. It does not call `railway run` or assert
 resolved Redis reference values before deployment because variables set with
 `--skip-deploys` are staged until the next deployment. After the variables are
 set, the workflow deploys the `scraper-queue` Redis service from its configured
-image source so the Redis database is online for the scraper, then deploys the
-scraper service from its configured GitHub source.
-Disable Railway's native GitHub auto-deploy for the scraper preview service;
-otherwise Railway will start one build from the GitHub integration and the API
-Deploy workflow will start a second build after syncing variables.
+image source so the Redis database is online for the scraper.
+
+Keep Railway's native GitHub auto-deploy enabled for the `field-log (preview)`
+service and enable Railway's **Wait for CI** setting for that service. The
+native GitHub deploy is the only scraper code deploy path; the API Deploy
+workflow prepares variables and Redis first. Do not add an explicit scraper
+`railway service redeploy --from-source` step to the workflow while native
+auto-deploy is enabled, or each push will produce two builds for the same
+commit.
 
 The root `.railwayignore` intentionally excludes unrelated apps and generated
 folders from any manual CLI uploads. Keep it aligned with the scraper's

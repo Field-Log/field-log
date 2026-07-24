@@ -407,25 +407,6 @@ jobs:
             --service "$RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
-      - name: Deploy Railway scraper preview
-        if: steps.db.outputs.can_deploy == 'true'
-        shell: bash
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-        run: |
-          set -euo pipefail
-
-          railway_environment="field-log-pr-${PR_NUMBER}"
-
-          pnpm dlx @railway/cli service redeploy \
-            --from-source \
-            --yes \
-            --project "$RAILWAY_PROJECT_ID" \
-            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
-            --environment "$railway_environment"
-
       - name: Build Worker dependencies
         if: steps.db.outputs.can_deploy == 'true'
         run: pnpm exec turbo run build --filter=@app/api
