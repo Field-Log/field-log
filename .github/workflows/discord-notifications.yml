@@ -53,18 +53,18 @@ jobs:
       - name: Validate Infisical OIDC configuration
         shell: bash
         env:
-          INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID: ${{ vars.INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID }}
-          INFISICAL_PROJECT_SLUG: ${{ vars.INFISICAL_PROJECT_SLUG }}
+          INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID: ${{ secrets.INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID }}
+          INFISICAL_PROJECT_SLUG: ${{ secrets.INFISICAL_PROJECT_SLUG }}
         run: |
           set -euo pipefail
 
           if [[ -z "${INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID:-}" ]]; then
-            echo "Repository variable INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID is required." >&2
+            echo "GitHub secret INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID is required." >&2
             exit 1
           fi
 
           if [[ -z "${INFISICAL_PROJECT_SLUG:-}" ]]; then
-            echo "Repository variable INFISICAL_PROJECT_SLUG is required." >&2
+            echo "GitHub secret INFISICAL_PROJECT_SLUG is required." >&2
             exit 1
           fi
 
@@ -72,11 +72,11 @@ jobs:
         uses: Infisical/secrets-action@v1.0.16
         with:
           method: oidc
-          identity-id: ${{ vars.INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID }}
-          oidc-audience: ${{ vars.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ vars.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ vars.INFISICAL_PROJECT_SLUG }}
-          env-slug: ${{ vars.INFISICAL_ENV_SLUG || 'dev' }}
+          identity-id: ${{ secrets.INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID }}
+          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
+          env-slug: ${{ secrets.INFISICAL_ENV_SLUG || 'dev' }}
           secret-path: /tools/github-discord-notifier
 
       - name: Send Discord notification

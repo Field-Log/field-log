@@ -20,12 +20,16 @@ Use one Axiom dataset per environment:
 - Production: `production`
 
 Keep the app name on each event with `app: "api"`, `app: "web"`, or
-`app: "expo"`. This keeps cross-app flows queryable in one dataset. Split into
-per-app datasets only if access, retention, or cost controls need to differ by
-app.
+`app: "expo"`. Scraper events should use a scraper-specific app value once
+`apps/scraper` is added. This keeps cross-app flows queryable in one dataset.
+Split into per-app datasets only if access, retention, or cost controls need to
+differ by app.
 
 The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
 Use that event to confirm scheduled Worker execution and Axiom ingestion.
+Railway scraper jobs emit `scraper.*` events for run lifecycle, source fetches,
+queue enqueue/drain, item and image processing, image storage operations, and
+database mutations.
 
 ## Infisical
 
@@ -33,6 +37,7 @@ Server targets that send directly to Axiom keep their Axiom settings in their
 own runtime folders:
 
 - `/apps/api`
+- `/apps/scraper`
 - `/apps/web`
 
 Each server runtime folder may provide:
@@ -215,7 +220,8 @@ It runs the live check for same-repository pull requests that touch
 logger-relevant files and can also be run manually with `workflow_dispatch`.
 In CI, the workflow authenticates to Infisical with OIDC, fetches
 `/tools/logger-axiom-test`, then runs the live script directly.
-Configure these GitHub repository variables:
+Configure these values in Infisical Production at `/tools/github/secrets`; they
+sync to GitHub repository secrets:
 
 - `INFISICAL_LOGGER_IDENTITY_ID`
 - `INFISICAL_PROJECT_SLUG`
