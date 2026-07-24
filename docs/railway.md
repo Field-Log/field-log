@@ -233,6 +233,10 @@ named `field-log-pr-<pull-request-number>`. For example, PR 53 uses
 repository source with `railway up --ci` so the first preview deployment can be
 created even when there is no latest deployment to redeploy.
 
+The root `.railwayignore` intentionally excludes unrelated apps and generated
+folders from CLI uploads. Keep it aligned with the scraper's workspace
+dependency closure when adding scraper dependencies.
+
 Keep `REDIS_URL` as a Railway service reference such as
 `${{scraper-queue.REDIS_URL}}`; only the external Neon `DATABASE_URL` is synced
 from the preview database workflow.
