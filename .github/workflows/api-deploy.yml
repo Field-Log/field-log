@@ -288,7 +288,7 @@ jobs:
 
           printf '::add-mask::%s\n' "$DATABASE_URL"
 
-          railway_environment="preview-pr-${PR_NUMBER}"
+          railway_environment="field-log-pr-${PR_NUMBER}"
           if [[ "$DB_CHANGING" == "true" ]]; then
             image_kit_folder_prefix="preview/pr-${PR_NUMBER}"
           else
