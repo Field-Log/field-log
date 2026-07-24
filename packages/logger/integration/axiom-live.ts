@@ -398,7 +398,7 @@ async function queryAxiom(input: {
 }): Promise<QueryRow[]> {
   const domain = input.config.edgeDomain ?? "api.axiom.co";
   const apl = [
-    `['${input.config.dataset}']`,
+    `[${quoteAplString(input.config.dataset)}]`,
     `| where message contains ${quoteAplString(input.runPrefix)}`,
     "| limit 100",
   ].join("\n");
