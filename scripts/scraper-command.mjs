@@ -10,7 +10,7 @@ try {
 
   if (!command) {
     throw new Error(
-      "Expected scraper command. Use cron:run, scrape, scrape:autmog, process:queue, or process:dead-letter.",
+      "Expected scraper command. Use cron:run, scrape, scrape:<source>, process:queue, or process:dead-letter.",
     );
   }
 
@@ -42,32 +42,17 @@ function getRunnerCommand(command, commandArgs) {
     };
   }
 
-  if (command === "scrape") {
+  if (command === "scrape" || command.startsWith("scrape:")) {
     return {
       args: [
         "packages/infisical-runner/src/cli.ts",
         "scraper",
-        "scrape",
+        command,
         "--",
         "tsx",
         "apps/scraper/src/cli.ts",
-        "scrape",
+        command,
         ...commandArgs,
-      ],
-      command: "tsx",
-    };
-  }
-
-  if (command === "scrape:autmog") {
-    return {
-      args: [
-        "packages/infisical-runner/src/cli.ts",
-        "scraper",
-        "scrape:autmog",
-        "--",
-        "tsx",
-        "apps/scraper/src/cli.ts",
-        "scrape:autmog",
       ],
       command: "tsx",
     };
