@@ -35,6 +35,7 @@ export type GrimsmoFetchedProduct = {
 export type FetchGrimsmoProductsOptions = {
   fetch?: typeof fetch;
   limit?: number;
+  maxProducts?: number;
   pageLimit?: number;
   pagePauseMs?: number;
   proxyUrl?: string;
@@ -102,6 +103,7 @@ export function getGrimsmoSourceDefinition(
 export async function fetchGrimsmoProducts({
   fetch: fetcher,
   limit,
+  maxProducts,
   pageLimit = 30,
   pagePauseMs = 500,
   proxyUrl,
@@ -114,6 +116,40 @@ export async function fetchGrimsmoProducts({
 
   if (!handles) {
     throw new Error(`Unsupported Grimsmo source "${source}".`);
+  }
+
+  if (maxProducts !== undefined) {
+    const fetchLimit = Math.min(limit ?? maxProducts, maxProducts);
+    const inventoryProducts = await fetchShopifyCollectionProducts({
+      collectionUrl: buildCollectionProductsUrl(handles.inventory),
+      fetch: fetcher,
+      limit: fetchLimit,
+      pageLimit: 1,
+      pagePauseMs,
+      proxyUrl,
+      requestTimeoutMs,
+      retries,
+      signal,
+      userAgent: "python-requests/2.33.1",
+    });
+    const archiveProductLimit = maxProducts - inventoryProducts.length;
+    const archiveProducts =
+      archiveProductLimit > 0
+        ? await fetchShopifyCollectionProducts({
+            collectionUrl: buildCollectionProductsUrl(handles.archive),
+            fetch: fetcher,
+            limit: Math.min(limit ?? archiveProductLimit, archiveProductLimit),
+            pageLimit: 1,
+            pagePauseMs,
+            proxyUrl,
+            requestTimeoutMs,
+            retries,
+            signal,
+            userAgent: "python-requests/2.33.1",
+          })
+        : [];
+
+    return mergeGrimsmoCollections({ archiveProducts, inventoryProducts });
   }
 
   const [inventoryProducts, archiveProducts] = await Promise.all([
@@ -143,6 +179,16 @@ export async function fetchGrimsmoProducts({
     }),
   ]);
 
+  return mergeGrimsmoCollections({ archiveProducts, inventoryProducts });
+}
+
+function mergeGrimsmoCollections({
+  archiveProducts,
+  inventoryProducts,
+}: {
+  archiveProducts: ShopifyProduct[];
+  inventoryProducts: ShopifyProduct[];
+}) {
   const seenHandles = new Set<string>();
   const fetched: GrimsmoFetchedProduct[] = [];
 

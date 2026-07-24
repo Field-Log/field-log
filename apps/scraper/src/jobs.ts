@@ -20,6 +20,7 @@ import {
   type ScraperSourceName,
   scraperSources,
 } from "./scraper-types.js";
+import { getSourceScrapeLimit } from "./source-limit.js";
 
 export type ScraperJobEnv = ReturnType<typeof createScraperJobEnv>;
 
@@ -87,18 +88,25 @@ export async function createScraperJobContext(
 
 export async function runAutmogProducerJob({
   context,
+  env,
   logger,
 }: {
   context: ScraperJobContext;
+  env?: ScraperJobEnv;
   logger: Logger;
 }) {
+  const sourceLimit = getSourceScrapeLimit(env?.APP_ENV);
+
   await runLoggedCommand({
     command: "scrape:autmog",
     db: context.db,
     execute: async (signal) => {
       const result = await runAutmogProducer({
         logger,
+        limit: sourceLimit,
+        pageLimit: sourceLimit ? 1 : undefined,
         queues: context.queues,
+        skipArchiveReconciliation: Boolean(sourceLimit),
         signal,
       });
 
@@ -106,6 +114,7 @@ export async function runAutmogProducerJob({
         enqueuedItemJobs: result.enqueuedCount,
         fetchedCount: result.fetchedCount,
         removedCompletedItemJobs: result.removedCompletedItemJobs,
+        sourceLimit,
       };
     },
     jobType: "producer",
@@ -126,7 +135,7 @@ export async function runSourceProducerJob({
   source: ScraperSourceName;
 }) {
   if (source === scraperSources.autmog) {
-    await runAutmogProducerJob({ context, logger });
+    await runAutmogProducerJob({ context, env, logger });
     return;
   }
 
@@ -135,6 +144,7 @@ export async function runSourceProducerJob({
       context,
       logger,
       proxyUrl: env?.GRIMSMO_PROXY_URL,
+      sourceLimit: getSourceScrapeLimit(env?.APP_ENV),
       source,
     });
     return;
@@ -147,11 +157,13 @@ export async function runGrimsmoProducerJob({
   context,
   logger,
   proxyUrl,
+  sourceLimit,
   source,
 }: {
   context: ScraperJobContext;
   logger: Logger;
   proxyUrl?: string;
+  sourceLimit?: number;
   source: GrimsmoSourceName;
 }) {
   await runLoggedCommand({
@@ -160,8 +172,10 @@ export async function runGrimsmoProducerJob({
     execute: async (signal) => {
       const result = await runGrimsmoProducer({
         logger,
+        maxProducts: sourceLimit,
         proxyUrl,
         queues: context.queues,
+        skipArchiveReconciliation: Boolean(sourceLimit),
         signal,
         source,
       });
@@ -172,6 +186,7 @@ export async function runGrimsmoProducerJob({
         fetchedCount: result.fetchedCount,
         inventoryFetchedCount: result.inventoryFetchedCount,
         removedCompletedItemJobs: result.removedCompletedItemJobs,
+        sourceLimit,
       };
     },
     jobType: "producer",
