@@ -4,6 +4,7 @@ import { runAutmogProducer } from "./autmog/producer.js";
 import { finishScraperRun, startScraperRun } from "./db/autmog.js";
 import { runGrimsmoProducer } from "./grimsmo/producer.js";
 import {
+  runAllSourceProducerJobs,
   runSourceProducerJob,
   ScraperCommandInterruptedError,
   type ScraperJobContext,
@@ -97,6 +98,33 @@ describe("scraper jobs", () => {
         source: scraperSources.grimsmoSaga,
       }),
     ).resolves.toBeUndefined();
+  });
+
+  it("runs all source producers in source key order", async () => {
+    await expect(
+      runAllSourceProducerJobs({
+        context: createContext(),
+        env: {
+          GRIMSMO_PROXY_URL: "https://proxy.example.com",
+        } as Parameters<typeof runAllSourceProducerJobs>[0]["env"],
+        logger: createNoopLogger(),
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(runAutmogProducer).toHaveBeenCalledTimes(1);
+    expect(runGrimsmoProducer).toHaveBeenCalledTimes(4);
+    expect(runGrimsmoProducer).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        source: scraperSources.grimsmoFjell,
+      }),
+    );
+    expect(runGrimsmoProducer).toHaveBeenNthCalledWith(
+      4,
+      expect.objectContaining({
+        source: scraperSources.grimsmoSaga,
+      }),
+    );
   });
 
   it("marks active producer runs failed when interrupted", async () => {

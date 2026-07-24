@@ -153,6 +153,20 @@ export async function runSourceProducerJob({
   throw new Error(`Scraper source "${source}" is not implemented yet.`);
 }
 
+export async function runAllSourceProducerJobs({
+  context,
+  env,
+  logger,
+}: {
+  context: ScraperJobContext;
+  env?: ScraperJobEnv;
+  logger: Logger;
+}) {
+  for (const source of scraperSourceKeys) {
+    await runSourceProducerJob({ context, env, logger, source });
+  }
+}
+
 export async function runGrimsmoProducerJob({
   context,
   logger,
