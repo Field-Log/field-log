@@ -174,7 +174,7 @@ service-to-service access. If the Redis service is named `scraper-queue`, set
 this variable on the scraper service:
 
 ```dotenv
-REDIS_URL=${{scraper-queue.REDIS_URL}}
+REDIS_URL=${{scraper-queue.REDIS_PUBLIC_URL}}
 ```
 
 Use the actual Railway Redis service name. Avoid copying Railway Redis URLs into
@@ -225,14 +225,31 @@ GitHub Actions requires:
 | --- | --- | --- |
 | `RAILWAY_API_TOKEN` | Secret | Railway account or workspace token that can edit service variables in PR environments. |
 | `RAILWAY_PROJECT_ID` | Variable | Railway project ID that owns the scraper PR environments. |
-| `RAILWAY_SCRAPER_SERVICE_NAME` | Variable | Stable Railway service name for the scraper cron service, for example `field-log`. |
 
 The workflow upserts `DATABASE_URL` into the scraper service variables in the
-Railway environment named `preview-pr-<pull-request-number>`. For example, PR
-53 uses `preview-pr-53`.
+Railway preview service named `field-log (preview)` in the Railway environment
+named `field-log-pr-<pull-request-number>`. For example, PR 53 uses
+`field-log-pr-53`. The workflow also upserts `REDIS_URL` as a Railway reference
+to the `scraper-queue` service. It does not call `railway run` or assert
+resolved Redis reference values before deployment because variables set with
+`--skip-deploys` are staged until the next deployment. After the variables are
+set, the workflow deploys the `scraper-queue` Redis service from its configured
+image source so the Redis database is online for the scraper.
+
+Keep Railway's native GitHub auto-deploy enabled for the `field-log (preview)`
+service and enable Railway's **Wait for CI** setting for that service. The
+native GitHub deploy is the only scraper code deploy path; the API Deploy
+workflow prepares variables and Redis first. Do not add an explicit scraper
+`railway service redeploy --from-source` step to the workflow while native
+auto-deploy is enabled, or each push will produce two builds for the same
+commit.
+
+The root `.railwayignore` intentionally excludes unrelated apps and generated
+folders from any manual CLI uploads. Keep it aligned with the scraper's
+workspace dependency closure when adding scraper dependencies.
 
 Keep `REDIS_URL` as a Railway service reference such as
-`${{scraper-queue.REDIS_URL}}`; only the external Neon `DATABASE_URL` is synced
+`${{scraper-queue.REDIS_PUBLIC_URL}}`; only the external Neon `DATABASE_URL` is synced
 from the preview database workflow.
 
 ## Deployment Notes

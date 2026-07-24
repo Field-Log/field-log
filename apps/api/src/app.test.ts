@@ -4,7 +4,8 @@ import {
   type LogEvent,
   loggerValues,
 } from "@package/logger";
-import { describe, expect, it } from "vitest";
+import type { FeatureFlagsService } from "@package/services";
+import { describe, expect, it, vi } from "vitest";
 import app, { createApp } from "./app.js";
 import { apiDocsPath, openApiJsonPath } from "./openapi.js";
 
@@ -41,6 +42,7 @@ describe("api", () => {
       version: "0.0.0",
     });
     expect(document.paths["/api/v0/health"]).toBeDefined();
+    expect(document.paths["/api/v0/feature-flags/beta"]).toBeDefined();
     expect(document.paths["/api/v0/logs"]).toBeDefined();
   });
 
@@ -276,4 +278,162 @@ describe("api", () => {
       severity: "recommended",
     });
   });
+
+  it("lists beta feature flags for authenticated users", async () => {
+    const featureFlags = createFeatureFlagsServiceMock({
+      listUserBeta: async () => [
+        {
+          description: "Try the new library filters.",
+          enabled: true,
+          name: "New library filters",
+          slug: "new-library-filters",
+        },
+      ],
+    });
+    const testApp = createApp({
+      getFeatureFlagAuth: () => ({ clerkId: "user_123" }),
+      getFeatureFlagsService: () => featureFlags,
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/api/v0/feature-flags/beta");
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      flags: [
+        {
+          description: "Try the new library filters.",
+          enabled: true,
+          name: "New library filters",
+          slug: "new-library-filters",
+        },
+      ],
+    });
+  });
+
+  it("requires auth for beta feature flag routes", async () => {
+    const testApp = createApp({
+      getFeatureFlagAuth: () => null,
+      getFeatureFlagsService: () => createFeatureFlagsServiceMock(),
+      logger: createNoopLogger(),
+    });
+
+    await expect(
+      testApp.request("/api/v0/feature-flags/beta"),
+    ).resolves.toMatchObject({ status: 401 });
+  });
+
+  it("updates beta feature flag preferences", async () => {
+    const setUserPreference = vi.fn(async () => undefined);
+    const testApp = createApp({
+      getFeatureFlagAuth: () => ({ clerkId: "user_123" }),
+      getFeatureFlagsService: () =>
+        createFeatureFlagsServiceMock({ setUserPreference }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request(
+      "/api/v0/feature-flags/beta/new-library-filters",
+      {
+        body: JSON.stringify({ enabled: true }),
+        method: "PUT",
+      },
+    );
+
+    expect(response.status).toBe(200);
+    expect(setUserPreference).toHaveBeenCalledWith({
+      actorClerkId: "user_123",
+      enabled: true,
+      slug: "new-library-filters",
+    });
+  });
+
+  it("rejects malformed beta feature flag preference slugs", async () => {
+    const setUserPreference = vi.fn(async () => undefined);
+    const testApp = createApp({
+      getFeatureFlagAuth: () => ({ clerkId: "user_123" }),
+      getFeatureFlagsService: () =>
+        createFeatureFlagsServiceMock({ setUserPreference }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request(
+      "/api/v0/feature-flags/beta/bad_slug",
+      {
+        body: JSON.stringify({ enabled: true }),
+        method: "PUT",
+      },
+    );
+
+    expect(response.status).toBe(400);
+    expect(setUserPreference).not.toHaveBeenCalled();
+  });
+
+  it("evaluates requested feature flags for authenticated users", async () => {
+    const evaluateMany = vi.fn(async () => ({
+      "new-library-filters": true,
+    }));
+    const testApp = createApp({
+      getFeatureFlagAuth: () => ({ clerkId: "user_123" }),
+      getFeatureFlagsService: () =>
+        createFeatureFlagsServiceMock({ evaluateMany }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/api/v0/feature-flags/evaluate", {
+      body: JSON.stringify({ slugs: ["new-library-filters"] }),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      flags: {
+        "new-library-filters": true,
+      },
+    });
+    expect(evaluateMany).toHaveBeenCalledWith({
+      clerkId: "user_123",
+      slugs: ["new-library-filters"],
+    });
+  });
+
+  it("rejects malformed feature flag evaluation slugs", async () => {
+    const evaluateMany = vi.fn(async () => ({}));
+    const testApp = createApp({
+      getFeatureFlagAuth: () => ({ clerkId: "user_123" }),
+      getFeatureFlagsService: () =>
+        createFeatureFlagsServiceMock({ evaluateMany }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/api/v0/feature-flags/evaluate", {
+      body: JSON.stringify({ slugs: ["bad_slug"] }),
+      method: "POST",
+    });
+
+    expect(response.status).toBe(400);
+    expect(evaluateMany).not.toHaveBeenCalled();
+  });
 });
+
+function createFeatureFlagsServiceMock(
+  overrides: Partial<FeatureFlagsService> = {},
+): FeatureFlagsService {
+  return {
+    archive: async () => undefined,
+    create: async () => {
+      throw new Error("Not implemented.");
+    },
+    evaluate: async () => false,
+    evaluateMany: async () => ({}),
+    listAdmin: async () => [],
+    listAdminTargetingForUser: async () => [],
+    listUserBeta: async () => [],
+    setAdminOverride: async () => undefined,
+    setUserPreference: async () => undefined,
+    update: async () => {
+      throw new Error("Not implemented.");
+    },
+    ...overrides,
+  };
+}

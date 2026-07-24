@@ -1,4 +1,5 @@
 import { relations } from "drizzle-orm";
+import { featureFlags, featureFlagUserOverrides } from "./feature-flags.js";
 import {
   makers,
   materials,
@@ -34,6 +35,24 @@ export const userSettingsRelations = relations(userSettings, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const featureFlagsRelations = relations(featureFlags, ({ many }) => ({
+  userOverrides: many(featureFlagUserOverrides),
+}));
+
+export const featureFlagUserOverridesRelations = relations(
+  featureFlagUserOverrides,
+  ({ one }) => ({
+    flag: one(featureFlags, {
+      fields: [featureFlagUserOverrides.flagId],
+      references: [featureFlags.id],
+    }),
+    user: one(users, {
+      fields: [featureFlagUserOverrides.userId],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const makersRelations = relations(makers, ({ many }) => ({
   autmogPens: many(tmpAutmogPens),

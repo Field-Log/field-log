@@ -25,6 +25,8 @@ permissions:
 env:
   API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
   DB_PREVIEW_COMMENT_MARKER: "<!-- field-log-db-preview -->"
+  RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME: "field-log (preview)"
+  RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME: "scraper-queue"
 
 jobs:
   preview:
@@ -175,11 +177,10 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_SCRAPER_SERVICE_NAME: ${{ secrets.RAILWAY_SCRAPER_SERVICE_NAME }}
         run: |
           set -euo pipefail
 
-          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_USER VERCEL_TEAM_ID VERCEL_PROJECT_ID VERCEL_TOKEN RAILWAY_API_TOKEN RAILWAY_PROJECT_ID RAILWAY_SCRAPER_SERVICE_NAME; do
+          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_USER VERCEL_TEAM_ID VERCEL_PROJECT_ID VERCEL_TOKEN RAILWAY_API_TOKEN RAILWAY_PROJECT_ID RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME; do
             if [[ -z "${!name:-}" ]]; then
               echo "$name is required." >&2
               exit 1
@@ -273,6 +274,17 @@ jobs:
               }
           }'
 
+      - name: Verify Neon PR branch
+        if: steps.db.outputs.can_deploy == 'true' && steps.db_changes.outputs.database == 'true'
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ steps.db.outputs.branch_name }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
+        run: bash .github/scripts/neon-database-branch.sh branch-url
+
       - name: Configure Railway scraper preview database
         if: steps.db.outputs.can_deploy == 'true'
         shell: bash
@@ -282,18 +294,18 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
           RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
-          RAILWAY_SCRAPER_SERVICE_NAME: ${{ secrets.RAILWAY_SCRAPER_SERVICE_NAME }}
         run: |
           set -euo pipefail
 
           printf '::add-mask::%s\n' "$DATABASE_URL"
 
-          railway_environment="preview-pr-${PR_NUMBER}"
+          railway_environment="field-log-pr-${PR_NUMBER}"
           if [[ "$DB_CHANGING" == "true" ]]; then
             image_kit_folder_prefix="preview/pr-${PR_NUMBER}"
           else
             image_kit_folder_prefix="preview"
           fi
+          redis_url_reference='$'"{{${RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME}.REDIS_PUBLIC_URL}}"
 
           jq -cn \
             --arg app "ci" \
@@ -302,7 +314,7 @@ jobs:
             --arg message "ci.railway.preview.imageFolderPrefix.selected" \
             --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
             --arg railway_environment "$railway_environment" \
-            --arg service "$RAILWAY_SCRAPER_SERVICE_NAME" \
+            --arg service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --arg image_kit_folder_prefix "$image_kit_folder_prefix" \
             --argjson database "$DB_CHANGING" \
             '{
@@ -323,21 +335,28 @@ jobs:
             --stdin \
             --skip-deploys \
             --project "$RAILWAY_PROJECT_ID" \
-            --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
           printf '%s' "$image_kit_folder_prefix" | pnpm dlx @railway/cli variable set IMAGE_KIT_FOLDER_PREFIX \
             --stdin \
             --skip-deploys \
             --project "$RAILWAY_PROJECT_ID" \
-            --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
+            --environment "$railway_environment"
+
+          printf '%s' "$redis_url_reference" | pnpm dlx @railway/cli variable set REDIS_URL \
+            --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
           railway_image_kit_folder_prefix="$(
             pnpm dlx @railway/cli variable list \
               --kv \
               --project "$RAILWAY_PROJECT_ID" \
-              --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
+              --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
               --environment "$railway_environment" |
               awk -F= '$1 == "IMAGE_KIT_FOLDER_PREFIX" {print substr($0, index($0, "=") + 1)}'
           )"
@@ -349,10 +368,43 @@ jobs:
             exit 1
           fi
 
-          pnpm dlx @railway/cli redeploy \
+      - name: Deploy Railway scraper queue preview
+        if: steps.db.outputs.can_deploy == 'true'
+        shell: bash
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+
+          railway_environment="field-log-pr-${PR_NUMBER}"
+
+          jq -cn \
+            --arg app "ci" \
+            --arg environment "github-actions" \
+            --arg level "info" \
+            --arg message "ci.railway.preview.queue.deployStarted" \
+            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg railway_environment "$railway_environment" \
+            --arg service "$RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME" \
+            '{
+              app: $app,
+              environment: $environment,
+              level: $level,
+              message: $message,
+              timestamp: $timestamp,
+              attributes: {
+                railwayEnvironment: $railway_environment,
+                service: $service
+              }
+            }'
+
+          pnpm dlx @railway/cli service redeploy \
+            --from-source \
             --yes \
             --project "$RAILWAY_PROJECT_ID" \
-            --service "$RAILWAY_SCRAPER_SERVICE_NAME" \
+            --service "$RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
       - name: Build Worker dependencies
@@ -410,8 +462,17 @@ jobs:
         run: |
           set -euo pipefail
 
+          for name in CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required in Infisical /apps/api." >&2
+              exit 1
+            fi
+          done
+
           jq -n \
             --arg DATABASE_URL "$PREVIEW_DATABASE_URL" \
+            --arg CLERK_PUBLISHABLE_KEY "${CLERK_PUBLISHABLE_KEY:-}" \
+            --arg CLERK_SECRET_KEY "${CLERK_SECRET_KEY:-}" \
             --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
             --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
             --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
@@ -425,6 +486,8 @@ jobs:
             --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
             '{
               DATABASE_URL: $DATABASE_URL,
+              CLERK_PUBLISHABLE_KEY: $CLERK_PUBLISHABLE_KEY,
+              CLERK_SECRET_KEY: $CLERK_SECRET_KEY,
               AXIOM_TOKEN: $AXIOM_TOKEN,
               AXIOM_DATASET: $AXIOM_DATASET,
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
@@ -843,8 +906,17 @@ jobs:
         run: |
           set -euo pipefail
 
+          for name in CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required in Infisical /apps/api." >&2
+              exit 1
+            fi
+          done
+
           jq -n \
             --arg DATABASE_URL "$PRODUCTION_DATABASE_URL" \
+            --arg CLERK_PUBLISHABLE_KEY "${CLERK_PUBLISHABLE_KEY:-}" \
+            --arg CLERK_SECRET_KEY "${CLERK_SECRET_KEY:-}" \
             --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
             --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
             --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
@@ -858,6 +930,8 @@ jobs:
             --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
             '{
               DATABASE_URL: $DATABASE_URL,
+              CLERK_PUBLISHABLE_KEY: $CLERK_PUBLISHABLE_KEY,
+              CLERK_SECRET_KEY: $CLERK_SECRET_KEY,
               AXIOM_TOKEN: $AXIOM_TOKEN,
               AXIOM_DATASET: $AXIOM_DATASET,
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
@@ -873,7 +947,11 @@ jobs:
             > "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Deploy production Worker
-        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env=""
+        run: |
+          pnpm dlx wrangler deploy \
+            --config apps/api/wrangler.jsonc \
+            --env="" \
+            --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
         run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v0/health

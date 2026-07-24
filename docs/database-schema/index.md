@@ -4,6 +4,8 @@
 
 Generated schema documentation for committed Drizzle tables.
 
+- [`feature_flag_user_overrides`](./feature-flag-user-overrides.md)
+- [`feature_flags`](./feature-flags.md)
 - [`makers`](./makers.md)
 - [`materials`](./materials.md)
 - [`mechanisms`](./mechanisms.md)

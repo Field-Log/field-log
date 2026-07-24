@@ -1,0 +1,47 @@
+# Railway deploys only the scraper service from this monorepo. Keep the upload
+# small enough for Railway's source upload limit by excluding unrelated apps,
+# static assets, local dependencies, and generated output.
+
+*
+
+!.railwayignore
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!railway.json
+!tsconfig.json
+!turbo.json
+
+!apps/
+!apps/scraper/
+!apps/scraper/**
+
+!packages/
+!packages/database/
+!packages/database/**
+!packages/eslint/
+!packages/eslint/**
+!packages/feature-flags/
+!packages/feature-flags/**
+!packages/images/
+!packages/images/**
+!packages/logger/
+!packages/logger/**
+!packages/markdown/
+!packages/markdown/**
+!packages/services/
+!packages/services/**
+!packages/tsconfig/
+!packages/tsconfig/**
+
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+build/
+**/build/
+.turbo/
+**/.turbo/
+coverage/
+**/coverage/
+*.log

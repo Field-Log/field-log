@@ -14,6 +14,7 @@ export type ScraperRuntimeEnv = {
   LOGGER?: string;
   LOG_LEVEL?: string;
   PORT?: string;
+  REDIS?: string;
   REDIS_URL?: string;
   SCRAPER_AUTMOG_INTERVAL_MINUTES?: string;
   SCRAPER_AUTMOG_START_DELAY_SECONDS?: string;
@@ -71,6 +72,14 @@ const scraperServerSchema = {
     .transform((value) => value === "true"),
 } as const;
 
+const redisUrlSchema = z
+  .string()
+  .min(1)
+  .url()
+  .refine((value) => isRedisUrl(value), {
+    message: "Invalid Redis URL",
+  });
+
 export function createScraperEnv(runtimeEnv: ScraperRuntimeEnv) {
   return createEnv({
     emptyStringAsUndefined: true,
@@ -98,7 +107,7 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
       IMAGE_KIT_PUBLIC_KEY: z.string().min(1).optional(),
       IMAGE_KIT_FOLDER_PREFIX: z.string().min(1).optional(),
       IMAGE_KIT_URL_ENDPOINT: z.string().min(1).url().optional(),
-      REDIS_URL: z.string().min(1).url(),
+      REDIS_URL: redisUrlSchema,
       GRIMSMO_PROXY_URL: z.string().min(1).url().optional(),
       SCRAPER_AUTMOG_INTERVAL_MINUTES: z.coerce
         .number()
@@ -195,7 +204,7 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     LOGGER: runtimeEnv.LOGGER,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,
     PORT: runtimeEnv.PORT,
-    REDIS_URL: runtimeEnv.REDIS_URL,
+    REDIS_URL: selectRedisUrl(runtimeEnv),
     SCRAPER_AUTMOG_INTERVAL_MINUTES: runtimeEnv.SCRAPER_AUTMOG_INTERVAL_MINUTES,
     SCRAPER_AUTMOG_START_DELAY_SECONDS:
       runtimeEnv.SCRAPER_AUTMOG_START_DELAY_SECONDS,
@@ -219,6 +228,27 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     SCRAPER_QUEUE_CONCURRENCY: runtimeEnv.SCRAPER_QUEUE_CONCURRENCY,
     SCRAPER_SCHEDULER_ENABLED: runtimeEnv.SCRAPER_SCHEDULER_ENABLED,
   };
+}
+
+function selectRedisUrl(runtimeEnv: ScraperRuntimeEnv): string | undefined {
+  if (runtimeEnv.REDIS_URL && isRedisUrl(runtimeEnv.REDIS_URL)) {
+    return runtimeEnv.REDIS_URL;
+  }
+
+  if (runtimeEnv.REDIS && isRedisUrl(runtimeEnv.REDIS)) {
+    return runtimeEnv.REDIS;
+  }
+
+  return runtimeEnv.REDIS_URL ?? runtimeEnv.REDIS;
+}
+
+function isRedisUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "redis:" || url.protocol === "rediss:";
+  } catch {
+    return false;
+  }
 }
 
 function formatValidationIssue(

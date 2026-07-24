@@ -11,10 +11,6 @@ Reference docs:
   <https://developers.cloudflare.com/workers/wrangler/commands/>
 - Cloudflare Wrangler system environment variables:
   <https://developers.cloudflare.com/workers/wrangler/system-environment-variables/>
-- Infisical Cloudflare Connection:
-  <https://infisical.com/docs/integrations/app-connections/cloudflare>
-- Infisical Cloudflare Workers Sync:
-  <https://infisical.com/docs/integrations/secret-syncs/cloudflare-workers>
 
 ## Cloudflare Services
 
@@ -24,8 +20,8 @@ Configure these Cloudflare services:
 - Cron Triggers: invokes the hourly API scheduled handler.
 - Custom Domains: routes owned hostnames to the production and staging Workers.
 - Workers Preview URLs: hosts per-PR preview aliases for `field-log-api-preview`.
-- Worker Secrets: receives API runtime secrets from Infisical Cloudflare Workers
-  Sync.
+- Worker Secrets: receives filtered API runtime secrets from the deployment
+  workflows.
 
 Cloudflare must manage the `field-log.app` DNS zone before custom domains can
 serve `api.field-log.app` or `api.staging.field-log.app`.
@@ -123,6 +119,8 @@ Development (`dev`):
 
 ```dotenv
 DATABASE_URL=
+CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 AXIOM_TOKEN=
 AXIOM_DATASET=development
 AXIOM_EDGE_DOMAIN=
@@ -140,6 +138,8 @@ Preview (`preview`):
 
 ```dotenv
 DATABASE_URL=
+CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 AXIOM_TOKEN=
 AXIOM_DATASET=development
 AXIOM_EDGE_DOMAIN=
@@ -157,6 +157,8 @@ Production (`prod`), used by production and staging for now:
 
 ```dotenv
 DATABASE_URL=
+CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 AXIOM_TOKEN=
 AXIOM_DATASET=production
 AXIOM_EDGE_DOMAIN=
@@ -191,52 +193,6 @@ non-secret variable.
    - `field-log-api`: `api.field-log.app`
    - `field-log-api-staging`: `api.staging.field-log.app`
 5. Confirm preview URLs are enabled for `field-log-api-preview`.
-
-## Infisical Cloudflare Connection
-
-Create a Cloudflare API token for the Infisical App Connection. Infisical's
-Cloudflare Workers sync documentation requires these permissions:
-
-- `Account - Workers Scripts - Edit`
-- `Account - Account Settings - Read`
-
-In Cloudflare:
-
-1. Open the Cloudflare Dashboard.
-2. Open the user profile menu.
-3. Go to `API Tokens`.
-4. Create a token with the permissions above, scoped to the Cloudflare account
-   that owns `field-log.app`.
-5. Copy the token once; Cloudflare will not show it again.
-6. Copy the account ID from Account Home.
-
-In Infisical:
-
-1. Open the `Field Log` project.
-2. Go to `Integrations`.
-3. Open `App Connections`.
-4. Add a `Cloudflare` connection.
-5. Enter the Cloudflare account ID and API token.
-6. Verify the connection.
-
-## Infisical Cloudflare Workers Syncs
-
-Create these Cloudflare Workers Secret Syncs from `/apps/api`:
-
-| Infisical environment | Source path | Destination Worker |
-| --- | --- | --- |
-| `prod` | `/apps/api` | `field-log-api` |
-| `prod` | `/apps/api` | `field-log-api-staging` |
-| `preview` | `/apps/api` | `field-log-api-preview` |
-
-Use these sync options:
-
-- Initial sync behavior: overwrite destination secrets.
-- Key schema: `{{secretKey}}`.
-- Auto-sync: enabled.
-- Disable secret deletion: disabled, because Infisical is the source of truth.
-
-After the first sync, manage Worker secrets in Infisical only.
 
 ## Deploy Credentials In Infisical
 
@@ -319,9 +275,10 @@ Pull requests:
 - Applies the matching ImageKit preview folder namespace documented in
   [ImageKit](./image-kit.md).
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
-- Reads Infisical environment `preview`, path `/tools/cloudflare`.
-- Does not write Cloudflare Worker runtime secrets. Preview Worker secrets are
-  owned by Infisical Secrets Sync.
+- Reads Infisical environment `preview`, paths `/tools/cloudflare` and
+  `/apps/api`.
+- Writes a filtered API runtime secret file for Wrangler, including the
+  PR-specific `DATABASE_URL` and required Clerk keys.
 - Uploads a preview Worker version with alias `pr-<number>`.
 - If `field-log-api-preview` does not exist yet, bootstraps it with
   `wrangler deploy --env preview`, then retries the aliased version upload.
@@ -346,9 +303,10 @@ Release tags:
 - Runs committed Drizzle migrations against the Neon `production` branch before
   deploying.
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
-- Reads Infisical environment `prod`, path `/tools/cloudflare`.
-- Does not write Cloudflare Worker runtime secrets. Production Worker secrets
-  are owned by Infisical Secrets Sync.
+- Reads Infisical environment `prod`, paths `/tools/cloudflare` and
+  `/apps/api`.
+- Writes a filtered API runtime secret file for Wrangler, including the
+  production `DATABASE_URL` and required Clerk keys.
 - Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/api/v0/health`.
 - Validates `@app/web`, pulls the Vercel production environment, builds with
@@ -380,7 +338,6 @@ sync to GitHub repository secrets:
 - `NEON_API_KEY`
 - `RAILWAY_API_TOKEN`
 - `RAILWAY_PROJECT_ID`
-- `RAILWAY_SCRAPER_SERVICE_NAME`
 - `VERCEL_TOKEN`
 
 The `Field Log API Preview` GitHub App must be installed on this repository
@@ -403,7 +360,9 @@ after the app creates its replacement.
 The Infisical identity must read:
 
 - environment `preview`, path `/tools/cloudflare`
+- environment `preview`, path `/apps/api`
 - environment `prod`, path `/tools/cloudflare`
+- environment `prod`, path `/apps/api`
 
 Fork pull requests are skipped because GitHub must not expose deployment
 credentials to untrusted fork code.

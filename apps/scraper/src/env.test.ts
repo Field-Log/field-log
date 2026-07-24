@@ -113,6 +113,35 @@ describe("scraper env", () => {
     );
   });
 
+  it("uses REDIS when REDIS_URL is missing", () => {
+    const env = createScraperJobEnv({
+      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      REDIS: "redis://localhost:4008",
+    });
+
+    expect(env.REDIS_URL).toBe("redis://localhost:4008");
+  });
+
+  it("uses REDIS when REDIS_URL is not a resolved Redis URL", () => {
+    const env = createScraperJobEnv({
+      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      REDIS: "redis://localhost:4008",
+      REDIS_URL: "${{scraper-queue.REDIS_PUBLIC_URL}}",
+    });
+
+    expect(env.REDIS_URL).toBe("redis://localhost:4008");
+  });
+
+  it("rejects Redis references that do not resolve to Redis URLs", () => {
+    expect(() =>
+      createScraperJobEnv({
+        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        REDIS: "${{shared.REDIS}}",
+        REDIS_URL: "${{scraper-queue.REDIS_PUBLIC_URL}}",
+      }),
+    ).toThrow("Invalid environment variables: REDIS_URL");
+  });
+
   it("defaults scheduler settings for scraper jobs", () => {
     const env = createScraperJobEnv({
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",

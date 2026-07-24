@@ -25,6 +25,18 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Delete Neon PR branch
         id: neon_cleanup
         shell: bash
@@ -54,6 +66,13 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove-image-folder-prefix
+
+      - name: Delete ImageKit PR preview folder
+        id: image_kit_cleanup
+        env:
+          IMAGE_KIT_PRIVATE_KEY: ${{ secrets.IMAGE_KIT_PRIVATE_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: pnpm --filter @package/images run cleanup:preview-folder
 
       - name: Remove db-change label
         uses: actions/github-script@v8
@@ -148,6 +167,8 @@ jobs:
         uses: actions/github-script@v8
         env:
           CLEANUP_PERFORMED: ${{ steps.neon_cleanup.outputs.cleanup_performed }}
+          IMAGE_KIT_CLEANUP_STATUS: ${{ steps.image_kit_cleanup.outputs.status }}
+          IMAGE_KIT_FOLDER_PATH: ${{ steps.image_kit_cleanup.outputs.folder_path }}
           TARGET_BRANCH: ${{ steps.neon_cleanup.outputs.target_branch }}
         with:
           github-token: ${{ steps.db-preview-comment-token.outputs.token }}
@@ -161,6 +182,7 @@ jobs:
               "The DB preview for this pull request is inactive because the pull request is closed.",
               "",
               `Neon cleanup: ${cleanup} for \`${process.env.TARGET_BRANCH}\``,
+              `ImageKit cleanup: ${process.env.IMAGE_KIT_CLEANUP_STATUS} for \`${process.env.IMAGE_KIT_FOLDER_PATH}\``,
               "Vercel branch-specific `DATABASE_URL` and `IMAGE_KIT_FOLDER_PREFIX` cleanup was attempted.",
             ].join("\n");
 

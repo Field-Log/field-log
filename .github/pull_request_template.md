@@ -1,9 +1,9 @@
 <!-- AI SECTION START -->
 ## Summary
-- 
+-
 
 ## Validation
-- 
+-
 
 <!-- AI SECTION END -->
 

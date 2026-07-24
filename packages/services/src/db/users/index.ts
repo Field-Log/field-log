@@ -1,6 +1,7 @@
 import type { Database, User } from "@package/database";
 import { schema } from "@package/database";
 import { type Logger, loggerMessages } from "@package/logger";
+import { eq } from "drizzle-orm";
 import { hashLogIdentifier } from "../../logging.js";
 
 export type EnsureUserInput = {
@@ -9,6 +10,7 @@ export type EnsureUserInput = {
 
 export type UsersService = {
   ensure(input: EnsureUserInput): Promise<User>;
+  getByClerkId(clerkId: string): Promise<User | null>;
 };
 
 function assertClerkId(clerkId: string): void {
@@ -39,6 +41,27 @@ export function createUsersService(db: Database, logger: Logger): UsersService {
           }
 
           return user;
+        },
+        {
+          attributes: {
+            clerkIdHash: hashLogIdentifier(clerkId),
+          },
+        },
+      );
+    },
+    async getByClerkId(clerkId) {
+      return await logger.operation(
+        loggerMessages.database.users.getByClerkId,
+        async () => {
+          assertClerkId(clerkId);
+
+          const [user] = await db
+            .select()
+            .from(schema.users)
+            .where(eq(schema.users.clerkId, clerkId))
+            .limit(1);
+
+          return user ?? null;
         },
         {
           attributes: {

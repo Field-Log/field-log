@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import type { AppDependencies } from "../dependencies.js";
 import { createApiDocsRouter } from "./docs/index.js";
+import { createFeatureFlagsRouter } from "./feature-flags/index.js";
 import { createHealthRouter } from "./health/index.js";
 import { createLogsRouter } from "./logs/index.js";
 import { createMobileVersionRouter } from "./mobile-version/index.js";
@@ -12,6 +13,7 @@ export function createApiV0Router(dependencies: AppDependencies = {}) {
   const router = new OpenAPIHono();
 
   router.route("/", createHealthRouter());
+  router.route("/", createFeatureFlagsRouter(dependencies));
   router.route("/", createLogsRouter(dependencies));
   router.route("/", createMobileVersionRouter(dependencies));
 

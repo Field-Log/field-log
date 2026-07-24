@@ -79,6 +79,8 @@ async function main() {
       attributes: {
         command: command ? formatCommand(command) : undefined,
         commandArgs: process.argv.slice(2).join(" "),
+        redis: formatRedisEnvDebugValue(process.env.REDIS),
+        redisUrl: formatRedisEnvDebugValue(process.env.REDIS_URL),
       },
       error,
     });
@@ -136,6 +138,36 @@ function formatCommand(command: ScraperCommand): string {
   }
 
   return `${command.type}:${command.source}`;
+}
+
+export function formatRedisEnvDebugValue(value: string | undefined) {
+  if (value === undefined) {
+    return {
+      present: false,
+    };
+  }
+
+  return {
+    length: value.length,
+    present: true,
+    reference: value.startsWith("${{") && value.endsWith("}}"),
+    value: redactUrlCredentials(value),
+  };
+}
+
+function redactUrlCredentials(value: string): string {
+  try {
+    const url = new URL(value);
+    if (url.username) {
+      url.username = "redacted";
+    }
+    if (url.password) {
+      url.password = "redacted";
+    }
+    return url.toString();
+  } catch {
+    return value;
+  }
 }
 
 function isScraperSourceKey(

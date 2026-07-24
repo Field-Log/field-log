@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { createImageStorage } from "./index.js";
+import {
+  buildPreviewImageKitFolderPath,
+  createImageStorage,
+  deletePreviewImageKitFolder,
+} from "./index.js";
 
 describe("createImageStorage", () => {
   it("skips image mutations in dry-run mode", async () => {
@@ -13,6 +17,9 @@ describe("createImageStorage", () => {
     ).resolves.toBeNull();
     await expect(storage.updateFile("file-id", {})).resolves.toBeNull();
     await expect(storage.deleteFile("file-id")).resolves.toBe("skipped");
+    await expect(storage.deleteFolder("/preview/pr-52")).resolves.toBe(
+      "skipped",
+    );
   });
 
   it("requires ImageKit config outside dry-run mode", () => {
@@ -112,12 +119,86 @@ describe("createImageStorage", () => {
         .filter((pathname) => pathname === "/api/v1/files/upload"),
     ).toHaveLength(1);
   });
+
+  it("deletes preview ImageKit folders", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      const url = toUrl(input);
+
+      if (url.pathname === "/v1/folder") {
+        expect(init?.method).toBe("DELETE");
+        expect(JSON.parse(String(init?.body))).toEqual({
+          folderPath: "/preview/pr-52",
+        });
+
+        return jsonResponse({});
+      }
+
+      throw new Error(`Unexpected ImageKit request: ${url.href}`);
+    });
+
+    await expect(
+      deletePreviewImageKitFolder({
+        fetch: fetchMock,
+        privateKey: "private_test",
+        prNumber: 52,
+      }),
+    ).resolves.toEqual({
+      folderPath: "/preview/pr-52",
+      status: "deleted",
+    });
+  });
+
+  it("treats missing preview ImageKit folders as already cleaned up", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = toUrl(input);
+
+      if (url.pathname === "/v1/folder") {
+        return jsonResponse(
+          {
+            message: "Folder not found.",
+          },
+          404,
+        );
+      }
+
+      throw new Error(`Unexpected ImageKit request: ${url.href}`);
+    });
+
+    await expect(
+      deletePreviewImageKitFolder({
+        fetch: fetchMock,
+        privateKey: "private_test",
+        prNumber: 52,
+      }),
+    ).resolves.toEqual({
+      folderPath: "/preview/pr-52",
+      status: "missing",
+    });
+  });
+
+  it("only builds positive PR preview folder paths", () => {
+    expect(buildPreviewImageKitFolderPath(52)).toBe("/preview/pr-52");
+    expect(() => buildPreviewImageKitFolderPath(0)).toThrow(
+      "ImageKit preview cleanup requires a positive PR number.",
+    );
+  });
+
+  it("refuses to delete non-PR ImageKit folders", async () => {
+    const storage = createImageStorage({
+      fetch: vi.fn<typeof fetch>(),
+      privateKey: "private_test",
+    });
+
+    await expect(storage.deleteFolder("/preview")).rejects.toThrow(
+      "ImageKit preview cleanup can only delete /preview/pr-<number> folders.",
+    );
+  });
 });
 
-function jsonResponse(body: unknown): Response {
+function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     headers: { "content-type": "application/json" },
-    status: 200,
+    status,
   });
 }
 
