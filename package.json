@@ -18,6 +18,8 @@
     "deploy": "pnpm --filter @app/api run deploy",
     "deploy:preview": "pnpm --filter @app/api run deploy:preview",
     "deploy:staging": "pnpm --filter @app/api run deploy:staging",
+    "diagram:infra": "node scripts/generate-infrastructure-diagram.mjs",
+    "diagram:infra:refresh": "node scripts/generate-infrastructure-diagram.mjs --refresh-metadata --once",
     "build": "turbo run build",
     "build:ci": "turbo run build:ci",
     "build:mobile:preview": "pnpm --filter @app/mobile run build:preview",
