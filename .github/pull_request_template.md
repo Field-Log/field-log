@@ -1,11 +1,11 @@
+<!-- HUMAN SECTION START -->
+<!-- HUMAN SECTION END -->
+
 <!-- AI SECTION START -->
-## Summary
+## AI Summary
 - 
 
-## Validation
+## AI Testing and Validation
 - 
 
 <!-- AI SECTION END -->
-
-<!-- HUMAN SECTION START -->
-<!-- HUMAN SECTION END -->
