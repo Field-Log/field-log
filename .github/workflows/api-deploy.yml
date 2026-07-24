@@ -273,6 +273,17 @@ jobs:
               }
           }'
 
+      - name: Verify Neon PR branch
+        if: steps.db.outputs.can_deploy == 'true' && steps.db_changes.outputs.database == 'true'
+        shell: bash
+        env:
+          BRANCH_NAME: ${{ steps.db.outputs.branch_name }}
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
+          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
+        run: bash .github/scripts/neon-database-branch.sh branch-url
+
       - name: Configure Railway scraper preview database
         if: steps.db.outputs.can_deploy == 'true'
         shell: bash
@@ -348,8 +359,8 @@ jobs:
             exit 1
           fi
 
-          pnpm dlx @railway/cli redeploy \
-            --yes \
+          pnpm dlx @railway/cli up \
+            --ci \
             --project "$RAILWAY_PROJECT_ID" \
             --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
