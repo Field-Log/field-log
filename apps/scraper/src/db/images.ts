@@ -26,7 +26,6 @@ export type TmpImageSyncResult = {
     imageFileId: string | null;
     imagePath: string | null;
     imageProvider: string | null;
-    imageThumbnailUrl: string | null;
     imageUrl: string | null;
     productId: number;
     productVariationId: number | null;
@@ -167,7 +166,6 @@ export async function syncTmpImages(
       imageFileId: row.imageFileId,
       imagePath: row.imagePath,
       imageProvider: row.imageProvider,
-      imageThumbnailUrl: row.imageThumbnailUrl,
       imageUrl: row.imageUrl,
       productId: row.productId,
       productVariationId: row.productVariationId,
@@ -244,7 +242,6 @@ export async function markTmpImageUploaded(
     imageFileId: string;
     imagePath: string;
     imageProvider: string;
-    imageThumbnailUrl: string;
     imageUrl: string;
     width: number;
   },
@@ -257,7 +254,6 @@ export async function markTmpImageUploaded(
       imageFileId: input.imageFileId,
       imagePath: input.imagePath,
       imageProvider: input.imageProvider,
-      imageThumbnailUrl: input.imageThumbnailUrl,
       imageUrl: input.imageUrl,
       status: "uploaded",
       updatedAt: now,

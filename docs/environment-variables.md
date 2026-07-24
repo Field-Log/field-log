@@ -103,7 +103,7 @@ values such as Redis connection strings.
 | `BUNNY_STORAGE_ACCESS_KEY` | Bunny Storage Zone password used by server-side uploads, deletes, and preview cleanup. See [Image CDN](./image-cdn.md). | All | `S` |
 | `BUNNY_STORAGE_ENDPOINT` | Bunny Storage API endpoint, usually `https://ny.storage.bunnycdn.com`. See [Image CDN](./image-cdn.md). | All | `S` |
 | `BUNNY_STORAGE_ZONE_NAME` | Bunny Storage Zone name, suggested `field-log-images`. See [Image CDN](./image-cdn.md). | All | `S` |
-| `IMAGE_CDN_BASE_URL` | Public image CDN base URL, suggested `https://cdn.field-log.app`. See [Image CDN](./image-cdn.md). | All | `C` |
+| `IMAGE_CDN_BASE_URL` | Public image CDN base URL, suggested `https://cdn.field-log.app/field-log-images`. See [Image CDN](./image-cdn.md). | All | `C` |
 | `IMAGE_FOLDER_PREFIX` | Optional image upload folder namespace. See [Image CDN](./image-cdn.md). | ? (All) | `S` |
 | `IMAGE_STORAGE_PROVIDER` | Optional image storage provider override. Defaults to `bunny` when unset. | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |

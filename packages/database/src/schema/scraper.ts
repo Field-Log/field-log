@@ -320,7 +320,6 @@ export const tmpImages = pgTable(
     imageFileId: text("image_file_id"),
     imagePath: text("image_path"),
     imageUrl: text("image_url"),
-    imageThumbnailUrl: text("image_thumbnail_url"),
     status: text("status").notNull().default("pending_upload"),
     uploadedAt: timestamp("uploaded_at", { mode: "date", withTimezone: true }),
     pendingDeleteAt: timestamp("pending_delete_at", {

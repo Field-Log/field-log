@@ -10,7 +10,7 @@ const bunnyConfig = {
   bunnyStorageAccessKey: "storage-key",
   bunnyStorageEndpoint: "https://ny.storage.bunnycdn.com",
   bunnyStorageZoneName: "field-log-images",
-  cdnBaseUrl: "https://cdn.field-log.app",
+  cdnBaseUrl: "https://cdn.field-log.app/field-log-images",
 };
 
 describe("createImageStorage", () => {
@@ -81,8 +81,8 @@ describe("createImageStorage", () => {
       height: 0,
       provider: "bunny",
       thumbnailUrl:
-        "https://cdn.field-log.app/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
-      url: "https://cdn.field-log.app/products/pens/123/source-image.webp",
+        "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
+      url: "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp",
       width: 0,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -147,11 +147,27 @@ describe("createImageStorage", () => {
       height: 1500,
       provider: "bunny",
       thumbnailUrl:
-        "https://cdn.field-log.app/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
-      url: "https://cdn.field-log.app/products/pens/123/source-image.webp",
+        "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
+      url: "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp",
       width: 2000,
     });
     expect(uploadedBodies).toHaveLength(1);
+  });
+
+  it("preserves the Bunny zone when the CDN base URL includes it", async () => {
+    const storage = createImageStorage({
+      ...bunnyConfig,
+      cdnBaseUrl: "https://cdn.field-log.app/field-log-images/",
+      fetch: vi.fn<typeof fetch>(),
+    });
+
+    await expect(
+      storage.updateFile("/dev/products/1000/42143344591035.webp", {}),
+    ).resolves.toMatchObject({
+      thumbnailUrl:
+        "https://cdn.field-log.app/field-log-images/dev/products/1000/42143344591035.webp?format=webp&quality=85&width=500",
+      url: "https://cdn.field-log.app/field-log-images/dev/products/1000/42143344591035.webp",
+    });
   });
 
   it("deletes preview image folders", async () => {

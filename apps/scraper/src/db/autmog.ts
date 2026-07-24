@@ -76,7 +76,6 @@ export type AutmogPenSyncDbResponse = {
       imageFileId: string | null;
       imagePath: string | null;
       imageProvider: string | null;
-      imageThumbnailUrl: string | null;
       imageUrl: string | null;
       productId: number;
       productVariationId: number | null;

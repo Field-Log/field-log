@@ -28,7 +28,7 @@ uploads.
 | --- | --- | --- |
 | `IMAGE_STORAGE_PROVIDER` | unset, defaults to `bunny` | Set only to override provider selection. Unsupported values fail fast. |
 | `IMAGE_FOLDER_PREFIX` | production unset; local `dev`; shared preview `preview`; isolated PR preview `preview/pr-<number>` | Prepended to upload folders. |
-| `IMAGE_CDN_BASE_URL` | `https://cdn.field-log.app` | Use `https://field-log-images.b-cdn.net` only until DNS/SSL is ready. |
+| `IMAGE_CDN_BASE_URL` | `https://cdn.field-log.app/field-log-images` | Public delivery root for this Storage Zone. Use `https://field-log-images.b-cdn.net` only until DNS/SSL is ready. |
 | `BUNNY_STORAGE_ZONE_NAME` | `field-log-images` | Storage Zone name. |
 | `BUNNY_STORAGE_ENDPOINT` | `https://ny.storage.bunnycdn.com` | Use the endpoint shown in Bunny if it differs. |
 | `BUNNY_STORAGE_ACCESS_KEY` | Storage Zone password | Secret. Required outside dry-run mode. |
@@ -75,10 +75,12 @@ listing handle is a product variation under a stable Grimsmo product.
 ## Delivery And Transforms
 
 Stored image URLs are built from `IMAGE_CDN_BASE_URL` and the object path.
-Thumbnail URLs use Bunny Dynamic Images query transforms, for example:
+`IMAGE_CDN_BASE_URL` must include the public Storage Zone path when the CDN
+serves one. Thumbnail URLs use Bunny Dynamic Images query transforms, for
+example:
 
 ```text
-https://cdn.field-log.app/products/1000/image.webp?width=500&format=webp&quality=85
+https://cdn.field-log.app/field-log-images/products/1000/image.webp?width=500&format=webp&quality=85
 ```
 
 Bunny CDN caches served files and Optimizer transformations.

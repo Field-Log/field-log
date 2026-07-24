@@ -92,6 +92,13 @@
       "when": 1784930048834,
       "tag": "0012_square_maelstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1784933785389,
+      "tag": "0013_first_silver_sable",
+      "breakpoints": true
     }
   ]
 }

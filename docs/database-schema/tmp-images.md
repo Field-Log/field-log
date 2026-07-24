@@ -22,7 +22,6 @@ Temporary scraper image rows shared by all scraped products and variations.
 | `image_file_id` | `text` | no |  |  |  | Image storage file identifier used for updates and deletes. | `/preview/pr-52/products/1000-1001/image.webp` |
 | `image_path` | `text` | no |  |  |  | Image storage object path. | `/preview/pr-52/products/1000-1001/image.webp` |
 | `image_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp` |
-| `image_thumbnail_url` | `text` | no |  |  |  | Thumbnail transform URL for the uploaded image. | `https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp?width=500&format=webp&quality=85` |
 | `status` | `text` | yes |  | `'pending_upload'` |  | Image upload/delete lifecycle status. | `uploaded` |
 | `uploaded_at` | `timestamp with time zone` | no |  |  |  | Timestamp when the image upload completed. | `2026-07-17T20:45:42.000Z` |
 | `pending_delete_at` | `timestamp with time zone` | no |  |  |  | Timestamp when the image was marked for deletion. | `2026-07-18T20:45:42.000Z` |

@@ -226,11 +226,6 @@ export const schemaDescriptions = {
         example:
           "https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp",
       },
-      image_thumbnail_url: {
-        description: "Thumbnail transform URL for the uploaded image.",
-        example:
-          "https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp?width=500&format=webp&quality=85",
-      },
       status: {
         description: "Image upload/delete lifecycle status.",
         example: "uploaded",

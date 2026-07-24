@@ -1,5 +1,3 @@
-import sharp from "sharp";
-
 type FetchLike = typeof fetch;
 
 export type ImageStorageProvider = "bunny";
@@ -291,6 +289,7 @@ async function fetchAndProcessRemoteImage(
   config: BunnyStorageConfig,
   sourceUrl: string,
 ): Promise<ProcessedImage> {
+  const { default: sharp } = await import("sharp");
   const response = await config.fetch(sourceUrl);
 
   if (!response.ok) {
@@ -482,8 +481,9 @@ function buildImageUrl(
   filePath: string,
   query?: Record<string, string>,
 ): string {
+  const relativeFilePath = filePath.trim().replace(/^\/+/u, "");
   const url = new URL(
-    filePath
+    relativeFilePath
       .split("/")
       .map((segment) => encodeURIComponent(segment))
       .join("/"),

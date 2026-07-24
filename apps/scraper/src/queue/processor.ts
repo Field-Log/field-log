@@ -738,7 +738,6 @@ async function processTmpImageJob({
         imageFileId: result.fileId,
         imagePath: result.filePath,
         imageProvider: result.provider,
-        imageThumbnailUrl: result.thumbnailUrl,
         imageUrl: result.url,
         width: result.width,
       });
