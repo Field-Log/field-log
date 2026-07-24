@@ -174,7 +174,7 @@ service-to-service access. If the Redis service is named `scraper-queue`, set
 this variable on the scraper service:
 
 ```dotenv
-REDIS_URL=${{scraper-queue.REDIS_URL}}
+REDIS_URL=${{scraper-queue.REDIS_PUBLIC_URL}}
 ```
 
 Use the actual Railway Redis service name. Avoid copying Railway Redis URLs into
@@ -245,7 +245,7 @@ folders from any manual CLI uploads. Keep it aligned with the scraper's
 workspace dependency closure when adding scraper dependencies.
 
 Keep `REDIS_URL` as a Railway service reference such as
-`${{scraper-queue.REDIS_URL}}`; only the external Neon `DATABASE_URL` is synced
+`${{scraper-queue.REDIS_PUBLIC_URL}}`; only the external Neon `DATABASE_URL` is synced
 from the preview database workflow.
 
 ## Deployment Notes

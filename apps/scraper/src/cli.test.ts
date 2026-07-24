@@ -50,11 +50,13 @@ describe("scraper CLI", () => {
       reference: false,
       value: "redis://redacted:redacted@example.com:6379/0",
     });
-    expect(formatRedisEnvDebugValue("${{scraper-queue.REDIS_URL}}")).toEqual({
-      length: 28,
+    const railwayReference = "${{scraper-queue.REDIS_PUBLIC_URL}}";
+
+    expect(formatRedisEnvDebugValue(railwayReference)).toEqual({
+      length: railwayReference.length,
       present: true,
       reference: true,
-      value: "${{scraper-queue.REDIS_URL}}",
+      value: railwayReference,
     });
     expect(formatRedisEnvDebugValue(undefined)).toEqual({
       present: false,

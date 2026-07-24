@@ -133,7 +133,7 @@ than storing the Redis URL in Infisical. If the Redis service is named
 `scraper-queue`, set this on the scraper service in Railway:
 
 ```dotenv
-REDIS_URL=${{scraper-queue.REDIS_URL}}
+REDIS_URL=${{scraper-queue.REDIS_PUBLIC_URL}}
 ```
 
 If Railway preview environments provide Redis through a shared variable instead,

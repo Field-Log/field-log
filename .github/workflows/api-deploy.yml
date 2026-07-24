@@ -305,7 +305,7 @@ jobs:
           else
             image_kit_folder_prefix="preview"
           fi
-          redis_url_reference='$'"{{${RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME}.REDIS_URL}}"
+          redis_url_reference='$'"{{${RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME}.REDIS_PUBLIC_URL}}"
 
           jq -cn \
             --arg app "ci" \
