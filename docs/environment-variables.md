@@ -294,7 +294,6 @@ Discord notifications.
 | `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
 | `RAILWAY_API_TOKEN` | Authenticates Railway CLI calls for scraper preview service variables. | Stg | `S` |
 | `RAILWAY_PROJECT_ID` | Railway project that owns scraper preview environments. | Stg | `S` |
-| `RAILWAY_SCRAPER_SERVICE_NAME` | Railway scraper cron service name inside preview environments. | Stg | `S` |
 | `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg, Prod | `S` |
 | `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls and as `VERCEL_ORG_ID` to Vercel CLI release deploys. | Stg, Prod | `S` |
 | `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars, deployment lookup, and CLI production deploys. | Stg, Prod | `S` |

@@ -225,11 +225,11 @@ GitHub Actions requires:
 | --- | --- | --- |
 | `RAILWAY_API_TOKEN` | Secret | Railway account or workspace token that can edit service variables in PR environments. |
 | `RAILWAY_PROJECT_ID` | Variable | Railway project ID that owns the scraper PR environments. |
-| `RAILWAY_SCRAPER_SERVICE_NAME` | Variable | Stable Railway service name for the scraper cron service, for example `field-log`. |
 
 The workflow upserts `DATABASE_URL` into the scraper service variables in the
-Railway environment named `preview-pr-<pull-request-number>`. For example, PR
-53 uses `preview-pr-53`.
+Railway preview service named `field-log (preview)` in the Railway environment
+named `field-log-pr-<pull-request-number>`. For example, PR 53 uses
+`field-log-pr-53`.
 
 Keep `REDIS_URL` as a Railway service reference such as
 `${{scraper-queue.REDIS_URL}}`; only the external Neon `DATABASE_URL` is synced

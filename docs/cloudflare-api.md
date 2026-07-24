@@ -338,7 +338,6 @@ sync to GitHub repository secrets:
 - `NEON_API_KEY`
 - `RAILWAY_API_TOKEN`
 - `RAILWAY_PROJECT_ID`
-- `RAILWAY_SCRAPER_SERVICE_NAME`
 - `VERCEL_TOKEN`
 
 The `Field Log API Preview` GitHub App must be installed on this repository
