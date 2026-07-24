@@ -54,6 +54,13 @@ suggest a branch, create a branch, push, fetch, or update a PR from `main`.
       for docs, tests, internal tooling, chores, and compatible fixes. Use
       `minor` for new compatible behavior. Use `major` for breaking API,
       database, or mobile compatibility changes.
+    - If the selected impact is `major`, double-confirm with the user before
+      creating or updating the Changeset:
+      1. Ask the user to confirm the `major` release impact.
+      2. After the user confirms, ask a second time before writing the
+         Changeset.
+      3. If either confirmation is missing, stop and report that explicit
+         double confirmation is required.
     - Keep the Changeset description succinct, terse, human friendly, and
       changelog-ready.
 14. Generate a proposed title and body from the commits, changed files, and any
@@ -64,7 +71,11 @@ suggest a branch, create a branch, push, fetch, or update a PR from `main`.
 17. If one or both values should change, update only those fields:
     - `gh pr edit <number-or-url> --title "<title>"`
     - `gh pr edit <number-or-url> --body "<body>"`
-18. Return the PR URL and a concise summary of what changed.
+18. Apply the release-impact label that matches the branch Changeset to the PR:
+    - `gh pr edit <number-or-url> --add-label patch` for a `patch` Changeset.
+    - `gh pr edit <number-or-url> --add-label minor` for a `minor` Changeset.
+    - `gh pr edit <number-or-url> --add-label major` for a `major` Changeset.
+19. Return the PR URL and a concise summary of what changed.
 
 ## Title
 
@@ -145,6 +156,15 @@ Use the smallest accurate bump. Keep the description one short sentence when
 possible. Prefer concrete human wording such as `Add release automation.` or
 `Fix mobile update prompts.` Avoid long implementation detail, issue IDs, and
 robotic phrasing.
+
+If AI tooling selects `major`, it must receive two explicit user confirmations
+before creating or updating the Changeset. Do not treat the user's original
+feature request as either confirmation. If either confirmation is missing, stop
+before writing the `major` Changeset.
+
+Apply the release-impact label that matches the PR Changeset to the GitHub PR
+when updating it: `patch`, `minor`, or `major`. Apply the matching label even
+when the title and body are already current.
 
 ## Error Cases
 
