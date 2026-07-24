@@ -1,5 +1,5 @@
 ---
-"field-log.app": patch
+"field-log.app": minor
 ---
 
-Limit non-production scraper runs and include all sources.
+Replace ImageKit with Bunny image storage.
