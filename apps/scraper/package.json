@@ -1,0 +1,44 @@
+{
+  "name": "@app/scraper",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "build:ci": "tsc -p tsconfig.json",
+    "cron:run": "node dist/cli.js cron:run",
+    "start": "node dist/index.js",
+    "start:scheduled": "SCRAPER_SCHEDULER_ENABLED=true node dist/index.js",
+    "scrape": "node dist/cli.js scrape",
+    "scrape:autmog": "node dist/cli.js scrape:autmog",
+    "process:queue": "node dist/cli.js process:queue",
+    "check": "biome check .",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:ci": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@hono/node-server": "latest",
+    "@package/database": "workspace:*",
+    "@package/logger": "workspace:*",
+    "@package/markdown": "workspace:*",
+    "@package/services": "workspace:*",
+    "@t3-oss/env-core": "^0.13.11",
+    "bullmq": "^5.80.4",
+    "drizzle-orm": "^0.45.2",
+    "hono": "latest",
+    "ioredis": "^5.11.1",
+    "undici": "^8.8.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@package/eslint": "workspace:*",
+    "@package/tsconfig": "workspace:*",
+    "tsx": "latest"
+  }
+}

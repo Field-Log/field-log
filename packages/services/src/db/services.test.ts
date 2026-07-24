@@ -58,7 +58,7 @@ describe("database service logging", () => {
     const logger = captureLogger(events);
     const user: User = {
       clerkId,
-      id: "user-1",
+      id: 1000,
     };
     const db = createDbMock({
       insertRows: [[user]],
@@ -112,7 +112,7 @@ describe("database service logging", () => {
       currencyCode: "CAD",
       dimensionUnit: "in",
       theme: "dark",
-      userId: "user-1",
+      userId: 1000,
       weightUnit: "g",
     };
     const service = createUserSettingsService(
@@ -144,7 +144,7 @@ describe("database service logging", () => {
     const logger = captureLogger(events);
     const user: User = {
       clerkId,
-      id: "user-1",
+      id: 1000,
     };
     const settings = {
       currencyCode: "USD",

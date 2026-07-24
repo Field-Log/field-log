@@ -138,20 +138,24 @@ list_branch_env_vars() {
   api GET "/v10/projects/${VERCEL_PROJECT_ID}/env$(team_query_prefix)&target=preview&gitBranch=${branch_query}"
 }
 
-delete_existing_database_url() {
+delete_existing_env_var() {
+  local key="$1"
+  local missing_message="$2"
+  local removed_message="$3"
   local response
   response="$(list_branch_env_vars)"
 
   local ids
-  ids="$(jq -r --arg branch "$BRANCH_NAME" \
-    '.envs[]? | select(.key == "DATABASE_URL" and ((.gitBranch // "") == $branch)) | .id' \
+  ids="$(jq -r --arg branch "$BRANCH_NAME" --arg key "$key" \
+    '.envs[]? | select(.key == $key and ((.gitBranch // "") == $branch)) | .id' \
     <<< "$response")"
 
   if [[ -z "$ids" ]]; then
     write_output removed false
-    emit_ci_log info "ci.vercel.preview.databaseOverride.missing" "$(jq -n \
+    emit_ci_log info "$missing_message" "$(jq -n \
       --arg branch_name "$BRANCH_NAME" \
-      '{branchName: $branch_name, key: "DATABASE_URL", target: "preview"}')"
+      --arg key "$key" \
+      '{branchName: $branch_name, key: $key, target: "preview"}')"
     return
   fi
 
@@ -161,35 +165,69 @@ delete_existing_database_url() {
   done <<< "$ids"
 
   write_output removed true
-  emit_ci_log info "ci.vercel.preview.databaseOverride.removed" "$(jq -n \
+  emit_ci_log info "$removed_message" "$(jq -n \
     --arg branch_name "$BRANCH_NAME" \
+    --arg key "$key" \
     --arg ids "$ids" \
     '{
       branchName: $branch_name,
-      key: "DATABASE_URL",
+      key: $key,
       target: "preview",
       envVarIds: ($ids | split("\n") | map(select(. != "")))
     }')"
 }
 
-set_database_url() {
-  require_env DATABASE_URL
-  printf '::add-mask::%s\n' "$DATABASE_URL"
+delete_existing_database_url() {
+  delete_existing_env_var DATABASE_URL \
+    "ci.vercel.preview.databaseOverride.missing" \
+    "ci.vercel.preview.databaseOverride.removed"
+}
 
-  delete_existing_database_url
+set_branch_env_var() {
+  local key="$1"
+  local value="$2"
+  local set_message="$3"
+  local missing_message="$4"
+  local removed_message="$5"
+
+  printf '::add-mask::%s\n' "$value"
+  delete_existing_env_var "$key" "$missing_message" "$removed_message"
 
   local body
   body="$(jq -n \
-    --arg key DATABASE_URL \
-    --arg value "$DATABASE_URL" \
+    --arg key "$key" \
+    --arg value "$value" \
     --arg branch "$BRANCH_NAME" \
     '{key: $key, value: $value, type: "encrypted", target: ["preview"], gitBranch: $branch}')"
 
   api POST "/v10/projects/${VERCEL_PROJECT_ID}/env$(team_query_prefix)" "$body" > /dev/null
   write_output configured true
-  emit_ci_log info "ci.vercel.preview.databaseOverride.set" "$(jq -n \
+  emit_ci_log info "$set_message" "$(jq -n \
     --arg branch_name "$BRANCH_NAME" \
-    '{branchName: $branch_name, key: "DATABASE_URL", target: "preview"}')"
+    --arg key "$key" \
+    '{branchName: $branch_name, key: $key, target: "preview"}')"
+}
+
+set_database_url() {
+  require_env DATABASE_URL
+  set_branch_env_var DATABASE_URL "$DATABASE_URL" \
+    "ci.vercel.preview.databaseOverride.set" \
+    "ci.vercel.preview.databaseOverride.missing" \
+    "ci.vercel.preview.databaseOverride.removed"
+}
+
+delete_existing_image_kit_folder_prefix() {
+  delete_existing_env_var IMAGE_KIT_FOLDER_PREFIX \
+    "ci.vercel.preview.imageFolderPrefix.missing" \
+    "ci.vercel.preview.imageFolderPrefix.removed"
+}
+
+set_image_kit_folder_prefix() {
+  require_env IMAGE_KIT_FOLDER_PREFIX
+  set_branch_env_var IMAGE_KIT_FOLDER_PREFIX "$IMAGE_KIT_FOLDER_PREFIX" \
+    "ci.vercel.preview.imageFolderPrefix.set" \
+    "ci.vercel.preview.imageFolderPrefix.missing" \
+    "ci.vercel.preview.imageFolderPrefix.removed"
 }
 
 latest_preview_url() {
@@ -240,8 +278,16 @@ case "${1:-}" in
     delete_existing_database_url
     latest_preview_url
     ;;
+  set-image-folder-prefix)
+    set_image_kit_folder_prefix
+    latest_preview_url
+    ;;
+  remove-image-folder-prefix)
+    delete_existing_image_kit_folder_prefix
+    latest_preview_url
+    ;;
   *)
-    echo "Usage: $0 {set|remove}" >&2
+    echo "Usage: $0 {set|remove|set-image-folder-prefix|remove-image-folder-prefix}" >&2
     exit 1
     ;;
 esac

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   type CommandSecretConfig,
   commandSecrets,
+  databaseUrlUserOverrideSecretPath,
   defaultEnvironmentSlug,
 } from "./config.js";
 
@@ -127,14 +128,21 @@ export function buildInfisicalRunArgs(request: InfisicalRunRequest): string[] {
   const paths = getSecretPaths(config);
   const innerCommand: string[] = [];
 
-  if (config.envAliases?.length) {
+  if (config.envAliases?.length || config.databaseUrlUserOverride) {
     innerCommand.push(
       "tsx",
       join(
         request.repoRoot,
         "packages/infisical-runner/src/env-alias-runner.ts",
       ),
-      JSON.stringify(config.envAliases),
+      JSON.stringify({
+        databaseUrlUserOverridePath: databaseUrlUserOverrideSecretPath,
+        databaseUrlUserOverride: config.databaseUrlUserOverride ?? false,
+        envAliases: config.envAliases ?? [],
+        environmentSlug,
+        infisicalProjectId: request.infisicalProjectId,
+        secretPaths: paths,
+      }),
       "--",
     );
   }

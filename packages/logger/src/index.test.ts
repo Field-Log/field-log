@@ -39,19 +39,15 @@ describe("logger", () => {
               "ci.database.preview.changeDetection.completed",
             migrationsApplied: "ci.database.preview.migrations.applied",
             noPrBranchNeeded: "ci.database.preview.noPrBranch.needed",
-            prBranchRecreateRequested:
-              "ci.database.preview.prBranchRecreate.requested",
-            stagingDatabaseSelected:
-              "ci.database.preview.stagingDatabase.selected",
+            prBranchReused: "ci.database.preview.prBranch.reused",
+            databaseSelected: "ci.database.preview.database.selected",
+            reset: "ci.database.preview.reset",
+            sharedDatabaseSelected:
+              "ci.database.preview.sharedDatabase.selected",
           },
           production: {
             databaseSelected: "ci.database.production.database.selected",
             migrationsApplied: "ci.database.production.migrations.applied",
-          },
-          staging: {
-            databaseSelected: "ci.database.staging.database.selected",
-            migrationsApplied: "ci.database.staging.migrations.applied",
-            reset: "ci.database.staging.reset",
           },
         },
         github: {
@@ -88,6 +84,25 @@ describe("logger", () => {
         syncUploadFailed: "mobile.sync.upload.failed",
         versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",
         versionPolicyStoreOpenFailed: "mobile.versionPolicy.storeOpen.failed",
+      },
+      scraper: {
+        cron: {
+          completed: "scraper.cron.completed",
+          failed: "scraper.cron.failed",
+          started: "scraper.cron.started",
+          taskCompleted: "scraper.cron.task.completed",
+          taskFailed: "scraper.cron.task.failed",
+          taskSkipped: "scraper.cron.task.skipped",
+          taskStarted: "scraper.cron.task.started",
+        },
+        processor: {
+          errorSummary: "scraper.processor.errors.summary",
+        },
+        queue: {
+          deadLetterCompleted: "scraper.queue.deadLetter.completed",
+          deadLetterFailed: "scraper.queue.deadLetter.failed",
+          deadLetterStarted: "scraper.queue.deadLetter.started",
+        },
       },
       web: {
         accountLoaded: "web.account.loaded",

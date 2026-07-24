@@ -12,7 +12,10 @@ import {
   type ApiRuntimeEnv,
   createMobileVersionPolicyFromApiEnv,
 } from "./env.schema.js";
-import { createApiLoggerRuntime } from "./lib/create-services.js";
+import {
+  createApiLoggerRuntime,
+  createApiServices,
+} from "./lib/create-services.js";
 
 export type CloudflareApiBindings = ApiRuntimeEnv;
 
@@ -26,6 +29,13 @@ export type CloudflareExecutionContext = {
 };
 
 const app = createApp({
+  getFeatureFlagsService(context) {
+    const { services } = createApiServices(
+      context.env as CloudflareApiBindings,
+    );
+
+    return services.flags;
+  },
   getRuntimeConfig(context) {
     const { apiEnv, logger } = createApiLoggerRuntime(
       context.env as CloudflareApiBindings,

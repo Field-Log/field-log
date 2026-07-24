@@ -36,6 +36,7 @@ yarn-error.log*
 .vscode/
 
 # Local scratch files
+.drizzle/
 .figjam/cache/
 .figjam/inbox/
 .figjam/outbox/

@@ -35,6 +35,7 @@ request titles only, not the individual commits already present on the branch.
 |---|---|
 | `web` | `apps/web/` |
 | `api` | `apps/api/` |
+| `scraper` | `apps/scraper/` |
 | `mobile` | `apps/mobile/` |
 | `field-log` | `apps/field-log/` |
 | `autmog` | `apps/autmog/` |

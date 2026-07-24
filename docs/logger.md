@@ -20,12 +20,16 @@ Use one Axiom dataset per environment:
 - Production: `production`
 
 Keep the app name on each event with `app: "api"`, `app: "web"`, or
-`app: "expo"`. This keeps cross-app flows queryable in one dataset. Split into
-per-app datasets only if access, retention, or cost controls need to differ by
-app.
+`app: "expo"`. Scraper events should use a scraper-specific app value once
+`apps/scraper` is added. This keeps cross-app flows queryable in one dataset.
+Split into per-app datasets only if access, retention, or cost controls need to
+differ by app.
 
 The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
 Use that event to confirm scheduled Worker execution and Axiom ingestion.
+Railway scraper jobs emit `scraper.*` events for run lifecycle, source fetches,
+queue enqueue/drain, item and image processing, image storage operations, and
+database mutations.
 
 ## Infisical
 
@@ -33,6 +37,7 @@ Server targets that send directly to Axiom keep their Axiom settings in their
 own runtime folders:
 
 - `/apps/api`
+- `/apps/scraper`
 - `/apps/web`
 
 Each server runtime folder may provide:
@@ -160,11 +165,9 @@ CI workflows and helper scripts emit compact JSON log events with `app: "ci"`.
 These are written to GitHub Actions logs rather than Axiom unless the workflow
 runner output is collected elsewhere. Current CI event namespaces include:
 
-- `ci.database.preview.*`: PR database change detection, staging fallback,
-  preview branch creation/recreation/deletion, branch-limit blocking, and
-  preview migration completion.
-- `ci.database.staging.*`: staging reset, staging database selection, and
-  staging migration completion.
+- `ci.database.preview.*`: PR database change detection, shared preview branch
+  selection, preview branch creation/recreation/deletion, branch-limit blocking,
+  preview refresh, and preview migration completion.
 - `ci.database.production.*`: production database selection and migration
   completion.
 - `ci.github.*`: GitHub-side metadata updates such as the `db-change` label.
@@ -196,31 +199,35 @@ Run it only when intentionally validating the real Axiom integration:
 pnpm test:logger:axiom
 ```
 
-The command loads secrets through the Infisical runner. `/tools/logger-axiom-test`
-must provide:
+Local runs load secrets from Infisical environment `dev` through the Infisical
+runner. CI loads secrets from Infisical environment `preview`.
+`/tools/logger-axiom-test` must provide:
 
-- `AXIOM_TOKEN`
-- `AXIOM_DATASET=testing`
 - `LOG_LEVEL`, currently `trace`
 - `LOG_PROXY_CLIENT_KEY`
+- `AXIOM_TOKEN`, with ingest and query access to the configured dataset
+- `AXIOM_DATASET=development` for local runs, or `AXIOM_DATASET=preview` for CI
 - optional `AXIOM_EDGE_DOMAIN`
 
-The test hard-fails unless `AXIOM_DATASET` is `testing` and `LOG_LEVEL` is
-`trace`. It emits direct logger events and in-process client proxy events, then
-queries Axiom to confirm the events were received, levels were preserved,
-context and operation metadata were recorded, and sensitive values were redacted.
+The test hard-fails unless `AXIOM_DATASET` matches the expected dataset and
+`LOG_LEVEL` is `trace`. Local runs default to the `development` dataset. CI sets
+`LOGGER_AXIOM_EXPECTED_DATASET=preview` so pull request validation writes to the
+`preview` dataset. The test emits direct logger events and in-process client
+proxy events, then queries Axiom to confirm the events were received, levels were
+preserved, context and operation metadata were recorded, and sensitive values
+were redacted.
 
 The dedicated GitHub Actions workflow is `.github/workflows/logger-live.yml`.
 It runs the live check for same-repository pull requests that touch
 logger-relevant files and can also be run manually with `workflow_dispatch`.
 In CI, the workflow authenticates to Infisical with OIDC, fetches
 `/tools/logger-axiom-test`, then runs the live script directly.
-Configure these GitHub repository variables:
+Configure these values in Infisical Production at `/tools/github/secrets`; they
+sync to GitHub repository secrets:
 
 - `INFISICAL_LOGGER_IDENTITY_ID`
 - `INFISICAL_PROJECT_SLUG`
 - optional `INFISICAL_DOMAIN`
-- optional `INFISICAL_ENV_SLUG`
 - optional `INFISICAL_OIDC_AUDIENCE`
 
 See `plans/configure-repo-for-logger.md` for the Infisical identity setup.

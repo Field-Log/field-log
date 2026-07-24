@@ -222,6 +222,7 @@ describe("web server env", () => {
       AXIOM_TOKEN: "xaat-example",
       CLERK_SECRET_KEY: "sk_test_example",
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      IMAGE_KIT_FOLDER_PREFIX: "preview/pr-52",
       LOGGER: "verbose",
       LOG_LEVEL: "debug",
     });
@@ -233,6 +234,7 @@ describe("web server env", () => {
     expect(env.DATABASE_URL).toBe(
       "postgres://user:password@example.com:5432/field_log",
     );
+    expect(env.IMAGE_KIT_FOLDER_PREFIX).toBe("preview/pr-52");
     expect(env.LOGGER).toBe("verbose");
     expect(env.LOG_LEVEL).toBe("debug");
   });
