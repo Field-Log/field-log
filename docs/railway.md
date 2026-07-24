@@ -230,13 +230,12 @@ The workflow upserts `DATABASE_URL` into the scraper service variables in the
 Railway preview service named `field-log (preview)` in the Railway environment
 named `field-log-pr-<pull-request-number>`. For example, PR 53 uses
 `field-log-pr-53`. The workflow also upserts `REDIS_URL` as a Railway reference
-to the `scraper-queue` service and verifies that the expected variables are
-stored on the scraper service before deployment. It does not call `railway run`
-for pre-deploy runtime validation because variables set with `--skip-deploys`
-are staged until the next deployment. After the variables are set, the workflow
-deploys the `scraper-queue` Redis service from its configured image source so
-the Redis database is online for the scraper, then deploys the scraper service
-from its configured GitHub source.
+to the `scraper-queue` service. It does not call `railway run` or assert
+resolved Redis reference values before deployment because variables set with
+`--skip-deploys` are staged until the next deployment. After the variables are
+set, the workflow deploys the `scraper-queue` Redis service from its configured
+image source so the Redis database is online for the scraper, then deploys the
+scraper service from its configured GitHub source.
 Disable Railway's native GitHub auto-deploy for the scraper preview service;
 otherwise Railway will start one build from the GitHub integration and the API
 Deploy workflow will start a second build after syncing variables.

@@ -368,32 +368,6 @@ jobs:
             exit 1
           fi
 
-          railway_variables="$(
-            pnpm dlx @railway/cli variable list \
-              --kv \
-              --project "$RAILWAY_PROJECT_ID" \
-              --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
-              --environment "$railway_environment"
-          )"
-          railway_database_url="$(
-            awk -F= '$1 == "DATABASE_URL" {print substr($0, index($0, "=") + 1)}' <<<"$railway_variables"
-          )"
-          railway_redis_url="$(
-            awk -F= '$1 == "REDIS_URL" {print substr($0, index($0, "=") + 1)}' <<<"$railway_variables"
-          )"
-
-          if [[ -z "$railway_database_url" ]]; then
-            echo "Railway DATABASE_URL was not set on the scraper preview service." >&2
-            exit 1
-          fi
-
-          if [[ "$railway_redis_url" != "$redis_url_reference" ]]; then
-            echo "Railway REDIS_URL did not match the expected scraper queue reference." >&2
-            echo "Expected: ${redis_url_reference}" >&2
-            echo "Actual: ${railway_redis_url:-<unset>}" >&2
-            exit 1
-          fi
-
       - name: Deploy Railway scraper queue preview
         if: steps.db.outputs.can_deploy == 'true'
         shell: bash
