@@ -231,14 +231,15 @@ Railway preview service named `field-log (preview)` in the Railway environment
 named `field-log-pr-<pull-request-number>`. For example, PR 53 uses
 `field-log-pr-53`. After the variables are set, the workflow deploys the
 `scraper-queue` Redis service from its configured image source, then deploys the
-current repository source with `railway up --detach` so the first scraper preview
-deployment can be created even when there is no latest deployment to redeploy.
-The detached scraper deploy starts the Railway deployment without blocking the
-API Deploy workflow on the scraper build.
+scraper service from its configured GitHub source with
+`railway service redeploy --from-source --yes` so the first preview deployment
+can be created even when there is no latest deployment to redeploy. The API
+Deploy workflow starts the Railway deployments without uploading repository
+source from CI.
 
 The root `.railwayignore` intentionally excludes unrelated apps and generated
-folders from CLI uploads. Keep it aligned with the scraper's workspace
-dependency closure when adding scraper dependencies.
+folders from any manual CLI uploads. Keep it aligned with the scraper's
+workspace dependency closure when adding scraper dependencies.
 
 Keep `REDIS_URL` as a Railway service reference such as
 `${{scraper-queue.REDIS_URL}}`; only the external Neon `DATABASE_URL` is synced

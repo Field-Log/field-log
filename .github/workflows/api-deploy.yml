@@ -411,8 +411,9 @@ jobs:
 
           railway_environment="field-log-pr-${PR_NUMBER}"
 
-          pnpm dlx @railway/cli up \
-            --detach \
+          pnpm dlx @railway/cli service redeploy \
+            --from-source \
+            --yes \
             --project "$RAILWAY_PROJECT_ID" \
             --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
