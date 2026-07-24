@@ -206,7 +206,7 @@ checks Redis state and runs only due producers.
 ## Preview Database Sync
 
 The Railway scraper preview service must use the same Neon branch selected for
-the API and web previews. Branch code running against the shared staging
+the API and web previews. Branch code running against the shared preview
 database can fail with misleading type errors when the PR contains database
 schema changes.
 
@@ -215,7 +215,7 @@ preview database:
 
 - DB-changing PRs use the isolated `preview-pr-<number>` branch after committed
   migrations are applied.
-- Non-DB-changing PRs use the shared `staging` branch.
+- Non-DB-changing PRs use the shared `preview` branch.
 - The selected `DATABASE_URL` is upserted into the Railway scraper preview
   service through the Railway CLI.
 

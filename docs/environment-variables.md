@@ -6,12 +6,12 @@ build-time alias or platform-provided value.
 
 Required values use these labels:
 
-- `All`: Dev, Stg, and Prod.
+- `All`: development, preview, and production.
 - `Dev`: local development.
-- `Stg`: preview and staging surfaces, including Vercel Preview and Cloudflare
-  preview/staging.
+- `Preview`: Vercel Preview, Railway preview, Cloudflare preview, and shared
+  preview database surfaces.
 - `Prod`: production.
-- `? (All)`, `? (Dev)`, `? (Stg)`, `? (Prod)`: optional for those surfaces.
+- `? (All)`, `? (Dev)`, `? (Preview)`, `? (Prod)`: optional for those surfaces.
 
 ## Local Ports
 
@@ -39,7 +39,7 @@ secret syncs.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
-| `API_PREVIEW_WORKER_HOST`[^3] | Stable Cloudflare preview Worker host used to derive PR API URLs. | Stg | `C` |
+| `API_PREVIEW_WORKER_HOST`[^3] | Stable Cloudflare preview Worker host used to derive PR API URLs. | Preview | `C` |
 | `API_URL`[^2] | API origin used by browser requests and client log proxy posts. | ? (All) | `C` |
 | `AXIOM_DATASET` | Axiom dataset for web logs. | ? (All) | `S` |
 | `AXIOM_EDGE_DOMAIN` | Axiom edge domain. | ? (All) | `S` |
@@ -260,7 +260,7 @@ Run local FigJam commands through Infisical:
 infisical run --env=dev --path=/local/figma -- pnpm figjam read
 ```
 
-The FigJam tooling is local-only and must not run against Stg or Prod.
+The FigJam tooling is local-only and must not run against Preview or Prod.
 
 ### GitHub Discord Notifier: `/tools/github-discord-notifier`
 
@@ -284,26 +284,26 @@ Discord notifications.
 
 | Secret | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
-| `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for API preview comments. | Stg | `S` |
-| `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Stg | `S` |
-| `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for DB preview comments. | Stg | `S` |
-| `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Stg | `S` |
-| `INFISICAL_CLOUDFLARE_IDENTITY_ID` | Infisical OIDC identity for Cloudflare/API deploy secrets. | Stg, Prod | `S` |
+| `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for API preview comments. | Preview | `S` |
+| `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Preview | `S` |
+| `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for DB preview comments. | Preview | `S` |
+| `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Preview | `S` |
+| `INFISICAL_CLOUDFLARE_IDENTITY_ID` | Infisical OIDC identity for Cloudflare/API deploy secrets. | Preview, Prod | `S` |
 | `INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID` | Infisical OIDC identity for Discord webhook delivery. | All | `S` |
 | `INFISICAL_DOMAIN` | Infisical API base URL. | ? (All) | `S` |
 | `INFISICAL_ENV_SLUG` | Infisical environment slug. | ? (All) | `S` |
-| `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Stg | `S` |
+| `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Preview | `S` |
 | `INFISICAL_OIDC_AUDIENCE` | OIDC audience for Infisical auth. | ? (All) | `S` |
 | `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows. | All | `S` |
-| `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Stg, Prod | `S` |
-| `NEON_DATABASE_NAME` | Neon `PGDATABASE` value used for connection URI lookup. | Stg, Prod | `S` |
-| `NEON_DATABASE_USER` | Neon `PGUSER` value used for connection URI lookup. | Stg, Prod | `S` |
-| `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
-| `RAILWAY_API_TOKEN` | Authenticates Railway CLI calls for scraper preview service variables. | Stg | `S` |
-| `RAILWAY_PROJECT_ID` | Railway project that owns scraper preview environments. | Stg | `S` |
-| `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg, Prod | `S` |
-| `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls and as `VERCEL_ORG_ID` to Vercel CLI release deploys. | Stg, Prod | `S` |
-| `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars, deployment lookup, and CLI production deploys. | Stg, Prod | `S` |
+| `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Preview, Prod | `S` |
+| `NEON_DATABASE_NAME` | Neon `PGDATABASE` value used for connection URI lookup. | Preview, Prod | `S` |
+| `NEON_DATABASE_USER` | Neon `PGUSER` value used for connection URI lookup. | Preview, Prod | `S` |
+| `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Preview, Prod | `S` |
+| `RAILWAY_API_TOKEN` | Authenticates Railway CLI calls for scraper preview service variables. | Preview | `S` |
+| `RAILWAY_PROJECT_ID` | Railway project that owns scraper preview environments. | Preview | `S` |
+| `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Preview, Prod | `S` |
+| `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls and as `VERCEL_ORG_ID` to Vercel CLI release deploys. | Preview, Prod | `S` |
+| `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars, deployment lookup, and CLI production deploys. | Preview, Prod | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
 
@@ -406,21 +406,19 @@ Use least-privilege credentials where the provider supports scoping.
 
 - Axiom access[^12]:
   - Runtime logging tokens need ingest access to the configured dataset.
-  - The live logger test token also needs query access for its testing dataset.
+  - The live logger test token also needs query access for its configured dataset.
 
-[^1]: Vercel Preview uses the shared staging database by default.
+[^1]: Vercel Preview uses the shared preview database by default.
     DB-changing PRs get a branch-specific `DATABASE_URL` override.
 [^2]: The web build aliases `API_URL` to `VITE_API_URL` and
     `LOG_PROXY_CLIENT_KEY` to `VITE_LOG_PROXY_CLIENT_KEY` when the `VITE_*`
     names are absent. The web and mobile loggers append `/api/v0/logs` to the
     API URL.
-[^3]: `Stg` here means Vercel Preview. This value is not
-    used by the shared staging web deploy.
+[^3]: Used by Vercel Preview to derive pull-request API preview aliases.
 [^4]: GitHub deploy workflows resolve branch-specific Neon URLs
     and pass them explicitly to Wrangler.
 [^5]: `pnpm db:migrate` loads this through the Infisical
-    runner. CI preview, staging, and production migrations pass explicit Neon
-    branch URLs.
+    runner. CI preview and production migrations pass explicit Neon branch URLs.
 [^6]: Vercel REST API docs say Vercel Access Tokens authenticate API
     requests via `Authorization: Bearer <TOKEN>` and are created in account
     settings: <https://vercel.com/docs/rest-api#authentication>.

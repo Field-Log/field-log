@@ -194,7 +194,7 @@ for production:
 | Branch | Lifetime | Parent | Purpose |
 | --- | --- | --- | --- |
 | `production` | permanent | root | Production data and schema. |
-| `staging` | permanent | `production` | Shared non-production data for previews that do not change DB schema. |
+| `preview` | permanent | `production` | Shared non-production data for previews that do not change DB schema. |
 | `dev-<name>` | permanent | `production` | Developer-owned local work branch. |
 | `preview-pr-<number>` | ephemeral | `production` | Isolated PR database, created only for DB-changing PRs. |
 
@@ -215,10 +215,10 @@ folder namespace. The API preview Worker uses the preview runtime secrets
 managed by Infisical Secrets Sync; the workflow does not write PR-specific
 `DATABASE_URL` values to Cloudflare Worker secrets.
 
-When a PR has no DB changes, the API preview uses the shared `staging` branch and
+When a PR has no DB changes, the API preview uses the shared `preview` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch
 database overrides. The Railway scraper preview environment is updated to the
-selected shared `staging` `DATABASE_URL` in that case.
+selected shared `preview` `DATABASE_URL` in that case.
 
 ## Parallel DB PRs
 

@@ -590,7 +590,7 @@ jobs:
             const healthUrl = `${previewUrl}/api/v0/health`;
             const databaseScope = process.env.DATABASE_ISOLATED === "true"
               ? `Neon branch \`${process.env.DATABASE_BRANCH_NAME}\``
-              : "shared Neon staging branch";
+              : "shared Neon preview branch";
             const body = [
               marker,
               "The latest API preview deployment for this pull request:",
