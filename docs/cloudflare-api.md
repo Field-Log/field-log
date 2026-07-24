@@ -1,6 +1,6 @@
 # Cloudflare API Deployment
 
-`apps/api` runs on Cloudflare Workers in production, staging, PR previews, and
+`apps/api` runs on Cloudflare Workers in production, PR previews, and
 local API development. Local development uses `wrangler dev` by default so
 fetch handling, Worker bindings, and scheduled events are exercised in the same
 runtime family as deploys.
@@ -11,10 +11,6 @@ Reference docs:
   <https://developers.cloudflare.com/workers/wrangler/commands/>
 - Cloudflare Wrangler system environment variables:
   <https://developers.cloudflare.com/workers/wrangler/system-environment-variables/>
-- Infisical Cloudflare Connection:
-  <https://infisical.com/docs/integrations/app-connections/cloudflare>
-- Infisical Cloudflare Workers Sync:
-  <https://infisical.com/docs/integrations/secret-syncs/cloudflare-workers>
 
 ## Cloudflare Services
 
@@ -22,13 +18,13 @@ Configure these Cloudflare services:
 
 - Workers: hosts the API Worker scripts.
 - Cron Triggers: invokes the hourly API scheduled handler.
-- Custom Domains: routes owned hostnames to the production and staging Workers.
+- Custom Domains: routes owned hostnames to the production Worker.
 - Workers Preview URLs: hosts per-PR preview aliases for `field-log-api-preview`.
-- Worker Secrets: receives API runtime secrets from Infisical Cloudflare Workers
-  Sync.
+- Worker Secrets: receives filtered API runtime secrets from the deployment
+  workflows.
 
 Cloudflare must manage the `field-log.app` DNS zone before custom domains can
-serve `api.field-log.app` or `api.staging.field-log.app`.
+serve `api.field-log.app`.
 
 ## Worker Names And Domains
 
@@ -38,13 +34,6 @@ Production:
 - Domain: `api.field-log.app`
 - Infisical app secrets: environment `prod`, path `/apps/api`
 - Infisical deploy credentials: environment `prod`, path `/tools/cloudflare`
-
-Staging:
-
-- Worker: `field-log-api-staging`
-- Domain: `api.staging.field-log.app`
-- Infisical app secrets: environment `prod`, path `/apps/api`
-- Manual deploy credentials: environment `dev`, path `/tools/cloudflare`
 
 Previews:
 
@@ -70,14 +59,13 @@ Important settings:
 - `main`: `src/worker.ts`
 - `compatibility_flags`: includes `nodejs_compat` because workspace
   dependencies currently import Node built-ins.
-- `workers_dev`: disabled for production and staging.
+- `workers_dev`: disabled for production and preview.
 - `preview_urls`: enabled so PR preview aliases can be used.
 - `env.preview.routes`: empty so preview uploads do not inherit or reassign
   the production custom domain.
 - `triggers.crons`: `0 * * * *`, hourly at minute zero UTC.
 - top-level `vars.APP_ENV`: `production`
 - `env.preview.vars.APP_ENV`: `preview`
-- `env.staging.vars.APP_ENV`: `staging`
 
 Local `wrangler dev` overrides `APP_ENV` to `development` from the package
 script with `--var APP_ENV:development`.
@@ -123,6 +111,8 @@ Development (`dev`):
 
 ```dotenv
 DATABASE_URL=
+CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 AXIOM_TOKEN=
 AXIOM_DATASET=development
 AXIOM_EDGE_DOMAIN=
@@ -140,6 +130,8 @@ Preview (`preview`):
 
 ```dotenv
 DATABASE_URL=
+CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 AXIOM_TOKEN=
 AXIOM_DATASET=development
 AXIOM_EDGE_DOMAIN=
@@ -153,10 +145,12 @@ MOBILE_MIN_SUPPORTED_VERSION=
 MOBILE_UPDATE_SEVERITY=none
 ```
 
-Production (`prod`), used by production and staging for now:
+Production (`prod`):
 
 ```dotenv
 DATABASE_URL=
+CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
 AXIOM_TOKEN=
 AXIOM_DATASET=production
 AXIOM_EDGE_DOMAIN=
@@ -181,62 +175,14 @@ non-secret variable.
 
    ```sh
    pnpm deploy
-   pnpm deploy:staging
    pnpm deploy:preview -- --preview-alias pr-smoke
    ```
 
 3. In Cloudflare Dashboard, confirm the Workers appear under
    `Workers & Pages`.
-4. Confirm custom domain triggers exist:
-   - `field-log-api`: `api.field-log.app`
-   - `field-log-api-staging`: `api.staging.field-log.app`
+4. Confirm the `field-log-api` custom domain trigger exists for
+   `api.field-log.app`.
 5. Confirm preview URLs are enabled for `field-log-api-preview`.
-
-## Infisical Cloudflare Connection
-
-Create a Cloudflare API token for the Infisical App Connection. Infisical's
-Cloudflare Workers sync documentation requires these permissions:
-
-- `Account - Workers Scripts - Edit`
-- `Account - Account Settings - Read`
-
-In Cloudflare:
-
-1. Open the Cloudflare Dashboard.
-2. Open the user profile menu.
-3. Go to `API Tokens`.
-4. Create a token with the permissions above, scoped to the Cloudflare account
-   that owns `field-log.app`.
-5. Copy the token once; Cloudflare will not show it again.
-6. Copy the account ID from Account Home.
-
-In Infisical:
-
-1. Open the `Field Log` project.
-2. Go to `Integrations`.
-3. Open `App Connections`.
-4. Add a `Cloudflare` connection.
-5. Enter the Cloudflare account ID and API token.
-6. Verify the connection.
-
-## Infisical Cloudflare Workers Syncs
-
-Create these Cloudflare Workers Secret Syncs from `/apps/api`:
-
-| Infisical environment | Source path | Destination Worker |
-| --- | --- | --- |
-| `prod` | `/apps/api` | `field-log-api` |
-| `prod` | `/apps/api` | `field-log-api-staging` |
-| `preview` | `/apps/api` | `field-log-api-preview` |
-
-Use these sync options:
-
-- Initial sync behavior: overwrite destination secrets.
-- Key schema: `{{secretKey}}`.
-- Auto-sync: enabled.
-- Disable secret deletion: disabled, because Infisical is the source of truth.
-
-After the first sync, manage Worker secrets in Infisical only.
 
 ## Deploy Credentials In Infisical
 
@@ -259,7 +205,7 @@ Create `/tools/cloudflare` in these Infisical environments:
 
 | Infisical environment | Used by | Values |
 | --- | --- | --- |
-| `dev` | Local `pnpm deploy`, `pnpm deploy:staging`, and `pnpm deploy:preview` | Cloudflare deploy token, account ID |
+| `dev` | Local `pnpm deploy` and `pnpm deploy:preview` | Cloudflare deploy token, account ID |
 | `preview` | GitHub PR preview workflow | Cloudflare deploy token, account ID |
 | `prod` | GitHub production workflow on `main` | Cloudflare deploy token, account ID |
 
@@ -278,12 +224,6 @@ Production:
 
 ```sh
 pnpm deploy
-```
-
-Staging:
-
-```sh
-pnpm deploy:staging
 ```
 
 Preview upload with a PR alias:
@@ -308,20 +248,20 @@ Pull requests:
   `packages/database/package.json`, or `pnpm-lock.yaml`.
 - Adds the `db-change` label when DB changes are present and removes it when
   later PR updates no longer contain DB changes.
-- Creates an isolated Neon branch named `preview-pr-<number>` only for
-  DB-changing PRs. The branch is recreated from `production` on every PR update
-  before committed Drizzle migrations are applied.
-- Blocks DB-isolated preview creation instead of falling back to `staging` when
-  the Neon project is at the configured branch limit and no existing PR branch
-  can be reused.
+- Creates or reuses an isolated Neon branch named `preview-pr-<number>` only for
+  DB-changing PRs before committed Drizzle migrations are applied.
+- Blocks DB-isolated preview creation instead of falling back to the shared
+  `preview` branch when the Neon project is at the configured branch limit and no
+  existing PR branch can be reused.
 - Removes stale `preview-pr-*` branches and stale branch-specific Vercel
   `DATABASE_URL` overrides when a PR no longer contains DB changes.
 - Applies the matching ImageKit preview folder namespace documented in
   [ImageKit](./image-kit.md).
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
-- Reads Infisical environment `preview`, path `/tools/cloudflare`.
-- Does not write Cloudflare Worker runtime secrets. Preview Worker secrets are
-  owned by Infisical Secrets Sync.
+- Reads Infisical environment `preview`, paths `/tools/cloudflare` and
+  `/apps/api`.
+- Writes a filtered API runtime secret file for Wrangler, including the
+  PR-specific `DATABASE_URL` and required Clerk keys.
 - Uploads a preview Worker version with alias `pr-<number>`.
 - If `field-log-api-preview` does not exist yet, bootstraps it with
   `wrangler deploy --env preview`, then retries the aliased version upload.
@@ -346,9 +286,10 @@ Release tags:
 - Runs committed Drizzle migrations against the Neon `production` branch before
   deploying.
 - Builds `@app/api` and its workspace dependencies before running Wrangler.
-- Reads Infisical environment `prod`, path `/tools/cloudflare`.
-- Does not write Cloudflare Worker runtime secrets. Production Worker secrets
-  are owned by Infisical Secrets Sync.
+- Reads Infisical environment `prod`, paths `/tools/cloudflare` and
+  `/apps/api`.
+- Writes a filtered API runtime secret file for Wrangler, including the
+  production `DATABASE_URL` and required Clerk keys.
 - Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/api/v0/health`.
 - Validates `@app/web`, pulls the Vercel production environment, builds with
@@ -380,7 +321,6 @@ sync to GitHub repository secrets:
 - `NEON_API_KEY`
 - `RAILWAY_API_TOKEN`
 - `RAILWAY_PROJECT_ID`
-- `RAILWAY_SCRAPER_SERVICE_NAME`
 - `VERCEL_TOKEN`
 
 The `Field Log API Preview` GitHub App must be installed on this repository
@@ -403,7 +343,9 @@ after the app creates its replacement.
 The Infisical identity must read:
 
 - environment `preview`, path `/tools/cloudflare`
+- environment `preview`, path `/apps/api`
 - environment `prod`, path `/tools/cloudflare`
+- environment `prod`, path `/apps/api`
 
 Fork pull requests are skipped because GitHub must not expose deployment
 credentials to untrusted fork code.
@@ -441,7 +383,7 @@ override points the web preview server runtime at the matching
 preview folder namespace from [ImageKit](./image-kit.md). When DB changes are
 removed or the PR closes, the workflow removes the branch-specific
 `DATABASE_URL` so the web preview falls back to the shared Preview
-`DATABASE_URL`, which should point at Neon `staging`; PR close also removes the
+`DATABASE_URL`, which should point at Neon `preview`; PR close also removes the
 branch-specific image folder prefix. The Cloudflare preview Worker always uses
 the runtime secrets managed by Infisical Secrets Sync; PR-specific database URLs
 are not written to Worker secrets by this workflow.
@@ -450,20 +392,20 @@ Vercel environment changes apply to new deployments. If the latest Vercel
 preview build started before the branch-specific database override was updated,
 redeploy the Vercel preview.
 
-## Staging Refresh
+## Preview Refresh
 
-The `Staging Refresh` workflow runs on a nightly schedule and by manual
-`workflow_dispatch`. It resets Neon `staging` from `production`, runs committed
-Drizzle migrations against `staging`, deploys `field-log-api-staging` with an
-explicit staging `DATABASE_URL`, and smoke-tests
-`https://api.staging.field-log.app/api/v0/health`.
+The `Preview Refresh` workflow runs on a nightly schedule and by manual
+`workflow_dispatch`. It resets Neon `preview` from `production`, runs committed
+Drizzle migrations against `preview`, deploys `field-log-api-preview` with an
+explicit preview `DATABASE_URL`, creates or updates the `refresh-smoke` preview
+alias, and smoke-tests that alias.
 
-Do not reset staging from production on every PR. The staging branch backs
+Do not reset preview from production on every PR. The preview branch backs
 normal previews and may contain shared non-production data.
 
 ## Smoke Tests
 
-Run these checks after production, staging, or preview deploys.
+Run these checks after production or preview deploys.
 
 Health:
 
@@ -512,12 +454,6 @@ Production:
 3. Promote or roll back to the last known good version.
 4. Run the production smoke tests.
 5. Check Axiom for new `api.cron.hourly` events after the next hour.
-
-Staging:
-
-1. Open `field-log-api-staging`.
-2. Promote or roll back to the last known good version.
-3. Run smoke tests against `https://api.staging.field-log.app`.
 
 Preview:
 

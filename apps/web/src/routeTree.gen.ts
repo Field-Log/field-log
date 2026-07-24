@@ -16,6 +16,8 @@ import { Route as UserAccountRouteImport } from './routes/user.account'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as PensPenIdRouteImport } from './routes/pens.$penId'
+import { Route as UserSettingsBetaFeaturesRouteImport } from './routes/user.settings.beta-features'
+import { Route as AdminSettingsFeatureFlagsRouteImport } from './routes/admin.settings.feature-flags'
 
 const UserRoute = UserRouteImport.update({
   id: '/user',
@@ -52,6 +54,18 @@ const PensPenIdRoute = PensPenIdRouteImport.update({
   path: '/pens/$penId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UserSettingsBetaFeaturesRoute =
+  UserSettingsBetaFeaturesRouteImport.update({
+    id: '/settings/beta-features',
+    path: '/settings/beta-features',
+    getParentRoute: () => UserRoute,
+  } as any)
+const AdminSettingsFeatureFlagsRoute =
+  AdminSettingsFeatureFlagsRouteImport.update({
+    id: '/admin/settings/feature-flags',
+    path: '/admin/settings/feature-flags',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +75,8 @@ export interface FileRoutesByFullPath {
   '/sign-up/$': typeof SignUpSplatRoute
   '/user/account': typeof UserAccountRoute
   '/user/collections': typeof UserCollectionsRoute
+  '/admin/settings/feature-flags': typeof AdminSettingsFeatureFlagsRoute
+  '/user/settings/beta-features': typeof UserSettingsBetaFeaturesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +86,8 @@ export interface FileRoutesByTo {
   '/sign-up/$': typeof SignUpSplatRoute
   '/user/account': typeof UserAccountRoute
   '/user/collections': typeof UserCollectionsRoute
+  '/admin/settings/feature-flags': typeof AdminSettingsFeatureFlagsRoute
+  '/user/settings/beta-features': typeof UserSettingsBetaFeaturesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +98,8 @@ export interface FileRoutesById {
   '/sign-up/$': typeof SignUpSplatRoute
   '/user/account': typeof UserAccountRoute
   '/user/collections': typeof UserCollectionsRoute
+  '/admin/settings/feature-flags': typeof AdminSettingsFeatureFlagsRoute
+  '/user/settings/beta-features': typeof UserSettingsBetaFeaturesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +111,8 @@ export interface FileRouteTypes {
     | '/sign-up/$'
     | '/user/account'
     | '/user/collections'
+    | '/admin/settings/feature-flags'
+    | '/user/settings/beta-features'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +122,8 @@ export interface FileRouteTypes {
     | '/sign-up/$'
     | '/user/account'
     | '/user/collections'
+    | '/admin/settings/feature-flags'
+    | '/user/settings/beta-features'
   id:
     | '__root__'
     | '/'
@@ -109,6 +133,8 @@ export interface FileRouteTypes {
     | '/sign-up/$'
     | '/user/account'
     | '/user/collections'
+    | '/admin/settings/feature-flags'
+    | '/user/settings/beta-features'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -117,6 +143,7 @@ export interface RootRouteChildren {
   PensPenIdRoute: typeof PensPenIdRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignUpSplatRoute: typeof SignUpSplatRoute
+  AdminSettingsFeatureFlagsRoute: typeof AdminSettingsFeatureFlagsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,17 +197,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PensPenIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/user/settings/beta-features': {
+      id: '/user/settings/beta-features'
+      path: '/settings/beta-features'
+      fullPath: '/user/settings/beta-features'
+      preLoaderRoute: typeof UserSettingsBetaFeaturesRouteImport
+      parentRoute: typeof UserRoute
+    }
+    '/admin/settings/feature-flags': {
+      id: '/admin/settings/feature-flags'
+      path: '/admin/settings/feature-flags'
+      fullPath: '/admin/settings/feature-flags'
+      preLoaderRoute: typeof AdminSettingsFeatureFlagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface UserRouteChildren {
   UserAccountRoute: typeof UserAccountRoute
   UserCollectionsRoute: typeof UserCollectionsRoute
+  UserSettingsBetaFeaturesRoute: typeof UserSettingsBetaFeaturesRoute
 }
 
 const UserRouteChildren: UserRouteChildren = {
   UserAccountRoute: UserAccountRoute,
   UserCollectionsRoute: UserCollectionsRoute,
+  UserSettingsBetaFeaturesRoute: UserSettingsBetaFeaturesRoute,
 }
 
 const UserRouteWithChildren = UserRoute._addFileChildren(UserRouteChildren)
@@ -191,6 +234,7 @@ const rootRouteChildren: RootRouteChildren = {
   PensPenIdRoute: PensPenIdRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignUpSplatRoute: SignUpSplatRoute,
+  AdminSettingsFeatureFlagsRoute: AdminSettingsFeatureFlagsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

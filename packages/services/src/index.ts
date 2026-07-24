@@ -3,7 +3,18 @@ import { createDb } from "@package/database";
 import type { ImageStorageConfig } from "@package/images";
 import { createLogger, type Logger, type LoggerConfig } from "@package/logger";
 import { createDbServices, type DbServices } from "./db/index.js";
+import {
+  createFeatureFlagsService,
+  type FeatureFlagsService,
+} from "./flags/index.js";
 import { createImagesService, type ImagesService } from "./images/index.js";
+
+export type {
+  AdminTargetingFeatureFlag,
+  FeatureFlagListItem,
+  FeatureFlagsService,
+  UserBetaFeatureFlag,
+} from "./flags/index.js";
 
 export type ServicesLoggerConfig = LoggerConfig | Logger;
 
@@ -15,6 +26,7 @@ export type ServicesConfig = {
 
 export class Services {
   #db?: DbServices;
+  #flags?: FeatureFlagsService;
   #images?: ImagesService;
   #logger?: Logger;
 
@@ -38,7 +50,9 @@ export class Services {
         throw new Error("Database services require logger configuration.");
       }
 
-      this.#db = createDbServices(createDb(config.db), this.#logger);
+      const db = createDb(config.db);
+      this.#db = createDbServices(db, this.#logger);
+      this.#flags = createFeatureFlagsService(db, this.#db.users, this.#logger);
     }
 
     if (config.images) {
@@ -68,6 +82,16 @@ export class Services {
     }
 
     return this.#logger;
+  }
+
+  get flags(): FeatureFlagsService {
+    if (!this.#flags) {
+      throw new Error(
+        "Feature flag services have not been configured. Import the app-local services module and provide database configuration before using s.flags.",
+      );
+    }
+
+    return this.#flags;
   }
 
   get images(): ImagesService {

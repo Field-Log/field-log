@@ -15,6 +15,7 @@ export function readProcessScraperRuntimeEnv() {
     LOGGER: process.env.LOGGER,
     LOG_LEVEL: process.env.LOG_LEVEL,
     PORT: process.env.PORT,
+    REDIS: process.env.REDIS,
     REDIS_URL: process.env.REDIS_URL,
     SCRAPER_AUTMOG_INTERVAL_MINUTES:
       process.env.SCRAPER_AUTMOG_INTERVAL_MINUTES,

@@ -17,16 +17,13 @@ export const loggerMessages = {
         migrationsApplied: "ci.database.preview.migrations.applied",
         noPrBranchNeeded: "ci.database.preview.noPrBranch.needed",
         prBranchReused: "ci.database.preview.prBranch.reused",
-        stagingDatabaseSelected: "ci.database.preview.stagingDatabase.selected",
+        databaseSelected: "ci.database.preview.database.selected",
+        reset: "ci.database.preview.reset",
+        sharedDatabaseSelected: "ci.database.preview.sharedDatabase.selected",
       },
       production: {
         databaseSelected: "ci.database.production.database.selected",
         migrationsApplied: "ci.database.production.migrations.applied",
-      },
-      staging: {
-        databaseSelected: "ci.database.staging.database.selected",
-        migrationsApplied: "ci.database.staging.migrations.applied",
-        reset: "ci.database.staging.reset",
       },
     },
     github: {
@@ -45,13 +42,29 @@ export const loggerMessages = {
   },
   common: {},
   database: {
+    featureFlags: {
+      archive: "database.featureFlags.archive",
+      create: "database.featureFlags.create",
+      evaluate: "database.featureFlags.evaluate",
+      listAdmin: "database.featureFlags.listAdmin",
+      listAdminTargetingForUser:
+        "database.featureFlags.listAdminTargetingForUser",
+      listUserBeta: "database.featureFlags.listUserBeta",
+      setAdminOverride: "database.featureFlags.setAdminOverride",
+      setUserPreference: "database.featureFlags.setUserPreference",
+      update: "database.featureFlags.update",
+    },
     userSettings: {
       getByClerkId: "database.userSettings.getByClerkId",
       upsertForClerkId: "database.userSettings.upsertForClerkId",
     },
     users: {
       ensure: "database.users.ensure",
+      getByClerkId: "database.users.getByClerkId",
     },
+  },
+  featureFlags: {
+    evaluationFailedClosed: "featureFlags.evaluation.failedClosed",
   },
   images: {
     delete: "images.delete",
@@ -62,6 +75,7 @@ export const loggerMessages = {
     authSignInFailed: "mobile.auth.signIn.failed",
     databaseInitFailed: "mobile.database.init.failed",
     exportFailed: "mobile.export.failed",
+    featureFlagsFetchFailed: "mobile.featureFlags.fetch.failed",
     screenViewed: "mobile.screen.viewed",
     syncUploadFailed: "mobile.sync.upload.failed",
     versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",

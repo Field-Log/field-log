@@ -27,7 +27,8 @@ type AxiomTabularResponse = {
   tables?: AxiomTable[];
 };
 
-const requiredDataset = "testing";
+const requiredDataset =
+  process.env.LOGGER_AXIOM_EXPECTED_DATASET ?? "development";
 const requiredLogLevel = "trace";
 const defaultTimeoutMs = 90_000;
 const defaultPollIntervalMs = 5_000;
@@ -397,7 +398,7 @@ async function queryAxiom(input: {
 }): Promise<QueryRow[]> {
   const domain = input.config.edgeDomain ?? "api.axiom.co";
   const apl = [
-    `['${input.config.dataset}']`,
+    `[${quoteAplString(input.config.dataset)}]`,
     `| where message contains ${quoteAplString(input.runPrefix)}`,
     "| limit 100",
   ].join("\n");
