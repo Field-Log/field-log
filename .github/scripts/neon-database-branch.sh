@@ -5,7 +5,7 @@ set -euo pipefail
 NEON_API_BASE="${NEON_API_BASE:-https://console.neon.tech/api/v2}"
 MAX_NEON_BRANCHES="${MAX_NEON_BRANCHES:-10}"
 PRODUCTION_BRANCH_NAME="${PRODUCTION_BRANCH_NAME:-production}"
-STAGING_BRANCH_NAME="${STAGING_BRANCH_NAME:-staging}"
+PREVIEW_BRANCH_NAME="${PREVIEW_BRANCH_NAME:-preview}"
 
 require_env() {
   local name="$1"
@@ -271,8 +271,8 @@ prepare_preview() {
   branch_names="$(branch_names_from_list "$branches_json")"
   local production_branch_id
   production_branch_id="$(branch_id_from_list "$branches_json" "$PRODUCTION_BRANCH_NAME")"
-  local staging_branch_id
-  staging_branch_id="$(branch_id_from_list "$branches_json" "$STAGING_BRANCH_NAME")"
+  local preview_branch_id
+  preview_branch_id="$(branch_id_from_list "$branches_json" "$PREVIEW_BRANCH_NAME")"
   local target_branch_id
   target_branch_id="$(branch_id_from_list "$branches_json" "$target_branch")"
 
@@ -281,8 +281,8 @@ prepare_preview() {
     exit 1
   fi
 
-  if [[ -z "$staging_branch_id" ]]; then
-    echo "Neon branch ${STAGING_BRANCH_NAME} was not found." >&2
+  if [[ -z "$preview_branch_id" ]]; then
+    echo "Neon branch ${PREVIEW_BRANCH_NAME} was not found." >&2
     exit 1
   fi
 
@@ -290,7 +290,7 @@ prepare_preview() {
   write_multiline_output branch_names "$branch_names"
   write_output target_branch "$target_branch"
   write_output production_branch_id "$production_branch_id"
-  write_output staging_branch_id "$staging_branch_id"
+  write_output preview_branch_id "$preview_branch_id"
   write_output branch_created false
 
   if [[ "$DB_CHANGING" != "true" ]]; then
@@ -299,17 +299,17 @@ prepare_preview() {
       --arg target_branch "$target_branch" \
       '{pullRequestNumber: $pr_number, targetBranch: $target_branch}')"
     delete_branch_if_exists "$target_branch" "$branches_json"
-    local staging_uri
-    staging_uri="$(connection_uri "$staging_branch_id")"
+    local preview_uri
+    preview_uri="$(connection_uri "$preview_branch_id")"
     write_output can_deploy true
     write_output isolated false
-    write_branch_metadata "$STAGING_BRANCH_NAME" "$staging_branch_id" "$PRODUCTION_BRANCH_NAME"
-    emit_ci_log info "ci.database.preview.stagingDatabase.selected" "$(jq -n \
-      --arg branch_name "$STAGING_BRANCH_NAME" \
-      --arg branch_id "$staging_branch_id" \
+    write_branch_metadata "$PREVIEW_BRANCH_NAME" "$preview_branch_id" "$PRODUCTION_BRANCH_NAME"
+    emit_ci_log info "ci.database.preview.sharedDatabase.selected" "$(jq -n \
+      --arg branch_name "$PREVIEW_BRANCH_NAME" \
+      --arg branch_id "$preview_branch_id" \
       --arg parent_branch "$PRODUCTION_BRANCH_NAME" \
       '{branchName: $branch_name, branchId: $branch_id, parentBranch: $parent_branch}')"
-    mask_and_output_database_url "$staging_uri"
+    mask_and_output_database_url "$preview_uri"
     return
   fi
 
@@ -419,8 +419,8 @@ branch_url() {
 
   write_branch_metadata "$BRANCH_NAME" "$branch_id"
   local event_message="ci.database.production.database.selected"
-  if [[ "$BRANCH_NAME" == "$STAGING_BRANCH_NAME" ]]; then
-    event_message="ci.database.staging.database.selected"
+  if [[ "$BRANCH_NAME" == "$PREVIEW_BRANCH_NAME" ]]; then
+    event_message="ci.database.preview.database.selected"
   fi
 
   emit_ci_log info "$event_message" "$(jq -n \
@@ -430,7 +430,7 @@ branch_url() {
   mask_and_output_database_url "$uri"
 }
 
-refresh_staging() {
+refresh_preview() {
   require_neon_env
 
   local branches_json
@@ -438,25 +438,25 @@ refresh_staging() {
 
   local production_branch_id
   production_branch_id="$(branch_id_from_list "$branches_json" "$PRODUCTION_BRANCH_NAME")"
-  local staging_branch_id
-  staging_branch_id="$(branch_id_from_list "$branches_json" "$STAGING_BRANCH_NAME")"
+  local preview_branch_id
+  preview_branch_id="$(branch_id_from_list "$branches_json" "$PREVIEW_BRANCH_NAME")"
 
   if [[ -z "$production_branch_id" ]]; then
     echo "Neon branch ${PRODUCTION_BRANCH_NAME} was not found." >&2
     exit 1
   fi
 
-  if [[ -z "$staging_branch_id" ]]; then
-    echo "Neon branch ${STAGING_BRANCH_NAME} was not found." >&2
+  if [[ -z "$preview_branch_id" ]]; then
+    echo "Neon branch ${PREVIEW_BRANCH_NAME} was not found." >&2
     exit 1
   fi
 
   local body
   body="$(jq -n --arg source_branch_id "$production_branch_id" '{source_branch_id: $source_branch_id}')"
 
-  emit_ci_log info "ci.database.staging.reset" "$(jq -n \
-    --arg branch_name "$STAGING_BRANCH_NAME" \
-    --arg branch_id "$staging_branch_id" \
+  emit_ci_log info "ci.database.preview.reset" "$(jq -n \
+    --arg branch_name "$PREVIEW_BRANCH_NAME" \
+    --arg branch_id "$preview_branch_id" \
     --arg source_branch "$PRODUCTION_BRANCH_NAME" \
     --arg source_branch_id "$production_branch_id" \
     '{
@@ -465,16 +465,16 @@ refresh_staging() {
       sourceBranch: $source_branch,
       sourceBranchId: $source_branch_id
     }')"
-  api POST "/projects/${NEON_PROJECT_ID}/branches/${staging_branch_id}/restore" "$body" > /dev/null
-  wait_for_branch_ready "$STAGING_BRANCH_NAME"
+  api POST "/projects/${NEON_PROJECT_ID}/branches/${preview_branch_id}/restore" "$body" > /dev/null
+  wait_for_branch_ready "$PREVIEW_BRANCH_NAME"
 
   local uri
-  uri="$(connection_uri "$staging_branch_id")"
+  uri="$(connection_uri "$preview_branch_id")"
 
-  write_branch_metadata "$STAGING_BRANCH_NAME" "$staging_branch_id" "$PRODUCTION_BRANCH_NAME"
-  emit_ci_log info "ci.database.staging.database.selected" "$(jq -n \
-    --arg branch_name "$STAGING_BRANCH_NAME" \
-    --arg branch_id "$staging_branch_id" \
+  write_branch_metadata "$PREVIEW_BRANCH_NAME" "$preview_branch_id" "$PRODUCTION_BRANCH_NAME"
+  emit_ci_log info "ci.database.preview.database.selected" "$(jq -n \
+    --arg branch_name "$PREVIEW_BRANCH_NAME" \
+    --arg branch_id "$preview_branch_id" \
     --arg parent_branch "$PRODUCTION_BRANCH_NAME" \
     '{branchName: $branch_name, branchId: $branch_id, parentBranch: $parent_branch}')"
   mask_and_output_database_url "$uri"
@@ -490,11 +490,11 @@ case "${1:-}" in
   branch-url)
     branch_url
     ;;
-  refresh-staging)
-    refresh_staging
+  refresh-preview)
+    refresh_preview
     ;;
   *)
-    echo "Usage: $0 {prepare-preview|cleanup-preview|branch-url|refresh-staging}" >&2
+    echo "Usage: $0 {prepare-preview|cleanup-preview|branch-url|refresh-preview}" >&2
     exit 1
     ;;
 esac

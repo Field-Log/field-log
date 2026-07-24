@@ -18,10 +18,6 @@ export const openApiDocumentConfig = {
       description: "Production",
     },
     {
-      url: "https://api.staging.field-log.app",
-      description: "Staging",
-    },
-    {
       url: "http://localhost:4006",
       description: "Local development",
     },

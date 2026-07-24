@@ -32,7 +32,7 @@ describe("api worker", () => {
       },
       {
         APP_ENV: "preview",
-        AXIOM_DATASET: "testing",
+        AXIOM_DATASET: "preview",
         AXIOM_TOKEN: "xaat-example",
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
       },
@@ -40,7 +40,7 @@ describe("api worker", () => {
 
     expect(requests).toHaveLength(1);
     expect(requests[0]?.input).toBe(
-      "https://api.axiom.co/v1/datasets/testing/ingest",
+      "https://api.axiom.co/v1/datasets/preview/ingest",
     );
     expect(requests[0]?.body).toEqual([
       expect.objectContaining({
@@ -110,7 +110,7 @@ describe("api worker", () => {
         method: "POST",
       }),
       {
-        AXIOM_DATASET: "testing",
+        AXIOM_DATASET: "preview",
         AXIOM_TOKEN: "xaat-example",
         DATABASE_URL: "not-a-url",
         LOGGER: "not-a-logger",
@@ -128,7 +128,7 @@ describe("api worker", () => {
     });
     expect(requests).toHaveLength(1);
     expect(requests[0]?.input).toBe(
-      "https://api.axiom.co/v1/datasets/testing/ingest",
+      "https://api.axiom.co/v1/datasets/preview/ingest",
     );
     expect(requests[0]?.body).toEqual([
       expect.objectContaining({
@@ -185,7 +185,7 @@ describe("api worker", () => {
         scheduledTime: Date.parse("2026-07-07T12:00:00.000Z"),
       },
       {
-        AXIOM_DATASET: "testing",
+        AXIOM_DATASET: "preview",
         AXIOM_TOKEN: "xaat-example",
         DATABASE_URL: "not-a-url",
         LOGGER: "not-a-logger",
