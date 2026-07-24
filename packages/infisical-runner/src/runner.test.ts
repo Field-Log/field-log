@@ -8,6 +8,23 @@ import {
   validateSecretPaths,
 } from "./runner.js";
 
+function getEnvAliasRunnerOptions(args: readonly string[]) {
+  const runnerIndex = args.findIndex((arg) =>
+    arg.endsWith("/packages/infisical-runner/src/env-alias-runner.ts"),
+  );
+
+  if (runnerIndex === -1) {
+    throw new Error("env-alias-runner was not included in args.");
+  }
+
+  return JSON.parse(args[runnerIndex + 1] ?? "{}") as {
+    databaseUrlUserOverride?: boolean;
+    databaseUrlUserOverridePath?: string;
+    environmentSlug?: string;
+    secretPaths?: string[];
+  };
+}
+
 describe("parseCliArguments", () => {
   it("parses the app, command, and wrapped command", () => {
     expect(parseCliArguments(["web", "dev", "--", "vite", "dev"])).toEqual({
@@ -26,22 +43,32 @@ describe("parseCliArguments", () => {
 
 describe("buildInfisicalRunArgs", () => {
   it("builds Infisical args with the API target path", () => {
-    expect(
-      buildInfisicalRunArgs({
-        app: "api",
-        command: "test",
-        commandArgs: ["vitest", "run"],
-        repoRoot: "/repo",
-      }),
-    ).toEqual([
+    const args = buildInfisicalRunArgs({
+      app: "api",
+      command: "test",
+      commandArgs: ["vitest", "run"],
+      repoRoot: "/repo",
+    });
+
+    expect(args).toEqual([
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
       "--path=/apps/api",
       "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
       "vitest",
       "run",
     ]);
+    expect(getEnvAliasRunnerOptions(args)).toMatchObject({
+      databaseUrlUserOverride: true,
+      databaseUrlUserOverridePath: "/local/database",
+      environmentSlug: "dev",
+      secretPaths: ["/apps/api"],
+    });
   });
 
   it("rejects unknown app commands", () => {
@@ -99,8 +126,61 @@ describe("buildInfisicalRunArgs", () => {
       "--env=dev",
       "--path=/apps/web",
       "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
       "vite",
       "build",
+    ]);
+  });
+
+  it("builds scraper source commands from the scraper target path", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "scraper",
+        command: "scrape",
+        commandArgs: ["tsx", "apps/scraper/src/cli.ts", "scrape", "autmog"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/scraper",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "tsx",
+      "apps/scraper/src/cli.ts",
+      "scrape",
+      "autmog",
+    ]);
+  });
+
+  it("builds scraper dead-letter processor commands from the scraper target path", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "scraper",
+        command: "process:dead-letter",
+        commandArgs: ["tsx", "apps/scraper/src/cli.ts", "process:dead-letter"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/scraper",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "tsx",
+      "apps/scraper/src/cli.ts",
+      "process:dead-letter",
     ]);
   });
 
@@ -302,6 +382,74 @@ describe("buildInfisicalRunArgs", () => {
       "start",
       "--web",
     ]);
+  });
+
+  it("builds database migrate args with the database URL user override", () => {
+    const args = buildInfisicalRunArgs({
+      app: "database",
+      command: "db:migrate",
+      commandArgs: ["drizzle-kit", "migrate", "--config=drizzle.config.ts"],
+      repoRoot: "/repo",
+    });
+
+    expect(args).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/api",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "drizzle-kit",
+      "migrate",
+      "--config=drizzle.config.ts",
+    ]);
+    expect(getEnvAliasRunnerOptions(args)).toMatchObject({
+      databaseUrlUserOverride: true,
+      databaseUrlUserOverridePath: "/local/database",
+      environmentSlug: "dev",
+      secretPaths: ["/apps/api"],
+    });
+  });
+
+  it("builds database studio args with the database URL user override", () => {
+    const args = buildInfisicalRunArgs({
+      app: "database",
+      command: "db:studio",
+      commandArgs: [
+        "drizzle-kit",
+        "studio",
+        "--config=drizzle.config.ts",
+        "--host=127.0.0.1",
+        "--port=4009",
+      ],
+      repoRoot: "/repo",
+    });
+
+    expect(args).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/apps/api",
+      "--",
+      "tsx",
+      "/repo/packages/infisical-runner/src/env-alias-runner.ts",
+      expect.stringContaining("databaseUrlUserOverride"),
+      "--",
+      "drizzle-kit",
+      "studio",
+      "--config=drizzle.config.ts",
+      "--host=127.0.0.1",
+      "--port=4009",
+    ]);
+    expect(getEnvAliasRunnerOptions(args)).toMatchObject({
+      databaseUrlUserOverride: true,
+      databaseUrlUserOverridePath: "/local/database",
+      environmentSlug: "dev",
+      secretPaths: ["/apps/api"],
+    });
   });
 });
 

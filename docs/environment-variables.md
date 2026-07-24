@@ -18,6 +18,8 @@ Required values use these labels:
 | Service | URL | Notes |
 | --- | --- | --- |
 | API Worker | `http://localhost:4006` | Wrangler dev server for `apps/api`. |
+| Scraper | `http://localhost:4007` | Railway-targeted health service in `apps/scraper`. |
+| Scraper Redis | `redis://localhost:4008` | Docker/OrbStack Redis for local scraper queues. |
 | Web | `http://localhost:4005` | TanStack Start app in `apps/web`. |
 
 Logging environment variables, Axiom setup, and client proxy configuration are
@@ -44,6 +46,7 @@ secret syncs.
 | `AXIOM_TOKEN` | Axiom ingest token for server-side web logs. | ? (All) | `S` |
 | `CLERK_SECRET_KEY` | Clerk server SDK secret key. | All | `S` |
 | `DATABASE_URL`[^1] | Web server runtime database connection. | All | `S` |
+| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY`[^2] | Client key aliased into the web client log proxy config. | ? (All) | `C` |
@@ -78,6 +81,72 @@ workflows through Wrangler secret files.
 | `MOBILE_UPDATE_SEVERITY` | Mobile update prompt severity: `none`, `recommended`, or `required`. | ? (Prod) | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
+
+### Scraper App: `/apps/scraper`
+
+`apps/scraper` runs as one Railway cron service. Railway starts it every 15
+minutes, the scraper runs due source jobs and queue processing, then the process
+exits.
+
+Use Infisical path `/apps/scraper` for local development and non-Railway secret
+source of truth. In Railway, prefer service references for platform-provided
+values such as Redis connection strings.
+
+| Variable | What it is for | Required | Important notes |
+| --- | --- | --- | --- |
+| `APP_ENV` | Runtime environment label for scraper logs. | All | `S` |
+| `AXIOM_DATASET` | Axiom dataset for scraper logs. | ? (All) | `S` |
+| `AXIOM_EDGE_DOMAIN` | Axiom edge domain. | ? (All) | `S` |
+| `AXIOM_TOKEN` | Axiom ingest token for scraper logs. | ? (All) | `S` |
+| `DATABASE_URL` | Scraper database connection string. | All | `S` |
+| `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
+| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key. See [ImageKit](./image-kit.md). | All | `S` |
+| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key. See [ImageKit](./image-kit.md). | All | `C` |
+| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
+| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint. See [ImageKit](./image-kit.md). | All | `C` |
+| `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
+| `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |
+| `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
+| `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval used by `cron:run`. Defaults to `60`; the first cron execution after fresh Redis state runs Autmog immediately. | ? (All) | `S` |
+| `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape for the legacy in-process scheduler. Defaults to `0`; not used by Railway cron. | ? (All) | `S` |
+| `SCRAPER_DRY_RUN` | When `true`, processor jobs write DB/queue state but skip image upload/delete mutations. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_FJELL_START_DELAY_SECONDS` | Optional Grimsmo Fjell first-run offset. Defaults to `1800`; Railway cron and the legacy scheduler use it to stagger Fjell around 30 minutes past the hour. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_INTERVAL_MINUTES` | Optional Grimsmo scrape interval for Saga, Rask, Fjell, and Norseman. Defaults to `60`. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_NORSEMAN_START_DELAY_SECONDS` | Optional Grimsmo Norseman first-run offset. Defaults to `2700`; Railway cron and the legacy scheduler use it to stagger Norseman around 45 minutes past the hour. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_RASK_START_DELAY_SECONDS` | Optional Grimsmo Rask first-run offset. Defaults to `900`; Railway cron and the legacy scheduler use it to stagger Rask around 15 minutes past the hour. | ? (All) | `S` |
+| `SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS` | Optional Grimsmo Saga first-run offset. Defaults to `0`; Railway cron and the legacy scheduler use it to run Saga at the top of the hour. | ? (All) | `S` |
+| `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
+| `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
+| `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval for the legacy in-process scheduler. Railway cron uses the `*/15 * * * *` schedule in `railway.json`. | ? (All) | `S` |
+| `SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS` | Optional delay before the first queue processor run for the legacy in-process scheduler. Defaults to `30`; not used by Railway cron. | ? (All) | `S` |
+| `SCRAPER_QUEUE_CONCURRENCY` | Optional BullMQ worker concurrency cap. Recommended initial value: `3`. | ? (All) | `S` |
+| `SCRAPER_SCHEDULER_ENABLED` | Enables the legacy in-process scrape and processor schedules for the non-cron server command. Railway cron does not use this. | ? (All) | `S` |
+
+Legend: `S` = server-only. `C` = client-visible.
+
+See [railway.md](./railway.md) for Railway service and cron setup.
+
+For Railway preview and production, prefer a Railway service reference rather
+than storing the Redis URL in Infisical. If the Redis service is named
+`scraper-queue`, set this on the scraper service in Railway:
+
+```dotenv
+REDIS_URL=${{scraper-queue.REDIS_URL}}
+```
+
+For local development, use Docker/OrbStack and `pnpm dev:scraper`; see
+[docker.md](./docker.md).
+
+For local manual source runs, use the root scraper commands. They start or reuse
+the local Docker/OrbStack Redis container and inject `/apps/scraper` values from
+Infisical:
+
+```sh
+pnpm scraper:scrape -- autmog
+pnpm scraper:process
+pnpm scraper:process:dead-letter
+```
 
 ### Cloudflare Deploy Tools: `/tools/cloudflare`
 
@@ -148,8 +217,20 @@ that do not need database credentials can still run.
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `DATABASE_URL`[^5] | Drizzle migration and database command connection string. | All | `S` |
+| `DATABASE_URL_<INITIALS>` | Optional personal dev database override stored only in Infisical environment `dev` at `/local/database`. Infisical-wrapped database, API, web, and scraper commands check this shared path regardless of their app secret path. For example, `DATABASE_URL_RA` overrides `DATABASE_URL` when the runner resolves the suffix `RA`. | ? (Dev) | `S` |
+| `INFISICAL_DATABASE_URL_SUFFIX` | Optional local suffix override for personal database URLs. For example, set `INFISICAL_DATABASE_URL_SUFFIX=RA` to make the runner look for `DATABASE_URL_RA`. If omitted, the runner tries `git config user.initials`, then initials derived from `git config user.name`. | ? (Dev) | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
+
+The personal database override is applied after Infisical injects secrets and
+before the wrapped command starts. If the suffixed variable is missing, the
+command keeps using `DATABASE_URL`. When an override is used, the runner prints
+the variable name and Infisical path, for example `DATABASE_URL_RA` from
+`/local/database`, without printing the secret value. Do not store
+`DATABASE_URL_<INITIALS>` in app paths such as `/apps/api`, `/apps/web`, or
+`/apps/scraper`; the runner does not check those paths for personal database
+overrides. When the suffixed variable is missing, the runner prints the
+Infisical path it checked and that it is falling back to `DATABASE_URL`.
 
 ### FigJam / Figma Agent Bridge: `/local/figma`
 
@@ -186,16 +267,20 @@ Legend: `S` = server-only. `C` = client-visible.
 
 ## GitHub Repository Configuration
 
-Repository variables and secrets configure deploy automation, PR comments,
-Neon branch management, Vercel branch environment variables, and GitHub Discord
-notifications.
+GitHub repository configuration is stored in Infisical Production at
+`/tools/github/secrets` and synced to GitHub repository secrets. GitHub
+repository variables are not used because Infisical syncs to secrets only.
 
-### Repository Variables
+These secrets configure deploy automation, PR comments, Neon branch management,
+Vercel branch environment variables, Railway preview services, and GitHub
+Discord notifications.
 
-| Variable | What it is for | Required | Important notes |
+| Secret | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for API preview comments. | Stg | `S` |
+| `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Stg | `S` |
 | `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for DB preview comments. | Stg | `S` |
+| `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Stg | `S` |
 | `INFISICAL_CLOUDFLARE_IDENTITY_ID` | Infisical OIDC identity for Cloudflare/API deploy secrets. | Stg, Prod | `S` |
 | `INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID` | Infisical OIDC identity for Discord webhook delivery. | All | `S` |
 | `INFISICAL_DOMAIN` | Infisical API base URL. | ? (All) | `S` |
@@ -203,21 +288,15 @@ notifications.
 | `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Stg | `S` |
 | `INFISICAL_OIDC_AUDIENCE` | OIDC audience for Infisical auth. | ? (All) | `S` |
 | `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows. | All | `S` |
+| `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Stg, Prod | `S` |
 | `NEON_DATABASE_NAME` | Neon `PGDATABASE` value used for connection URI lookup. | Stg, Prod | `S` |
 | `NEON_DATABASE_USER` | Neon `PGUSER` value used for connection URI lookup. | Stg, Prod | `S` |
 | `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
-| `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg | `S` |
+| `RAILWAY_API_TOKEN` | Authenticates Railway CLI calls for scraper preview service variables. | Stg | `S` |
+| `RAILWAY_PROJECT_ID` | Railway project that owns scraper preview environments. | Stg | `S` |
+| `RAILWAY_SCRAPER_SERVICE_NAME` | Railway scraper cron service name inside preview environments. | Stg | `S` |
+| `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg, Prod | `S` |
 | `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls and as `VERCEL_ORG_ID` to Vercel CLI release deploys. | Stg, Prod | `S` |
-
-Legend: `S` = server-only. `C` = client-visible.
-
-### Repository Secrets
-
-| Secret | What it is for | Required | Important notes |
-| --- | --- | --- | --- |
-| `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Stg | `S` |
-| `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Stg | `S` |
-| `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Stg, Prod | `S` |
 | `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars, deployment lookup, and CLI production deploys. | Stg, Prod | `S` |
 
 Legend: `S` = server-only. `C` = client-visible.
@@ -226,9 +305,9 @@ Legend: `S` = server-only. `C` = client-visible.
 
 1. Open Vercel account settings and go to the Access Tokens area.[^6]
 2. Create a token for the team that owns the web project.
-3. Copy the token once and save it as the repository secret `VERCEL_TOKEN`.
-4. Keep `VERCEL_TEAM_ID` and `VERCEL_PROJECT_ID` as repository variables. Use
-   the exact `team_...` ID, not the team slug/name or surrounding label text.
+3. Copy the token once and save it in Infisical as `VERCEL_TOKEN`.
+4. Keep `VERCEL_TEAM_ID` and `VERCEL_PROJECT_ID` in the same Infisical path.
+   Use the exact `team_...` ID, not the team slug/name or surrounding label text.
 5. Make sure `VERCEL_PROJECT_ID` belongs to `VERCEL_TEAM_ID`; a token for a
    different account or team will receive `401` or `403` from the Vercel API.
 
@@ -242,9 +321,9 @@ GitHub workflows use the token as a bearer token against `https://api.vercel.com
 3. If project-scoped keys are not suitable, use an organization API key created
    by an organization admin.
 4. Copy the token immediately; Neon shows API key tokens only once.
-5. Save the token as the repository secret `NEON_API_KEY`.
+5. Save the token in Infisical as `NEON_API_KEY`.
 6. Keep `NEON_PROJECT_ID`, `NEON_DATABASE_NAME`, and `NEON_DATABASE_USER` as
-   repository variables.
+   GitHub secrets synced from Infisical.
 
 ## Platform-Provided Or Managed Values
 
@@ -261,6 +340,10 @@ a workflow explicitly starts requiring that.
 | `GITHUB_RUN_ID` | Workflow run ID for links. | GitHub Actions | `S` |
 | `GITHUB_SERVER_URL` | GitHub server base URL. | GitHub Actions | `S` |
 | `GITHUB_SHA` | Commit SHA for links. | GitHub Actions | `S` |
+| `RAILWAY_ENVIRONMENT_NAME` | Railway environment name for the deployed scraper service. | Railway | `S` |
+| `RAILWAY_PROJECT_ID` | Railway project identifier for the deployed scraper service. | Railway | `S` |
+| `RAILWAY_SERVICE_ID` | Railway service identifier for the deployed scraper service. | Railway | `S` |
+| `RAILWAY_SERVICE_NAME` | Railway service name for the deployed scraper service. | Railway | `S` |
 | `VERCEL_ENV` | Vercel deployment environment. | Vercel | `S` |
 | `VERCEL_GIT_PULL_REQUEST_ID` | Pull request number for Vercel Preview builds. | Vercel | `S` |
 | `VERCEL_PROJECT_PRODUCTION_URL`[^8] | Vercel production domain. | Vercel | `S` |

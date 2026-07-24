@@ -455,7 +455,7 @@ async function listOverridesForUser(
   input: {
     flagIds: string[];
     source?: "admin" | "user";
-    userId: string;
+    userId: number;
   },
 ): Promise<OverrideRow[]> {
   if (input.flagIds.length === 0) {
@@ -488,7 +488,7 @@ async function upsertOverride(
     enabled: boolean;
     flagId: string;
     source: "admin" | "user";
-    userId: string;
+    userId: number;
   },
 ) {
   await db

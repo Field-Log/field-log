@@ -3,7 +3,7 @@ CREATE TYPE "public"."feature_flag_override_source" AS ENUM('admin', 'user');-->
 CREATE TABLE "feature_flag_user_overrides" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"flag_id" uuid NOT NULL,
-	"user_id" uuid NOT NULL,
+	"user_id" bigint NOT NULL,
 	"source" "feature_flag_override_source" NOT NULL,
 	"enabled" boolean NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,

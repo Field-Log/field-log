@@ -1,4 +1,5 @@
 import {
+  bigint,
   boolean,
   pgEnum,
   pgTable,
@@ -45,7 +46,7 @@ export const featureFlagUserOverrides = pgTable(
     flagId: uuid("flag_id")
       .notNull()
       .references(() => featureFlags.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
+    userId: bigint("user_id", { mode: "number" })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     source: featureFlagOverrideSourceEnum("source").notNull(),

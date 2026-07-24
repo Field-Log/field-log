@@ -39,8 +39,7 @@ describe("logger", () => {
               "ci.database.preview.changeDetection.completed",
             migrationsApplied: "ci.database.preview.migrations.applied",
             noPrBranchNeeded: "ci.database.preview.noPrBranch.needed",
-            prBranchRecreateRequested:
-              "ci.database.preview.prBranchRecreate.requested",
+            prBranchReused: "ci.database.preview.prBranch.reused",
             stagingDatabaseSelected:
               "ci.database.preview.stagingDatabase.selected",
           },
@@ -88,6 +87,25 @@ describe("logger", () => {
         syncUploadFailed: "mobile.sync.upload.failed",
         versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",
         versionPolicyStoreOpenFailed: "mobile.versionPolicy.storeOpen.failed",
+      },
+      scraper: {
+        cron: {
+          completed: "scraper.cron.completed",
+          failed: "scraper.cron.failed",
+          started: "scraper.cron.started",
+          taskCompleted: "scraper.cron.task.completed",
+          taskFailed: "scraper.cron.task.failed",
+          taskSkipped: "scraper.cron.task.skipped",
+          taskStarted: "scraper.cron.task.started",
+        },
+        processor: {
+          errorSummary: "scraper.processor.errors.summary",
+        },
+        queue: {
+          deadLetterCompleted: "scraper.queue.deadLetter.completed",
+          deadLetterFailed: "scraper.queue.deadLetter.failed",
+          deadLetterStarted: "scraper.queue.deadLetter.started",
+        },
       },
       web: {
         accountLoaded: "web.account.loaded",

@@ -28,6 +28,9 @@ packages/database/
 ## Schema Files
 
 - Table schema files define Drizzle table objects and inferred row types.
+- `src/schema/scraper.ts` defines scraper-owned tables, including `makers`,
+  `scraper_runs`, source-specific temporary product tables, `tmp_products`,
+  `tmp_product_variations`, `tmp_images`, and version history tables.
 - `src/schema/enums.ts` defines TypeScript constants and types for allowed setting values.
 - `src/schema/relations.ts` defines Drizzle relationships between tables.
 - `src/schema/index.ts` re-exports all schema objects for Drizzle config and package consumers.
@@ -48,7 +51,9 @@ const db = createDb({
 ```
 
 `DATABASE_URL` is stored in Infisical at `/apps/api` for API and migration
-commands. The web app keeps its deploy copy in `/apps/web`.
+commands. The web app keeps its deploy copy in `/apps/web`. The Railway scraper
+app keeps its runtime copy in `/apps/scraper`, or receives the equivalent value
+through Railway service configuration.
 
 ## Migrations
 
@@ -67,7 +72,8 @@ pnpm db:migrate
 ```
 
 `pnpm db:migrate` runs through the Infisical runner so `DATABASE_URL` is loaded
-from `/apps/api`.
+from `/apps/api`. Personal developer overrides such as `DATABASE_URL_RA` are
+looked up only from `/local/database`.
 
 Generated migration files are committed under `packages/database/drizzle/`. Schema source of truth remains in `packages/database/src/schema/`.
 
@@ -78,6 +84,107 @@ pnpm --filter @package/database exec drizzle-kit check --config=drizzle.config.t
 ```
 
 This fails inconsistent Drizzle migration history before merge.
+
+## Database Viewer
+
+Run Drizzle Studio, Drizzle Lab Visualizer, and Drizzle View together:
+
+```sh
+pnpm db:view
+```
+
+The root command delegates to `@package/database`, where the individual viewer
+commands live:
+
+| Command | Purpose | Port |
+| --- | --- | --- |
+| `pnpm --filter @package/database db:studio` | Runs `drizzle-kit studio` from `packages/database` through the Infisical runner. | `4009` |
+| `pnpm --filter @package/database db:visualizer` | Runs `drizzle-lab visualizer` against `packages/database/drizzle.config.ts`. | `4010` |
+| `pnpm --filter @package/database db:view:shell` | Runs `drizzle-view` with Studio and Visualizer URLs wired in. | `4011` |
+
+`pnpm db:view` starts Studio and Visualizer first, waits for both TCP ports with
+`wait-on`, then starts the Drizzle View shell. Open
+`http://127.0.0.1:4011` for the combined view.
+
+Drizzle Studio's browser UI is loaded through
+`https://local.drizzle.studio?port=4009`. Do not point Drizzle View at
+`http://127.0.0.1:4009`; that port is the local Studio bridge endpoint and can
+return an empty browser response.
+
+The Drizzle View npm package downloads its platform binary from GitHub on first
+run. The repo wrapper at `scripts/drizzle-view.mjs` removes incomplete zero-byte
+downloads and fixes executable permissions before delegating to the pinned
+`drizzle-view` CLI.
+
+## Schema Docs
+
+`pnpm db:generate` refreshes both Drizzle migration artifacts and generated
+Markdown schema docs. The docs generator reads the latest committed Drizzle
+snapshot metadata, combines it with the human-authored description map, and
+writes one Markdown file per table under `docs/database-schema/`.
+
+Drizzle supplies table names, column names, data types, nullability, defaults,
+primary keys, foreign keys, indexes, and unique constraints. The metadata map
+supplies the business meaning that cannot be inferred from SQL:
+
+```txt
+packages/database/src/schema/descriptions.ts
+```
+
+Metadata shape:
+
+```ts
+export const schemaDescriptions = {
+  tmp_images: {
+    description:
+      "Temporary scraper image rows shared by all scraped products and variations.",
+    columns: {
+      id: {
+        description: "Internal image row identifier.",
+        example: 1000,
+      },
+      product_id: {
+        description: "Generic temporary product row this image belongs to.",
+        example: 1000,
+      },
+      product_variation_id: {
+        description:
+          "Generic temporary variation row this image belongs to, when present.",
+        example: 1001,
+      },
+      source_hash: {
+        description: "Stable hash of the source image identity used to dedupe image rows.",
+        example: "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
+      },
+      image_kit_url: {
+        description: "Optimized uploaded image URL.",
+        example: "https://example.invalid/uploaded-image.webp",
+      },
+    },
+  },
+} as const;
+```
+
+Generated table docs include column metadata like this:
+
+| Column | Type | Required | Key | Default | Relation | Description | Example |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `id` | `bigint` | yes | PK |  |  | Internal image row identifier. | `1000` |
+| `product_id` | `bigint` | yes | FK |  | `tmp_products.id` | Generic temporary product row this image belongs to. | `1000` |
+| `product_variation_id` | `bigint` | no | FK |  | `tmp_product_variations.id` | Generic temporary variation row this image belongs to, when present. | `1001` |
+| `source_hash` | `text` | yes |  |  |  | Stable hash of the source image identity used to dedupe image rows. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
+| `image_kit_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://example.invalid/uploaded-image.webp` |
+
+Foreign-key relations should be generated from Drizzle snapshot metadata. For
+example, `tmp_images.product_id` should render as a relation to
+`tmp_products.id` without manually duplicating that relationship in the
+description map.
+
+Refresh only the Markdown schema docs without generating migrations:
+
+```sh
+pnpm --filter @package/database db:generate:docs
+```
 
 ## Neon Branches
 
@@ -95,16 +202,22 @@ Local development should use a developer branch. `drizzle-kit push` is allowed
 only against developer branches for rapid iteration. Before opening or updating
 a PR with schema changes, generate committed migrations with `pnpm db:generate`.
 
-PR branches are disposable. On each DB-changing PR update, the API deploy
-workflow recreates `preview-pr-<number>` from `production`, runs committed
-migrations against it, and sets a branch-specific Vercel Preview `DATABASE_URL`
-for the web preview branch. The API preview Worker uses runtime secrets written
-by the API deploy workflow from Infisical, so DB-changing PRs receive the
-matching PR-specific `DATABASE_URL`.
+PR branches are disposable, but DB-changing PR updates reuse the existing
+`preview-pr-<number>` branch when it already exists. The API deploy workflow
+creates the branch from `production` only when missing, runs committed migrations
+against it, deploys the API preview with that `DATABASE_URL`, and sets a
+branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
+same selected `DATABASE_URL` is also pushed into the Railway scraper preview
+environment so scraper cron executions use the same database branch as the API
+and web previews. See [ImageKit](./image-kit.md) for the matching preview image
+folder namespace. The API preview Worker uses the preview runtime secrets
+managed by Infisical Secrets Sync; the workflow does not write PR-specific
+`DATABASE_URL` values to Cloudflare Worker secrets.
 
 When a PR has no DB changes, the API preview uses the shared `staging` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch
-database overrides.
+database overrides. The Railway scraper preview environment is updated to the
+selected shared `staging` `DATABASE_URL` in that case.
 
 ## Parallel DB PRs
 
