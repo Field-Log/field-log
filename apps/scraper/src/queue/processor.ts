@@ -74,12 +74,34 @@ export type RunQueueDeadLetterProcessorResult = {
 
 export type ProcessorErrorSummary = {
   errorsByMessage: Record<string, number>;
+  sampleErrors: ProcessorErrorSample[];
   totalErrors: number;
 };
 
 type ProcessorErrorCounter = {
-  record: (message: string) => void;
+  record: (message: string, sample?: ProcessorErrorSampleInput) => void;
   summary: () => ProcessorErrorSummary;
+};
+type ProcessorErrorSample = {
+  error?: {
+    cause?: {
+      message: string;
+      name: string;
+    };
+    message: string;
+    name: string;
+  };
+  imageId?: number;
+  jobId?: string;
+  message: string;
+  source?: string;
+  type?: string;
+};
+type ProcessorErrorSampleInput = Omit<
+  ProcessorErrorSample,
+  "error" | "message"
+> & {
+  error?: unknown;
 };
 type ImageJobResult = "completed" | "skipped";
 
@@ -515,7 +537,12 @@ async function processItemJob({
       },
     });
   } catch (error) {
-    errorCounter.record(loggerMessages.scraper.database.mutationFailed);
+    errorCounter.record(loggerMessages.scraper.database.mutationFailed, {
+      error,
+      jobId: job.id,
+      source: job.data.source,
+      type: job.data.type,
+    });
     logger.error(loggerMessages.scraper.database.mutationFailed, {
       attributes: {
         durationMs: Date.now() - startedAt,
@@ -826,7 +853,12 @@ function logImageJobError({
     ? loggerMessages.scraper.image.uploadFailed
     : loggerMessages.scraper.image.deleteFailed;
 
-  errorCounter.record(primaryErrorMessage);
+  errorCounter.record(primaryErrorMessage, {
+    error,
+    imageId: job.data.imageId,
+    jobId: job.id,
+    type: job.data.type,
+  });
   logger.error(primaryErrorMessage, {
     attributes: {
       durationMs: Date.now() - startedAt,
@@ -892,10 +924,22 @@ function getTmpImageTags({
 
 export function createProcessorErrorCounter(): ProcessorErrorCounter {
   const errorsByMessage = new Map<string, number>();
+  const sampleErrors: ProcessorErrorSample[] = [];
+  const maxSampleErrors = 5;
 
   return {
-    record(message) {
+    record(message, sample) {
       errorsByMessage.set(message, (errorsByMessage.get(message) ?? 0) + 1);
+      if (sample && sampleErrors.length < maxSampleErrors) {
+        sampleErrors.push({
+          ...sample,
+          error:
+            sample.error === undefined
+              ? undefined
+              : formatProcessorErrorForAttributes(sample.error),
+          message,
+        });
+      }
     },
     summary() {
       const entries = [...errorsByMessage.entries()].sort(([left], [right]) =>
@@ -905,12 +949,35 @@ export function createProcessorErrorCounter(): ProcessorErrorCounter {
 
       return {
         errorsByMessage: errors,
+        sampleErrors,
         totalErrors: Object.values(errors).reduce(
           (total, count) => total + count,
           0,
         ),
       };
     },
+  };
+}
+
+function formatProcessorErrorForAttributes(error: unknown) {
+  if (!(error instanceof Error)) {
+    return {
+      message: String(error),
+      name: "Error",
+    };
+  }
+
+  return {
+    ...(error.cause instanceof Error
+      ? {
+          cause: {
+            message: error.cause.message,
+            name: error.cause.name,
+          },
+        }
+      : {}),
+    message: error.message,
+    name: error.name,
   };
 }
 
@@ -956,6 +1023,7 @@ function logProcessorErrorSummary({
       durationMs,
       errorsByMessage: summary.errorsByMessage,
       processor,
+      sampleErrors: summary.sampleErrors,
       totalErrors: summary.totalErrors,
     },
   });
