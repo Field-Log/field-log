@@ -326,7 +326,7 @@ describe("buildInfisicalRunArgs", () => {
       "run",
       "--projectId=project-1",
       "--project-config-dir=/repo",
-      "--env=development",
+      "--env=dev",
       "--path=/tools/logger-axiom-test",
       "--",
       "tsx",
