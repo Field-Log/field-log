@@ -1,6 +1,12 @@
 import { useClerk, useUser } from "@clerk/tanstack-react-start";
 import { Link } from "@tanstack/react-router";
-import { ChevronsUpDown, Folder, LogOut, User } from "lucide-react";
+import {
+  ChevronsUpDown,
+  FlaskConical,
+  Folder,
+  LogOut,
+  User,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -123,6 +129,10 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         <DropdownMenuItem render={<Link to="/user/collections" />}>
           <Folder />
           Collections
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link to="/user/settings/beta-features" />}>
+          <FlaskConical />
+          Beta features
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

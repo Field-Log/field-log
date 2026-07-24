@@ -1,4 +1,5 @@
 import type { Logger } from "@package/logger";
+import type { FeatureFlagsService } from "@package/services";
 import type { Context } from "hono";
 
 export const mobileUpdateSeverities = [
@@ -25,6 +26,12 @@ export type AppRuntimeConfig = {
 
 export type AppDependencies = {
   clientLogKey?: string;
+  getFeatureFlagAuth?: (
+    context: Context,
+  ) => { clerkId: string } | Promise<{ clerkId: string } | null> | null;
+  getFeatureFlagsService?: (
+    context: Context,
+  ) => FeatureFlagsService | Promise<FeatureFlagsService>;
   getRuntimeConfig?: (
     context: Context,
   ) => AppRuntimeConfig | Promise<AppRuntimeConfig>;

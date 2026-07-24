@@ -15,6 +15,7 @@
     "build": "tsc -p tsconfig.json",
     "build:ci": "tsc -p tsconfig.json",
     "check": "biome check .",
+    "cleanup:preview-folder": "tsx src/cleanup-preview-folder.ts",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests --exclude \"dist/**\"",

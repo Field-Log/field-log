@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCommand } from "./cli.js";
+import { formatRedisEnvDebugValue, parseCommand } from "./cli.js";
 
 describe("scraper CLI", () => {
   it("parses Railway cron commands", () => {
@@ -38,6 +38,28 @@ describe("scraper CLI", () => {
   it("parses dead-letter processor commands", () => {
     expect(parseCommand(["process:dead-letter"])).toEqual({
       type: "process:dead-letter",
+    });
+  });
+
+  it("formats Redis env debug values without logging credentials", () => {
+    expect(
+      formatRedisEnvDebugValue("redis://user:password@example.com:6379/0"),
+    ).toEqual({
+      length: 40,
+      present: true,
+      reference: false,
+      value: "redis://redacted:redacted@example.com:6379/0",
+    });
+    const railwayReference = "${{scraper-queue.REDIS_PUBLIC_URL}}";
+
+    expect(formatRedisEnvDebugValue(railwayReference)).toEqual({
+      length: railwayReference.length,
+      present: true,
+      reference: true,
+      value: railwayReference,
+    });
+    expect(formatRedisEnvDebugValue(undefined)).toEqual({
+      present: false,
     });
   });
 });
