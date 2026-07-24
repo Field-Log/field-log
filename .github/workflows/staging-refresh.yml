@@ -119,8 +119,17 @@ jobs:
         run: |
           set -euo pipefail
 
+          for name in CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required in Infisical /apps/api." >&2
+              exit 1
+            fi
+          done
+
           jq -n \
             --arg DATABASE_URL "$STAGING_DATABASE_URL" \
+            --arg CLERK_PUBLISHABLE_KEY "${CLERK_PUBLISHABLE_KEY:-}" \
+            --arg CLERK_SECRET_KEY "${CLERK_SECRET_KEY:-}" \
             --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
             --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
             --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
@@ -134,6 +143,8 @@ jobs:
             --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
             '{
               DATABASE_URL: $DATABASE_URL,
+              CLERK_PUBLISHABLE_KEY: $CLERK_PUBLISHABLE_KEY,
+              CLERK_SECRET_KEY: $CLERK_SECRET_KEY,
               AXIOM_TOKEN: $AXIOM_TOKEN,
               AXIOM_DATASET: $AXIOM_DATASET,
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
@@ -149,7 +160,11 @@ jobs:
             > "$RUNNER_TEMP/api-staging-secrets.json"
 
       - name: Deploy staging Worker
-        run: pnpm dlx wrangler deploy --config apps/api/wrangler.jsonc --env staging
+        run: |
+          pnpm dlx wrangler deploy \
+            --config apps/api/wrangler.jsonc \
+            --env staging \
+            --secrets-file "$RUNNER_TEMP/api-staging-secrets.json"
 
       - name: Smoke test staging Worker
         run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.staging.field-log.app/api/v0/health

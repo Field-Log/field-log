@@ -22,6 +22,7 @@
     "@base-ui/react": "^1.6.0",
     "@clerk/tanstack-react-start": "^1.4.13",
     "@clerk/ui": "^1.24.2",
+    "@package/feature-flags": "workspace:*",
     "@package/logger": "workspace:*",
     "@package/services": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",

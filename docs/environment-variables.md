@@ -60,14 +60,16 @@ Legend: `S` = server-only. `C` = client-visible.
 ### API App: `/apps/api`
 
 `apps/api` runs on Cloudflare Workers. Local development uses Wrangler. Deployed
-Worker runtime secrets are owned by Infisical Secrets Sync for preview, staging,
-and production; deploy commands must not write Worker secrets with Wrangler.
+Worker runtime secrets are read from Infisical and written by deployment
+workflows through Wrangler secret files.
 
 | Variable | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
 | `AXIOM_DATASET` | Axiom dataset for API logs. | ? (All) | `S` |
 | `AXIOM_EDGE_DOMAIN` | Axiom edge domain. | ? (All) | `S` |
 | `AXIOM_TOKEN` | Axiom ingest token for API logs. | ? (All) | `S` |
+| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key used by API Clerk middleware. | All | `C` |
+| `CLERK_SECRET_KEY` | Clerk secret key used by API Clerk middleware. | All | `S` |
 | `DATABASE_URL`[^4] | API database connection string. | All | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
@@ -105,6 +107,7 @@ values such as Redis connection strings.
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |
+| `REDIS` | Optional fallback BullMQ Redis connection string. Railway previews may use this as a shared Redis reference when `REDIS_URL` is not resolved. | ? (All) | `S` |
 | `REDIS_URL` | BullMQ Redis connection string. In Railway, reference the Redis service value. | All | `S` |
 | `SCRAPER_AUTMOG_INTERVAL_MINUTES` | Optional Autmog scrape interval used by `cron:run`. Defaults to `60`; the first cron execution after fresh Redis state runs Autmog immediately. | ? (All) | `S` |
 | `SCRAPER_AUTMOG_START_DELAY_SECONDS` | Optional delay before the first Autmog scrape for the legacy in-process scheduler. Defaults to `0`; not used by Railway cron. | ? (All) | `S` |
@@ -130,8 +133,12 @@ than storing the Redis URL in Infisical. If the Redis service is named
 `scraper-queue`, set this on the scraper service in Railway:
 
 ```dotenv
-REDIS_URL=${{scraper-queue.REDIS_URL}}
+REDIS_URL=${{scraper-queue.REDIS_PUBLIC_URL}}
 ```
+
+If Railway preview environments provide Redis through a shared variable instead,
+the scraper also accepts `REDIS` as a fallback. `REDIS_URL` remains the canonical
+application variable and is preferred when it resolves to a valid Redis URL.
 
 For local development, use Docker/OrbStack and `pnpm dev:scraper`; see
 [docker.md](./docker.md).
@@ -292,7 +299,6 @@ Discord notifications.
 | `NEON_PROJECT_ID` | Neon project managed by DB-aware workflows. | Stg, Prod | `S` |
 | `RAILWAY_API_TOKEN` | Authenticates Railway CLI calls for scraper preview service variables. | Stg | `S` |
 | `RAILWAY_PROJECT_ID` | Railway project that owns scraper preview environments. | Stg | `S` |
-| `RAILWAY_SCRAPER_SERVICE_NAME` | Railway scraper cron service name inside preview environments. | Stg | `S` |
 | `VERCEL_PROJECT_ID` | Vercel project ID for the web app. | Stg, Prod | `S` |
 | `VERCEL_TEAM_ID` | Exact Vercel Team ID, `team_...`, passed as `teamId` to REST API calls and as `VERCEL_ORG_ID` to Vercel CLI release deploys. | Stg, Prod | `S` |
 | `VERCEL_TOKEN` | Authenticates Vercel REST API calls for Preview env vars, deployment lookup, and CLI production deploys. | Stg, Prod | `S` |

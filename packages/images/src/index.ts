@@ -36,8 +36,11 @@ export type ImageUpdateResult = {
   width?: number;
 };
 
+export type ImageFolderDeleteResult = "deleted" | "missing" | "skipped";
+
 export type ImageStorage = {
   deleteFile: (fileId: string) => Promise<"deleted" | "skipped">;
+  deleteFolder: (folderPath: string) => Promise<ImageFolderDeleteResult>;
   updateFile: (
     fileId: string,
     input: ImageUpdateInput,
@@ -67,6 +70,21 @@ export function createImageStorage(config: ImageStorageConfig): ImageStorage {
   return {
     async deleteFile(fileId) {
       await imageKit.files.delete(fileId);
+      return "deleted";
+    },
+    async deleteFolder(folderPath) {
+      try {
+        await imageKit.folders.delete({
+          folderPath: normalizeImageKitFolderPath(folderPath),
+        });
+      } catch (error) {
+        if (isImageKitNotFoundError(error)) {
+          return "missing";
+        }
+
+        throw error;
+      }
+
       return "deleted";
     },
     async updateFile(fileId, input) {
@@ -101,6 +119,37 @@ export function createImageStorage(config: ImageStorageConfig): ImageStorage {
       return mapUploadResponse(uploadResponse);
     },
   };
+}
+
+export async function deletePreviewImageKitFolder(input: {
+  dryRun?: boolean;
+  fetch?: FetchLike;
+  privateKey?: string;
+  prNumber: number;
+}): Promise<{
+  folderPath: string;
+  status: ImageFolderDeleteResult;
+}> {
+  const folderPath = buildPreviewImageKitFolderPath(input.prNumber);
+  const storage = createImageStorage({
+    dryRun: input.dryRun,
+    fetch: input.fetch,
+    privateKey: input.privateKey,
+  });
+  const status = await storage.deleteFolder(folderPath);
+
+  return {
+    folderPath,
+    status,
+  };
+}
+
+export function buildPreviewImageKitFolderPath(prNumber: number): string {
+  if (!Number.isInteger(prNumber) || prNumber <= 0) {
+    throw new Error("ImageKit preview cleanup requires a positive PR number.");
+  }
+
+  return `/preview/pr-${prNumber}`;
 }
 
 async function findExistingImage(
@@ -138,9 +187,27 @@ function normalizeImageKitFolder(folder: string | undefined): string {
   return `/${trimmedFolder.replace(/^\/+|\/+$/g, "")}/`;
 }
 
+function normalizeImageKitFolderPath(folderPath: string): string {
+  const normalizedFolder = normalizeImageKitFolder(folderPath).replace(
+    /\/$/u,
+    "",
+  );
+
+  if (!/^\/preview\/pr-[1-9]\d*$/u.test(normalizedFolder)) {
+    throw new Error(
+      "ImageKit preview cleanup can only delete /preview/pr-<number> folders.",
+    );
+  }
+
+  return normalizedFolder;
+}
+
 function createDryRunImageStorage(): ImageStorage {
   return {
     async deleteFile() {
+      return "skipped";
+    },
+    async deleteFolder() {
       return "skipped";
     },
     async updateFile() {
@@ -153,6 +220,15 @@ function createDryRunImageStorage(): ImageStorage {
       return null;
     },
   };
+}
+
+function isImageKitNotFoundError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    error.status === 404
+  );
 }
 
 function mapUploadResponse(

@@ -20,6 +20,8 @@ describe("api env", () => {
       AXIOM_DATASET: "development",
       AXIOM_EDGE_DOMAIN: "api.axiom.co",
       AXIOM_TOKEN: "xaat-example",
+      CLERK_PUBLISHABLE_KEY: "pk_test_example",
+      CLERK_SECRET_KEY: "sk_test_example",
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
       LOGGER: "verbose",
       LOG_LEVEL: "debug",
@@ -43,6 +45,8 @@ describe("api env", () => {
 
   it("validates mobile version policy environment variables", () => {
     const env = createApiEnv({
+      CLERK_PUBLISHABLE_KEY: "pk_test_example",
+      CLERK_SECRET_KEY: "sk_test_example",
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
       MOBILE_ANDROID_STORE_URL:
         "https://play.google.com/store/apps/details?id=com.example.app",
@@ -65,6 +69,8 @@ describe("api env", () => {
 
   it("defaults PORT to 4006", () => {
     const env = createApiEnv({
+      CLERK_PUBLISHABLE_KEY: "pk_test_example",
+      CLERK_SECRET_KEY: "sk_test_example",
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
     });
 
@@ -74,6 +80,8 @@ describe("api env", () => {
   it("rejects invalid PORT values", () => {
     expect(() =>
       createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
         PORT: "70000",
       }),
@@ -83,6 +91,8 @@ describe("api env", () => {
   it("rejects invalid logger values", () => {
     expect(() =>
       createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
         LOG_LEVEL: "loud",
       }),
@@ -90,6 +100,8 @@ describe("api env", () => {
 
     expect(() =>
       createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
         LOGGER: "pretty",
       }),
@@ -99,6 +111,8 @@ describe("api env", () => {
   it("rejects invalid mobile version policy values", () => {
     expect(() =>
       createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
         MOBILE_UPDATE_SEVERITY: "critical",
       }),
@@ -106,6 +120,8 @@ describe("api env", () => {
 
     expect(() =>
       createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
         DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
         MOBILE_IOS_STORE_URL: "not a url",
       }),
@@ -113,8 +129,28 @@ describe("api env", () => {
   });
 
   it("rejects missing DATABASE_URL", () => {
+    expect(() =>
+      createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
+        PORT: "3000",
+      }),
+    ).toThrow("Invalid environment variables: DATABASE_URL");
+  });
+
+  it("rejects missing Clerk environment variables", () => {
+    expect(() =>
+      createApiEnv({
+        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      }),
+    ).toThrow(
+      "Invalid environment variables: CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY",
+    );
+  });
+
+  it("reports all missing required API environment variables", () => {
     expect(() => createApiEnv({ PORT: "3000" })).toThrow(
-      "Invalid environment variables: DATABASE_URL",
+      "Invalid environment variables: CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, DATABASE_URL",
     );
   });
 
@@ -144,6 +180,8 @@ describe("api env", () => {
   it("exposes sanitized validation issue details", () => {
     expect(() =>
       createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
         DATABASE_URL: "not-a-url",
         LOGGER: "pretty",
         LOG_LEVEL: "loud",
@@ -152,6 +190,8 @@ describe("api env", () => {
 
     try {
       createApiEnv({
+        CLERK_PUBLISHABLE_KEY: "pk_test_example",
+        CLERK_SECRET_KEY: "sk_test_example",
         DATABASE_URL: "not-a-url",
         LOGGER: "pretty",
         LOG_LEVEL: "loud",
