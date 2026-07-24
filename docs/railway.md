@@ -229,9 +229,12 @@ GitHub Actions requires:
 The workflow upserts `DATABASE_URL` into the scraper service variables in the
 Railway preview service named `field-log (preview)` in the Railway environment
 named `field-log-pr-<pull-request-number>`. For example, PR 53 uses
-`field-log-pr-53`. After the variables are set, the workflow deploys the current
-repository source with `railway up --ci` so the first preview deployment can be
-created even when there is no latest deployment to redeploy.
+`field-log-pr-53`. After the variables are set, the workflow deploys the
+`scraper-queue` Redis service from its configured image source, then deploys the
+current repository source with `railway up --detach` so the first scraper preview
+deployment can be created even when there is no latest deployment to redeploy.
+The detached scraper deploy starts the Railway deployment without blocking the
+API Deploy workflow on the scraper build.
 
 The root `.railwayignore` intentionally excludes unrelated apps and generated
 folders from CLI uploads. Keep it aligned with the scraper's workspace
