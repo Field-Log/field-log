@@ -19,7 +19,44 @@ describe("createProcessorErrorCounter", () => {
         [loggerMessages.scraper.image.deleteFailed]: 1,
         [loggerMessages.scraper.image.uploadFailed]: 2,
       },
+      sampleErrors: [],
       totalErrors: 3,
+    });
+  });
+
+  it("keeps bounded sample error details for summaries", () => {
+    const counter = createProcessorErrorCounter();
+
+    counter.record(loggerMessages.scraper.database.mutationFailed, {
+      error: new Error("insert failed", {
+        cause: new TypeError("bad column"),
+      }),
+      jobId: "job-1",
+      source: "autmog",
+      type: "autmog.item",
+    });
+
+    expect(counter.summary()).toEqual({
+      errorsByMessage: {
+        [loggerMessages.scraper.database.mutationFailed]: 1,
+      },
+      sampleErrors: [
+        {
+          error: {
+            cause: {
+              message: "bad column",
+              name: "TypeError",
+            },
+            message: "insert failed",
+            name: "Error",
+          },
+          jobId: "job-1",
+          message: loggerMessages.scraper.database.mutationFailed,
+          source: "autmog",
+          type: "autmog.item",
+        },
+      ],
+      totalErrors: 1,
     });
   });
 });

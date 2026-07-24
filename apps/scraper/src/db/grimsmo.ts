@@ -481,7 +481,7 @@ async function ensureGrimsmoKnife(
   const [existing] = await db
     .select()
     .from(schema.tmpGrimsmoKnives)
-    .where(eq(schema.tmpGrimsmoKnives.knifeType, knifeType))
+    .where(eq(schema.tmpGrimsmoKnives.productHandle, product.productHandle))
     .limit(1);
   const [existingProduct] = existing
     ? await db
@@ -523,6 +523,7 @@ async function ensureGrimsmoKnife(
     .onConflictDoUpdate({
       set: {
         detailsHash,
+        knifeType,
         makerId: maker.id,
         normalizedData,
         productHandle: product.productHandle,
@@ -530,7 +531,7 @@ async function ensureGrimsmoKnife(
         title: product.title,
         updatedAt: now,
       },
-      target: schema.tmpGrimsmoKnives.knifeType,
+      target: schema.tmpGrimsmoKnives.productHandle,
     })
     .returning();
 

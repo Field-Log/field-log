@@ -1,4 +1,10 @@
-import { createNoopLogger } from "@package/logger";
+import {
+  createLogger,
+  createNoopLogger,
+  type LogEvent,
+  type LogTransport,
+  loggerMessages,
+} from "@package/logger";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getRecurringTaskDueState, runRailwayCronJob } from "./cron.js";
 import {
@@ -90,6 +96,42 @@ describe("Railway scraper cron", () => {
     expect(runQueueProcessorJob).toHaveBeenCalledOnce();
   });
 
+  it("includes task failure details in the final cron failure log", async () => {
+    const events: LogEvent[] = [];
+    const logger = captureLogger(events);
+
+    vi.mocked(runSourceProducerJob).mockRejectedValueOnce(
+      new Error("producer failed"),
+    );
+    vi.mocked(runQueueProcessorJob).mockResolvedValueOnce(undefined);
+
+    await runRailwayCronJob({
+      context: createContext(),
+      env: createEnv(),
+      logger,
+      now: new Date("2026-07-16T12:00:00.000Z"),
+    });
+    await logger.flush();
+
+    expect(
+      events.find(
+        (event) => event.message === loggerMessages.scraper.cron.failed,
+      )?.attributes,
+    ).toMatchObject({
+      failedTasks: 1,
+      failures: [
+        {
+          error: {
+            message: "producer failed",
+            name: "Error",
+          },
+          source: "autmog",
+          task: "scrape:autmog",
+        },
+      ],
+    });
+  });
+
   it("waits for Grimsmo stagger offsets on first run", async () => {
     vi.mocked(runSourceProducerJob).mockResolvedValue(undefined);
     vi.mocked(runQueueProcessorJob).mockResolvedValue(undefined);
@@ -122,6 +164,20 @@ describe("Railway scraper cron", () => {
     ).toEqual(["autmog", "grimsmo-saga", "grimsmo-rask"]);
   });
 });
+
+function captureLogger(events: LogEvent[]) {
+  const transport: LogTransport = {
+    log(event) {
+      events.push(event);
+    },
+  };
+
+  return createLogger({
+    app: "scraper",
+    environment: "test",
+    transports: [transport],
+  });
+}
 
 function createContext(): ScraperJobContext {
   return {

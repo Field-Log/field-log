@@ -7,6 +7,7 @@ import { s } from "./lib/services.js";
 
 const app = createApp({
   clientLogKey: apiEnv.LOG_PROXY_CLIENT_KEY,
+  getFeatureFlagsService: () => s.flags,
   mobileVersionPolicy: createMobileVersionPolicyFromApiEnv(apiEnv),
 });
 
