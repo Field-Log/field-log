@@ -85,6 +85,7 @@ describe("scraper env", () => {
       SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES: "10",
       SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS: "15",
       SCRAPER_QUEUE_CONCURRENCY: "2",
+      SCRAPER_CRON_ENABLED: "false",
     });
 
     expect(env.DATABASE_URL).toBe(
@@ -111,6 +112,7 @@ describe("scraper env", () => {
     expect(env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES).toBe(10);
     expect(env.SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS).toBe(15);
     expect(env.SCRAPER_QUEUE_CONCURRENCY).toBe(2);
+    expect(env.SCRAPER_CRON_ENABLED).toBe(false);
   });
 
   it("requires Redis and database URLs for scraper jobs", () => {
@@ -173,5 +175,6 @@ describe("scraper env", () => {
     expect(env.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS).toBe(0);
     expect(env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES).toBe(15);
     expect(env.SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS).toBe(30);
+    expect(env.SCRAPER_CRON_ENABLED).toBeUndefined();
   });
 });

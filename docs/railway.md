@@ -89,6 +89,12 @@ Future source schedules should be added in `apps/scraper` and staggered in code
 or configuration inside the `cron:run` command. Do not add one Railway service
 per scraped site.
 
+Preview cron runs are gated by `SCRAPER_CRON_ENABLED`. When `APP_ENV=preview`,
+`cron:run` exits before opening DB or Redis connections unless
+`SCRAPER_CRON_ENABLED=true`. The API deploy workflow sets this to `true` only
+for DB-changing PRs with an isolated Neon `preview-pr-*` branch, and to `false`
+for non-DB PRs that share the preview database.
+
 Manual source runs use source keys. For local development, use the root command
 so local Docker/OrbStack Redis is started and `/apps/scraper` secrets are
 injected from Infisical:

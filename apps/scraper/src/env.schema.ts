@@ -32,6 +32,7 @@ export type ScraperRuntimeEnv = {
   SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES?: string;
   SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS?: string;
   SCRAPER_QUEUE_CONCURRENCY?: string;
+  SCRAPER_CRON_ENABLED?: string;
   SCRAPER_SCHEDULER_ENABLED?: string;
 };
 
@@ -189,6 +190,12 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
         .min(1)
         .max(20)
         .default(3),
+      SCRAPER_CRON_ENABLED: z
+        .enum(["true", "false"])
+        .optional()
+        .transform((value) =>
+          value === undefined ? undefined : value === "true",
+        ),
     },
   });
 }
@@ -232,6 +239,7 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS:
       runtimeEnv.SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS,
     SCRAPER_QUEUE_CONCURRENCY: runtimeEnv.SCRAPER_QUEUE_CONCURRENCY,
+    SCRAPER_CRON_ENABLED: runtimeEnv.SCRAPER_CRON_ENABLED,
     SCRAPER_SCHEDULER_ENABLED: runtimeEnv.SCRAPER_SCHEDULER_ENABLED,
   };
 }

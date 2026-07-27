@@ -121,6 +121,7 @@ values such as Redis connection strings.
 | `SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS` | Optional Grimsmo Saga first-run offset. Defaults to `0`; Railway cron and the legacy scheduler use it to run Saga at the top of the hour. | ? (All) | `S` |
 | `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
 | `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
+| `SCRAPER_CRON_ENABLED` | Enables Railway `cron:run`. Defaults to disabled when `APP_ENV=preview`; DB-changing PR previews set this to `true`, non-DB PR previews set it to `false`. | ? (Preview) | `S` |
 | `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval for the legacy in-process scheduler. Railway cron uses the `*/15 * * * *` schedule in `railway.json`. | ? (All) | `S` |
 | `SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS` | Optional delay before the first queue processor run for the legacy in-process scheduler. Defaults to `30`; not used by Railway cron. | ? (All) | `S` |
 | `SCRAPER_QUEUE_CONCURRENCY` | Optional BullMQ worker concurrency cap. Recommended initial value: `3`. | ? (All) | `S` |

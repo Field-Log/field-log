@@ -285,7 +285,7 @@ jobs:
           NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
         run: bash .github/scripts/neon-database-branch.sh branch-url
 
-      - name: Configure Railway scraper preview database
+      - name: Configure Railway scraper preview database and cron
         if: steps.db.outputs.can_deploy == 'true'
         shell: bash
         env:
@@ -302,8 +302,10 @@ jobs:
           railway_environment="field-log-pr-${PR_NUMBER}"
           if [[ "$DB_CHANGING" == "true" ]]; then
             image_folder_prefix="preview/pr-${PR_NUMBER}"
+            scraper_cron_enabled="true"
           else
             image_folder_prefix="preview"
+            scraper_cron_enabled="false"
           fi
           redis_url_reference='$'"{{${RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME}.REDIS_PUBLIC_URL}}"
 
@@ -316,6 +318,7 @@ jobs:
             --arg railway_environment "$railway_environment" \
             --arg service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --arg image_folder_prefix "$image_folder_prefix" \
+            --arg scraper_cron_enabled "$scraper_cron_enabled" \
             --argjson database "$DB_CHANGING" \
             '{
               app: $app,
@@ -327,7 +330,8 @@ jobs:
                 databaseChanged: $database,
                 railwayEnvironment: $railway_environment,
                 service: $service,
-                imageFolderPrefix: $image_folder_prefix
+                imageFolderPrefix: $image_folder_prefix,
+                scraperCronEnabled: $scraper_cron_enabled
               }
             }'
 
@@ -352,6 +356,13 @@ jobs:
             --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
+          printf '%s' "$scraper_cron_enabled" | pnpm dlx @railway/cli variable set SCRAPER_CRON_ENABLED \
+            --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
+            --environment "$railway_environment"
+
           railway_image_folder_prefix="$(
             pnpm dlx @railway/cli variable list \
               --kv \
@@ -365,6 +376,22 @@ jobs:
             echo "Railway IMAGE_FOLDER_PREFIX did not match expected preview prefix." >&2
             echo "Expected: ${image_folder_prefix}" >&2
             echo "Actual: ${railway_image_folder_prefix:-<unset>}" >&2
+            exit 1
+          fi
+
+          railway_scraper_cron_enabled="$(
+            pnpm dlx @railway/cli variable list \
+              --kv \
+              --project "$RAILWAY_PROJECT_ID" \
+              --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
+              --environment "$railway_environment" |
+              awk -F= '$1 == "SCRAPER_CRON_ENABLED" {print substr($0, index($0, "=") + 1)}'
+          )"
+
+          if [[ "$railway_scraper_cron_enabled" != "$scraper_cron_enabled" ]]; then
+            echo "Railway SCRAPER_CRON_ENABLED did not match expected preview setting." >&2
+            echo "Expected: ${scraper_cron_enabled}" >&2
+            echo "Actual: ${railway_scraper_cron_enabled:-<unset>}" >&2
             exit 1
           fi
 

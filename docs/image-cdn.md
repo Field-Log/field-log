@@ -92,6 +92,9 @@ detection that selects the database branch:
 
 - DB-changing PRs get `IMAGE_FOLDER_PREFIX=preview/pr-<number>`.
 - PRs without DB changes get `IMAGE_FOLDER_PREFIX=preview`.
+- DB-changing PR scraper previews set `SCRAPER_CRON_ENABLED=true` because they
+  have an isolated Neon branch. PRs without DB changes set
+  `SCRAPER_CRON_ENABLED=false` because they share the preview database.
 
 The cleanup workflow removes branch-specific Vercel `IMAGE_FOLDER_PREFIX` when
 the PR closes. Isolated PR image folders under `/preview/pr-<number>` are deleted
