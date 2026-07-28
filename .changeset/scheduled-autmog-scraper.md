@@ -1,5 +1,5 @@
 ---
-"field-log.app": major
+"field-log.app": minor
 ---
 
 - Add a scheduled Autmog scraper service with producer, queue processor, and dead-letter processing commands.
