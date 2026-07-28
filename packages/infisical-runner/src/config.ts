@@ -82,6 +82,12 @@ const fieldLogExpoAliases = [
   ...expoLoggingAliases,
 ] as const satisfies readonly EnvironmentAlias[];
 
+const scraperCommandSecretConfig = {
+  allowServerSecrets: true,
+  databaseUrlUserOverride: true,
+  paths: [scraperSecretPath],
+} as const satisfies CommandSecretConfig;
+
 export const commandSecrets = {
   api: {
     dev: {
@@ -237,26 +243,15 @@ export const commandSecrets = {
     },
   },
   scraper: {
-    "process:dead-letter": {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
-    "process:queue": {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
-    scrape: {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
-    "scrape:autmog": {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
+    "cron:run": scraperCommandSecretConfig,
+    "process:dead-letter": scraperCommandSecretConfig,
+    "process:queue": scraperCommandSecretConfig,
+    scrape: scraperCommandSecretConfig,
+    "scrape:autmog": scraperCommandSecretConfig,
+    "scrape:grimsmo-fjell": scraperCommandSecretConfig,
+    "scrape:grimsmo-norseman": scraperCommandSecretConfig,
+    "scrape:grimsmo-rask": scraperCommandSecretConfig,
+    "scrape:grimsmo-saga": scraperCommandSecretConfig,
   },
   web: {
     build: {

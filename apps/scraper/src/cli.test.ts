@@ -15,6 +15,12 @@ describe("scraper CLI", () => {
     });
   });
 
+  it("parses scrape commands without a source as all sources", () => {
+    expect(parseCommand(["scrape"])).toEqual({
+      type: "scrape:all",
+    });
+  });
+
   it("parses source scrape commands with pnpm argument separators", () => {
     expect(parseCommand(["scrape", "--", "autmog"])).toEqual({
       source: "autmog",

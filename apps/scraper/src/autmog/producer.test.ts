@@ -77,4 +77,56 @@ describe("runAutmogProducer", () => {
       name: "autmog.archiveMissing",
     });
   });
+
+  it("skips archive reconciliation during limited source scrapes", async () => {
+    const addBulk = vi.fn().mockResolvedValue([]);
+    const queues = {
+      close: vi.fn(),
+      images: { addBulk: vi.fn() },
+      items: {
+        addBulk,
+        getJob: vi.fn(async () => null),
+      },
+    } as unknown as ScraperQueues;
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          products: [
+            {
+              available: true,
+              body_html: "<p>36 click pen clipless Pilot G2.</p>",
+              created_at: "2026-01-01T00:00:00Z",
+              handle: "36-click-pen",
+              id: 123,
+              images: [],
+              product_type: "Pens",
+              published_at: "2026-01-02T00:00:00Z",
+              tags: ["pen"],
+              title: "36 Click Pen Clipless Pilot G2",
+              updated_at: "2026-01-03T00:00:00Z",
+              variants: [],
+              vendor: "Autmog",
+            },
+          ],
+        }),
+      ),
+    );
+
+    await runAutmogProducer({
+      fetch: fetcher,
+      logger: createNoopLogger({ app: "scraper" }),
+      queues,
+      skipArchiveReconciliation: true,
+    });
+
+    const [jobs] = addBulk.mock.calls[0] ?? [];
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]).toMatchObject({
+      data: {
+        source: "autmog",
+        type: "autmog.pen",
+      },
+      name: "autmog.pen",
+    });
+  });
 });
