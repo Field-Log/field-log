@@ -100,18 +100,18 @@ Use this AI section format:
 
 ```markdown
 <!-- AI SECTION START -->
-## Summary
+## AI Summary
 - point form summary
 - point form summary
 
-## Validation
+## AI Testing and Validation
 - command run, or "Not run (reason)"
 
 <!-- AI SECTION END -->
 ```
 
-Leave the Human section blank by default. Do not remove or edit the Human
-section markers.
+Leave the Human section before the AI section and blank by default. Do not
+remove or edit the Human section markers.
 
 Keep the body factual. Prefer commit messages, diffs, and test output over
 guessing. If the user asks for a draft PR, pass `--draft`.
