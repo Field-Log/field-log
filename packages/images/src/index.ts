@@ -377,7 +377,7 @@ async function readResponseBodyWithLimit(
   maxBytes: number,
 ): Promise<Buffer> {
   if (!response.body) {
-    return Buffer.from(await response.arrayBuffer());
+    throw new Error("Remote image response did not include a readable body.");
   }
 
   const reader = response.body.getReader();
