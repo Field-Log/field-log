@@ -33,10 +33,13 @@ suggest a branch, create a branch, push, fetch, or create a PR from `main`.
    report that there is nothing to open a PR for.
 6. If there are uncommitted changes, mention them clearly. Do not include them
    in the PR description as completed work.
-7. Create or update a branch Changeset before pushing:
+7. Create or update branch Changeset files before pushing:
    - Inspect changed `.changeset/*.md` files relative to the base.
    - If none exists, create one under `.changeset/`.
    - If one exists and no longer matches the branch, update it.
+   - If multiple changed Changeset files exist, choose the PR release-impact
+     label from the highest bump present: `major` wins over `minor`, and
+     `minor` wins over `patch`.
    - Use `"field-log.app"` as the package name.
    - Choose `patch`, `minor`, or `major` from the branch impact. Use `patch`
      for docs, tests, internal tooling, chores, and compatible fixes. Use
@@ -57,10 +60,12 @@ suggest a branch, create a branch, push, fetch, or create a PR from `main`.
    `gh pr list --head <branch> --json url,title,state`.
 10. If no PR exists, create one:
    `gh pr create --base <base> --head <branch> --title "<title>" --body "<body>"`.
-11. Apply the release-impact label that matches the branch Changeset to the PR:
-    - `gh pr edit <url> --add-label patch` for a `patch` Changeset.
-    - `gh pr edit <url> --add-label minor` for a `minor` Changeset.
-    - `gh pr edit <url> --add-label major` for a `major` Changeset.
+11. Apply exactly one release-impact label that matches the highest branch
+    Changeset bump to the PR. Remove the other release-impact labels in the
+    same edit so downgraded or upgraded PRs do not keep contradictory labels:
+    - `gh pr edit <url> --remove-label minor --remove-label major --add-label patch` for a `patch` Changeset.
+    - `gh pr edit <url> --remove-label patch --remove-label major --add-label minor` for a `minor` Changeset.
+    - `gh pr edit <url> --remove-label patch --remove-label minor --add-label major` for a `major` Changeset.
 12. Return the PR URL and a concise summary of the created PR.
 
 ## Title And Body
@@ -149,10 +154,12 @@ before creating or updating the Changeset. Do not treat the user's original
 feature request as either confirmation. If either confirmation is missing, stop
 before writing the `major` Changeset.
 
-Apply the release-impact label that matches the PR Changeset to the GitHub PR
-when creating it: `patch`, `minor`, or `major`. If the PR already exists, do
-not create a duplicate; apply the matching release-impact label to the existing
-PR before returning.
+Apply exactly one release-impact label that matches the highest PR Changeset
+bump to the GitHub PR when creating it: `patch`, `minor`, or `major`. If
+multiple changed Changeset files exist, `major` wins over `minor`, and `minor`
+wins over `patch`. Remove the other release-impact labels before adding the
+matching label. If the PR already exists, do not create a duplicate; apply the
+matching release-impact label to the existing PR before returning.
 
 ## Error Cases
 
