@@ -24,6 +24,8 @@ describe("api env", () => {
       CLERK_SECRET_KEY: "sk_test_example",
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
       LOGGER: "verbose",
+      LOG_DEPLOYMENT_ID: "pr-27",
+      LOG_DEPLOYMENT_TARGET: "cloudflare-worker",
       LOG_LEVEL: "debug",
       LOG_PROXY_CLIENT_KEY: "client-key",
       PORT: "4000",
@@ -37,6 +39,8 @@ describe("api env", () => {
       "postgres://user:password@example.com:5432/field_log",
     );
     expect(env.LOGGER).toBe("verbose");
+    expect(env.LOG_DEPLOYMENT_ID).toBe("pr-27");
+    expect(env.LOG_DEPLOYMENT_TARGET).toBe("cloudflare-worker");
     expect(env.LOG_LEVEL).toBe("debug");
     expect(env.LOG_PROXY_CLIENT_KEY).toBe("client-key");
     expect(env.MOBILE_UPDATE_SEVERITY).toBe("none");
@@ -161,11 +165,15 @@ describe("api env", () => {
       AXIOM_EDGE_DOMAIN: "api.axiom.co",
       AXIOM_TOKEN: "xaat-example",
       LOGGER: "verbose",
+      LOG_DEPLOYMENT_ID: "preview",
+      LOG_DEPLOYMENT_TARGET: "cloudflare-worker",
       LOG_LEVEL: "debug",
       LOG_PROXY_CLIENT_KEY: "client-key",
     });
 
     expect(env.APP_ENV).toBe("preview");
+    expect(env.LOG_DEPLOYMENT_ID).toBe("preview");
+    expect(env.LOG_DEPLOYMENT_TARGET).toBe("cloudflare-worker");
     expect(env.LOG_PROXY_CLIENT_KEY).toBe("client-key");
   });
 

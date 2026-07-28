@@ -10,6 +10,8 @@ export function readProcessApiRuntimeEnv() {
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
     DATABASE_URL: process.env.DATABASE_URL,
     LOGGER: process.env.LOGGER,
+    LOG_DEPLOYMENT_ID: process.env.LOG_DEPLOYMENT_ID,
+    LOG_DEPLOYMENT_TARGET: process.env.LOG_DEPLOYMENT_TARGET,
     LOG_LEVEL: process.env.LOG_LEVEL,
     LOG_PROXY_CLIENT_KEY: process.env.LOG_PROXY_CLIENT_KEY,
     MOBILE_ANDROID_STORE_URL: process.env.MOBILE_ANDROID_STORE_URL,

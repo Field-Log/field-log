@@ -11,8 +11,11 @@ const logger = createScraperLogger({
   axiomDataset: scraperEnv.AXIOM_DATASET,
   axiomEdgeDomain: scraperEnv.AXIOM_EDGE_DOMAIN,
   axiomToken: scraperEnv.AXIOM_TOKEN,
+  deploymentId: scraperEnv.LOG_DEPLOYMENT_ID,
+  deploymentTarget: scraperEnv.LOG_DEPLOYMENT_TARGET,
   loggerMode: scraperEnv.LOGGER,
   logLevel: scraperEnv.LOG_LEVEL,
+  railwayEnvironmentName: scraperEnv.RAILWAY_ENVIRONMENT_NAME,
 });
 
 void main().catch(async (error) => {

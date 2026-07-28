@@ -39,6 +39,14 @@ const expoLoggingAliases = [
     from: "LOG_PROXY_CLIENT_KEY",
     to: "EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY",
   },
+  {
+    from: "LOG_DEPLOYMENT_ID",
+    to: "EXPO_PUBLIC_LOG_DEPLOYMENT_ID",
+  },
+  {
+    from: "LOG_DEPLOYMENT_TARGET",
+    to: "EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET",
+  },
 ] as const satisfies readonly EnvironmentAlias[];
 
 const expoFieldLogAliases = [

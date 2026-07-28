@@ -32,6 +32,8 @@ const transports = [
 
 const logger = {
   app: loggerValues.apps.web,
+  deploymentId: serverEnv.LOG_DEPLOYMENT_ID ?? environment,
+  deploymentTarget: serverEnv.LOG_DEPLOYMENT_TARGET ?? "web-server",
   environment,
   level: normalizeLogLevel(serverEnv.LOG_LEVEL),
   transports,

@@ -29,6 +29,8 @@ const validEnv = createMobileEnv({
   EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "123456789",
   EXPO_PUBLIC_FIREBASE_PROJECT_ID: "field-log",
   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: "field-log.example.com",
+  EXPO_PUBLIC_LOG_DEPLOYMENT_ID: "development",
+  EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET: "expo-client",
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY: "client-key",
 });
 assertEqual(
@@ -45,6 +47,16 @@ assertEqual(
   validEnv.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
   "field-log",
   "valid Firebase project ID is preserved",
+);
+assertEqual(
+  validEnv.EXPO_PUBLIC_LOG_DEPLOYMENT_ID,
+  "development",
+  "valid log deployment ID is preserved",
+);
+assertEqual(
+  validEnv.EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET,
+  "expo-client",
+  "valid log deployment target is preserved",
 );
 assertEqual(
   validEnv.EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY,

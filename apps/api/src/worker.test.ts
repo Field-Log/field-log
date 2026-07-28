@@ -50,6 +50,8 @@ describe("api worker", () => {
           scheduledAt: "2026-07-07T12:00:00.000Z",
           source: "cloudflare-cron",
         },
+        deploymentId: "preview",
+        deploymentTarget: "cloudflare-worker",
         environment: "preview",
         level: "info",
         message: "api.cron.hourly",
@@ -150,6 +152,8 @@ describe("api worker", () => {
           source: "cloudflare-worker",
           trigger: "fetch",
         },
+        deploymentId: "unknown",
+        deploymentTarget: "cloudflare-worker",
         environment: "unknown",
         error: {
           message: "Invalid environment variables: LOGGER, LOG_LEVEL",
@@ -215,6 +219,8 @@ describe("api worker", () => {
           source: "cloudflare-cron",
           trigger: "scheduled",
         },
+        deploymentId: "unknown",
+        deploymentTarget: "cloudflare-worker",
         environment: "unknown",
         error: {
           message: "Invalid environment variables: LOGGER, LOG_LEVEL",

@@ -12,6 +12,8 @@ export type ApiRuntimeEnv = {
   CLERK_SECRET_KEY?: string;
   DATABASE_URL?: string;
   LOGGER?: string;
+  LOG_DEPLOYMENT_ID?: string;
+  LOG_DEPLOYMENT_TARGET?: string;
   LOG_LEVEL?: string;
   LOG_PROXY_CLIENT_KEY?: string;
   MOBILE_ANDROID_STORE_URL?: string;
@@ -29,6 +31,8 @@ export type ApiLoggerRuntimeEnv = Pick<
   | "AXIOM_EDGE_DOMAIN"
   | "AXIOM_TOKEN"
   | "LOGGER"
+  | "LOG_DEPLOYMENT_ID"
+  | "LOG_DEPLOYMENT_TARGET"
   | "LOG_LEVEL"
   | "LOG_PROXY_CLIENT_KEY"
   | "MOBILE_ANDROID_STORE_URL"
@@ -74,6 +78,8 @@ const apiServerSchema = {
   CLERK_SECRET_KEY: z.string().min(1),
   DATABASE_URL: z.string().min(1).url(),
   LOGGER: z.enum(["compact", "verbose"]).optional(),
+  LOG_DEPLOYMENT_ID: z.string().min(1).optional(),
+  LOG_DEPLOYMENT_TARGET: z.string().min(1).optional(),
   LOG_LEVEL: z
     .enum(["trace", "debug", "verbose", "info", "warn", "error", "fatal"])
     .optional(),
@@ -92,6 +98,8 @@ const apiLoggerServerSchema = {
   AXIOM_EDGE_DOMAIN: apiServerSchema.AXIOM_EDGE_DOMAIN,
   AXIOM_TOKEN: apiServerSchema.AXIOM_TOKEN,
   LOGGER: apiServerSchema.LOGGER,
+  LOG_DEPLOYMENT_ID: apiServerSchema.LOG_DEPLOYMENT_ID,
+  LOG_DEPLOYMENT_TARGET: apiServerSchema.LOG_DEPLOYMENT_TARGET,
   LOG_LEVEL: apiServerSchema.LOG_LEVEL,
   LOG_PROXY_CLIENT_KEY: apiServerSchema.LOG_PROXY_CLIENT_KEY,
   MOBILE_ANDROID_STORE_URL: apiServerSchema.MOBILE_ANDROID_STORE_URL,
@@ -126,6 +134,8 @@ export function createApiLoggerEnv(runtimeEnv: ApiLoggerRuntimeEnv) {
       AXIOM_EDGE_DOMAIN: runtimeEnv.AXIOM_EDGE_DOMAIN,
       AXIOM_TOKEN: runtimeEnv.AXIOM_TOKEN,
       LOGGER: runtimeEnv.LOGGER,
+      LOG_DEPLOYMENT_ID: runtimeEnv.LOG_DEPLOYMENT_ID,
+      LOG_DEPLOYMENT_TARGET: runtimeEnv.LOG_DEPLOYMENT_TARGET,
       LOG_LEVEL: runtimeEnv.LOG_LEVEL,
       LOG_PROXY_CLIENT_KEY: runtimeEnv.LOG_PROXY_CLIENT_KEY,
       MOBILE_ANDROID_STORE_URL: runtimeEnv.MOBILE_ANDROID_STORE_URL,
@@ -162,6 +172,8 @@ function getApiRuntimeEnvStrict(runtimeEnv: ApiRuntimeEnv) {
     CLERK_SECRET_KEY: runtimeEnv.CLERK_SECRET_KEY,
     DATABASE_URL: runtimeEnv.DATABASE_URL,
     LOGGER: runtimeEnv.LOGGER,
+    LOG_DEPLOYMENT_ID: runtimeEnv.LOG_DEPLOYMENT_ID,
+    LOG_DEPLOYMENT_TARGET: runtimeEnv.LOG_DEPLOYMENT_TARGET,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,
     LOG_PROXY_CLIENT_KEY: runtimeEnv.LOG_PROXY_CLIENT_KEY,
     MOBILE_ANDROID_STORE_URL: runtimeEnv.MOBILE_ANDROID_STORE_URL,

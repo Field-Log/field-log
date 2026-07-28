@@ -9,11 +9,17 @@ describe("scraper env", () => {
   it("validates scraper environment variables", () => {
     const env = createScraperEnv({
       APP_ENV: "preview",
+      LOG_DEPLOYMENT_ID: "field-log-pr-27",
+      LOG_DEPLOYMENT_TARGET: "railway",
       PORT: "4010",
+      RAILWAY_ENVIRONMENT_NAME: "field-log-pr-27",
     });
 
     expect(env.APP_ENV).toBe("preview");
+    expect(env.LOG_DEPLOYMENT_ID).toBe("field-log-pr-27");
+    expect(env.LOG_DEPLOYMENT_TARGET).toBe("railway");
     expect(env.PORT).toBe(4010);
+    expect(env.RAILWAY_ENVIRONMENT_NAME).toBe("field-log-pr-27");
     expect(env.SCRAPER_SCHEDULER_ENABLED).toBe(false);
   });
 

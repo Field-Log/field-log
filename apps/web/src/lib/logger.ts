@@ -24,6 +24,8 @@ const transports = logProxyUrl
 
 export const logger = createLogger({
   app: loggerValues.apps.web,
+  deploymentId: clientEnv.VITE_LOG_DEPLOYMENT_ID ?? import.meta.env.MODE,
+  deploymentTarget: clientEnv.VITE_LOG_DEPLOYMENT_TARGET ?? "web-client",
   environment: import.meta.env.MODE,
   transports,
 });

@@ -95,6 +95,9 @@ function createApiLoggerConfig(
 
   return {
     app: loggerValues.apps.api,
+    deploymentId: configuredApiEnv.LOG_DEPLOYMENT_ID ?? environment,
+    deploymentTarget:
+      configuredApiEnv.LOG_DEPLOYMENT_TARGET ?? "cloudflare-worker",
     environment,
     level: normalizeLogLevel(configuredApiEnv.LOG_LEVEL),
     transports,
