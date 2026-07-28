@@ -2,4 +2,4 @@
 "field-log.app": patch
 ---
 
-Add infrastructure diagrams.
+Add regenerable infrastructure diagrams.

@@ -151,10 +151,14 @@ dev_api > dev_axiom: optional worker logs
 shared_packages [label: "Shared packages and detected runtime links", color: "gray"] {
   app_api [icon: box, label: "@app/api\napps/api"]
   app_mobile [icon: box, label: "@app/mobile\napps/mobile"]
+  app_scraper [icon: box, label: "@app/scraper\napps/scraper"]
   app_web [icon: box, label: "@app/web\napps/web"]
   package_database [icon: package, label: "@package/database\npackages/database"]
+  package_feature_flags [icon: package, label: "@package/feature-flags\npackages/feature-flags"]
+  package_images [icon: package, label: "@package/images\npackages/images"]
   package_json_data [icon: package, label: "@package/json-data\npackages/json-data"]
   package_logger [icon: package, label: "@package/logger\npackages/logger"]
+  package_markdown [icon: package, label: "@package/markdown\npackages/markdown"]
   package_services [icon: package, label: "@package/services\npackages/services"]
   package_types [icon: package, label: "@package/types\npackages/types"]
   service_github_actions [color: gray, icon: github, label: "GitHub Actions"]
@@ -172,13 +176,22 @@ shared_packages [label: "Shared packages and detected runtime links", color: "gr
   service_figjam [color: pink, icon: figma, label: "Figma / FigJam"]
 }
 
+app_api > package_feature_flags: workspace dependency
 app_api > package_logger: workspace dependency
 app_api > package_services: workspace dependency
 app_api > package_types: workspace dependency
 app_mobile > package_logger: workspace dependency
+app_scraper > package_database: workspace dependency
+app_scraper > package_logger: workspace dependency
+app_scraper > package_markdown: workspace dependency
+app_scraper > package_services: workspace dependency
+app_web > package_feature_flags: workspace dependency
 app_web > package_logger: workspace dependency
 app_web > package_services: workspace dependency
+package_database > package_feature_flags: workspace dependency
 package_services > package_database: workspace dependency
+package_services > package_feature_flags: workspace dependency
+package_services > package_images: workspace dependency
 package_services > package_logger: workspace dependency
 app_web > app_api: source scan: VITE_API_URL -> /api/v0/logs
 app_mobile > app_api: source scan: EXPO_PUBLIC_API_URL -> /api/v0/logs

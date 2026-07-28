@@ -2,6 +2,7 @@ import { readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import readline from "node:readline/promises";
+import YAML from "yaml";
 
 const repoRoot = process.cwd();
 const metadataPath = path.join(repoRoot, "docs/infrastructure-diagram.yaml");
@@ -85,233 +86,6 @@ const defaultDetections = [
   },
 ];
 
-function stripComment(line) {
-  let quote = null;
-
-  for (let index = 0; index < line.length; index += 1) {
-    const character = line[index];
-    const previous = line[index - 1];
-
-    if ((character === '"' || character === "'") && previous !== "\\") {
-      quote = quote === character ? null : (quote ?? character);
-    }
-
-    if (character === "#" && quote === null) {
-      return line.slice(0, index);
-    }
-  }
-
-  return line;
-}
-
-function parseInlineList(value) {
-  const content = value.slice(1, -1).trim();
-
-  if (!content) {
-    return [];
-  }
-
-  return content.split(",").map((item) => parseScalar(item.trim()));
-}
-
-function parseScalar(value) {
-  if (value === "true") {
-    return true;
-  }
-
-  if (value === "false") {
-    return false;
-  }
-
-  if (value === "null") {
-    return null;
-  }
-
-  if (/^-?\d+(\.\d+)?$/.test(value)) {
-    return Number(value);
-  }
-
-  if (value.startsWith("[") && value.endsWith("]")) {
-    return parseInlineList(value);
-  }
-
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
-    return value.slice(1, -1).replaceAll("\\n", "\n");
-  }
-
-  return value;
-}
-
-function splitKeyValue(value) {
-  const separatorIndex = value.indexOf(":");
-
-  if (separatorIndex === -1) {
-    throw new Error(`Expected "key: value" but received "${value}".`);
-  }
-
-  return {
-    key: value.slice(0, separatorIndex).trim(),
-    value: value.slice(separatorIndex + 1).trim(),
-  };
-}
-
-function nextContainer(lines, currentIndex, currentIndent) {
-  const line = lines[currentIndex + 1];
-
-  if (!line || line.indent <= currentIndent) {
-    return {};
-  }
-
-  return line.content.startsWith("- ") ? [] : {};
-}
-
-function parseYamlSubset(source) {
-  const lines = source
-    .split(/\r?\n/)
-    .map((line) => {
-      const withoutComment = stripComment(line);
-      return {
-        indent: withoutComment.length - withoutComment.trimStart().length,
-        content: withoutComment.trim(),
-      };
-    })
-    .filter((line) => line.content.length > 0);
-
-  const root = {};
-  const stack = [{ container: root, indent: -1 }];
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-
-    while (line.indent <= stack.at(-1).indent) {
-      stack.pop();
-    }
-
-    const parent = stack.at(-1).container;
-
-    if (line.content.startsWith("- ")) {
-      if (!Array.isArray(parent)) {
-        throw new Error(`Unexpected list item at "${line.content}".`);
-      }
-
-      const itemContent = line.content.slice(2).trim();
-
-      if (itemContent.includes(":")) {
-        const item = {};
-        const { key, value } = splitKeyValue(itemContent);
-        const parsedValue =
-          value === ""
-            ? nextContainer(lines, index, line.indent)
-            : parseScalar(value);
-        item[key] = parsedValue;
-        parent.push(item);
-        stack.push({ container: item, indent: line.indent });
-
-        if (typeof parsedValue === "object" && parsedValue !== null) {
-          stack.push({ container: parsedValue, indent: line.indent + 1 });
-        }
-      } else {
-        parent.push(parseScalar(itemContent));
-      }
-
-      continue;
-    }
-
-    if (Array.isArray(parent)) {
-      throw new Error(
-        `Unexpected mapping entry inside list at "${line.content}".`,
-      );
-    }
-
-    const { key, value } = splitKeyValue(line.content);
-    const parsedValue =
-      value === ""
-        ? nextContainer(lines, index, line.indent)
-        : parseScalar(value);
-    parent[key] = parsedValue;
-
-    if (typeof parsedValue === "object" && parsedValue !== null) {
-      stack.push({ container: parsedValue, indent: line.indent });
-    }
-  }
-
-  return root;
-}
-
-function yamlScalar(value) {
-  if (typeof value === "string") {
-    return JSON.stringify(value);
-  }
-
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-
-  if (value === null) {
-    return "null";
-  }
-
-  throw new Error(`Cannot serialize YAML scalar for ${typeof value}.`);
-}
-
-function renderYamlValue(value, indent = 0) {
-  if (Array.isArray(value)) {
-    return value.flatMap((item) => {
-      if (typeof item !== "object" || item === null) {
-        return [`${"  ".repeat(indent)}- ${yamlScalar(item)}`];
-      }
-
-      const entries = Object.entries(item);
-      const [firstKey, firstValue] = entries[0];
-      const output = [];
-
-      if (typeof firstValue === "object" && firstValue !== null) {
-        output.push(`${"  ".repeat(indent)}- ${firstKey}:`);
-        output.push(...renderYamlValue(firstValue, indent + 2));
-      } else {
-        output.push(
-          `${"  ".repeat(indent)}- ${firstKey}: ${yamlScalar(firstValue)}`,
-        );
-      }
-
-      for (const [key, nestedValue] of entries.slice(1)) {
-        if (typeof nestedValue === "object" && nestedValue !== null) {
-          output.push(`${"  ".repeat(indent + 1)}${key}:`);
-          output.push(...renderYamlValue(nestedValue, indent + 2));
-        } else {
-          output.push(
-            `${"  ".repeat(indent + 1)}${key}: ${yamlScalar(nestedValue)}`,
-          );
-        }
-      }
-
-      return output;
-    });
-  }
-
-  if (typeof value === "object" && value !== null) {
-    return Object.entries(value).flatMap(([key, nestedValue]) => {
-      if (typeof nestedValue === "object" && nestedValue !== null) {
-        return [
-          `${"  ".repeat(indent)}${key}:`,
-          ...renderYamlValue(nestedValue, indent + 1),
-        ];
-      }
-
-      return [`${"  ".repeat(indent)}${key}: ${yamlScalar(nestedValue)}`];
-    });
-  }
-
-  return [`${"  ".repeat(indent)}${yamlScalar(value)}`];
-}
-
-function stringifyYamlSubset(value) {
-  return `${renderYamlValue(value).join("\n")}\n`;
-}
-
 function assertArray(value, label) {
   if (!Array.isArray(value)) {
     throw new Error(`${label} must be an array.`);
@@ -391,7 +165,11 @@ async function findPackageJsonFiles() {
       continue;
     }
 
-    for (const entry of await readdir(rootPath, { withFileTypes: true })) {
+    const entries = await readdir(rootPath, { withFileTypes: true });
+
+    for (const entry of entries.sort((left, right) =>
+      left.name.localeCompare(right.name),
+    )) {
       if (!entry.isDirectory()) {
         continue;
       }
@@ -404,7 +182,9 @@ async function findPackageJsonFiles() {
     }
   }
 
-  return files;
+  return files.sort((left, right) =>
+    path.relative(repoRoot, left).localeCompare(path.relative(repoRoot, right)),
+  );
 }
 
 async function collectAllWorkspacePackageInfos() {
@@ -424,7 +204,9 @@ async function collectAllWorkspacePackageInfos() {
     });
   }
 
-  return packages.sort((left, right) => left.name.localeCompare(right.name));
+  return packages.sort((left, right) =>
+    (left.name ?? "").localeCompare(right.name ?? ""),
+  );
 }
 
 async function collectWorkspacePackages(metadata) {
@@ -460,7 +242,11 @@ async function collectWorkspacePackages(metadata) {
     });
   }
 
-  return packages;
+  return new Map(
+    [...packages.entries()].sort(([leftName], [rightName]) =>
+      leftName.localeCompare(rightName),
+    ),
+  );
 }
 
 function reachableWorkspacePackageNames(packageInfos, appNames, excludedNames) {
@@ -592,7 +378,9 @@ async function collectSourceFiles(targetPath) {
   const entries = await readdir(fullPath, { withFileTypes: true });
   const files = [];
 
-  for (const entry of entries) {
+  for (const entry of entries.sort((left, right) =>
+    left.name.localeCompare(right.name),
+  )) {
     if (
       entry.name === "node_modules" ||
       entry.name === "dist" ||
@@ -615,10 +403,18 @@ async function collectSourceFiles(targetPath) {
     }
   }
 
-  return files;
+  return files.sort((left, right) =>
+    path.relative(repoRoot, left).localeCompare(path.relative(repoRoot, right)),
+  );
 }
 
 async function detectionMatches(detection) {
+  const patterns = assertArray(
+    detection.patterns,
+    `detections.${detection.id}.patterns`,
+  );
+  const remainingPatterns = new Set(patterns);
+
   for (const detectionPath of assertArray(
     detection.paths,
     `detections.${detection.id}.paths`,
@@ -632,12 +428,13 @@ async function detectionMatches(detection) {
     for (const file of files) {
       const contents = await readFile(file, "utf8");
 
-      if (
-        assertArray(
-          detection.patterns,
-          `detections.${detection.id}.patterns`,
-        ).every((pattern) => contents.includes(pattern))
-      ) {
+      for (const pattern of patterns) {
+        if (contents.includes(pattern)) {
+          remainingPatterns.delete(pattern);
+        }
+      }
+
+      if (remainingPatterns.size === 0) {
         return true;
       }
     }
@@ -651,8 +448,24 @@ async function collectDetectionEdges(metadata, packages) {
   const serviceIds = new Set(
     assertArray(metadata.services, "services").map((service) => service.id),
   );
+  const packageNames = new Set(packages.keys());
 
   for (const detection of assertArray(metadata.detections, "detections")) {
+    if (!packageNames.has(detection.source)) {
+      throw new Error(
+        `detections.${detection.id}.source must reference an included workspace package.`,
+      );
+    }
+
+    if (
+      !packageNames.has(detection.target) &&
+      !serviceIds.has(detection.target)
+    ) {
+      throw new Error(
+        `detections.${detection.id}.target must reference an included workspace package or service.`,
+      );
+    }
+
     if (!(await detectionMatches(detection))) {
       continue;
     }
@@ -664,10 +477,6 @@ async function collectDetectionEdges(metadata, packages) {
       (serviceIds.has(detection.target)
         ? `service_${detection.target}`
         : undefined);
-
-    if (!source || !targetId) {
-      continue;
-    }
 
     edges.push({
       from: source.id,
@@ -878,12 +687,44 @@ async function generateDiagram(metadata, feedbackOverlay = []) {
 }
 
 async function loadMetadata() {
-  return parseYamlSubset(await readFile(metadataPath, "utf8"));
+  return YAML.parse(await readFile(metadataPath, "utf8"));
+}
+
+async function loadMetadataDocument() {
+  const document = YAML.parseDocument(await readFile(metadataPath, "utf8"));
+
+  if (document.errors.length > 0) {
+    throw document.errors[0];
+  }
+
+  return document;
 }
 
 async function refreshMetadataFile() {
-  const refreshedMetadata = await refreshMetadata(await loadMetadata());
-  await writeFile(metadataPath, stringifyYamlSubset(refreshedMetadata));
+  const document = await loadMetadataDocument();
+  const refreshedMetadata = await refreshMetadata(document.toJS());
+
+  document.set("generatedBy", refreshedMetadata.generatedBy);
+  document.set("output", refreshedMetadata.output);
+  document.set("source", refreshedMetadata.source);
+  document.setIn(["scope", "apps"], refreshedMetadata.scope.apps);
+  document.setIn(["scope", "packages"], refreshedMetadata.scope.packages);
+  document.setIn(
+    ["scope", "excludedApps"],
+    refreshedMetadata.scope.excludedApps,
+  );
+  document.setIn(
+    ["scope", "excludedPackages"],
+    refreshedMetadata.scope.excludedPackages,
+  );
+
+  const detectionsNode = document.get("detections", true);
+
+  if (refreshedMetadata.detections.length !== detectionsNode.items.length) {
+    document.set("detections", refreshedMetadata.detections);
+  }
+
+  await writeFile(metadataPath, String(document));
   process.stdout.write("Wrote docs/infrastructure-diagram.yaml\n");
 
   return refreshedMetadata;
@@ -986,6 +827,8 @@ if (args.has("--once")) {
 } else if (args.has("--refresh-metadata")) {
   await refreshMetadataFile();
   await runInteractive();
+} else if (!process.stdin.isTTY) {
+  await runOnce();
 } else {
   await runInteractive();
 }

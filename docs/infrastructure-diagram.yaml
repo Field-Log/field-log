@@ -6,11 +6,15 @@ scope:
   apps:
     - "@app/api"
     - "@app/mobile"
+    - "@app/scraper"
     - "@app/web"
   packages:
     - "@package/database"
+    - "@package/feature-flags"
+    - "@package/images"
     - "@package/json-data"
     - "@package/logger"
+    - "@package/markdown"
     - "@package/services"
     - "@package/types"
   excludedApps:
