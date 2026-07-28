@@ -18,7 +18,7 @@ export const userSettings = pgTable("user_settings", {
     .references(() => users.id, { onDelete: "cascade" }),
   currencyCode: currencyCodeEnum("currency_code").notNull().default("USD"),
   dimensionUnit: dimensionUnitEnum("dimension_unit").notNull().default("in"),
-  theme: themeModeEnum("theme").notNull().default("dark"),
+  theme: themeModeEnum("theme").notNull().default("system"),
   weightUnit: weightUnitEnum("weight_unit").notNull().default("g"),
 });
 

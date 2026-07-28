@@ -53,6 +53,7 @@ type MobileToolbarProps = {
   onWeightChange: (unit: WeightUnit) => void;
   products: PenProduct[];
   query: string;
+  settingsDisabled?: boolean;
   sort: SortKey;
   sortOptions: Array<{ label: string; value: SortKey }>;
   units: DimensionUnit;
@@ -81,6 +82,7 @@ export function MobileToolbar({
   onWeightChange,
   products,
   query,
+  settingsDisabled = false,
   sort,
   sortOptions,
   units,
@@ -235,6 +237,7 @@ export function MobileToolbar({
             </DrawerHeader>
             <SettingsPanel
               currency={currency}
+              disabled={settingsDisabled}
               onCurrencyChange={onCurrencyChange}
               onUnitsChange={onUnitsChange}
               onWeightChange={onWeightChange}

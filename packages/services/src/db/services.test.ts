@@ -149,7 +149,7 @@ describe("database service logging", () => {
     const settings = {
       currencyCode: "USD",
       dimensionUnit: "mm",
-      theme: "light",
+      theme: "system",
       weightUnit: "oz",
     } as const;
     const userSettings: UserSettings = {
@@ -178,6 +178,87 @@ describe("database service logging", () => {
       settingKeys: ["currencyCode", "dimensionUnit", "theme", "weightUnit"],
       settings,
     });
+    expect(JSON.stringify(events)).not.toContain(clerkId);
+  });
+
+  it("patches partial user settings over existing values", async () => {
+    const events: LogEvent[] = [];
+    const clerkId = "clerk-patch-existing-1";
+    const logger = captureLogger(events);
+    const existingSettings: UserSettings = {
+      currencyCode: "CAD",
+      dimensionUnit: "in",
+      theme: "dark",
+      userId: 1000,
+      weightUnit: "g",
+    };
+    const user: User = {
+      clerkId,
+      id: 1000,
+    };
+    const patchedSettings: UserSettings = {
+      ...existingSettings,
+      theme: "system",
+    };
+    const db = createDbMock({
+      insertRows: [[user], [patchedSettings]],
+      selectRows: [[existingSettings]],
+    });
+    const users = createUsersService(db, logger);
+    const service = createUserSettingsService(db, users, logger);
+
+    await expect(
+      service.patchForClerkId(clerkId, { theme: "system" }),
+    ).resolves.toEqual(patchedSettings);
+    await logger.flush();
+
+    expect(events.map((event) => event.message)).toEqual([
+      `${loggerMessages.database.userSettings.getByClerkId}.succeeded`,
+      `${loggerMessages.database.users.ensure}.succeeded`,
+      `${loggerMessages.database.userSettings.upsertForClerkId}.succeeded`,
+    ]);
+    expect(events[2]?.attributes).toMatchObject({
+      clerkIdHash: hashLogIdentifier(clerkId),
+      operation: loggerMessages.database.userSettings.upsertForClerkId,
+      outcome: "success",
+      settingKeys: ["theme"],
+      settings: { theme: "system" },
+    });
+    expect(JSON.stringify(events)).not.toContain(clerkId);
+  });
+
+  it("patches partial user settings over defaults when none exist", async () => {
+    const events: LogEvent[] = [];
+    const clerkId = "clerk-patch-defaults-1";
+    const logger = captureLogger(events);
+    const user: User = {
+      clerkId,
+      id: 1000,
+    };
+    const patchedSettings: UserSettings = {
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      theme: "light",
+      userId: user.id,
+      weightUnit: "g",
+    };
+    const db = createDbMock({
+      insertRows: [[user], [patchedSettings]],
+      selectRows: [[]],
+    });
+    const users = createUsersService(db, logger);
+    const service = createUserSettingsService(db, users, logger);
+
+    await expect(
+      service.patchForClerkId(clerkId, { theme: "light" }),
+    ).resolves.toEqual(patchedSettings);
+    await logger.flush();
+
+    expect(events.map((event) => event.message)).toEqual([
+      `${loggerMessages.database.userSettings.getByClerkId}.succeeded`,
+      `${loggerMessages.database.users.ensure}.succeeded`,
+      `${loggerMessages.database.userSettings.upsertForClerkId}.succeeded`,
+    ]);
     expect(JSON.stringify(events)).not.toContain(clerkId);
   });
 });

@@ -1,12 +1,19 @@
+import { loggerMessages } from "@package/logger";
 import * as React from "react";
+import { logger } from "@/lib/logger";
 import {
   applyTheme,
   isThemeMode,
   type ThemeMode,
   themeStorageKey,
 } from "@/lib/theme";
+import {
+  getCurrentUserSettings,
+  patchCurrentUserSettings,
+} from "@/lib/user-settings";
 
 type ThemeProviderValue = {
+  saving: boolean;
   setTheme: (theme: ThemeMode) => void;
   theme: ThemeMode;
 };
@@ -22,6 +29,7 @@ function readTheme(): ThemeMode {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = React.useState<ThemeMode>(readTheme);
+  const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
     applyTheme(theme);
@@ -34,18 +42,53 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => media.removeEventListener("change", onChange);
   }, [theme]);
 
+  React.useEffect(() => {
+    let cancelled = false;
+
+    getCurrentUserSettings()
+      .then((settings) => {
+        if (cancelled || !settings) return;
+
+        setThemeState(settings.theme);
+        window.localStorage.setItem(themeStorageKey, settings.theme);
+        applyTheme(settings.theme);
+      })
+      .catch((error: unknown) => {
+        logger.warn(loggerMessages.web.userSettingsFetchFailed, { error });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const setTheme = React.useCallback((nextTheme: ThemeMode) => {
     setThemeState(nextTheme);
     window.localStorage.setItem(themeStorageKey, nextTheme);
     applyTheme(nextTheme);
+
+    setSaving(true);
+    patchCurrentUserSettings({ data: { theme: nextTheme } })
+      .then((settings) => {
+        if (!settings) return;
+
+        setThemeState(settings.theme);
+        window.localStorage.setItem(themeStorageKey, settings.theme);
+        applyTheme(settings.theme);
+      })
+      .catch((error: unknown) => {
+        logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+      })
+      .finally(() => setSaving(false));
   }, []);
 
   const value = React.useMemo(
     () => ({
+      saving,
       setTheme,
       theme,
     }),
-    [setTheme, theme],
+    [saving, setTheme, theme],
   );
 
   return (

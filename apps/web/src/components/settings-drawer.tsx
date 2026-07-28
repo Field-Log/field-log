@@ -26,6 +26,7 @@ import {
 
 type SettingsDrawerProps = {
   currency: CurrencyCode;
+  disabled?: boolean;
   onCurrencyChange: (currency: CurrencyCode) => void;
   onUnitsChange: (unit: DimensionUnit) => void;
   onWeightChange: (unit: WeightUnit) => void;
@@ -35,6 +36,7 @@ type SettingsDrawerProps = {
 
 export function SettingsDrawer({
   currency,
+  disabled = false,
   onCurrencyChange,
   onUnitsChange,
   onWeightChange,
@@ -65,6 +67,7 @@ export function SettingsDrawer({
         </SheetHeader>
         <SettingsPanel
           currency={currency}
+          disabled={disabled}
           onCurrencyChange={onCurrencyChange}
           onUnitsChange={onUnitsChange}
           onWeightChange={onWeightChange}
@@ -80,6 +83,7 @@ export function SettingsDrawer({
 // compact bottom sheet in the mobile toolbar.
 export function SettingsPanel({
   currency,
+  disabled = false,
   onCurrencyChange,
   onUnitsChange,
   onWeightChange,
@@ -104,8 +108,12 @@ export function SettingsPanel({
           type="single"
           value={units}
         >
-          <ToggleGroupItem value="in">Inches</ToggleGroupItem>
-          <ToggleGroupItem value="mm">Millimeters</ToggleGroupItem>
+          <ToggleGroupItem disabled={disabled} value="in">
+            Inches
+          </ToggleGroupItem>
+          <ToggleGroupItem disabled={disabled} value="mm">
+            Millimeters
+          </ToggleGroupItem>
         </ToggleGroup>
       </SettingGroup>
 
@@ -118,8 +126,12 @@ export function SettingsPanel({
           type="single"
           value={weight}
         >
-          <ToggleGroupItem value="g">Grams</ToggleGroupItem>
-          <ToggleGroupItem value="oz">Ounces</ToggleGroupItem>
+          <ToggleGroupItem disabled={disabled} value="g">
+            Grams
+          </ToggleGroupItem>
+          <ToggleGroupItem disabled={disabled} value="oz">
+            Ounces
+          </ToggleGroupItem>
         </ToggleGroup>
       </SettingGroup>
 
@@ -132,7 +144,11 @@ export function SettingsPanel({
           onValueChange={(value) => onCurrencyChange(value as CurrencyCode)}
           value={currency}
         >
-          <SelectTrigger aria-label="Display currency" className="w-full">
+          <SelectTrigger
+            aria-label="Display currency"
+            className="w-full"
+            disabled={disabled}
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

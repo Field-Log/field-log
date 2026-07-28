@@ -65,7 +65,7 @@ export function ArchivePage() {
   const { penId } = useParams({ strict: false });
   const { img } = useSearch({ strict: false }) as { img?: number };
 
-  const { currency, setCurrency, setUnits, setWeight, units, weight } =
+  const { currency, saving, setCurrency, setUnits, setWeight, units, weight } =
     usePenSettings();
   const { rates, refreshRates } = useCurrencyRates();
   const [filtersOpen, setFiltersOpen] = useFiltersOpen();
@@ -157,6 +157,7 @@ export function ArchivePage() {
         <MobileToolbar
           active={active}
           currency={currency}
+          settingsDisabled={saving}
           filterCount={filterCount}
           matchModes={matchModes}
           onClearFilters={clearFilters}
@@ -211,6 +212,7 @@ export function ArchivePage() {
           </Select>
           <SettingsDrawer
             currency={currency}
+            disabled={saving}
             onCurrencyChange={setCurrency}
             onUnitsChange={setUnits}
             onWeightChange={setWeight}

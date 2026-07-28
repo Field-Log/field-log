@@ -19,7 +19,7 @@ const themeOptions: Array<{
 ];
 
 export function ThemeToggle() {
-  const { setTheme, theme } = useTheme();
+  const { saving, setTheme, theme } = useTheme();
 
   return (
     <ToggleGroup
@@ -41,6 +41,7 @@ export function ThemeToggle() {
                 <ToggleGroupItem
                   aria-label={option.label}
                   className="size-7 flex-none rounded-full p-0 text-sidebar-foreground/65 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[pressed]:bg-background data-[pressed]:text-foreground data-[pressed]:shadow-sm [&_svg]:size-4"
+                  disabled={saving}
                   value={option.value}
                 />
               }

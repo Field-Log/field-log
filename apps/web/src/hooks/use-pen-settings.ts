@@ -11,80 +11,94 @@ import {
   todayUTCDateString,
   type WeightUnit,
 } from "@/lib/pen-formatters";
+import {
+  defaultUserSettings,
+  getCurrentUserSettings,
+  patchCurrentUserSettings,
+  type UserSettingsPatch,
+} from "@/lib/user-settings";
 
-type StoredSettings = {
-  units?: DimensionUnit;
-  weight?: WeightUnit;
-};
-
-const settingsStorageKey = "field-log.settings";
-const currencyStorageKey = "field-log.currency";
 const filtersClosedStorageKey = "field-log.filtersClosed";
 const rateStorageKey = `field-log.fxRates.${baseCurrency}`;
 
-function readStoredSettings(): Required<StoredSettings> {
-  if (typeof window === "undefined") return { units: "in", weight: "g" };
-
-  try {
-    const parsed = JSON.parse(
-      window.localStorage.getItem(settingsStorageKey) ?? "{}",
-    ) as StoredSettings;
-
-    return {
-      units: parsed.units === "mm" ? "mm" : "in",
-      weight: parsed.weight === "oz" ? "oz" : "g",
-    };
-  } catch {
-    return { units: "in", weight: "g" };
-  }
-}
-
-function readCurrency(): CurrencyCode {
-  if (typeof window === "undefined") return baseCurrency;
-  const stored = window.localStorage.getItem(currencyStorageKey);
-  return currencies.includes(stored as CurrencyCode)
-    ? (stored as CurrencyCode)
-    : baseCurrency;
-}
-
 export function usePenSettings() {
   const [units, setUnitsState] = React.useState<DimensionUnit>(
-    () => readStoredSettings().units,
+    defaultUserSettings.dimensionUnit,
   );
   const [weight, setWeightState] = React.useState<WeightUnit>(
-    () => readStoredSettings().weight,
+    defaultUserSettings.weightUnit,
   );
-  const [currency, setCurrencyState] =
-    React.useState<CurrencyCode>(readCurrency);
+  const [currency, setCurrencyState] = React.useState<CurrencyCode>(
+    defaultUserSettings.currencyCode,
+  );
+  const [saving, setSaving] = React.useState(false);
 
-  const setUnits = React.useCallback((nextUnits: DimensionUnit) => {
-    setUnitsState(nextUnits);
-    const stored = readStoredSettings();
-    window.localStorage.setItem(
-      settingsStorageKey,
-      JSON.stringify({ ...stored, units: nextUnits }),
-    );
+  React.useEffect(() => {
+    let cancelled = false;
+
+    getCurrentUserSettings()
+      .then((settings) => {
+        if (cancelled || !settings) return;
+
+        setUnitsState(settings.dimensionUnit);
+        setWeightState(settings.weightUnit);
+        setCurrencyState(settings.currencyCode);
+      })
+      .catch((error: unknown) => {
+        logger.warn(loggerMessages.web.userSettingsFetchFailed, { error });
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const setWeight = React.useCallback((nextWeight: WeightUnit) => {
-    setWeightState(nextWeight);
-    const stored = readStoredSettings();
-    window.localStorage.setItem(
-      settingsStorageKey,
-      JSON.stringify({ ...stored, weight: nextWeight }),
-    );
+  const saveSettings = React.useCallback((patch: UserSettingsPatch) => {
+    setSaving(true);
+    patchCurrentUserSettings({ data: patch })
+      .then((settings) => {
+        if (!settings) return;
+
+        setUnitsState(settings.dimensionUnit);
+        setWeightState(settings.weightUnit);
+        setCurrencyState(settings.currencyCode);
+      })
+      .catch((error: unknown) => {
+        logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+      })
+      .finally(() => setSaving(false));
   }, []);
 
-  const setCurrency = React.useCallback((nextCurrency: CurrencyCode) => {
-    setCurrencyState(nextCurrency);
-    window.localStorage.setItem(currencyStorageKey, nextCurrency);
-  }, []);
+  const setUnits = React.useCallback(
+    (nextUnits: DimensionUnit) => {
+      setUnitsState(nextUnits);
+      saveSettings({ dimensionUnit: nextUnits });
+    },
+    [saveSettings],
+  );
+
+  const setWeight = React.useCallback(
+    (nextWeight: WeightUnit) => {
+      setWeightState(nextWeight);
+      saveSettings({ weightUnit: nextWeight });
+    },
+    [saveSettings],
+  );
+
+  const setCurrency = React.useCallback(
+    (nextCurrency: CurrencyCode) => {
+      setCurrencyState(nextCurrency);
+      saveSettings({ currencyCode: nextCurrency });
+    },
+    [saveSettings],
+  );
 
   return {
     currency,
     setCurrency,
     setUnits,
     setWeight,
+    saving,
     units,
     weight,
   };

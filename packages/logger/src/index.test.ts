@@ -80,8 +80,11 @@ describe("logger", () => {
         authSignInFailed: "mobile.auth.signIn.failed",
         databaseInitFailed: "mobile.database.init.failed",
         exportFailed: "mobile.export.failed",
+        featureFlagsFetchFailed: "mobile.featureFlags.fetch.failed",
         screenViewed: "mobile.screen.viewed",
         syncUploadFailed: "mobile.sync.upload.failed",
+        userSettingsFetchFailed: "mobile.userSettings.fetch.failed",
+        userSettingsSaveFailed: "mobile.userSettings.save.failed",
         versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",
         versionPolicyStoreOpenFailed: "mobile.versionPolicy.storeOpen.failed",
       },
@@ -108,6 +111,8 @@ describe("logger", () => {
         accountLoaded: "web.account.loaded",
         fxRatesFetchFailed: "web.fxRates.fetch.failed",
         previewApiDerived: "web.previewApi.derived",
+        userSettingsFetchFailed: "web.userSettings.fetch.failed",
+        userSettingsSaveFailed: "web.userSettings.save.failed",
       },
     });
     expect(loggerValues).toMatchObject({
