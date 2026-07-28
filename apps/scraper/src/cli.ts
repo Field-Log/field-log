@@ -51,7 +51,7 @@ async function main() {
     });
 
     if (command.type === "cron:run" && !shouldRunRailwayCron(env)) {
-      logger.info(loggerMessages.scraper.cron.taskSkipped, {
+      logger.info(loggerMessages.scraper.cron.runSkipped, {
         attributes: {
           appEnv: env.APP_ENV,
           cronEnabled: env.SCRAPER_CRON_ENABLED,
