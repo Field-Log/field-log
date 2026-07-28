@@ -132,33 +132,6 @@ export const commandSecrets = {
       paths: [githubDiscordNotifierSecretPath],
     },
   },
-  "field-log": {
-    start: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    dev: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    android: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    ios: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    web: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-  },
   logger: {
     "test:axiom": {
       allowServerSecrets: true,
