@@ -9,6 +9,8 @@ export type ImageStorageConfig = {
   cdnBaseUrl?: string;
   dryRun?: boolean;
   fetch?: FetchLike;
+  fetchTimeoutMs?: number;
+  maxInputPixels?: number;
   provider?: string;
   remoteImageMaxBytes?: number;
 };
@@ -49,9 +51,10 @@ export type ImageUpdateResult = {
 };
 
 export type ImageFolderDeleteResult = "deleted" | "missing" | "skipped";
+export type ImageFileDeleteResult = "deleted" | "missing" | "skipped";
 
 export type ImageStorage = {
-  deleteFile: (fileId: string) => Promise<"deleted" | "skipped">;
+  deleteFile: (fileId: string) => Promise<ImageFileDeleteResult>;
   deleteFolder: (folderPath: string) => Promise<ImageFolderDeleteResult>;
   updateFile: (
     fileId: string,
@@ -68,6 +71,8 @@ type BunnyStorageConfig = {
   cdnBaseUrl: string;
   endpoint: string;
   fetch: FetchLike;
+  fetchTimeoutMs: number;
+  maxInputPixels: number;
   remoteImageMaxBytes: number;
   zoneName: string;
 };
@@ -77,6 +82,11 @@ type BunnyStorageObject = {
   ObjectName?: string;
 };
 
+type BunnyPrefixDeleteResult = {
+  deletedFiles: number;
+  foundFolder: boolean;
+};
+
 type ProcessedImage = {
   buffer: Buffer;
   height: number;
@@ -84,6 +94,8 @@ type ProcessedImage = {
 };
 
 const defaultImageStorageProvider = "bunny";
+const defaultFetchTimeoutMs = 30_000;
+const defaultMaxInputPixels = 80_000_000;
 const defaultRemoteImageMaxBytes = 50 * 1024 * 1024;
 const uploadMaxDimension = 2_000;
 const uploadWebpQuality = 85;
@@ -94,11 +106,7 @@ export function createImageStorage(config: ImageStorageConfig): ImageStorage {
     return createDryRunImageStorage();
   }
 
-  const provider = normalizeProvider(config.provider);
-
-  if (provider !== "bunny") {
-    throw new Error(`Unsupported image storage provider: ${provider}.`);
-  }
+  normalizeProvider(config.provider);
 
   return createBunnyImageStorage(readBunnyConfig(config));
 }
@@ -143,21 +151,26 @@ export function buildPreviewImageFolderPath(prNumber: number): string {
 function createBunnyImageStorage(config: BunnyStorageConfig): ImageStorage {
   return {
     async deleteFile(fileId) {
-      await bunnyRequest(config, normalizeBunnyObjectPath(fileId), {
-        expectedStatuses: [200, 404],
-        method: "DELETE",
-      });
+      const response = await bunnyRequest(
+        config,
+        normalizeBunnyObjectPath(fileId),
+        {
+          expectedStatuses: [200, 404],
+          method: "DELETE",
+        },
+      );
 
-      return "deleted";
+      return response.status === 404 ? "missing" : "deleted";
     },
     async deleteFolder(folderPath) {
       const normalizedFolderPath = normalizePreviewFolderPath(folderPath);
-      const deletedFiles = await deleteBunnyPrefix(
-        config,
-        normalizedFolderPath,
-      );
+      const result = await deleteBunnyPrefix(config, normalizedFolderPath);
 
-      return deletedFiles === 0 ? "missing" : "deleted";
+      if (result.deletedFiles > 0) {
+        return "deleted";
+      }
+
+      return result.foundFolder ? "deleted" : "missing";
     },
     async updateFile(fileId) {
       const filePath = normalizeImageFilePath(fileId);
@@ -179,12 +192,6 @@ function createBunnyImageStorage(config: BunnyStorageConfig): ImageStorage {
     },
     async uploadRemoteImage(input) {
       const targetFilePath = buildImageFilePath(input);
-      const existingFile = await findExistingBunnyFile(config, targetFilePath);
-
-      if (existingFile) {
-        return existingFile;
-      }
-
       const image = await fetchAndProcessRemoteImage(config, input.sourceUrl);
       await bunnyRequest(config, normalizeBunnyObjectPath(targetFilePath), {
         body: new Uint8Array(image.buffer),
@@ -203,9 +210,20 @@ function createBunnyImageStorage(config: BunnyStorageConfig): ImageStorage {
 async function deleteBunnyPrefix(
   config: BunnyStorageConfig,
   folderPath: string,
-): Promise<number> {
+): Promise<BunnyPrefixDeleteResult> {
   const objects = await listBunnyFolder(config, folderPath);
-  let deletedFiles = 0;
+
+  if (!objects) {
+    return {
+      deletedFiles: 0,
+      foundFolder: false,
+    };
+  }
+
+  const result: BunnyPrefixDeleteResult = {
+    deletedFiles: 0,
+    foundFolder: true,
+  };
 
   for (const object of objects) {
     if (!object.ObjectName) {
@@ -215,54 +233,30 @@ async function deleteBunnyPrefix(
     const objectPath = `${normalizeBunnyObjectPath(folderPath)}/${object.ObjectName}`;
 
     if (object.IsDirectory) {
-      deletedFiles += await deleteBunnyPrefix(config, objectPath);
+      const childResult = await deleteBunnyPrefix(config, objectPath);
+
+      result.deletedFiles += childResult.deletedFiles;
+      result.foundFolder ||= childResult.foundFolder;
       continue;
     }
 
-    await bunnyRequest(config, objectPath, {
+    const response = await bunnyRequest(config, objectPath, {
       expectedStatuses: [200, 404],
       method: "DELETE",
     });
-    deletedFiles += 1;
+
+    if (response.status === 200) {
+      result.deletedFiles += 1;
+    }
   }
 
-  return deletedFiles;
-}
-
-async function findExistingBunnyFile(
-  config: BunnyStorageConfig,
-  filePath: string,
-): Promise<ImageUploadResult | null> {
-  const folderPath = filePath.replace(/\/[^/]+$/u, "") || "/";
-  const fileName = filePath.split("/").at(-1);
-  const objects = await listBunnyFolder(config, folderPath);
-  const existingFile = objects.find(
-    (object) => !object.IsDirectory && object.ObjectName === fileName,
-  );
-
-  if (!existingFile) {
-    return null;
-  }
-
-  return {
-    fileId: filePath,
-    filePath,
-    height: 0,
-    provider: "bunny",
-    thumbnailUrl: buildImageUrl(config.cdnBaseUrl, filePath, {
-      format: "webp",
-      quality: String(uploadWebpQuality),
-      width: String(thumbnailWidth),
-    }),
-    url: buildImageUrl(config.cdnBaseUrl, filePath),
-    width: 0,
-  };
+  return result;
 }
 
 async function listBunnyFolder(
   config: BunnyStorageConfig,
   folderPath: string,
-): Promise<BunnyStorageObject[]> {
+): Promise<BunnyStorageObject[] | null> {
   const response = await bunnyRequest(
     config,
     normalizeBunnyFolderPath(folderPath),
@@ -273,7 +267,7 @@ async function listBunnyFolder(
   );
 
   if (response.status === 404) {
-    return [];
+    return null;
   }
 
   const body = await response.json();
@@ -290,7 +284,7 @@ async function fetchAndProcessRemoteImage(
   sourceUrl: string,
 ): Promise<ProcessedImage> {
   const { default: sharp } = await import("sharp");
-  const response = await config.fetch(sourceUrl);
+  const response = await fetchWithTimeout(config, sourceUrl);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch remote image: ${response.status}.`);
@@ -302,13 +296,18 @@ async function fetchAndProcessRemoteImage(
     throw new Error("Remote image is larger than the configured maximum size.");
   }
 
-  const inputBuffer = Buffer.from(await response.arrayBuffer());
+  const inputBuffer = await readResponseBodyWithLimit(
+    response,
+    config.remoteImageMaxBytes,
+  );
 
   if (inputBuffer.byteLength > config.remoteImageMaxBytes) {
     throw new Error("Remote image is larger than the configured maximum size.");
   }
 
-  const { data, info } = await sharp(inputBuffer)
+  const { data, info } = await sharp(inputBuffer, {
+    limitInputPixels: config.maxInputPixels,
+  })
     .rotate()
     .resize({
       fit: "inside",
@@ -337,7 +336,7 @@ async function bunnyRequest(
   },
 ): Promise<Response> {
   const url = buildBunnyStorageUrl(config, objectPath);
-  const response = await config.fetch(url, {
+  const response = await fetchWithTimeout(config, url, {
     body: input.body,
     headers: {
       AccessKey: config.accessKey,
@@ -351,6 +350,64 @@ async function bunnyRequest(
   }
 
   return response;
+}
+
+async function fetchWithTimeout(
+  config: BunnyStorageConfig,
+  input: Parameters<FetchLike>[0],
+  init?: Parameters<FetchLike>[1],
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, config.fetchTimeoutMs);
+
+  try {
+    return await config.fetch(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function readResponseBodyWithLimit(
+  response: Response,
+  maxBytes: number,
+): Promise<Buffer> {
+  if (!response.body) {
+    return Buffer.from(await response.arrayBuffer());
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        break;
+      }
+
+      totalBytes += value.byteLength;
+
+      if (totalBytes > maxBytes) {
+        await reader.cancel();
+        throw new Error(
+          "Remote image is larger than the configured maximum size.",
+        );
+      }
+
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return Buffer.concat(chunks, totalBytes);
 }
 
 function readBunnyConfig(config: ImageStorageConfig): BunnyStorageConfig {
@@ -384,6 +441,8 @@ function readBunnyConfig(config: ImageStorageConfig): BunnyStorageConfig {
     cdnBaseUrl: normalizeBaseUrl(cdnBaseUrl),
     endpoint: normalizeBaseUrl(endpoint),
     fetch: config.fetch ?? fetch,
+    fetchTimeoutMs: config.fetchTimeoutMs ?? defaultFetchTimeoutMs,
+    maxInputPixels: config.maxInputPixels ?? defaultMaxInputPixels,
     remoteImageMaxBytes:
       config.remoteImageMaxBytes ?? defaultRemoteImageMaxBytes,
     zoneName,

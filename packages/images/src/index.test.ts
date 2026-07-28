@@ -49,17 +49,35 @@ describe("createImageStorage", () => {
     ).toThrow("Unsupported image storage provider: imagekit.");
   });
 
-  it("reuses an existing Bunny image with the same target path", async () => {
-    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+  it("overwrites an existing Bunny image with processed dimensions", async () => {
+    const sourceImage = await sharp({
+      create: {
+        background: "red",
+        channels: 3,
+        height: 300,
+        width: 400,
+      },
+    })
+      .jpeg()
+      .toBuffer();
+    const uploadedBodies: BodyInit[] = [];
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
       const url = toUrl(input);
 
-      if (url.pathname === "/field-log-images/products/pens/123/") {
-        return jsonResponse([
-          {
-            IsDirectory: false,
-            ObjectName: "source-image.webp",
-          },
-        ]);
+      if (url.href === "https://cdn.example.test/source-image.jpg") {
+        return new Response(sourceImage, {
+          headers: { "content-length": String(sourceImage.byteLength) },
+        });
+      }
+
+      if (
+        url.pathname === "/field-log-images/products/pens/123/source-image.webp"
+      ) {
+        if (init?.body) {
+          uploadedBodies.push(init.body);
+        }
+
+        return jsonResponse({});
       }
 
       throw new Error(`Unexpected Bunny request: ${url.href}`);
@@ -78,14 +96,15 @@ describe("createImageStorage", () => {
     ).resolves.toEqual({
       fileId: "/products/pens/123/source-image.webp",
       filePath: "/products/pens/123/source-image.webp",
-      height: 0,
+      height: 300,
       provider: "bunny",
       thumbnailUrl:
         "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
       url: "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp",
-      width: 0,
+      width: 400,
     });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(uploadedBodies).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it("uploads an optimized remote image when Bunny does not have the target path", async () => {
@@ -241,6 +260,112 @@ describe("createImageStorage", () => {
       folderPath: "/preview/pr-52",
       status: "missing",
     });
+  });
+
+  it("treats empty preview image folders as cleaned up", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = toUrl(input);
+
+      if (url.pathname === "/field-log-images/preview/pr-52/") {
+        return jsonResponse([]);
+      }
+
+      throw new Error(`Unexpected Bunny request: ${url.href}`);
+    });
+
+    await expect(
+      deletePreviewImageFolder({
+        ...bunnyConfig,
+        fetch: fetchMock,
+        prNumber: 52,
+      }),
+    ).resolves.toEqual({
+      folderPath: "/preview/pr-52",
+      status: "deleted",
+    });
+  });
+
+  it("reports missing files separately from deleted files", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      const url = toUrl(input);
+
+      if (url.pathname === "/field-log-images/products/pens/123/image.webp") {
+        expect(init?.method).toBe("DELETE");
+
+        return jsonResponse({ message: "Not Found" }, 404);
+      }
+
+      throw new Error(`Unexpected Bunny request: ${url.href}`);
+    });
+    const storage = createImageStorage({
+      ...bunnyConfig,
+      fetch: fetchMock,
+    });
+
+    await expect(
+      storage.deleteFile("/products/pens/123/image.webp"),
+    ).resolves.toBe("missing");
+  });
+
+  it("stops reading remote images after the configured byte limit", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = toUrl(input);
+
+      if (url.href === "https://cdn.example.test/source-image.jpg") {
+        return new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new Uint8Array(4));
+              controller.enqueue(new Uint8Array(4));
+              controller.close();
+            },
+          }),
+        );
+      }
+
+      throw new Error(`Unexpected Bunny request: ${url.href}`);
+    });
+    const storage = createImageStorage({
+      ...bunnyConfig,
+      fetch: fetchMock,
+      remoteImageMaxBytes: 6,
+    });
+
+    await expect(
+      storage.uploadRemoteImage({
+        fileName: "source-image.webp",
+        folder: "/products/pens/123",
+        sourceUrl: "https://cdn.example.test/source-image.jpg",
+      }),
+    ).rejects.toThrow(
+      "Remote image is larger than the configured maximum size.",
+    );
+  });
+
+  it("aborts remote image fetches after the configured timeout", async () => {
+    const fetchMock = vi.fn<typeof fetch>(
+      async (_input, init) =>
+        await new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("The operation was aborted.", "AbortError"),
+            );
+          });
+        }),
+    );
+    const storage = createImageStorage({
+      ...bunnyConfig,
+      fetch: fetchMock,
+      fetchTimeoutMs: 1,
+    });
+
+    await expect(
+      storage.uploadRemoteImage({
+        fileName: "source-image.webp",
+        folder: "/products/pens/123",
+        sourceUrl: "https://cdn.example.test/source-image.jpg",
+      }),
+    ).rejects.toThrow("The operation was aborted.");
   });
 
   it("only builds positive PR preview folder paths", () => {

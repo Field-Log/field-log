@@ -1,5 +1,6 @@
 import {
   createImageStorage,
+  type ImageFileDeleteResult,
   type ImageStorage,
   type ImageStorageConfig,
   type ImageUpdateInput,
@@ -12,7 +13,7 @@ import { type Logger, loggerMessages } from "@package/logger";
 import { hashLogIdentifier } from "../logging.js";
 
 export type ImagesService = {
-  deleteFile(fileId: string): Promise<"deleted" | "skipped">;
+  deleteFile(fileId: string): Promise<ImageFileDeleteResult>;
   updateFile(
     fileId: string,
     input: ImageUpdateInput,
