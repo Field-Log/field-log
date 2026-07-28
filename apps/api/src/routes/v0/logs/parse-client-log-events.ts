@@ -64,6 +64,20 @@ function normalizeClientLogEvent(
     return { error: "Log event environment must be a string.", ok: false };
   }
 
+  if (
+    event.deploymentTarget !== undefined &&
+    !isShortString(event.deploymentTarget)
+  ) {
+    return {
+      error: "Log event deploymentTarget must be a string.",
+      ok: false,
+    };
+  }
+
+  if (event.deploymentId !== undefined && !isShortString(event.deploymentId)) {
+    return { error: "Log event deploymentId must be a string.", ok: false };
+  }
+
   if (!isLogLevel(event.level)) {
     return { error: "Log event level is invalid.", ok: false };
   }
@@ -90,6 +104,8 @@ function normalizeClientLogEvent(
 
   const normalizedEvent: LogEvent = {
     app: event.app,
+    deploymentId: event.deploymentId,
+    deploymentTarget: event.deploymentTarget,
     environment: event.environment,
     level: event.level,
     message: event.message,

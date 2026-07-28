@@ -54,6 +54,8 @@ async function main(): Promise<void> {
       suite: "logger-axiom-live",
       testRunId: runId,
     },
+    deploymentId: runId,
+    deploymentTarget: "test",
     environment: "automated-tests",
     level: config.logLevel,
     transports: [axiomTransport],
@@ -125,6 +127,8 @@ async function main(): Promise<void> {
       suite: "logger-axiom-live",
       testRunId: runId,
     },
+    deploymentId: runId,
+    deploymentTarget: "test",
     environment: "automated-tests",
     level: "warn",
     transports: [axiomTransport],
@@ -142,6 +146,8 @@ async function main(): Promise<void> {
       suite: "logger-axiom-live",
       testRunId: runId,
     },
+    deploymentId: runId,
+    deploymentTarget: "cloudflare-worker",
     environment: "automated-tests",
     level: config.logLevel,
     transports: [axiomTransport],
@@ -172,6 +178,8 @@ async function main(): Promise<void> {
       testRunId: runId,
       token: secrets.proxyContextToken,
     },
+    deploymentId: runId,
+    deploymentTarget: "web-client",
     environment: "automated-tests",
     level: config.logLevel,
     transports: [
@@ -228,6 +236,7 @@ async function main(): Promise<void> {
   assertRows(rows, {
     expectedMessages,
     filteredInfoMessage,
+    runId,
     runPrefix,
     secrets,
   });
@@ -471,6 +480,7 @@ function assertRows(
   input: {
     expectedMessages: readonly string[];
     filteredInfoMessage: string;
+    runId: string;
     runPrefix: string;
     secrets: Record<string, string>;
   },
@@ -490,6 +500,8 @@ function assertRows(
       rows,
       message(input.runPrefix, `direct.level.${level}`),
     );
+    assert.equal(getField(directRow, "deploymentId"), input.runId);
+    assert.equal(getField(directRow, "deploymentTarget"), "test");
     assert.equal(getField(directRow, "level"), level);
     assert.equal(getField(directRow, "attributes.emittedLevel"), level);
 
@@ -497,9 +509,11 @@ function assertRows(
       rows,
       message(input.runPrefix, `proxy.level.${level}`),
     );
-    assert.equal(getField(proxyRow, "app"), "api");
+    assert.equal(getField(proxyRow, "app"), "web");
+    assert.equal(getField(proxyRow, "deploymentId"), input.runId);
+    assert.equal(getField(proxyRow, "deploymentTarget"), "web-client");
+    assert.equal(getField(proxyRow, "environment"), "automated-tests");
     assert.equal(getField(proxyRow, "level"), level);
-    assert.equal(getField(proxyRow, "attributes.clientApp"), "web");
     assert.equal(getField(proxyRow, "attributes.source"), "log-proxy");
     assert.equal(getField(proxyRow, "context.proxyContext"), "client-value");
   }
@@ -521,12 +535,10 @@ function assertRows(
     rows,
     message(input.runPrefix, "proxy.error"),
   );
+  assert.equal(getField(proxyErrorRow, "app"), "web");
+  assert.equal(getField(proxyErrorRow, "error.name"), "TypeError");
   assert.equal(
-    getField(proxyErrorRow, "attributes.clientError.name"),
-    "TypeError",
-  );
-  assert.equal(
-    getField(proxyErrorRow, "attributes.clientError.message"),
+    getField(proxyErrorRow, "error.message"),
     "Proxy client live error",
   );
 

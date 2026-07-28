@@ -30,6 +30,8 @@ export type LogEvent = {
   attributes?: LogContext;
   console?: ConsoleLogOptions;
   context?: LogContext;
+  deploymentId?: string;
+  deploymentTarget?: string;
   environment: string;
   error?: SerializedError;
   level: LogLevel;
@@ -73,6 +75,7 @@ export type Logger = {
   error: (message: string, data?: LogData) => void;
   fatal: (message: string, data?: LogData) => void;
   flush: () => Promise<void>;
+  forward: (event: LogEvent, data?: LogData) => void;
   info: (message: string, data?: LogData) => void;
   operation: <T>(
     name: string,
@@ -87,6 +90,8 @@ export type Logger = {
 export type LoggerConfig = {
   app: string;
   context?: LogContext;
+  deploymentId?: string;
+  deploymentTarget?: string;
   environment: string;
   level?: LogLevel;
   redactKeys?: readonly string[];
@@ -206,6 +211,17 @@ export function createLogger(config: LoggerConfig): Logger {
   const baseContext = { ...(config.context ?? {}) };
   const pending = new Set<Promise<void>>();
 
+  const send = (event: LogEvent): void => {
+    for (const transport of transports) {
+      const task = Promise.resolve(transport.log(event)).catch(() => undefined);
+      pending.add(task);
+      task.then(
+        () => pending.delete(task),
+        () => pending.delete(task),
+      );
+    }
+  };
+
   const emit = (
     eventLevel: LogLevel,
     message: string,
@@ -217,6 +233,8 @@ export function createLogger(config: LoggerConfig): Logger {
 
     const event: LogEvent = {
       app: config.app,
+      deploymentId: config.deploymentId,
+      deploymentTarget: config.deploymentTarget,
       environment: config.environment,
       level: eventLevel,
       message,
@@ -254,14 +272,69 @@ export function createLogger(config: LoggerConfig): Logger {
       event.console = data.console;
     }
 
-    for (const transport of transports) {
-      const task = Promise.resolve(transport.log(event)).catch(() => undefined);
-      pending.add(task);
-      task.then(
-        () => pending.delete(task),
-        () => pending.delete(task),
-      );
+    send(event);
+  };
+
+  const forward = (inputEvent: LogEvent, data?: LogData): void => {
+    if (logLevelWeights[inputEvent.level] < logLevelWeights[level]) {
+      return;
     }
+
+    const event: LogEvent = {
+      app: String(inputEvent.app),
+      deploymentId: inputEvent.deploymentId,
+      deploymentTarget: inputEvent.deploymentTarget,
+      environment: String(inputEvent.environment),
+      level: inputEvent.level,
+      message: String(inputEvent.message),
+      timestamp: String(inputEvent.timestamp),
+    };
+
+    const context = redactValue(
+      {
+        ...baseContext,
+        ...(inputEvent.context ?? {}),
+        ...(data?.context ?? {}),
+      },
+      redactKeys,
+    );
+
+    if (hasKeys(context)) {
+      event.context = context;
+    }
+
+    const attributes = redactValue(
+      {
+        ...(inputEvent.attributes ?? {}),
+        ...(data?.attributes ?? {}),
+      },
+      redactKeys,
+    );
+
+    if (hasKeys(attributes)) {
+      event.attributes = attributes;
+    }
+
+    if (data?.error) {
+      event.error = serializeError(data.error);
+    } else if (inputEvent.error) {
+      event.error = redactValue(
+        inputEvent.error,
+        redactKeys,
+      ) as SerializedError;
+    }
+
+    if (data?.includeRawPayload) {
+      event.rawPayload = redactValue(data.rawPayload, redactKeys);
+    } else if (inputEvent.rawPayload !== undefined) {
+      event.rawPayload = redactValue(inputEvent.rawPayload, redactKeys);
+    }
+
+    if (data?.console ?? inputEvent.console) {
+      event.console = data?.console ?? inputEvent.console;
+    }
+
+    send(event);
   };
 
   const logger: Logger = {
@@ -288,6 +361,7 @@ export function createLogger(config: LoggerConfig): Logger {
       await Promise.all([...pending]);
       await Promise.all(transports.map((transport) => transport.flush?.()));
     },
+    forward,
     info(message, data) {
       emit("info", message, data);
     },
@@ -448,6 +522,10 @@ function createRedactSet(extraKeys: readonly string[]): Set<string> {
 function compactConsoleEvent(event: LogEvent): LogContext {
   const output: LogContext = {
     app: event.app,
+    ...(event.deploymentId ? { deploymentId: event.deploymentId } : {}),
+    ...(event.deploymentTarget
+      ? { deploymentTarget: event.deploymentTarget }
+      : {}),
     environment: event.environment,
     level: event.level,
     message: event.message,

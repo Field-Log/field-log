@@ -52,6 +52,14 @@ Optional client key. Required only when LOG\_PROXY\_CLIENT\_KEY is configured.
 
   `object`
 
+- **`deploymentId`**
+
+  `string`
+
+- **`deploymentTarget`**
+
+  `string`
+
 - **`error`**
 
   `object`
@@ -101,6 +109,14 @@ Optional client key. Required only when LOG\_PROXY\_CLIENT\_KEY is configured.
 - **`context`**
 
   `object`
+
+- **`deploymentId`**
+
+  `string`
+
+- **`deploymentTarget`**
+
+  `string`
 
 - **`error`**
 
@@ -159,6 +175,14 @@ Optional client key. Required only when LOG\_PROXY\_CLIENT\_KEY is configured.
 
     `object`
 
+  - **`deploymentId`**
+
+    `string`
+
+  - **`deploymentTarget`**
+
+    `string`
+
   - **`error`**
 
     `object`
@@ -190,6 +214,8 @@ Optional client key. Required only when LOG\_PROXY\_CLIENT\_KEY is configured.
   "app": "web",
   "attributes": {},
   "context": {},
+  "deploymentId": "pr-27",
+  "deploymentTarget": "web-client",
   "environment": "production",
   "error": null,
   "level": "info",
