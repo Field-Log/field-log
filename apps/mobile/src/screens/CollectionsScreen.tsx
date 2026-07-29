@@ -1,11 +1,6 @@
 import { type ReactElement } from "react";
-import { StyleSheet, View } from "react-native";
-import { C } from "../theme/colors";
+import { View } from "react-native";
 
 export default function CollectionsScreen(): ReactElement {
-  return <View style={styles.screen} />;
+  return <View className="flex-1 bg-background" />;
 }
-
-const styles = StyleSheet.create({
-  screen: { backgroundColor: C.bg, flex: 1 },
-});
