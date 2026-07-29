@@ -32,7 +32,7 @@ const endpoints = [
   },
   {
     name: "Databases",
-    path: "/database/v2/databases",
+    path: "/database/v2/databases?page=1&perPage=1000",
     summarize: summarizeDatabases,
   },
   {
