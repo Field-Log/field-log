@@ -1,7 +1,7 @@
 import { loggerMessages } from "@package/logger";
 import { describe, expect, it } from "vitest";
 import {
-  buildImageKitFolder,
+  buildImageFolder,
   createProcessorErrorCounter,
   getTmpImageFolderKey,
 } from "./processor.js";
@@ -61,10 +61,10 @@ describe("createProcessorErrorCounter", () => {
   });
 });
 
-describe("buildImageKitFolder", () => {
+describe("buildImageFolder", () => {
   it("builds production product folders without a prefix", () => {
     expect(
-      buildImageKitFolder({
+      buildImageFolder({
         entityId: "1000",
       }),
     ).toBe("/products/1000");
@@ -72,7 +72,7 @@ describe("buildImageKitFolder", () => {
 
   it("builds isolated preview product folders with the PR prefix", () => {
     expect(
-      buildImageKitFolder({
+      buildImageFolder({
         entityId: "1000-1001",
         prefix: "preview/pr-52",
       }),
@@ -81,7 +81,7 @@ describe("buildImageKitFolder", () => {
 
   it("normalizes surrounding slashes in the folder prefix", () => {
     expect(
-      buildImageKitFolder({
+      buildImageFolder({
         entityId: "1000",
         prefix: "/preview/",
       }),

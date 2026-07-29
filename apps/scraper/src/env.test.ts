@@ -70,11 +70,12 @@ describe("scraper env", () => {
   it("validates scraper job environment variables", () => {
     const env = createScraperJobEnv({
       APP_ENV: "development",
+      BUNNY_STORAGE_ACCESS_KEY: "storage-key",
+      BUNNY_STORAGE_ENDPOINT: "https://ny.storage.bunnycdn.com",
+      BUNNY_STORAGE_ZONE_NAME: "field-log-images",
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
-      IMAGE_KIT_PRIVATE_KEY: "private",
-      IMAGE_KIT_PUBLIC_KEY: "public",
-      IMAGE_KIT_FOLDER_PREFIX: "preview/pr-52",
-      IMAGE_KIT_URL_ENDPOINT: "https://ik.imagekit.io/example",
+      IMAGE_CDN_BASE_URL: "https://cdn.field-log.app",
+      IMAGE_FOLDER_PREFIX: "preview/pr-52",
       REDIS_URL: "redis://localhost:4008",
       GRIMSMO_PROXY_URL: "https://proxy.example.com",
       SCRAPER_AUTMOG_INTERVAL_MINUTES: "45",
@@ -90,12 +91,18 @@ describe("scraper env", () => {
       SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES: "10",
       SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS: "15",
       SCRAPER_QUEUE_CONCURRENCY: "2",
+      SCRAPER_CRON_ENABLED: "false",
     });
 
     expect(env.DATABASE_URL).toBe(
       "postgres://user:password@example.com:5432/field_log",
     );
-    expect(env.IMAGE_KIT_FOLDER_PREFIX).toBe("preview/pr-52");
+    expect(env.BUNNY_STORAGE_ACCESS_KEY).toBe("storage-key");
+    expect(env.BUNNY_STORAGE_ENDPOINT).toBe("https://ny.storage.bunnycdn.com");
+    expect(env.BUNNY_STORAGE_ZONE_NAME).toBe("field-log-images");
+    expect(env.IMAGE_CDN_BASE_URL).toBe("https://cdn.field-log.app");
+    expect(env.IMAGE_FOLDER_PREFIX).toBe("preview/pr-52");
+    expect(env.IMAGE_STORAGE_PROVIDER).toBe("bunny");
     expect(env.REDIS_URL).toBe("redis://localhost:4008");
     expect(env.GRIMSMO_PROXY_URL).toBe("https://proxy.example.com");
     expect(env.SCRAPER_AUTMOG_INTERVAL_MINUTES).toBe(45);
@@ -111,6 +118,7 @@ describe("scraper env", () => {
     expect(env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES).toBe(10);
     expect(env.SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS).toBe(15);
     expect(env.SCRAPER_QUEUE_CONCURRENCY).toBe(2);
+    expect(env.SCRAPER_CRON_ENABLED).toBe(false);
   });
 
   it("requires Redis and database URLs for scraper jobs", () => {
@@ -126,6 +134,16 @@ describe("scraper env", () => {
     });
 
     expect(env.REDIS_URL).toBe("redis://localhost:4008");
+  });
+
+  it("allows overriding the image storage provider", () => {
+    const env = createScraperJobEnv({
+      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      IMAGE_STORAGE_PROVIDER: "test-provider",
+      REDIS_URL: "redis://localhost:4008",
+    });
+
+    expect(env.IMAGE_STORAGE_PROVIDER).toBe("test-provider");
   });
 
   it("uses REDIS when REDIS_URL is not a resolved Redis URL", () => {
@@ -163,5 +181,6 @@ describe("scraper env", () => {
     expect(env.SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS).toBe(0);
     expect(env.SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES).toBe(15);
     expect(env.SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS).toBe(30);
+    expect(env.SCRAPER_CRON_ENABLED).toBeUndefined();
   });
 });

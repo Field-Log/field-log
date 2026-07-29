@@ -89,6 +89,7 @@ describe("logger", () => {
         cron: {
           completed: "scraper.cron.completed",
           failed: "scraper.cron.failed",
+          runSkipped: "scraper.cron.run.skipped",
           started: "scraper.cron.started",
           taskCompleted: "scraper.cron.task.completed",
           taskFailed: "scraper.cron.task.failed",

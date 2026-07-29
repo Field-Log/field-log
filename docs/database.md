@@ -156,7 +156,7 @@ export const schemaDescriptions = {
         description: "Stable hash of the source image identity used to dedupe image rows.",
         example: "sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55",
       },
-      image_kit_url: {
+      image_url: {
         description: "Optimized uploaded image URL.",
         example: "https://example.invalid/uploaded-image.webp",
       },
@@ -173,7 +173,7 @@ Generated table docs include column metadata like this:
 | `product_id` | `bigint` | yes | FK |  | `tmp_products.id` | Generic temporary product row this image belongs to. | `1000` |
 | `product_variation_id` | `bigint` | no | FK |  | `tmp_product_variations.id` | Generic temporary variation row this image belongs to, when present. | `1001` |
 | `source_hash` | `text` | yes |  |  |  | Stable hash of the source image identity used to dedupe image rows. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
-| `image_kit_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://example.invalid/uploaded-image.webp` |
+| `image_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://example.invalid/uploaded-image.webp` |
 
 Foreign-key relations should be generated from Drizzle snapshot metadata. For
 example, `tmp_images.product_id` should render as a relation to
@@ -210,7 +210,7 @@ migrations against it, deploys the API preview with that `DATABASE_URL`, and set
 branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
 same selected `DATABASE_URL` is also pushed into the Railway scraper preview
 environment so scraper cron executions use the same database branch as the API
-and web previews. See [ImageKit](./image-kit.md) for the matching preview image
+and web previews. See [Image CDN](./image-cdn.md) for the matching preview image
 folder namespace. The API preview Worker uses the preview runtime secrets
 managed by Infisical Secrets Sync; the workflow does not write PR-specific
 `DATABASE_URL` values to Cloudflare Worker secrets.

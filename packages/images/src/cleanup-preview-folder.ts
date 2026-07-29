@@ -1,5 +1,5 @@
 import { appendFileSync } from "node:fs";
-import { deletePreviewImageKitFolder } from "./index.js";
+import { deletePreviewImageFolder } from "./index.js";
 
 try {
   await main();
@@ -10,11 +10,13 @@ try {
 
 async function main(): Promise<void> {
   const prNumber = readPositiveIntegerEnv("PR_NUMBER");
-  const privateKey = readRequiredEnv("IMAGE_KIT_PRIVATE_KEY");
 
-  const result = await deletePreviewImageKitFolder({
-    dryRun: readBooleanEnv("IMAGE_KIT_CLEANUP_DRY_RUN"),
-    privateKey,
+  const result = await deletePreviewImageFolder({
+    bunnyStorageAccessKey: readRequiredEnv("BUNNY_STORAGE_ACCESS_KEY"),
+    bunnyStorageEndpoint: readRequiredEnv("BUNNY_STORAGE_ENDPOINT"),
+    bunnyStorageZoneName: readRequiredEnv("BUNNY_STORAGE_ZONE_NAME"),
+    cdnBaseUrl: readRequiredEnv("IMAGE_CDN_BASE_URL"),
+    dryRun: readBooleanEnv("IMAGE_CLEANUP_DRY_RUN"),
     prNumber,
   });
 
@@ -25,7 +27,7 @@ async function main(): Promise<void> {
       app: "ci",
       environment: process.env.GITHUB_ACTIONS ? "github-actions" : "local",
       level: "info",
-      message: "ci.imageKit.previewFolder.cleanup.completed",
+      message: "ci.images.previewFolder.cleanup.completed",
       timestamp: new Date().toISOString(),
       attributes: {
         folderPath: result.folderPath,

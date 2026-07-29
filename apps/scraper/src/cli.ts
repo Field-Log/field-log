@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { type Logger, loggerMessages } from "@package/logger";
-import { runRailwayCronJob } from "./cron.js";
+import { runRailwayCronJob, shouldRunRailwayCron } from "./cron.js";
 import { readProcessScraperRuntimeEnv } from "./env.js";
 import { createScraperJobEnv } from "./env.schema.js";
 import {
@@ -52,6 +52,19 @@ async function main() {
       logLevel: env.LOG_LEVEL,
       railwayEnvironmentName: env.RAILWAY_ENVIRONMENT_NAME,
     });
+
+    if (command.type === "cron:run" && !shouldRunRailwayCron(env)) {
+      logger.info(loggerMessages.scraper.cron.runSkipped, {
+        attributes: {
+          appEnv: env.APP_ENV,
+          cronEnabled: env.SCRAPER_CRON_ENABLED,
+          reason: "cron-disabled",
+          task: "cron:run",
+        },
+      });
+      return;
+    }
+
     context = await createScraperJobContext(env, logger);
 
     if (command.type === "cron:run") {
