@@ -47,6 +47,7 @@
     "diagram:infra": "node scripts/generate-infrastructure-diagram.mjs --once --refresh-metadata",
     "lint": "biome lint . && turbo run lint",
     "format": "biome check --write --linter-enabled=false .",
+    "logger:axiom:map-fields": "pnpm --filter @package/logger run axiom:map-fields",
     "figjam": "tsx packages/figjam/src/cli.ts",
     "figjam:read": "tsx packages/figjam/src/cli.ts read",
     "figjam:serve": "tsx packages/figjam/src/cli.ts serve-outbox",

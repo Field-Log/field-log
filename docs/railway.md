@@ -194,7 +194,7 @@ Required groups:
 - ImageKit: see [ImageKit](./image-kit.md) for endpoint, upload path, and
   preview namespace rules
 - Logger: `AXIOM_TOKEN`, `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`,
-  `LOG_LEVEL`, and `LOGGER`
+  `LOG_LEVEL`, `LOGGER`, `LOG_DEPLOYMENT_ID`, and `LOG_DEPLOYMENT_TARGET`
 - Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL` first; add
   `GRIMSMO_PROXY_URL` only if Railway/direct IP fetches are blocked
 

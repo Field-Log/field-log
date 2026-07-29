@@ -134,6 +134,8 @@ jobs:
             --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
             --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
             --arg LOG_LEVEL "${LOG_LEVEL:-}" \
+            --arg LOG_DEPLOYMENT_ID "${LOG_DEPLOYMENT_ID:-preview}" \
+            --arg LOG_DEPLOYMENT_TARGET "${LOG_DEPLOYMENT_TARGET:-cloudflare-worker}" \
             --arg LOGGER "${LOGGER:-}" \
             --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
             --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
@@ -149,6 +151,8 @@ jobs:
               AXIOM_DATASET: $AXIOM_DATASET,
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
               LOG_LEVEL: $LOG_LEVEL,
+              LOG_DEPLOYMENT_ID: $LOG_DEPLOYMENT_ID,
+              LOG_DEPLOYMENT_TARGET: $LOG_DEPLOYMENT_TARGET,
               LOGGER: $LOGGER,
               LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
               MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,

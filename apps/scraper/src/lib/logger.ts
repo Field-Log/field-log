@@ -13,13 +13,21 @@ export type ScraperLoggerConfig = {
   axiomDataset?: string;
   axiomEdgeDomain?: string;
   axiomToken?: string;
+  deploymentId?: string;
+  deploymentTarget?: string;
   loggerMode?: string;
   logLevel?: string;
+  railwayEnvironmentName?: string;
 };
 
 export function createScraperLogger(config: ScraperLoggerConfig): Logger {
   const hasAxiomConfig = Boolean(config.axiomToken && config.axiomDataset);
   const environment = config.appEnv ?? "development";
+  const deploymentTarget =
+    config.deploymentTarget ??
+    (config.railwayEnvironmentName ? "railway" : "local");
+  const deploymentId =
+    config.deploymentId ?? config.railwayEnvironmentName ?? environment;
   const consoleTransport = createConsoleTransport({
     mode: normalizeConsoleTransportMode(config.loggerMode),
   });
@@ -38,6 +46,8 @@ export function createScraperLogger(config: ScraperLoggerConfig): Logger {
 
   return createLogger({
     app: loggerValues.apps.scraper,
+    deploymentId,
+    deploymentTarget,
     environment,
     level: normalizeLogLevel(config.logLevel),
     transports,

@@ -83,6 +83,12 @@ export const ClientLogEventSchema = z
     }),
     attributes: UnknownRecordSchema.optional(),
     context: UnknownRecordSchema.optional(),
+    deploymentId: z.string().min(1).max(64).optional().openapi({
+      example: "pr-27",
+    }),
+    deploymentTarget: z.string().min(1).max(64).optional().openapi({
+      example: "web-client",
+    }),
     environment: z.string().min(1).max(64).openapi({
       example: "production",
     }),

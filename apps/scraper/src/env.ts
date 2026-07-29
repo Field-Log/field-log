@@ -13,8 +13,11 @@ export function readProcessScraperRuntimeEnv() {
     IMAGE_KIT_URL_ENDPOINT: process.env.IMAGE_KIT_URL_ENDPOINT,
     GRIMSMO_PROXY_URL: process.env.GRIMSMO_PROXY_URL,
     LOGGER: process.env.LOGGER,
+    LOG_DEPLOYMENT_ID: process.env.LOG_DEPLOYMENT_ID,
+    LOG_DEPLOYMENT_TARGET: process.env.LOG_DEPLOYMENT_TARGET,
     LOG_LEVEL: process.env.LOG_LEVEL,
     PORT: process.env.PORT,
+    RAILWAY_ENVIRONMENT_NAME: process.env.RAILWAY_ENVIRONMENT_NAME,
     REDIS: process.env.REDIS,
     REDIS_URL: process.env.REDIS_URL,
     SCRAPER_AUTMOG_INTERVAL_MINUTES:
