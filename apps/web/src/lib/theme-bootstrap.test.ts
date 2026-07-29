@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveThemeBootstrap } from "./theme-bootstrap";
+import {
+  resolveServerThemeBootstrap,
+  resolveThemeBootstrap,
+} from "./theme-bootstrap";
 import type { UserSettingsState } from "./user-settings";
 
 const defaultSettingsState: UserSettingsState = {
@@ -43,6 +46,38 @@ describe("resolveThemeBootstrap", () => {
     expect(resolveThemeBootstrap(defaultSettingsState, null)).toEqual({
       shouldPersist: false,
       theme: "system",
+    });
+  });
+});
+
+describe("resolveServerThemeBootstrap", () => {
+  it("uses the saved server theme for first paint when settings exist", () => {
+    expect(
+      resolveServerThemeBootstrap({
+        ...defaultSettingsState,
+        hasSavedSettings: true,
+        settings: {
+          ...defaultSettingsState.settings,
+          theme: "light",
+        },
+      }),
+    ).toEqual({
+      serverTheme: "light",
+      shouldUseServerTheme: true,
+    });
+  });
+
+  it("falls back to browser theme bootstrap when no saved settings exist", () => {
+    expect(resolveServerThemeBootstrap(defaultSettingsState)).toEqual({
+      serverTheme: null,
+      shouldUseServerTheme: false,
+    });
+  });
+
+  it("falls back to browser theme bootstrap when signed out", () => {
+    expect(resolveServerThemeBootstrap(null)).toEqual({
+      serverTheme: null,
+      shouldUseServerTheme: false,
     });
   });
 });

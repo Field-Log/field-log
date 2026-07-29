@@ -11,6 +11,7 @@ import { resolveThemeBootstrap } from "@/lib/theme-bootstrap";
 import {
   getCurrentUserSettingsState,
   patchCurrentUserSettings,
+  type UserSettingsState,
 } from "@/lib/user-settings";
 
 type ThemeProviderValue = {
@@ -20,16 +21,30 @@ type ThemeProviderValue = {
 };
 
 const ThemeContext = React.createContext<ThemeProviderValue | null>(null);
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? React.useEffect : React.useLayoutEffect;
 
-function readTheme(): ThemeMode {
+function readTheme(initialSettingsState: UserSettingsState | null): ThemeMode {
+  if (initialSettingsState?.hasSavedSettings) {
+    return initialSettingsState.settings.theme;
+  }
+
   if (typeof window === "undefined") return "system";
 
   const stored = window.localStorage.getItem(themeStorageKey);
   return isThemeMode(stored) ? stored : "system";
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<ThemeMode>(readTheme);
+export function ThemeProvider({
+  children,
+  initialSettingsState,
+}: {
+  children: React.ReactNode;
+  initialSettingsState: UserSettingsState | null;
+}) {
+  const [theme, setThemeState] = React.useState<ThemeMode>(() =>
+    readTheme(initialSettingsState),
+  );
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -43,8 +58,38 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => media.removeEventListener("change", onChange);
   }, [theme]);
 
+  useIsomorphicLayoutEffect(() => {
+    if (!initialSettingsState) return;
+
+    const stored = window.localStorage.getItem(themeStorageKey);
+    const localTheme = isThemeMode(stored) ? stored : null;
+    const next = resolveThemeBootstrap(initialSettingsState, localTheme);
+
+    setThemeState(next.theme);
+    window.localStorage.setItem(themeStorageKey, next.theme);
+    applyTheme(next.theme);
+  }, [initialSettingsState]);
+
   React.useEffect(() => {
     let cancelled = false;
+
+    if (initialSettingsState) {
+      const stored = window.localStorage.getItem(themeStorageKey);
+      const localTheme = isThemeMode(stored) ? stored : null;
+      const next = resolveThemeBootstrap(initialSettingsState, localTheme);
+
+      if (next.shouldPersist) {
+        patchCurrentUserSettings({ data: { theme: next.theme } }).catch(
+          (error: unknown) => {
+            logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+          },
+        );
+
+        return () => {
+          cancelled = true;
+        };
+      }
+    }
 
     getCurrentUserSettingsState()
       .then((settingsState) => {
@@ -73,7 +118,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialSettingsState]);
 
   const setTheme = React.useCallback((nextTheme: ThemeMode) => {
     setThemeState(nextTheme);
