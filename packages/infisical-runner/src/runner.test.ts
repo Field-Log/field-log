@@ -142,6 +142,25 @@ describe("buildInfisicalRunArgs", () => {
     ]);
   });
 
+  it("builds Bunny audit args from the local Bunny target path", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "bunny",
+        command: "audit",
+        commandArgs: ["node", "scripts/audit-bunny-services.mjs"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/local/bunny",
+      "--",
+      "node",
+      "scripts/audit-bunny-services.mjs",
+    ]);
+  });
+
   it("builds web commands from the web target path", () => {
     expect(
       buildInfisicalRunArgs({

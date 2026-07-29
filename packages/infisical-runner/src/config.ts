@@ -1,6 +1,7 @@
 export const defaultEnvironmentSlug = "dev";
 
 const apiSecretPath = "/apps/api";
+const bunnyLocalSecretPath = "/local/bunny";
 const cloudflareToolsSecretPath = "/tools/cloudflare";
 const fastlaneToolsSecretPath = "/tools/fastlane";
 const mobileSecretPath = "/apps/mobile";
@@ -120,6 +121,12 @@ export const commandSecrets = {
       allowServerSecrets: true,
       databaseUrlUserOverride: true,
       paths: [apiSecretPath],
+    },
+  },
+  bunny: {
+    audit: {
+      allowServerSecrets: true,
+      paths: [bunnyLocalSecretPath],
     },
   },
   database: {
