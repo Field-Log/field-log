@@ -108,7 +108,13 @@ describe("api", () => {
               route: "/",
               token: "secret",
             },
+            deploymentId: "pr-27",
+            deploymentTarget: "web-client",
             environment: "test",
+            error: {
+              message: "Client failed",
+              name: "TypeError",
+            },
             level: "info",
             message: "client.clicked",
             timestamp: "2026-01-01T00:00:00.000Z",
@@ -122,9 +128,19 @@ describe("api", () => {
       accepted: 1,
     });
     expect(events).toHaveLength(1);
-    expect(events[0]?.message).toBe("client.clicked");
+    expect(events[0]).toMatchObject({
+      app: "web",
+      deploymentId: "pr-27",
+      deploymentTarget: "web-client",
+      environment: "test",
+      error: {
+        message: "Client failed",
+        name: "TypeError",
+      },
+      message: "client.clicked",
+    });
     expect(events[0]?.attributes).toMatchObject({
-      clientApp: "web",
+      originalTimestamp: "2026-01-01T00:00:00.000Z",
       route: "/",
       source: loggerValues.logProxy.source,
       token: "[REDACTED]",

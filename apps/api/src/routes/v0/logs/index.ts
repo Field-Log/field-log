@@ -1,5 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { type LogData, loggerValues } from "@package/logger";
+import { loggerValues } from "@package/logger";
 import {
   ClientLogAcceptedResponseSchema,
   ClientLogHeadersSchema,
@@ -88,33 +88,16 @@ export function createLogsRouter(dependencies: AppDependencies = {}) {
 
     for (const event of events.value) {
       const attributes: Record<string, unknown> = {
-        ...(event.attributes ?? {}),
-        clientApp: event.app,
-        clientEnvironment: event.environment,
         originalTimestamp: event.timestamp,
         receivedAt,
         source: loggerValues.logProxy.source,
       };
 
-      if (event.error) {
-        attributes.clientError = event.error;
-      }
-
       if (userAgent) {
         attributes.userAgent = userAgent;
       }
 
-      const logData: LogData = {
-        attributes,
-        context: event.context,
-      };
-
-      if (event.rawPayload !== undefined) {
-        logData.includeRawPayload = true;
-        logData.rawPayload = event.rawPayload;
-      }
-
-      logger[event.level](event.message, logData);
+      logger.forward(event, { attributes });
     }
 
     await logger.flush();

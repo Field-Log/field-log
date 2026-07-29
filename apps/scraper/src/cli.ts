@@ -46,8 +46,11 @@ async function main() {
       axiomDataset: env.AXIOM_DATASET,
       axiomEdgeDomain: env.AXIOM_EDGE_DOMAIN,
       axiomToken: env.AXIOM_TOKEN,
+      deploymentId: env.LOG_DEPLOYMENT_ID,
+      deploymentTarget: env.LOG_DEPLOYMENT_TARGET,
       loggerMode: env.LOGGER,
       logLevel: env.LOG_LEVEL,
+      railwayEnvironmentName: env.RAILWAY_ENVIRONMENT_NAME,
     });
 
     if (command.type === "cron:run" && !shouldRunRailwayCron(env)) {

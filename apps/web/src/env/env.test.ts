@@ -25,6 +25,8 @@ describe("web client env", () => {
       VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
       VITE_CLERK_SIGN_IN_URL: "/sign-in",
       VITE_CLERK_SIGN_UP_URL: "/sign-up",
+      VITE_LOG_DEPLOYMENT_ID: "pr-27",
+      VITE_LOG_DEPLOYMENT_TARGET: "web-client",
       VITE_LOG_PROXY_CLIENT_KEY: "client-key",
     });
 
@@ -32,6 +34,8 @@ describe("web client env", () => {
     expect(env.VITE_CLERK_PUBLISHABLE_KEY).toBe("pk_test_example");
     expect(env.VITE_CLERK_SIGN_IN_URL).toBe("/sign-in");
     expect(env.VITE_CLERK_SIGN_UP_URL).toBe("/sign-up");
+    expect(env.VITE_LOG_DEPLOYMENT_ID).toBe("pr-27");
+    expect(env.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
     expect(env.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
   });
 
@@ -72,6 +76,8 @@ describe("web client env aliases", () => {
   it("maps unprefixed API and log proxy variables to their Vite client names", () => {
     const runtimeEnv: Record<string, string | undefined> = {
       API_URL: "localhost:4006",
+      LOG_DEPLOYMENT_ID: "development",
+      LOG_DEPLOYMENT_TARGET: "web-client",
       LOG_PROXY_CLIENT_KEY: "client-key",
     };
 
@@ -82,24 +88,34 @@ describe("web client env aliases", () => {
       VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
       VITE_CLERK_SIGN_IN_URL: "/sign-in",
       VITE_CLERK_SIGN_UP_URL: "/sign-up",
+      VITE_LOG_DEPLOYMENT_ID: runtimeEnv.VITE_LOG_DEPLOYMENT_ID,
+      VITE_LOG_DEPLOYMENT_TARGET: runtimeEnv.VITE_LOG_DEPLOYMENT_TARGET,
       VITE_LOG_PROXY_CLIENT_KEY: runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY,
     });
 
     expect(env.VITE_API_URL).toBe("http://localhost:4006");
+    expect(env.VITE_LOG_DEPLOYMENT_ID).toBe("development");
+    expect(env.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
     expect(env.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
   });
 
-  it("keeps explicit Vite API and log proxy variables over unprefixed aliases", () => {
+  it("keeps explicit Vite logging variables over unprefixed aliases", () => {
     const runtimeEnv: Record<string, string | undefined> = {
       API_URL: "https://api.example.com/fallback",
+      LOG_DEPLOYMENT_ID: "fallback",
+      LOG_DEPLOYMENT_TARGET: "fallback-target",
       LOG_PROXY_CLIENT_KEY: "fallback-client-key",
       VITE_API_URL: "https://api.example.com",
+      VITE_LOG_DEPLOYMENT_ID: "pr-27",
+      VITE_LOG_DEPLOYMENT_TARGET: "web-client",
       VITE_LOG_PROXY_CLIENT_KEY: "client-key",
     };
 
     applyWebClientEnvAliases(runtimeEnv);
 
     expect(runtimeEnv.VITE_API_URL).toBe("https://api.example.com");
+    expect(runtimeEnv.VITE_LOG_DEPLOYMENT_ID).toBe("pr-27");
+    expect(runtimeEnv.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
     expect(runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
   });
 });
@@ -117,6 +133,8 @@ describe("Vercel preview API env", () => {
     expect(runtimeEnv.VITE_API_URL).toBe(
       "https://pr-27-field-log-api-preview.23242.workers.dev",
     );
+    expect(runtimeEnv.VITE_LOG_DEPLOYMENT_ID).toBe("pr-27");
+    expect(runtimeEnv.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
     expect(consoleLogSpy).toHaveBeenCalledWith(
       expect.stringContaining("web.previewApi.derived"),
     );
@@ -167,6 +185,7 @@ describe("Vercel preview API env", () => {
       error: vi.fn(),
       fatal: vi.fn(),
       flush: vi.fn().mockResolvedValue(undefined),
+      forward: vi.fn(),
       info: vi.fn(),
       operation: vi.fn(async (_name, action) => action()),
       trace: vi.fn(),
@@ -224,6 +243,8 @@ describe("web server env", () => {
       DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
       IMAGE_FOLDER_PREFIX: "preview/pr-52",
       LOGGER: "verbose",
+      LOG_DEPLOYMENT_ID: "pr-52",
+      LOG_DEPLOYMENT_TARGET: "web-server",
       LOG_LEVEL: "debug",
     });
 
@@ -236,6 +257,8 @@ describe("web server env", () => {
     );
     expect(env.IMAGE_FOLDER_PREFIX).toBe("preview/pr-52");
     expect(env.LOGGER).toBe("verbose");
+    expect(env.LOG_DEPLOYMENT_ID).toBe("pr-52");
+    expect(env.LOG_DEPLOYMENT_TARGET).toBe("web-server");
     expect(env.LOG_LEVEL).toBe("debug");
   });
 

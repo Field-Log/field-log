@@ -2,4 +2,4 @@
 "field-log.app": minor
 ---
 
-Replace ImageKit with Bunny image storage.
+Limit non-production scraper runs and include all sources.

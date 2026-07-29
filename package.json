@@ -44,8 +44,10 @@
     "db:migrate": "pnpm --filter @package/database db:migrate",
     "db:resolve-conflicts": "pnpm --filter @package/database db:resolve-conflicts",
     "db:view": "pnpm --filter @package/database db:view",
+    "diagram:infra": "node scripts/generate-infrastructure-diagram.mjs --once --refresh-metadata",
     "lint": "biome lint . && turbo run lint",
     "format": "biome check --write --linter-enabled=false .",
+    "logger:axiom:map-fields": "pnpm --filter @package/logger run axiom:map-fields",
     "figjam": "tsx packages/figjam/src/cli.ts",
     "figjam:read": "tsx packages/figjam/src/cli.ts read",
     "figjam:serve": "tsx packages/figjam/src/cli.ts serve-outbox",
@@ -77,7 +79,8 @@
     "typescript": "latest",
     "typescript-eslint": "latest",
     "vitest": "latest",
-    "wait-on": "^9.0.10"
+    "wait-on": "^9.0.10",
+    "yaml": "^2.9.0"
   },
   "pnpm": {
     "overrides": {

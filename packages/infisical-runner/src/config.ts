@@ -39,6 +39,14 @@ const expoLoggingAliases = [
     from: "LOG_PROXY_CLIENT_KEY",
     to: "EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY",
   },
+  {
+    from: "LOG_DEPLOYMENT_ID",
+    to: "EXPO_PUBLIC_LOG_DEPLOYMENT_ID",
+  },
+  {
+    from: "LOG_DEPLOYMENT_TARGET",
+    to: "EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET",
+  },
 ] as const satisfies readonly EnvironmentAlias[];
 
 const expoFieldLogAliases = [
@@ -82,6 +90,12 @@ const fieldLogExpoAliases = [
   ...expoLoggingAliases,
 ] as const satisfies readonly EnvironmentAlias[];
 
+const scraperCommandSecretConfig = {
+  allowServerSecrets: true,
+  databaseUrlUserOverride: true,
+  paths: [scraperSecretPath],
+} as const satisfies CommandSecretConfig;
+
 export const commandSecrets = {
   api: {
     dev: {
@@ -124,33 +138,6 @@ export const commandSecrets = {
     "discord-notify": {
       allowServerSecrets: true,
       paths: [githubDiscordNotifierSecretPath],
-    },
-  },
-  "field-log": {
-    start: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    dev: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    android: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    ios: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
-    },
-    web: {
-      allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
-      paths: [mobileSecretPath],
     },
   },
   logger: {
@@ -237,26 +224,15 @@ export const commandSecrets = {
     },
   },
   scraper: {
-    "process:dead-letter": {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
-    "process:queue": {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
-    scrape: {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
-    "scrape:autmog": {
-      allowServerSecrets: true,
-      databaseUrlUserOverride: true,
-      paths: [scraperSecretPath],
-    },
+    "cron:run": scraperCommandSecretConfig,
+    "process:dead-letter": scraperCommandSecretConfig,
+    "process:queue": scraperCommandSecretConfig,
+    scrape: scraperCommandSecretConfig,
+    "scrape:autmog": scraperCommandSecretConfig,
+    "scrape:grimsmo-fjell": scraperCommandSecretConfig,
+    "scrape:grimsmo-norseman": scraperCommandSecretConfig,
+    "scrape:grimsmo-rask": scraperCommandSecretConfig,
+    "scrape:grimsmo-saga": scraperCommandSecretConfig,
   },
   web: {
     build: {

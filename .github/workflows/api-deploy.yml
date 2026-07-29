@@ -363,6 +363,20 @@ jobs:
             --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
+          printf '%s' "$railway_environment" | pnpm dlx @railway/cli variable set LOG_DEPLOYMENT_ID \
+            --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
+            --environment "$railway_environment"
+
+          printf '%s' "railway" | pnpm dlx @railway/cli variable set LOG_DEPLOYMENT_TARGET \
+            --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME" \
+            --environment "$railway_environment"
+
           railway_image_folder_prefix="$(
             pnpm dlx @railway/cli variable list \
               --kv \
@@ -427,6 +441,20 @@ jobs:
               }
             }'
 
+          printf '%s' "$railway_environment" | pnpm dlx @railway/cli variable set LOG_DEPLOYMENT_ID \
+            --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME" \
+            --environment "$railway_environment"
+
+          printf '%s' "railway" | pnpm dlx @railway/cli variable set LOG_DEPLOYMENT_TARGET \
+            --stdin \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME" \
+            --environment "$railway_environment"
+
           pnpm dlx @railway/cli service redeploy \
             --from-source \
             --yes \
@@ -486,6 +514,7 @@ jobs:
         shell: bash
         env:
           PREVIEW_DATABASE_URL: ${{ steps.db.outputs.database_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
@@ -504,6 +533,8 @@ jobs:
             --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
             --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
             --arg LOG_LEVEL "${LOG_LEVEL:-}" \
+            --arg LOG_DEPLOYMENT_ID "${LOG_DEPLOYMENT_ID:-pr-${PR_NUMBER}}" \
+            --arg LOG_DEPLOYMENT_TARGET "${LOG_DEPLOYMENT_TARGET:-cloudflare-worker}" \
             --arg LOGGER "${LOGGER:-}" \
             --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
             --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
@@ -519,6 +550,8 @@ jobs:
               AXIOM_DATASET: $AXIOM_DATASET,
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
               LOG_LEVEL: $LOG_LEVEL,
+              LOG_DEPLOYMENT_ID: $LOG_DEPLOYMENT_ID,
+              LOG_DEPLOYMENT_TARGET: $LOG_DEPLOYMENT_TARGET,
               LOGGER: $LOGGER,
               LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
               MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
@@ -948,6 +981,8 @@ jobs:
             --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
             --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
             --arg LOG_LEVEL "${LOG_LEVEL:-}" \
+            --arg LOG_DEPLOYMENT_ID "${LOG_DEPLOYMENT_ID:-production}" \
+            --arg LOG_DEPLOYMENT_TARGET "${LOG_DEPLOYMENT_TARGET:-cloudflare-worker}" \
             --arg LOGGER "${LOGGER:-}" \
             --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
             --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
@@ -963,6 +998,8 @@ jobs:
               AXIOM_DATASET: $AXIOM_DATASET,
               AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
               LOG_LEVEL: $LOG_LEVEL,
+              LOG_DEPLOYMENT_ID: $LOG_DEPLOYMENT_ID,
+              LOG_DEPLOYMENT_TARGET: $LOG_DEPLOYMENT_TARGET,
               LOGGER: $LOGGER,
               LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
               MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,

@@ -9,5 +9,7 @@ export const serverEnv = createWebServerEnv({
   DATABASE_URL: process.env.DATABASE_URL,
   IMAGE_FOLDER_PREFIX: process.env.IMAGE_FOLDER_PREFIX,
   LOGGER: process.env.LOGGER,
+  LOG_DEPLOYMENT_ID: process.env.LOG_DEPLOYMENT_ID,
+  LOG_DEPLOYMENT_TARGET: process.env.LOG_DEPLOYMENT_TARGET,
   LOG_LEVEL: process.env.LOG_LEVEL,
 });

@@ -37,8 +37,6 @@ request titles only, not the individual commits already present on the branch.
 | `api` | `apps/api/` |
 | `scraper` | `apps/scraper/` |
 | `mobile` | `apps/mobile/` |
-| `field-log` | `apps/field-log/` |
-| `autmog` | `apps/autmog/` |
 | `packages` | Multiple packages or the `packages/` root |
 | `database` | `packages/database/` |
 | `eslint` | `packages/eslint/` |

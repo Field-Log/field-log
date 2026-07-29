@@ -14,8 +14,11 @@ export type ScraperRuntimeEnv = {
   IMAGE_FOLDER_PREFIX?: string;
   IMAGE_STORAGE_PROVIDER?: string;
   LOGGER?: string;
+  LOG_DEPLOYMENT_ID?: string;
+  LOG_DEPLOYMENT_TARGET?: string;
   LOG_LEVEL?: string;
   PORT?: string;
+  RAILWAY_ENVIRONMENT_NAME?: string;
   REDIS?: string;
   REDIS_URL?: string;
   SCRAPER_AUTMOG_INTERVAL_MINUTES?: string;
@@ -67,8 +70,11 @@ const scraperServerSchema = {
   AXIOM_EDGE_DOMAIN: z.string().min(1).optional(),
   AXIOM_TOKEN: z.string().min(1).optional(),
   LOGGER: z.string().min(1).optional(),
+  LOG_DEPLOYMENT_ID: z.string().min(1).optional(),
+  LOG_DEPLOYMENT_TARGET: z.string().min(1).optional(),
   LOG_LEVEL: z.string().min(1).optional(),
   PORT: z.coerce.number().int().min(1).max(65_535).default(4007),
+  RAILWAY_ENVIRONMENT_NAME: z.string().min(1).optional(),
   SCRAPER_SCHEDULER_ENABLED: z
     .enum(["true", "false"])
     .optional()
@@ -215,8 +221,11 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     IMAGE_STORAGE_PROVIDER: runtimeEnv.IMAGE_STORAGE_PROVIDER,
     GRIMSMO_PROXY_URL: runtimeEnv.GRIMSMO_PROXY_URL,
     LOGGER: runtimeEnv.LOGGER,
+    LOG_DEPLOYMENT_ID: runtimeEnv.LOG_DEPLOYMENT_ID,
+    LOG_DEPLOYMENT_TARGET: runtimeEnv.LOG_DEPLOYMENT_TARGET,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,
     PORT: runtimeEnv.PORT,
+    RAILWAY_ENVIRONMENT_NAME: runtimeEnv.RAILWAY_ENVIRONMENT_NAME,
     REDIS_URL: selectRedisUrl(runtimeEnv),
     SCRAPER_AUTMOG_INTERVAL_MINUTES: runtimeEnv.SCRAPER_AUTMOG_INTERVAL_MINUTES,
     SCRAPER_AUTMOG_START_DELAY_SECONDS:

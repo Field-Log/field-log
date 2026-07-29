@@ -24,6 +24,11 @@ const transports = logProxyUrl
 
 export const logger = createLogger({
   app: loggerValues.apps.mobile,
+  deploymentId:
+    mobileEnv.EXPO_PUBLIC_LOG_DEPLOYMENT_ID ??
+    (__DEV__ ? "development" : "production"),
+  deploymentTarget:
+    mobileEnv.EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET ?? "expo-client",
   environment: __DEV__ ? "development" : "production",
   transports,
 });

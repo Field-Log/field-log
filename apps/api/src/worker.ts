@@ -133,9 +133,12 @@ async function logWorkerException(
       : []),
     createConsoleTransport(),
   ];
+  const environment = env.APP_ENV ?? "unknown";
   const logger = createLogger({
     app: loggerValues.apps.api,
-    environment: env.APP_ENV ?? "unknown",
+    deploymentId: env.LOG_DEPLOYMENT_ID ?? environment,
+    deploymentTarget: env.LOG_DEPLOYMENT_TARGET ?? "cloudflare-worker",
+    environment,
     level: normalizeLogLevel(env.LOG_LEVEL),
     transports,
   });
