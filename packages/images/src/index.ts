@@ -284,22 +284,28 @@ async function fetchAndProcessRemoteImage(
   sourceUrl: string,
 ): Promise<ProcessedImage> {
   const { default: sharp } = await import("sharp");
-  const response = await fetchWithTimeout(config, sourceUrl);
 
-  if (!response.ok) {
-    throw new Error(`Failed to fetch remote image: ${response.status}.`);
-  }
+  const inputBuffer = await withFetchTimeout(config, async (signal) => {
+    const response = await config.fetch(sourceUrl, { signal });
 
-  const contentLength = response.headers.get("content-length");
+    if (!response.ok) {
+      throw new Error(`Failed to fetch remote image: ${response.status}.`);
+    }
 
-  if (contentLength && Number(contentLength) > config.remoteImageMaxBytes) {
-    throw new Error("Remote image is larger than the configured maximum size.");
-  }
+    const contentLength = response.headers.get("content-length");
 
-  const inputBuffer = await readResponseBodyWithLimit(
-    response,
-    config.remoteImageMaxBytes,
-  );
+    if (contentLength && Number(contentLength) > config.remoteImageMaxBytes) {
+      throw new Error(
+        "Remote image is larger than the configured maximum size.",
+      );
+    }
+
+    return await readResponseBodyWithLimit(
+      response,
+      config.remoteImageMaxBytes,
+      signal,
+    );
+  });
 
   if (inputBuffer.byteLength > config.remoteImageMaxBytes) {
     throw new Error("Remote image is larger than the configured maximum size.");
@@ -357,16 +363,27 @@ async function fetchWithTimeout(
   input: Parameters<FetchLike>[0],
   init?: Parameters<FetchLike>[1],
 ): Promise<Response> {
+  return await withFetchTimeout(
+    config,
+    async (signal) =>
+      await config.fetch(input, {
+        ...init,
+        signal,
+      }),
+  );
+}
+
+async function withFetchTimeout<T>(
+  config: BunnyStorageConfig,
+  run: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => {
     controller.abort();
   }, config.fetchTimeoutMs);
 
   try {
-    return await config.fetch(input, {
-      ...init,
-      signal: controller.signal,
-    });
+    return await run(controller.signal);
   } finally {
     clearTimeout(timeout);
   }
@@ -375,6 +392,7 @@ async function fetchWithTimeout(
 async function readResponseBodyWithLimit(
   response: Response,
   maxBytes: number,
+  signal?: AbortSignal,
 ): Promise<Buffer> {
   if (!response.body) {
     throw new Error("Remote image response did not include a readable body.");
@@ -386,7 +404,7 @@ async function readResponseBodyWithLimit(
 
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await readStreamChunk(reader, signal);
 
       if (done) {
         break;
@@ -408,6 +426,40 @@ async function readResponseBodyWithLimit(
   }
 
   return Buffer.concat(chunks, totalBytes);
+}
+
+async function readStreamChunk(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  signal?: AbortSignal,
+): Promise<ReadableStreamReadResult<Uint8Array>> {
+  if (!signal) {
+    return await reader.read();
+  }
+
+  if (signal.aborted) {
+    throw createAbortError();
+  }
+
+  return await new Promise<ReadableStreamReadResult<Uint8Array>>(
+    (resolve, reject) => {
+      const onAbort = () => {
+        void reader.cancel().catch(() => undefined);
+        reject(createAbortError());
+      };
+
+      signal.addEventListener("abort", onAbort, { once: true });
+      reader
+        .read()
+        .then(resolve, reject)
+        .finally(() => {
+          signal.removeEventListener("abort", onAbort);
+        });
+    },
+  );
+}
+
+function createAbortError(): DOMException {
+  return new DOMException("The operation was aborted.", "AbortError");
 }
 
 function readBunnyConfig(config: ImageStorageConfig): BunnyStorageConfig {

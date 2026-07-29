@@ -368,6 +368,37 @@ describe("createImageStorage", () => {
     ).rejects.toThrow("The operation was aborted.");
   });
 
+  it("aborts remote image body reads after the configured timeout", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input) => {
+      const url = toUrl(input);
+
+      if (url.href === "https://cdn.example.test/source-image.jpg") {
+        return new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new Uint8Array(1));
+            },
+          }),
+        );
+      }
+
+      throw new Error(`Unexpected Bunny request: ${url.href}`);
+    });
+    const storage = createImageStorage({
+      ...bunnyConfig,
+      fetch: fetchMock,
+      fetchTimeoutMs: 1,
+    });
+
+    await expect(
+      storage.uploadRemoteImage({
+        fileName: "source-image.webp",
+        folder: "/products/pens/123",
+        sourceUrl: "https://cdn.example.test/source-image.jpg",
+      }),
+    ).rejects.toThrow("The operation was aborted.");
+  });
+
   it("only builds positive PR preview folder paths", () => {
     expect(buildPreviewImageFolderPath(52)).toBe("/preview/pr-52");
     expect(() => buildPreviewImageFolderPath(0)).toThrow(
