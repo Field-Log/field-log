@@ -1,6 +1,6 @@
 {
-  "id": "c8fa1f5b-7504-42b7-bcb6-55c342aaf4f5",
-  "prevId": "811a3d64-8748-4102-bdaf-4064f9d7bb79",
+  "id": "0512747d-e370-433b-89c1-f61b93a19cf7",
+  "prevId": "c8fa1f5b-7504-42b7-bcb6-55c342aaf4f5",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3186,7 +3186,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'dark'"
+          "default": "'system'"
         },
         "weight_unit": {
           "name": "weight_unit",
