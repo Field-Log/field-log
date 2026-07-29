@@ -18,6 +18,11 @@ export type UserSettingsPreferences = {
 
 export type UserSettingsPatch = Partial<UserSettingsPreferences>;
 
+export type UserSettingsState = {
+  hasSavedSettings: boolean;
+  settings: UserSettingsPreferences;
+};
+
 export const defaultUserSettings: UserSettingsPreferences = {
   currencyCode: "USD",
   dimensionUnit: "in",
@@ -38,6 +43,23 @@ export const getCurrentUserSettings = createServerFn({ method: "GET" }).handler(
     return toUserSettingsPreferences(settings ?? defaultUserSettings);
   },
 );
+
+export const getCurrentUserSettingsState = createServerFn({
+  method: "GET",
+}).handler(async (): Promise<UserSettingsState | null> => {
+  const { isAuthenticated, userId } = await auth();
+
+  if (!isAuthenticated || !userId) {
+    return null;
+  }
+
+  const settings = await s.db.userSettings.getByClerkId(userId);
+
+  return {
+    hasSavedSettings: Boolean(settings),
+    settings: toUserSettingsPreferences(settings ?? defaultUserSettings),
+  };
+});
 
 export const patchCurrentUserSettings = createServerFn({ method: "POST" })
   .validator(parseUserSettingsPatch)

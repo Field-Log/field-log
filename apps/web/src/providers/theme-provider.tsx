@@ -7,8 +7,9 @@ import {
   type ThemeMode,
   themeStorageKey,
 } from "@/lib/theme";
+import { resolveThemeBootstrap } from "@/lib/theme-bootstrap";
 import {
-  getCurrentUserSettings,
+  getCurrentUserSettingsState,
   patchCurrentUserSettings,
 } from "@/lib/user-settings";
 
@@ -45,13 +46,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     let cancelled = false;
 
-    getCurrentUserSettings()
-      .then((settings) => {
-        if (cancelled || !settings) return;
+    getCurrentUserSettingsState()
+      .then((settingsState) => {
+        if (cancelled || !settingsState) return;
 
-        setThemeState(settings.theme);
-        window.localStorage.setItem(themeStorageKey, settings.theme);
-        applyTheme(settings.theme);
+        const stored = window.localStorage.getItem(themeStorageKey);
+        const localTheme = isThemeMode(stored) ? stored : null;
+        const next = resolveThemeBootstrap(settingsState, localTheme);
+
+        setThemeState(next.theme);
+        window.localStorage.setItem(themeStorageKey, next.theme);
+        applyTheme(next.theme);
+
+        if (!next.shouldPersist) return;
+
+        patchCurrentUserSettings({ data: { theme: next.theme } }).catch(
+          (error: unknown) => {
+            logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+          },
+        );
       })
       .catch((error: unknown) => {
         logger.warn(loggerMessages.web.userSettingsFetchFailed, { error });
