@@ -44,5 +44,6 @@ yarn-error.log*
 assets/
 !apps/mobile/assets/
 !apps/mobile/assets/**
+/bunny-audit/
 plans/
 pr-summarys/
