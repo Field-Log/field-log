@@ -25,6 +25,7 @@
     "@package/feature-flags": "workspace:*",
     "@package/logger": "workspace:*",
     "@package/services": "workspace:*",
+    "@package/theme": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "@tailwindcss/vite": "^4.3.2",
     "@tanstack/react-router": "latest",
