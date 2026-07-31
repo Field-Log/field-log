@@ -1,6 +1,21 @@
 # field-log.app
 
 
+
+## 0.1.1
+
+### Patch Changes
+
+- Fix scraper Axiom environment labels.
+- Fix release validation for clean GitHub runners.
+
+## Mobile Release Status
+
+| Platform | Build | Submit | Destination | Review / Live |
+| --- | --- | --- | --- | --- |
+| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
+| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
+
 ## 0.1.0
 
 ### Minor Changes
