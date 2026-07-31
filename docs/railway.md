@@ -89,6 +89,12 @@ Future source schedules should be added in `apps/scraper` and staggered in code
 or configuration inside the `cron:run` command. Do not add one Railway service
 per scraped site.
 
+Preview cron runs are gated by `SCRAPER_CRON_ENABLED`. When `APP_ENV=preview`,
+`cron:run` exits before opening DB or Redis connections unless
+`SCRAPER_CRON_ENABLED=true`. The API deploy workflow sets this to `true` only
+for DB-changing PRs with an isolated Neon `preview-pr-*` branch, and to `false`
+for non-DB PRs that share the preview database.
+
 Manual source runs use source keys. For local development, use the root command
 so local Docker/OrbStack Redis is started and `/apps/scraper` secrets are
 injected from Infisical:
@@ -191,10 +197,10 @@ Required groups:
 
 - Database: `DATABASE_URL`
 - Queue: `REDIS_URL`
-- ImageKit: see [ImageKit](./image-kit.md) for endpoint, upload path, and
-  preview namespace rules
+- Image CDN: see [Image CDN](./image-cdn.md) for Bunny setup, upload path,
+  and preview namespace rules
 - Logger: `AXIOM_TOKEN`, `AXIOM_DATASET`, optional `AXIOM_EDGE_DOMAIN`,
-  `LOG_LEVEL`, and `LOGGER`
+  `LOG_LEVEL`, `LOGGER`, `LOG_DEPLOYMENT_ID`, and `LOG_DEPLOYMENT_TARGET`
 - Grimsmo proxying: try direct fetches without `GRIMSMO_PROXY_URL` first; add
   `GRIMSMO_PROXY_URL` only if Railway/direct IP fetches are blocked
 

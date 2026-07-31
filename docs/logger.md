@@ -17,6 +17,7 @@ Local development uses stable ports:
 Use one Axiom dataset per environment:
 
 - Development: `development`
+- Preview: `preview`
 - Production: `production`
 
 Keep the app name on each event with `app: "api"`, `app: "web"`, or
@@ -24,6 +25,28 @@ Keep the app name on each event with `app: "api"`, `app: "web"`, or
 `apps/scraper` is added. This keeps cross-app flows queryable in one dataset.
 Split into per-app datasets only if access, retention, or cost controls need to
 differ by app.
+
+Keep stable routing and deployment dimensions as fixed top-level fields:
+`app`, `environment`, `deploymentTarget`, `deploymentId`, `level`, `message`,
+`timestamp`, `operation`, `outcome`, and `durationMs`.
+
+Keep structured or high-cardinality payloads as top-level Axiom map fields:
+`attributes`, `context`, `error`, and `rawPayload`. Configure these map fields
+once per dataset before relying on the logger in that dataset. They stay
+queryable, but arbitrary nested keys do not consume dataset fields one by one.
+
+Run the setup script for each dataset:
+
+```sh
+AXIOM_DATASET=development AXIOM_TOKEN=<token> pnpm logger:axiom:map-fields
+AXIOM_DATASET=preview AXIOM_TOKEN=<token> pnpm logger:axiom:map-fields
+AXIOM_DATASET=production AXIOM_TOKEN=<token> pnpm logger:axiom:map-fields
+```
+
+The script reads optional `AXIOM_EDGE_DOMAIN` and otherwise uses
+`api.axiom.co`. To configure manually in Axiom, open the dataset fields list and
+create map fields named exactly `attributes`, `context`, `error`, and
+`rawPayload`.
 
 The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
 Use that event to confirm scheduled Worker execution and Axiom ingestion.
@@ -47,21 +70,30 @@ Each server runtime folder may provide:
 - `AXIOM_EDGE_DOMAIN`, optional
 - `LOG_LEVEL`, optional
 - `LOGGER`, optional
+- `LOG_DEPLOYMENT_ID`, optional
+- `LOG_DEPLOYMENT_TARGET`, optional
 
 `AXIOM_TOKEN` must have ingest access for the configured dataset.
 `LOGGER=verbose` makes development terminal logs print the full event. Omit it
-for compact terminal logs.
+for compact terminal logs. `LOG_DEPLOYMENT_ID` identifies the deploy or preview,
+for example `pr-40`, `preview`, or `production`. `LOG_DEPLOYMENT_TARGET`
+identifies the runtime, for example `cloudflare-worker`, `vercel`, `railway`,
+`web-client`, or `expo-client`.
 
 Recommended values:
 
 ```dotenv
 # Development
 AXIOM_DATASET=development
+LOG_DEPLOYMENT_ID=development
+LOG_DEPLOYMENT_TARGET=local
 LOG_LEVEL=debug
 # LOGGER=verbose
 
 # Production
 AXIOM_DATASET=production
+LOG_DEPLOYMENT_ID=production
+LOG_DEPLOYMENT_TARGET=<cloudflare-worker|vercel|railway>
 LOG_LEVEL=info
 ```
 
@@ -72,10 +104,14 @@ Client runtime folders provide their platform-specific API and proxy settings:
 
 - `/apps/web`: `API_URL`, `LOG_PROXY_CLIENT_KEY`, optional. The web build
   aliases these to `VITE_API_URL` and `VITE_LOG_PROXY_CLIENT_KEY` when the
-  `VITE_*` names are absent.
+  `VITE_*` names are absent. It also aliases optional `LOG_DEPLOYMENT_ID` and
+  `LOG_DEPLOYMENT_TARGET` to `VITE_LOG_DEPLOYMENT_ID` and
+  `VITE_LOG_DEPLOYMENT_TARGET` for browser logs.
 - `/apps/mobile`: `API_URL`, `EXPO_PUBLIC_API_URL`,
   `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional. The mobile Infisical runner
-  aliases `API_URL` to `EXPO_PUBLIC_API_URL` when the public name is absent.
+  aliases `API_URL` to `EXPO_PUBLIC_API_URL` when the public name is absent. It
+  also aliases optional `LOG_DEPLOYMENT_ID` and `LOG_DEPLOYMENT_TARGET` to
+  `EXPO_PUBLIC_LOG_DEPLOYMENT_ID` and `EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET`.
 - `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
 
 Web and mobile derive the client log proxy URL by appending `/api/v0/logs` to
@@ -137,6 +173,8 @@ even when Axiom is configured. The default terminal shape is compact:
 ```json
 {
   "app": "api",
+  "deploymentId": "development",
+  "deploymentTarget": "cloudflare-worker",
   "durationMs": 12,
   "environment": "development",
   "level": "info",
@@ -214,8 +252,9 @@ The test hard-fails unless `AXIOM_DATASET` matches the expected dataset and
 `LOGGER_AXIOM_EXPECTED_DATASET=preview` so pull request validation writes to the
 `preview` dataset. The test emits direct logger events and in-process client
 proxy events, then queries Axiom to confirm the events were received, levels were
-preserved, context and operation metadata were recorded, and sensitive values
-were redacted.
+preserved, deployment metadata was recorded, proxied client rows kept the
+original client top-level identity, context and operation metadata were recorded,
+and sensitive values were redacted.
 
 The dedicated GitHub Actions workflow is `.github/workflows/logger-live.yml`.
 It runs the live check for same-repository pull requests that touch
@@ -253,6 +292,8 @@ const databaseUrl = process.env.DATABASE_URL;
 const axiomToken = process.env.AXIOM_TOKEN;
 const axiomDataset = process.env.AXIOM_DATASET;
 const environment = process.env.NODE_ENV ?? "development";
+const deploymentId = process.env.LOG_DEPLOYMENT_ID ?? environment;
+const deploymentTarget = process.env.LOG_DEPLOYMENT_TARGET ?? "cloudflare-worker";
 const isDevelopment = environment === "development";
 const consoleTransport = createConsoleTransport({
   mode: normalizeConsoleTransportMode(process.env.LOGGER),
@@ -272,6 +313,8 @@ const transports = [
 
 const logger = {
   app: loggerValues.apps.api,
+  deploymentId,
+  deploymentTarget,
   environment,
   level: normalizeLogLevel(process.env.LOG_LEVEL),
   transports,
@@ -385,6 +428,9 @@ const transports = logProxyUrl
 
 export const logger = createLogger({
   app: loggerValues.apps.web,
+  deploymentId: import.meta.env.VITE_LOG_DEPLOYMENT_ID ?? import.meta.env.MODE,
+  deploymentTarget:
+    import.meta.env.VITE_LOG_DEPLOYMENT_TARGET ?? "web-client",
   environment: import.meta.env.MODE,
   transports,
 });
@@ -426,6 +472,11 @@ const transports = logProxyUrl
 
 export const logger = createLogger({
   app: loggerValues.apps.mobile,
+  deploymentId:
+    process.env.EXPO_PUBLIC_LOG_DEPLOYMENT_ID ??
+    (__DEV__ ? "development" : "production"),
+  deploymentTarget:
+    process.env.EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET ?? "expo-client",
   environment: __DEV__ ? "development" : "production",
   transports,
 });
@@ -435,8 +486,10 @@ export const logger = createLogger({
 
 The API exposes `POST /api/v0/logs`. It accepts a single event, an array of
 events, or `{ "events": [...] }`. Batches are capped at 25 events. The API
-validates the event shape, enriches the event with proxy metadata, redacts again
-server-side, and forwards through `s.logger`.
+validates the event shape, enriches the event with proxy metadata in
+`attributes`, redacts again server-side, and forwards through `s.logger.forward`.
+Forwarding preserves the original client top-level identity fields: `app`,
+`environment`, `deploymentTarget`, and `deploymentId`.
 
 If `LOG_PROXY_CLIENT_KEY` is configured, clients must send it with the
 `x-log-client-key` header. The proxy transport handles this automatically.

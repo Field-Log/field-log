@@ -12,7 +12,6 @@ import { fileURLToPath } from "node:url";
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const changesetDirectory = join(repoRoot, ".changeset");
 const changelogPath = join(repoRoot, "CHANGELOG.md");
-const fieldLogAppJsonPath = join(repoRoot, "apps/field-log/app.json");
 const mobileAppJsonPath = join(repoRoot, "apps/mobile/app.json");
 const mobileAppVersionPath = join(
   repoRoot,
@@ -20,8 +19,6 @@ const mobileAppVersionPath = join(
 );
 const versionPackagePaths = [
   "package.json",
-  "apps/autmog/package.json",
-  "apps/field-log/package.json",
   "apps/mobile/package.json",
   "apps/api/package.json",
   "apps/web/package.json",
@@ -190,10 +187,6 @@ function updatePackageVersions(version) {
   appJson.expo.version = version;
   writeJson(mobileAppJsonPath, appJson);
 
-  const fieldLogAppJson = readJson(fieldLogAppJsonPath);
-  fieldLogAppJson.expo.version = version;
-  writeJson(fieldLogAppJsonPath, fieldLogAppJson);
-
   writeFileSync(
     mobileAppVersionPath,
     `export const mobileAppVersion = "${version}";\n`,
@@ -313,7 +306,6 @@ function createInitialRelease(changesets) {
     "CHANGELOG.md",
     ".changeset",
     "apps/mobile/app.json",
-    "apps/field-log/app.json",
     "apps/mobile/src/lib/app-version.ts",
     ...versionPackagePaths.map((path) => path.replace(`${repoRoot}/`, "")),
   ]);
@@ -353,7 +345,6 @@ function createChangesetRelease(changesets) {
     "package.json",
     "apps/mobile/package.json",
     "apps/mobile/app.json",
-    "apps/field-log/app.json",
     "apps/mobile/src/lib/app-version.ts",
     ...versionPackagePaths
       .map((path) => path.replace(`${repoRoot}/`, ""))

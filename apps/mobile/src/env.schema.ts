@@ -10,6 +10,8 @@ export type MobileRuntimeEnv = {
   EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET?: string;
   EXPO_PUBLIC_API_URL?: string;
   EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
+  EXPO_PUBLIC_LOG_DEPLOYMENT_ID?: string;
+  EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET?: string;
   EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY?: string;
 };
 
@@ -42,6 +44,8 @@ export function createMobileEnv(runtimeEnv: MobileRuntimeEnv) {
       EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1).optional(),
       EXPO_PUBLIC_API_URL: urlSchema.optional(),
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
+      EXPO_PUBLIC_LOG_DEPLOYMENT_ID: z.string().min(1).optional(),
+      EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET: z.string().min(1).optional(),
       EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY: z.string().min(1).optional(),
     },
     clientPrefix: "EXPO_PUBLIC_",
@@ -61,6 +65,9 @@ export function createMobileEnv(runtimeEnv: MobileRuntimeEnv) {
       EXPO_PUBLIC_API_URL: runtimeEnv.EXPO_PUBLIC_API_URL,
       EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY:
         runtimeEnv.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
+      EXPO_PUBLIC_LOG_DEPLOYMENT_ID: runtimeEnv.EXPO_PUBLIC_LOG_DEPLOYMENT_ID,
+      EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET:
+        runtimeEnv.EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET,
       EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY:
         runtimeEnv.EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY,
     },

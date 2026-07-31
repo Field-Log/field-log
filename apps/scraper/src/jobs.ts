@@ -20,6 +20,7 @@ import {
   type ScraperSourceName,
   scraperSources,
 } from "./scraper-types.js";
+import { getSourceScrapeLimit } from "./source-limit.js";
 
 export type ScraperJobEnv = ReturnType<typeof createScraperJobEnv>;
 
@@ -51,10 +52,12 @@ export async function createScraperJobContext(
   const services = createServices();
   services.configure({
     images: {
+      bunnyStorageAccessKey: env.BUNNY_STORAGE_ACCESS_KEY,
+      bunnyStorageEndpoint: env.BUNNY_STORAGE_ENDPOINT,
+      bunnyStorageZoneName: env.BUNNY_STORAGE_ZONE_NAME,
+      cdnBaseUrl: env.IMAGE_CDN_BASE_URL,
       dryRun: env.SCRAPER_DRY_RUN,
-      privateKey: env.IMAGE_KIT_PRIVATE_KEY,
-      publicKey: env.IMAGE_KIT_PUBLIC_KEY,
-      urlEndpoint: env.IMAGE_KIT_URL_ENDPOINT,
+      provider: env.IMAGE_STORAGE_PROVIDER,
     },
     logger,
   });
@@ -78,7 +81,7 @@ export async function createScraperJobContext(
       redis.disconnect();
     },
     db,
-    imageFolderPrefix: env.IMAGE_KIT_FOLDER_PREFIX,
+    imageFolderPrefix: env.IMAGE_FOLDER_PREFIX,
     imageStorage: services.images,
     queues,
     redis,
@@ -87,18 +90,25 @@ export async function createScraperJobContext(
 
 export async function runAutmogProducerJob({
   context,
+  env,
   logger,
 }: {
   context: ScraperJobContext;
+  env?: ScraperJobEnv;
   logger: Logger;
 }) {
+  const sourceLimit = getSourceScrapeLimit(env?.APP_ENV);
+
   await runLoggedCommand({
     command: "scrape:autmog",
     db: context.db,
     execute: async (signal) => {
       const result = await runAutmogProducer({
         logger,
+        limit: sourceLimit,
+        pageLimit: sourceLimit ? 1 : undefined,
         queues: context.queues,
+        skipArchiveReconciliation: Boolean(sourceLimit),
         signal,
       });
 
@@ -106,6 +116,7 @@ export async function runAutmogProducerJob({
         enqueuedItemJobs: result.enqueuedCount,
         fetchedCount: result.fetchedCount,
         removedCompletedItemJobs: result.removedCompletedItemJobs,
+        sourceLimit,
       };
     },
     jobType: "producer",
@@ -126,7 +137,7 @@ export async function runSourceProducerJob({
   source: ScraperSourceName;
 }) {
   if (source === scraperSources.autmog) {
-    await runAutmogProducerJob({ context, logger });
+    await runAutmogProducerJob({ context, env, logger });
     return;
   }
 
@@ -135,6 +146,7 @@ export async function runSourceProducerJob({
       context,
       logger,
       proxyUrl: env?.GRIMSMO_PROXY_URL,
+      sourceLimit: getSourceScrapeLimit(env?.APP_ENV),
       source,
     });
     return;
@@ -143,15 +155,31 @@ export async function runSourceProducerJob({
   throw new Error(`Scraper source "${source}" is not implemented yet.`);
 }
 
+export async function runAllSourceProducerJobs({
+  context,
+  env,
+  logger,
+}: {
+  context: ScraperJobContext;
+  env?: ScraperJobEnv;
+  logger: Logger;
+}) {
+  for (const source of scraperSourceKeys) {
+    await runSourceProducerJob({ context, env, logger, source });
+  }
+}
+
 export async function runGrimsmoProducerJob({
   context,
   logger,
   proxyUrl,
+  sourceLimit,
   source,
 }: {
   context: ScraperJobContext;
   logger: Logger;
   proxyUrl?: string;
+  sourceLimit?: number;
   source: GrimsmoSourceName;
 }) {
   await runLoggedCommand({
@@ -160,8 +188,10 @@ export async function runGrimsmoProducerJob({
     execute: async (signal) => {
       const result = await runGrimsmoProducer({
         logger,
+        maxProducts: sourceLimit,
         proxyUrl,
         queues: context.queues,
+        skipArchiveReconciliation: Boolean(sourceLimit),
         signal,
         source,
       });
@@ -172,6 +202,7 @@ export async function runGrimsmoProducerJob({
         fetchedCount: result.fetchedCount,
         inventoryFetchedCount: result.inventoryFetchedCount,
         removedCompletedItemJobs: result.removedCompletedItemJobs,
+        sourceLimit,
       };
     },
     jobType: "producer",

@@ -23,10 +23,10 @@ export type TmpImageSyncResult = {
     altText: string | null;
     height: number | null;
     id: number;
-    imageKitFileId: string | null;
-    imageKitPath: string | null;
-    imageKitThumbnailUrl: string | null;
-    imageKitUrl: string | null;
+    imageFileId: string | null;
+    imagePath: string | null;
+    imageProvider: string | null;
+    imageUrl: string | null;
     productId: number;
     productVariationId: number | null;
     sourceHash: string;
@@ -163,10 +163,10 @@ export async function syncTmpImages(
       altText: row.altText,
       height: row.height,
       id: row.id,
-      imageKitFileId: row.imageKitFileId,
-      imageKitPath: row.imageKitPath,
-      imageKitThumbnailUrl: row.imageKitThumbnailUrl,
-      imageKitUrl: row.imageKitUrl,
+      imageFileId: row.imageFileId,
+      imagePath: row.imagePath,
+      imageProvider: row.imageProvider,
+      imageUrl: row.imageUrl,
       productId: row.productId,
       productVariationId: row.productVariationId,
       sourceHash: row.sourceHash,
@@ -239,10 +239,10 @@ export async function markTmpImageUploaded(
   input: {
     height: number;
     imageId: number;
-    imageKitFileId: string;
-    imageKitPath: string;
-    imageKitThumbnailUrl: string;
-    imageKitUrl: string;
+    imageFileId: string;
+    imagePath: string;
+    imageProvider: string;
+    imageUrl: string;
     width: number;
   },
 ) {
@@ -251,10 +251,10 @@ export async function markTmpImageUploaded(
     .update(schema.tmpImages)
     .set({
       height: input.height,
-      imageKitFileId: input.imageKitFileId,
-      imageKitPath: input.imageKitPath,
-      imageKitThumbnailUrl: input.imageKitThumbnailUrl,
-      imageKitUrl: input.imageKitUrl,
+      imageFileId: input.imageFileId,
+      imagePath: input.imagePath,
+      imageProvider: input.imageProvider,
+      imageUrl: input.imageUrl,
       status: "uploaded",
       updatedAt: now,
       uploadedAt: now,
