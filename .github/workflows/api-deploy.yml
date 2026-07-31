@@ -1019,7 +1019,7 @@ jobs:
             --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
-        run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v0/health
+        run: curl --fail-with-body --retry 12 --retry-all-errors --retry-delay 5 https://api.field-log.app/api/v0/health
 
   railway-production:
     name: Railway Production
