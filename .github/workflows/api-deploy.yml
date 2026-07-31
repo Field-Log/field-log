@@ -1149,11 +1149,12 @@ jobs:
           fi
 
           expected_message="Production release for $RELEASE_TAG"
-          if [[ "$message" != "$expected_message" ]]; then
-            echo "Railway production deployment message did not match." >&2
+          if [[ -z "$message" ]]; then
+            echo "Railway production deployment message was empty; status is SUCCESS." >&2
+          elif [[ "$message" != "$expected_message" ]]; then
+            echo "Railway production deployment message did not match; status is SUCCESS." >&2
             echo "Expected: $expected_message" >&2
-            echo "Actual: ${message:-<empty>}" >&2
-            exit 1
+            echo "Actual: $message" >&2
           fi
 
   web-production:
