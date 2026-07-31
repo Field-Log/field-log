@@ -7,7 +7,7 @@
 sites/*/data/data.json
 # Latest upstream snapshot (regenerated every run)
 sites/*/data/raw_latest.json
-# Locally-downloaded product images (live on Hostinger; also under apps/autmog/images)
+# Locally-downloaded product images live on Hostinger.
 sites/*/data/images/
 # Pre-fetch backup of archive.json
 sites/*/data/archive.json.bak

@@ -46,8 +46,10 @@ secret syncs.
 | `AXIOM_TOKEN` | Axiom ingest token for server-side web logs. | ? (All) | `S` |
 | `CLERK_SECRET_KEY` | Clerk server SDK secret key. | All | `S` |
 | `DATABASE_URL`[^1] | Web server runtime database connection. | All | `S` |
-| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
+| `IMAGE_FOLDER_PREFIX` | Optional image upload folder namespace. See [Image CDN](./image-cdn.md). | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `LOG_DEPLOYMENT_ID` | Optional logger deployment identifier. Vercel PR previews set this to `pr-<number>` automatically. | ? (All) | `C` |
+| `LOG_DEPLOYMENT_TARGET` | Optional logger deployment target, aliased to `VITE_LOG_DEPLOYMENT_TARGET` for client logs. | ? (All) | `C` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY`[^2] | Client key aliased into the web client log proxy config. | ? (All) | `C` |
 | `SITE_URL` | Explicit absolute site origin for canonical and Open Graph URLs. | ? (All) | `S` |
@@ -72,6 +74,8 @@ workflows through Wrangler secret files.
 | `CLERK_SECRET_KEY` | Clerk secret key used by API Clerk middleware. | All | `S` |
 | `DATABASE_URL`[^4] | API database connection string. | All | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `LOG_DEPLOYMENT_ID` | Optional logger deployment identifier. Deploy workflows set this to `pr-<number>`, `preview`, or `production`. | ? (All) | `S` |
+| `LOG_DEPLOYMENT_TARGET` | Optional logger deployment target. Defaults to `cloudflare-worker`. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `LOG_PROXY_CLIENT_KEY` | Key checked by `POST /api/v0/logs`. | ? (All) | `C` |
 | `MOBILE_ANDROID_STORE_URL` | Google Play store URL returned by `GET /api/v0/mobile-version`. | ? (Prod) | `S` |
@@ -100,11 +104,15 @@ values such as Redis connection strings.
 | `AXIOM_TOKEN` | Axiom ingest token for scraper logs. | ? (All) | `S` |
 | `DATABASE_URL` | Scraper database connection string. | All | `S` |
 | `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
-| `IMAGE_KIT_PRIVATE_KEY` | ImageKit server-side private key. See [ImageKit](./image-kit.md). | All | `S` |
-| `IMAGE_KIT_PUBLIC_KEY` | ImageKit public key. See [ImageKit](./image-kit.md). | All | `C` |
-| `IMAGE_KIT_FOLDER_PREFIX` | Optional ImageKit upload folder namespace. See [ImageKit](./image-kit.md). | ? (All) | `S` |
-| `IMAGE_KIT_URL_ENDPOINT` | ImageKit URL endpoint. See [ImageKit](./image-kit.md). | All | `C` |
+| `BUNNY_STORAGE_ACCESS_KEY` | Bunny Storage Zone password used by server-side uploads, deletes, and preview cleanup. See [Image CDN](./image-cdn.md). | All | `S` |
+| `BUNNY_STORAGE_ENDPOINT` | Bunny Storage API endpoint, usually `https://ny.storage.bunnycdn.com`. See [Image CDN](./image-cdn.md). | All | `S` |
+| `BUNNY_STORAGE_ZONE_NAME` | Bunny Storage Zone name, suggested `field-log-images`. See [Image CDN](./image-cdn.md). | All | `S` |
+| `IMAGE_CDN_BASE_URL` | Public image CDN base URL, suggested `https://cdn.field-log.app/field-log-images`. See [Image CDN](./image-cdn.md). | All | `C` |
+| `IMAGE_FOLDER_PREFIX` | Optional image upload folder namespace. See [Image CDN](./image-cdn.md). | ? (All) | `S` |
+| `IMAGE_STORAGE_PROVIDER` | Optional image storage provider override. Defaults to `bunny` when unset. | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
+| `LOG_DEPLOYMENT_ID` | Optional logger deployment identifier. Preview workflows set this to the Railway environment name. | ? (All) | `S` |
+| `LOG_DEPLOYMENT_TARGET` | Optional logger deployment target. Defaults to `railway` when Railway env vars are present, otherwise `local`. | ? (All) | `S` |
 | `LOG_LEVEL` | Minimum logger level. | ? (All) | `S` |
 | `PORT` | HTTP port for the optional non-cron health server. Defaults to `4007` locally. | ? (All) | `S` |
 | `REDIS` | Optional fallback BullMQ Redis connection string. Railway previews may use this as a shared Redis reference when `REDIS_URL` is not resolved. | ? (All) | `S` |
@@ -119,6 +127,7 @@ values such as Redis connection strings.
 | `SCRAPER_GRIMSMO_SAGA_START_DELAY_SECONDS` | Optional Grimsmo Saga first-run offset. Defaults to `0`; Railway cron and the legacy scheduler use it to run Saga at the top of the hour. | ? (All) | `S` |
 | `SCRAPER_IMAGE_BATCH_SIZE` | Optional cap for image jobs processed per processor run. Recommended initial value: `25`. | ? (All) | `S` |
 | `SCRAPER_ITEM_BATCH_SIZE` | Optional cap for item jobs processed per processor run. Recommended initial value: `100`. | ? (All) | `S` |
+| `SCRAPER_CRON_ENABLED` | Enables Railway `cron:run`. Defaults to disabled when `APP_ENV=preview`; DB-changing PR previews set this to `true`, non-DB PR previews set it to `false`. | ? (Preview) | `S` |
 | `SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES` | Optional queue processor interval for the legacy in-process scheduler. Railway cron uses the `*/15 * * * *` schedule in `railway.json`. | ? (All) | `S` |
 | `SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS` | Optional delay before the first queue processor run for the legacy in-process scheduler. Defaults to `30`; not used by Railway cron. | ? (All) | `S` |
 | `SCRAPER_QUEUE_CONCURRENCY` | Optional BullMQ worker concurrency cap. Recommended initial value: `3`. | ? (All) | `S` |
@@ -201,6 +210,10 @@ JavaScript must use Expo's `EXPO_PUBLIC_` prefix.
 | `EXPO_PUBLIC_API_URL` | API origin used by mobile requests and client log proxy posts. | ? (All) | `C` |
 | `CLERK_PUBLISHABLE_KEY` | Clerk mobile SDK publishable key. The Infisical runner aliases this to `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` before Expo commands run. | All | `C` |
 | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | Expo-visible Clerk publishable key consumed by app JavaScript. Prefer setting `CLERK_PUBLISHABLE_KEY` in Infisical and letting the runner alias it. | All | `C` |
+| `LOG_DEPLOYMENT_ID` | Optional logger deployment identifier aliased to `EXPO_PUBLIC_LOG_DEPLOYMENT_ID`. | ? (All) | `C` |
+| `LOG_DEPLOYMENT_TARGET` | Optional logger deployment target aliased to `EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET`. | ? (All) | `C` |
+| `EXPO_PUBLIC_LOG_DEPLOYMENT_ID` | Expo-visible logger deployment identifier. Defaults to `development` or `production`. | ? (All) | `C` |
+| `EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET` | Expo-visible logger deployment target. Defaults to `expo-client`. | ? (All) | `C` |
 | `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY` | Client key sent to the API log proxy. | ? (All) | `C` |
 
 Legend: `S` = server-only. `C` = client-visible.

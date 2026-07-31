@@ -6,6 +6,8 @@ export type WebClientRuntimeEnv = {
   VITE_CLERK_PUBLISHABLE_KEY?: string;
   VITE_CLERK_SIGN_IN_URL?: string;
   VITE_CLERK_SIGN_UP_URL?: string;
+  VITE_LOG_DEPLOYMENT_ID?: string;
+  VITE_LOG_DEPLOYMENT_TARGET?: string;
   VITE_LOG_PROXY_CLIENT_KEY?: string;
 };
 
@@ -34,6 +36,8 @@ export function createWebClientEnv(runtimeEnv: WebClientRuntimeEnv) {
       VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1),
       VITE_CLERK_SIGN_IN_URL: z.string().min(1),
       VITE_CLERK_SIGN_UP_URL: z.string().min(1),
+      VITE_LOG_DEPLOYMENT_ID: z.string().min(1).optional(),
+      VITE_LOG_DEPLOYMENT_TARGET: z.string().min(1).optional(),
       VITE_LOG_PROXY_CLIENT_KEY: z.string().min(1).optional(),
     },
     clientPrefix: "VITE_",
@@ -43,6 +47,8 @@ export function createWebClientEnv(runtimeEnv: WebClientRuntimeEnv) {
       VITE_CLERK_PUBLISHABLE_KEY: runtimeEnv.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: runtimeEnv.VITE_CLERK_SIGN_IN_URL,
       VITE_CLERK_SIGN_UP_URL: runtimeEnv.VITE_CLERK_SIGN_UP_URL,
+      VITE_LOG_DEPLOYMENT_ID: runtimeEnv.VITE_LOG_DEPLOYMENT_ID,
+      VITE_LOG_DEPLOYMENT_TARGET: runtimeEnv.VITE_LOG_DEPLOYMENT_TARGET,
       VITE_LOG_PROXY_CLIENT_KEY: runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY,
     },
   });

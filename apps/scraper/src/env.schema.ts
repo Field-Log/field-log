@@ -6,14 +6,19 @@ export type ScraperRuntimeEnv = {
   AXIOM_DATASET?: string;
   AXIOM_EDGE_DOMAIN?: string;
   AXIOM_TOKEN?: string;
+  BUNNY_STORAGE_ACCESS_KEY?: string;
+  BUNNY_STORAGE_ENDPOINT?: string;
+  BUNNY_STORAGE_ZONE_NAME?: string;
   DATABASE_URL?: string;
-  IMAGE_KIT_PRIVATE_KEY?: string;
-  IMAGE_KIT_PUBLIC_KEY?: string;
-  IMAGE_KIT_FOLDER_PREFIX?: string;
-  IMAGE_KIT_URL_ENDPOINT?: string;
+  IMAGE_CDN_BASE_URL?: string;
+  IMAGE_FOLDER_PREFIX?: string;
+  IMAGE_STORAGE_PROVIDER?: string;
   LOGGER?: string;
+  LOG_DEPLOYMENT_ID?: string;
+  LOG_DEPLOYMENT_TARGET?: string;
   LOG_LEVEL?: string;
   PORT?: string;
+  RAILWAY_ENVIRONMENT_NAME?: string;
   REDIS?: string;
   REDIS_URL?: string;
   SCRAPER_AUTMOG_INTERVAL_MINUTES?: string;
@@ -30,6 +35,7 @@ export type ScraperRuntimeEnv = {
   SCRAPER_QUEUE_PROCESSOR_INTERVAL_MINUTES?: string;
   SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS?: string;
   SCRAPER_QUEUE_CONCURRENCY?: string;
+  SCRAPER_CRON_ENABLED?: string;
   SCRAPER_SCHEDULER_ENABLED?: string;
 };
 
@@ -64,8 +70,11 @@ const scraperServerSchema = {
   AXIOM_EDGE_DOMAIN: z.string().min(1).optional(),
   AXIOM_TOKEN: z.string().min(1).optional(),
   LOGGER: z.string().min(1).optional(),
+  LOG_DEPLOYMENT_ID: z.string().min(1).optional(),
+  LOG_DEPLOYMENT_TARGET: z.string().min(1).optional(),
   LOG_LEVEL: z.string().min(1).optional(),
   PORT: z.coerce.number().int().min(1).max(65_535).default(4007),
+  RAILWAY_ENVIRONMENT_NAME: z.string().min(1).optional(),
   SCRAPER_SCHEDULER_ENABLED: z
     .enum(["true", "false"])
     .optional()
@@ -102,11 +111,13 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
     runtimeEnvStrict: getScraperRuntimeEnvStrict(runtimeEnv),
     server: {
       ...scraperServerSchema,
+      BUNNY_STORAGE_ACCESS_KEY: z.string().min(1).optional(),
+      BUNNY_STORAGE_ENDPOINT: z.string().min(1).url().optional(),
+      BUNNY_STORAGE_ZONE_NAME: z.string().min(1).optional(),
       DATABASE_URL: z.string().min(1).url(),
-      IMAGE_KIT_PRIVATE_KEY: z.string().min(1).optional(),
-      IMAGE_KIT_PUBLIC_KEY: z.string().min(1).optional(),
-      IMAGE_KIT_FOLDER_PREFIX: z.string().min(1).optional(),
-      IMAGE_KIT_URL_ENDPOINT: z.string().min(1).url().optional(),
+      IMAGE_CDN_BASE_URL: z.string().min(1).url().optional(),
+      IMAGE_FOLDER_PREFIX: z.string().min(1).optional(),
+      IMAGE_STORAGE_PROVIDER: z.string().min(1).default("bunny"),
       REDIS_URL: redisUrlSchema,
       GRIMSMO_PROXY_URL: z.string().min(1).url().optional(),
       SCRAPER_AUTMOG_INTERVAL_MINUTES: z.coerce
@@ -185,6 +196,12 @@ export function createScraperJobEnv(runtimeEnv: ScraperRuntimeEnv) {
         .min(1)
         .max(20)
         .default(3),
+      SCRAPER_CRON_ENABLED: z
+        .enum(["true", "false"])
+        .optional()
+        .transform((value) =>
+          value === undefined ? undefined : value === "true",
+        ),
     },
   });
 }
@@ -195,15 +212,20 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     AXIOM_DATASET: runtimeEnv.AXIOM_DATASET,
     AXIOM_EDGE_DOMAIN: runtimeEnv.AXIOM_EDGE_DOMAIN,
     AXIOM_TOKEN: runtimeEnv.AXIOM_TOKEN,
+    BUNNY_STORAGE_ACCESS_KEY: runtimeEnv.BUNNY_STORAGE_ACCESS_KEY,
+    BUNNY_STORAGE_ENDPOINT: runtimeEnv.BUNNY_STORAGE_ENDPOINT,
+    BUNNY_STORAGE_ZONE_NAME: runtimeEnv.BUNNY_STORAGE_ZONE_NAME,
     DATABASE_URL: runtimeEnv.DATABASE_URL,
-    IMAGE_KIT_PRIVATE_KEY: runtimeEnv.IMAGE_KIT_PRIVATE_KEY,
-    IMAGE_KIT_PUBLIC_KEY: runtimeEnv.IMAGE_KIT_PUBLIC_KEY,
-    IMAGE_KIT_FOLDER_PREFIX: runtimeEnv.IMAGE_KIT_FOLDER_PREFIX,
-    IMAGE_KIT_URL_ENDPOINT: runtimeEnv.IMAGE_KIT_URL_ENDPOINT,
+    IMAGE_CDN_BASE_URL: runtimeEnv.IMAGE_CDN_BASE_URL,
+    IMAGE_FOLDER_PREFIX: runtimeEnv.IMAGE_FOLDER_PREFIX,
+    IMAGE_STORAGE_PROVIDER: runtimeEnv.IMAGE_STORAGE_PROVIDER,
     GRIMSMO_PROXY_URL: runtimeEnv.GRIMSMO_PROXY_URL,
     LOGGER: runtimeEnv.LOGGER,
+    LOG_DEPLOYMENT_ID: runtimeEnv.LOG_DEPLOYMENT_ID,
+    LOG_DEPLOYMENT_TARGET: runtimeEnv.LOG_DEPLOYMENT_TARGET,
     LOG_LEVEL: runtimeEnv.LOG_LEVEL,
     PORT: runtimeEnv.PORT,
+    RAILWAY_ENVIRONMENT_NAME: runtimeEnv.RAILWAY_ENVIRONMENT_NAME,
     REDIS_URL: selectRedisUrl(runtimeEnv),
     SCRAPER_AUTMOG_INTERVAL_MINUTES: runtimeEnv.SCRAPER_AUTMOG_INTERVAL_MINUTES,
     SCRAPER_AUTMOG_START_DELAY_SECONDS:
@@ -226,6 +248,7 @@ function getScraperRuntimeEnvStrict(runtimeEnv: ScraperRuntimeEnv) {
     SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS:
       runtimeEnv.SCRAPER_QUEUE_PROCESSOR_START_DELAY_SECONDS,
     SCRAPER_QUEUE_CONCURRENCY: runtimeEnv.SCRAPER_QUEUE_CONCURRENCY,
+    SCRAPER_CRON_ENABLED: runtimeEnv.SCRAPER_CRON_ENABLED,
     SCRAPER_SCHEDULER_ENABLED: runtimeEnv.SCRAPER_SCHEDULER_ENABLED,
   };
 }

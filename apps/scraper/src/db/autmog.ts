@@ -73,10 +73,10 @@ export type AutmogPenSyncDbResponse = {
       altText: string | null;
       height: number | null;
       id: number;
-      imageKitFileId: string | null;
-      imageKitPath: string | null;
-      imageKitThumbnailUrl: string | null;
-      imageKitUrl: string | null;
+      imageFileId: string | null;
+      imagePath: string | null;
+      imageProvider: string | null;
+      imageUrl: string | null;
       productId: number;
       productVariationId: number | null;
       sourceHash: string;

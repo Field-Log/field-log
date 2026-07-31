@@ -45,26 +45,42 @@ suggest a branch, create a branch, push, fetch, or update a PR from `main`.
 11. Read `./docs/changesets.md`.
 12. If there are no commits relative to the base branch, stop and report that
    there is nothing to summarize.
-13. Create or update a branch Changeset:
+13. Create or update branch Changeset files:
     - Inspect changed `.changeset/*.md` files relative to the base.
     - If none exists, create one under `.changeset/`.
     - If one exists and no longer matches the branch, update it.
+    - If multiple changed Changeset files exist, choose the PR release-impact
+      label from the highest bump present: `major` wins over `minor`, and
+      `minor` wins over `patch`.
     - Use `"field-log.app"` as the package name.
     - Choose `patch`, `minor`, or `major` from the branch impact. Use `patch`
       for docs, tests, internal tooling, chores, and compatible fixes. Use
       `minor` for new compatible behavior. Use `major` for breaking API,
       database, or mobile compatibility changes.
+    - If the selected impact is `major`, double-confirm with the user before
+      creating or updating the Changeset:
+      1. Ask the user to confirm the `major` release impact.
+      2. After the user confirms, ask a second time before writing the
+         Changeset.
+      3. If either confirmation is missing, stop and report that explicit
+         double confirmation is required.
     - Keep the Changeset description succinct, terse, human friendly, and
       changelog-ready.
 14. Generate a proposed title and body from the commits, changed files, and any
    relevant test output already available in the conversation or shell history.
 15. Compare the proposed title and body with the current PR values.
-16. If neither value needs a meaningful update, report that the PR is already
-    current and do not call `gh pr edit`.
-17. If one or both values should change, update only those fields:
+16. Apply exactly one release-impact label that matches the highest branch
+    Changeset bump to the PR. Remove the other release-impact labels in the
+    same edit so downgraded or upgraded PRs do not keep contradictory labels:
+    - `gh pr edit <number-or-url> --remove-label minor --remove-label major --add-label patch` for a `patch` Changeset.
+    - `gh pr edit <number-or-url> --remove-label patch --remove-label major --add-label minor` for a `minor` Changeset.
+    - `gh pr edit <number-or-url> --remove-label patch --remove-label minor --add-label major` for a `major` Changeset.
+17. If neither title nor body needs a meaningful update after the label edit,
+    report that the PR title and body are already current.
+18. If one or both values should change, update only those fields:
     - `gh pr edit <number-or-url> --title "<title>"`
     - `gh pr edit <number-or-url> --body "<body>"`
-18. Return the PR URL and a concise summary of what changed.
+19. Return the PR URL and a concise summary of what changed.
 
 ## Title
 
@@ -103,11 +119,11 @@ Use this AI section format:
 
 ```markdown
 <!-- AI SECTION START -->
-## Summary
+## AI Summary
 - point form summary
 - point form summary
 
-## Validation
+## AI Testing and Validation
 - command run, or "Not run (reason)"
 
 <!-- AI SECTION END -->
@@ -145,6 +161,18 @@ Use the smallest accurate bump. Keep the description one short sentence when
 possible. Prefer concrete human wording such as `Add release automation.` or
 `Fix mobile update prompts.` Avoid long implementation detail, issue IDs, and
 robotic phrasing.
+
+If AI tooling selects `major`, it must receive two explicit user confirmations
+before creating or updating the Changeset. Do not treat the user's original
+feature request as either confirmation. If either confirmation is missing, stop
+before writing the `major` Changeset.
+
+Apply exactly one release-impact label that matches the highest PR Changeset
+bump to the GitHub PR when updating it: `patch`, `minor`, or `major`. If
+multiple changed Changeset files exist, `major` wins over `minor`, and `minor`
+wins over `patch`. Remove the other release-impact labels before adding the
+matching label. Apply the matching label even when the title and body are
+already current.
 
 ## Error Cases
 

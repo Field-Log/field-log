@@ -28,6 +28,7 @@ import {
 export type RunGrimsmoProducerOptions = FetchGrimsmoProductsOptions & {
   logger: Logger;
   queues: ScraperQueues;
+  skipArchiveReconciliation?: boolean;
 };
 
 export type RunGrimsmoProducerResult = {
@@ -42,6 +43,7 @@ export type RunGrimsmoProducerResult = {
 export async function runGrimsmoProducer({
   logger,
   queues,
+  skipArchiveReconciliation = false,
   source,
   ...fetchOptions
 }: RunGrimsmoProducerOptions): Promise<RunGrimsmoProducerResult> {
@@ -80,7 +82,7 @@ export async function runGrimsmoProducer({
     const archiveItems = items.filter(
       (item) => item.sourceCollection === "archive",
     );
-    const jobs = createJobs({ items, source });
+    const jobs = createJobs({ items, skipArchiveReconciliation, source });
     const removedCompletedItemJobs = await removeCompletedJobsById(
       queues.items,
       jobs.map((job) => job.opts.jobId).filter(Boolean),
@@ -113,6 +115,7 @@ export async function runGrimsmoProducer({
         fetchedCount: items.length,
         inventoryFetchedCount: inventoryItems.length,
         removedCompletedItemJobs,
+        skipArchiveReconciliation,
         source,
       },
     });
@@ -145,9 +148,11 @@ export async function runGrimsmoProducer({
 
 function createJobs({
   items,
+  skipArchiveReconciliation,
   source,
 }: {
   items: (NormalizedGrimsmoKnifeVariation | NormalizedGrimsmoPenVariation)[];
+  skipArchiveReconciliation: boolean;
   source: GrimsmoSourceName;
 }) {
   const itemJobs = items.map((item) => {
@@ -183,6 +188,15 @@ function createJobs({
   const inventorySourceHandles = items
     .filter((item) => item.sourceCollection === "inventory")
     .map((item) => item.sourceHandle);
+
+  if (skipArchiveReconciliation) {
+    return itemJobs satisfies {
+      data: ScraperItemJob;
+      name: string;
+      opts: { jobId: string };
+    }[];
+  }
+
   const batchJob =
     source === scraperSources.grimsmoSaga
       ? {

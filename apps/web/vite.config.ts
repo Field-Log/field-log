@@ -28,11 +28,19 @@ function envValue(env: MutableEnv, key: string) {
 function createWebBuildLogger(env: MutableEnv): Logger {
   const axiomDataset = envValue(env, "AXIOM_DATASET");
   const axiomToken = envValue(env, "AXIOM_TOKEN");
+  const environment =
+    envValue(env, "VERCEL_ENV") ?? envValue(env, "NODE_ENV") ?? "build";
+  const pullRequestId = envValue(env, "VERCEL_GIT_PULL_REQUEST_ID");
 
   return createLogger({
     app: loggerValues.apps.web,
-    environment:
-      envValue(env, "VERCEL_ENV") ?? envValue(env, "NODE_ENV") ?? "build",
+    deploymentId:
+      envValue(env, "LOG_DEPLOYMENT_ID") ??
+      (pullRequestId ? `pr-${pullRequestId}` : environment),
+    deploymentTarget:
+      envValue(env, "LOG_DEPLOYMENT_TARGET") ??
+      (envValue(env, "VERCEL_ENV") ? "vercel" : "local"),
+    environment,
     level: normalizeLogLevel(envValue(env, "LOG_LEVEL")),
     transports: [
       ...(axiomDataset !== undefined && axiomToken !== undefined
@@ -53,10 +61,26 @@ function createWebBuildLogger(env: MutableEnv): Logger {
 
 export function applyWebClientEnvAliases(env: MutableEnv = process.env) {
   const apiUrl = envValue(env, "API_URL");
+  const logDeploymentId = envValue(env, "LOG_DEPLOYMENT_ID");
+  const logDeploymentTarget = envValue(env, "LOG_DEPLOYMENT_TARGET");
   const logProxyClientKey = envValue(env, "LOG_PROXY_CLIENT_KEY");
 
   if (envValue(env, "VITE_API_URL") === undefined && apiUrl !== undefined) {
     env.VITE_API_URL = apiUrl;
+  }
+
+  if (
+    envValue(env, "VITE_LOG_DEPLOYMENT_ID") === undefined &&
+    logDeploymentId !== undefined
+  ) {
+    env.VITE_LOG_DEPLOYMENT_ID = logDeploymentId;
+  }
+
+  if (
+    envValue(env, "VITE_LOG_DEPLOYMENT_TARGET") === undefined &&
+    logDeploymentTarget !== undefined
+  ) {
+    env.VITE_LOG_DEPLOYMENT_TARGET = logDeploymentTarget;
   }
 
   if (
@@ -97,6 +121,8 @@ export async function applyVercelPreviewApiEnv(
   const apiUrl = `https://pr-${pullRequestId}-${workerHost}`;
 
   env.VITE_API_URL = apiUrl;
+  env.VITE_LOG_DEPLOYMENT_ID = `pr-${pullRequestId}`;
+  env.VITE_LOG_DEPLOYMENT_TARGET ??= "web-client";
 
   const buildLogger = logger ?? createWebBuildLogger(env);
 
@@ -125,6 +151,8 @@ export default defineConfig(async ({ mode }) => {
       VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: process.env.VITE_CLERK_SIGN_IN_URL,
       VITE_CLERK_SIGN_UP_URL: process.env.VITE_CLERK_SIGN_UP_URL,
+      VITE_LOG_DEPLOYMENT_ID: process.env.VITE_LOG_DEPLOYMENT_ID,
+      VITE_LOG_DEPLOYMENT_TARGET: process.env.VITE_LOG_DEPLOYMENT_TARGET,
       VITE_LOG_PROXY_CLIENT_KEY: process.env.VITE_LOG_PROXY_CLIENT_KEY,
     });
     createWebServerEnv({
@@ -134,6 +162,8 @@ export default defineConfig(async ({ mode }) => {
       CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
       DATABASE_URL: process.env.DATABASE_URL,
       LOGGER: process.env.LOGGER,
+      LOG_DEPLOYMENT_ID: process.env.LOG_DEPLOYMENT_ID,
+      LOG_DEPLOYMENT_TARGET: process.env.LOG_DEPLOYMENT_TARGET,
       LOG_LEVEL: process.env.LOG_LEVEL,
     });
   }

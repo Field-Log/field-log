@@ -18,6 +18,7 @@ import {
 export type RunAutmogProducerOptions = FetchAutmogProductsOptions & {
   logger: Logger;
   queues: ScraperQueues;
+  skipArchiveReconciliation?: boolean;
 };
 
 export type RunAutmogProducerResult = {
@@ -30,6 +31,7 @@ export type RunAutmogProducerResult = {
 export async function runAutmogProducer({
   logger,
   queues,
+  skipArchiveReconciliation = false,
   ...fetchOptions
 }: RunAutmogProducerOptions): Promise<RunAutmogProducerResult> {
   const startedAt = Date.now();
@@ -64,15 +66,18 @@ export async function runAutmogProducer({
       name: "autmog.pen",
     }));
     const seenSourceProductIds = items.map((item) => item.sourceProductId);
-    jobs.push({
-      data: {
-        seenSourceProductIds,
-        source: scraperSources.autmog,
-        type: "autmog.archiveMissing",
-      },
-      jobId: getAutmogArchiveJobId(seenSourceProductIds),
-      name: "autmog.archiveMissing",
-    });
+
+    if (!skipArchiveReconciliation) {
+      jobs.push({
+        data: {
+          seenSourceProductIds,
+          source: scraperSources.autmog,
+          type: "autmog.archiveMissing",
+        },
+        jobId: getAutmogArchiveJobId(seenSourceProductIds),
+        name: "autmog.archiveMissing",
+      });
+    }
 
     const removedCompletedItemJobs = await removeCompletedJobsById(
       queues.items,
@@ -103,6 +108,7 @@ export async function runAutmogProducer({
         enqueuedItemJobs: jobs.length,
         fetchedCount: products.length,
         removedCompletedItemJobs,
+        skipArchiveReconciliation,
         source: scraperSources.autmog,
       },
     });

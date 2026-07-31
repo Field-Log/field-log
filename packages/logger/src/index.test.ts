@@ -92,6 +92,7 @@ describe("logger", () => {
         cron: {
           completed: "scraper.cron.completed",
           failed: "scraper.cron.failed",
+          runSkipped: "scraper.cron.run.skipped",
           started: "scraper.cron.started",
           taskCompleted: "scraper.cron.task.completed",
           taskFailed: "scraper.cron.task.failed",
@@ -151,6 +152,8 @@ describe("logger", () => {
     const logger = createLogger({
       app: "api",
       context: { requestId: "req-1" },
+      deploymentId: "pr-27",
+      deploymentTarget: "cloudflare-worker",
       environment: "test",
       transports: [captureTransport(events)],
     }).child({ userId: "user-1" });
@@ -161,6 +164,84 @@ describe("logger", () => {
     expect(events[0]?.context).toEqual({
       requestId: "req-1",
       userId: "user-1",
+    });
+    expect(events[0]).toMatchObject({
+      deploymentId: "pr-27",
+      deploymentTarget: "cloudflare-worker",
+    });
+  });
+
+  it("forwards client events without replacing top-level identity", async () => {
+    const events: LogEvent[] = [];
+    const logger = createLogger({
+      app: "api",
+      context: { proxyRequestId: "req-1" },
+      environment: "preview",
+      redactKeys: ["sessionId"],
+      transports: [captureTransport(events)],
+    });
+
+    logger.forward(
+      {
+        app: "web",
+        attributes: {
+          route: "/account",
+          sessionId: "secret",
+          source: "client",
+        },
+        context: {
+          view: "account",
+        },
+        deploymentId: "pr-27",
+        deploymentTarget: "web-client",
+        environment: "preview",
+        error: {
+          message: "Client failed",
+          name: "TypeError",
+        },
+        level: "error",
+        message: "client.failed",
+        rawPayload: {
+          token: "raw-secret",
+          visible: true,
+        },
+        timestamp: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        attributes: {
+          receivedAt: "2026-01-01T00:00:01.000Z",
+          source: loggerValues.logProxy.source,
+        },
+      },
+    );
+    await logger.flush();
+
+    expect(events[0]).toMatchObject({
+      app: "web",
+      attributes: {
+        receivedAt: "2026-01-01T00:00:01.000Z",
+        route: "/account",
+        sessionId: "[REDACTED]",
+        source: loggerValues.logProxy.source,
+      },
+      context: {
+        proxyRequestId: "req-1",
+        view: "account",
+      },
+      deploymentId: "pr-27",
+      deploymentTarget: "web-client",
+      environment: "preview",
+      error: {
+        message: "Client failed",
+        name: "TypeError",
+      },
+      level: "error",
+      message: "client.failed",
+      rawPayload: {
+        token: "[REDACTED]",
+        visible: true,
+      },
+      timestamp: "2026-01-01T00:00:00.000Z",
     });
   });
 
@@ -250,6 +331,8 @@ describe("transports", () => {
       context: {
         requestId: "req-1",
       },
+      deploymentId: "development",
+      deploymentTarget: "local",
       environment: "development",
       error: {
         message: "Boom",
@@ -269,6 +352,8 @@ describe("transports", () => {
 
     expect(output).toEqual({
       app: "api",
+      deploymentId: "development",
+      deploymentTarget: "local",
       durationMs: 12,
       environment: "development",
       error: {

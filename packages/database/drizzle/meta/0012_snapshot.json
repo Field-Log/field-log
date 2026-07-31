@@ -1,5 +1,5 @@
 {
-  "id": "c8fa1f5b-7504-42b7-bcb6-55c342aaf4f5",
+  "id": "ea80e71a-f0fe-40a6-986e-32f0c4192b4a",
   "prevId": "811a3d64-8748-4102-bdaf-4064f9d7bb79",
   "version": "7",
   "dialect": "postgresql",
@@ -2695,26 +2695,32 @@
           "primaryKey": false,
           "notNull": true
         },
-        "image_kit_file_id": {
-          "name": "image_kit_file_id",
+        "image_provider": {
+          "name": "image_provider",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "image_kit_path": {
-          "name": "image_kit_path",
+        "image_file_id": {
+          "name": "image_file_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "image_kit_url": {
-          "name": "image_kit_url",
+        "image_path": {
+          "name": "image_path",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "image_kit_thumbnail_url": {
-          "name": "image_kit_thumbnail_url",
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_thumbnail_url": {
+          "name": "image_thumbnail_url",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -3186,7 +3192,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'system'"
+          "default": "'dark'"
         },
         "weight_unit": {
           "name": "weight_unit",
@@ -3282,7 +3288,7 @@
     "public.theme_mode": {
       "name": "theme_mode",
       "schema": "public",
-      "values": ["dark", "light", "system"]
+      "values": ["dark", "light"]
     },
     "public.weight_unit": {
       "name": "weight_unit",

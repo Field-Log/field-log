@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { commandSecrets } from "./config.js";
 import {
   buildInfisicalRunArgs,
   getInfisicalAuthCheckError,
@@ -42,6 +43,35 @@ describe("parseCliArguments", () => {
 });
 
 describe("buildInfisicalRunArgs", () => {
+  it.each([
+    ["cron:run"],
+    ["process:dead-letter"],
+    ["process:queue"],
+    ["scrape"],
+    ["scrape:autmog"],
+    ["scrape:grimsmo-fjell"],
+    ["scrape:grimsmo-norseman"],
+    ["scrape:grimsmo-rask"],
+    ["scrape:grimsmo-saga"],
+  ])("maps the scraper %s command to scraper app secrets", (command) => {
+    expect(commandSecrets.scraper).toHaveProperty(command);
+
+    const args = buildInfisicalRunArgs({
+      app: "scraper",
+      command,
+      commandArgs: ["tsx", "apps/scraper/src/cli.ts", command],
+      repoRoot: "/repo",
+    });
+
+    expect(args).toContain("--path=/apps/scraper");
+    expect(getEnvAliasRunnerOptions(args)).toMatchObject({
+      databaseUrlUserOverride: true,
+      databaseUrlUserOverridePath: "/local/database",
+      environmentSlug: "dev",
+      secretPaths: ["/apps/scraper"],
+    });
+  });
+
   it("builds Infisical args with the API target path", () => {
     const args = buildInfisicalRunArgs({
       app: "api",
@@ -109,6 +139,25 @@ describe("buildInfisicalRunArgs", () => {
       "deploy",
       "--config",
       "wrangler.jsonc",
+    ]);
+  });
+
+  it("builds Bunny audit args from the local Bunny target path", () => {
+    expect(
+      buildInfisicalRunArgs({
+        app: "bunny",
+        command: "audit",
+        commandArgs: ["node", "scripts/audit-bunny-services.mjs"],
+        repoRoot: "/repo",
+      }),
+    ).toEqual([
+      "run",
+      "--project-config-dir=/repo",
+      "--env=dev",
+      "--path=/local/bunny",
+      "--",
+      "node",
+      "scripts/audit-bunny-services.mjs",
     ]);
   });
 

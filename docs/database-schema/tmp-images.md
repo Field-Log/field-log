@@ -9,19 +9,19 @@ Temporary scraper image rows shared by all scraped products and variations.
 | Column | Type | Required | Key | Default | Relation | Description | Example |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `bigint` | yes | PK |  |  | Internal image row identifier. | `1000` |
-| `product_id` | `bigint` | yes | FK |  | `tmp_products.id` (on delete cascade), `tmp_product_variations.product_id` | Generic temporary product row this image belongs to. Product-level images use this id as the ImageKit folder key. | `1000` |
+| `product_id` | `bigint` | yes | FK |  | `tmp_products.id` (on delete cascade), `tmp_product_variations.product_id` | Generic temporary product row this image belongs to. Product-level images use this id as the image folder key. | `1000` |
 | `product_variation_id` | `bigint` | no | FK |  | `tmp_product_variations.id` (on delete cascade), `tmp_product_variations.id` | Generic temporary variation row this image belongs to, when the source image is variation-specific. | `1001` |
 | `source_image_id` | `text` | no |  |  |  | Source-provided image identifier when available from the scraped site. | `40219471790203` |
-| `source_url` | `text` | yes |  |  |  | Remote source URL fetched and uploaded to ImageKit. | `https://cdn.shopify.com/s/files/example/image.jpg` |
+| `source_url` | `text` | yes |  |  |  | Remote source URL fetched and uploaded to image storage. | `https://cdn.shopify.com/s/files/example/image.jpg` |
 | `position` | `integer` | yes |  |  |  | Source image order within the product or variation. | `1` |
 | `alt_text` | `text` | no |  |  |  | Source image alt text, when provided by the source site. | `Titanium click pen side profile` |
-| `width` | `integer` | no |  |  |  | Uploaded ImageKit image width in pixels. | `2000` |
-| `height` | `integer` | no |  |  |  | Uploaded ImageKit image height in pixels. | `1333` |
+| `width` | `integer` | no |  |  |  | Uploaded optimized image width in pixels. | `2000` |
+| `height` | `integer` | no |  |  |  | Uploaded optimized image height in pixels. | `1333` |
 | `source_hash` | `text` | yes |  |  |  | Stable hash of the source image identity used to dedupe image rows within a product or variation. | `sha256:db2ef0e97513c1dc9d75f55ee8c014c06fc31a459c1c25b12904696bf2ab1c55` |
-| `image_kit_file_id` | `text` | no |  |  |  | ImageKit file identifier used for updates and deletes. | `68f5b2d5e4f9012a3b4c5d6e` |
-| `image_kit_path` | `text` | no |  |  |  | ImageKit media-library file path. | `/preview/pr-52/products/1000-1001/image.webp` |
-| `image_kit_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://ik.imagekit.io/fieldlog/preview/pr-52/products/1000-1001/image.webp` |
-| `image_kit_thumbnail_url` | `text` | no |  |  |  | ImageKit thumbnail URL returned with the upload. | `https://ik.imagekit.io/fieldlog/tr:n-thumbnail/image.webp` |
+| `image_provider` | `text` | no |  |  |  | Image storage provider that owns the uploaded file. | `bunny` |
+| `image_file_id` | `text` | no |  |  |  | Image storage file identifier used for updates and deletes. | `/preview/pr-52/products/1000-1001/image.webp` |
+| `image_path` | `text` | no |  |  |  | Image storage object path. | `/preview/pr-52/products/1000-1001/image.webp` |
+| `image_url` | `text` | no |  |  |  | Optimized uploaded image URL. | `https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp` |
 | `status` | `text` | yes |  | `'pending_upload'` |  | Image upload/delete lifecycle status. | `uploaded` |
 | `uploaded_at` | `timestamp with time zone` | no |  |  |  | Timestamp when the image upload completed. | `2026-07-17T20:45:42.000Z` |
 | `pending_delete_at` | `timestamp with time zone` | no |  |  |  | Timestamp when the image was marked for deletion. | `2026-07-18T20:45:42.000Z` |

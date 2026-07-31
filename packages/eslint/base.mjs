@@ -14,7 +14,6 @@ export default [
       "**/.expo/**",
       "**/coverage/**",
       "**/routeTree.gen.ts",
-      "apps/autmog/images/**",
     ],
   },
   js.configs.recommended,

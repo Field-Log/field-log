@@ -84,6 +84,47 @@ describe("runGrimsmoProducer", () => {
       name: "grimsmo.penVariationBatch",
     });
   });
+
+  it("skips archive reconciliation during limited source scrapes", async () => {
+    const addBulk = vi.fn().mockResolvedValue([]);
+    const queues = {
+      close: vi.fn(),
+      images: { addBulk: vi.fn() },
+      items: {
+        addBulk,
+        getJob: vi.fn(async () => null),
+      },
+    } as unknown as ScraperQueues;
+    const fetcher = vi.fn(async (input: Parameters<typeof fetch>[0]) => {
+      const url = input instanceof URL ? input : new URL(String(input));
+      const handle = url.pathname.split("/").at(-2);
+
+      if (handle === "saga-inventory") {
+        return jsonResponse([createProduct({ handle: "saga-1", id: 1 })]);
+      }
+
+      return jsonResponse([]);
+    });
+
+    await runGrimsmoProducer({
+      fetch: fetcher as typeof fetch,
+      logger: createNoopLogger({ app: "scraper" }),
+      pagePauseMs: 0,
+      queues,
+      skipArchiveReconciliation: true,
+      source: scraperSources.grimsmoSaga,
+    });
+
+    const [jobs] = addBulk.mock.calls[0] ?? [];
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]).toMatchObject({
+      data: {
+        source: "grimsmo-saga",
+        type: "grimsmo.penVariation",
+      },
+      name: "grimsmo.penVariation",
+    });
+  });
 });
 
 function jsonResponse(products: ShopifyProduct[]) {

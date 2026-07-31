@@ -133,6 +133,16 @@ export async function runRailwayCronJob({
   });
 }
 
+export function shouldRunRailwayCron(
+  env: Pick<ScraperJobEnv, "APP_ENV" | "SCRAPER_CRON_ENABLED">,
+): boolean {
+  if (env.SCRAPER_CRON_ENABLED !== undefined) {
+    return env.SCRAPER_CRON_ENABLED;
+  }
+
+  return env.APP_ENV !== "preview";
+}
+
 export function getRecurringTaskDueState({
   intervalMinutes,
   lastRunAt,

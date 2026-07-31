@@ -6,7 +6,11 @@ import {
   loggerMessages,
 } from "@package/logger";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getRecurringTaskDueState, runRailwayCronJob } from "./cron.js";
+import {
+  getRecurringTaskDueState,
+  runRailwayCronJob,
+  shouldRunRailwayCron,
+} from "./cron.js";
 import {
   runQueueProcessorJob,
   runSourceProducerJob,
@@ -41,6 +45,36 @@ describe("Railway scraper cron", () => {
       due: true,
       reason: "never-run",
     });
+  });
+
+  it("disables preview cron unless explicitly enabled", () => {
+    expect(
+      shouldRunRailwayCron({
+        APP_ENV: "preview",
+        SCRAPER_CRON_ENABLED: undefined,
+      } as ScraperJobEnv),
+    ).toBe(false);
+    expect(
+      shouldRunRailwayCron({
+        APP_ENV: "preview",
+        SCRAPER_CRON_ENABLED: true,
+      } as ScraperJobEnv),
+    ).toBe(true);
+    expect(
+      shouldRunRailwayCron({
+        APP_ENV: "production",
+        SCRAPER_CRON_ENABLED: undefined,
+      } as ScraperJobEnv),
+    ).toBe(true);
+  });
+
+  it("honors explicit cron disablement outside preview", () => {
+    expect(
+      shouldRunRailwayCron({
+        APP_ENV: "production",
+        SCRAPER_CRON_ENABLED: false,
+      } as ScraperJobEnv),
+    ).toBe(false);
   });
 
   it("skips a recurring task before the interval has elapsed", () => {
