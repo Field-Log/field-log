@@ -3,6 +3,20 @@
 
 
 
+
+## 0.1.3
+
+### Patch Changes
+
+- Fix Vercel production build output detection.
+
+## Mobile Release Status
+
+| Platform | Build | Submit | Destination | Review / Live |
+| --- | --- | --- | --- | --- |
+| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
+| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
+
 ## 0.1.2
 
 ### Patch Changes
