@@ -1,17 +1,9 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { type ReactElement, useState } from "react";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { insertLogEntry, type LogEntryType } from "../db/database";
 import { syncCurrentUserLogEntryBestEffort } from "../db/sync";
 import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
-import { C } from "../theme/colors";
 
 const ENTRY_TYPES: { value: LogEntryType; label: string }[] = [
   { value: "note", label: "Note" },
@@ -20,7 +12,7 @@ const ENTRY_TYPES: { value: LogEntryType; label: string }[] = [
   { value: "config_change", label: "Config Change" },
 ];
 
-export default function AddLogScreen() {
+export default function AddLogScreen(): ReactElement {
   const route = useRoute<FieldLogRoute<"AddLog">>();
   const navigation = useNavigation<FieldLogNavigation>();
   const { itemId, itemType } = route.params;
@@ -41,25 +33,29 @@ export default function AddLogScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Add Log Entry</Text>
+    <ScrollView contentContainerClassName="flex-grow bg-background p-5">
+      <Text className="mb-5 text-2xl font-bold text-foreground">
+        Add Log Entry
+      </Text>
 
-      <Text style={styles.fieldLabel}>Type</Text>
-      <View style={styles.typeRow}>
+      <Text className="mb-1.5 text-sm text-card-foreground">Type</Text>
+      <View className="mb-5 flex-row flex-wrap gap-2">
         {ENTRY_TYPES.map((t) => (
           <Pressable
             key={t.value}
-            style={[
-              styles.typePill,
-              entryType === t.value && styles.typePillActive,
-            ]}
+            className={`rounded-full border px-3.5 py-2 ${
+              entryType === t.value
+                ? "border-accent bg-accent"
+                : "border-border bg-background"
+            }`}
             onPress={() => setEntryType(t.value)}
           >
             <Text
-              style={[
-                styles.typePillText,
-                entryType === t.value && styles.typePillTextActive,
-              ]}
+              className={`text-sm ${
+                entryType === t.value
+                  ? "text-accent-foreground"
+                  : "text-card-foreground"
+              }`}
             >
               {t.label}
             </Text>
@@ -67,62 +63,34 @@ export default function AddLogScreen() {
         ))}
       </View>
 
-      <Text style={styles.fieldLabel}>Notes</Text>
+      <Text className="mb-1.5 text-sm text-card-foreground">Notes</Text>
       <TextInput
-        style={[styles.input, styles.notes]}
+        className="mb-4 h-24 rounded-lg border border-border bg-background p-2.5 text-base text-foreground"
         value={notes}
         onChangeText={setNotes}
         multiline
         placeholder="What happened?"
+        textAlignVertical="top"
       />
 
-      <Text style={styles.fieldLabel}>Condition (optional)</Text>
+      <Text className="mb-1.5 text-sm text-card-foreground">
+        Condition (optional)
+      </Text>
       <TextInput
-        style={styles.input}
+        className="mb-4 rounded-lg border border-border bg-background p-2.5 text-base text-foreground"
         value={condition}
         onChangeText={setCondition}
         placeholder="e.g. Excellent"
       />
 
-      <Pressable style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save</Text>
+      <Pressable
+        className="mt-2 items-center rounded-lg bg-accent py-3.5"
+        onPress={handleSave}
+      >
+        <Text className="text-base font-semibold text-accent-foreground">
+          Save
+        </Text>
       </Pressable>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: C.bg, flexGrow: 1 },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 20, color: C.text },
-  fieldLabel: { fontSize: 13, color: C.textSub, marginBottom: 6 },
-  typeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 20 },
-  typePill: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  typePillActive: { backgroundColor: C.accent, borderColor: C.accent },
-  typePillText: { fontSize: 13, color: C.textSub },
-  typePillTextActive: { color: C.text },
-  input: {
-    borderWidth: 1,
-    borderColor: C.border,
-    padding: 10,
-    marginBottom: 16,
-    borderRadius: 8,
-    fontSize: 15,
-    backgroundColor: C.bgInput,
-    color: C.text,
-  },
-  notes: { height: 100, textAlignVertical: "top" },
-  saveButton: {
-    backgroundColor: C.accent,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  saveButtonText: { color: C.text, fontSize: 16, fontWeight: "600" },
-});

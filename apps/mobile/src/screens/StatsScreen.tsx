@@ -1,10 +1,9 @@
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
+import { type ReactElement, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -15,7 +14,6 @@ import {
   fetchItemById,
   fetchMostCarried,
 } from "../db/database";
-import { C } from "../theme/colors";
 
 function computeCurrentStreak(sortedDates: string[]): number {
   if (sortedDates.length === 0) return 0;
@@ -52,7 +50,7 @@ function sinceDate30() {
   return d.toISOString().slice(0, 10);
 }
 
-export default function StatsScreen() {
+export default function StatsScreen(): ReactElement {
   const [view, setView] = useState<"carry" | "ink">("carry");
   const [allTime, setAllTime] = useState(true);
   const [rows, setRows] = useState<RankedRow[]>([]);
@@ -90,31 +88,33 @@ export default function StatsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       {/* Top-level view toggle */}
-      <View style={styles.viewToggle}>
+      <View className="m-4 flex-row overflow-hidden rounded-lg border border-accent">
         <Pressable
-          style={[styles.viewPill, view === "carry" && styles.viewPillActive]}
+          className={`flex-1 items-center py-2.5 ${
+            view === "carry" ? "bg-accent" : "bg-card"
+          }`}
           onPress={() => setView("carry")}
         >
           <Text
-            style={[
-              styles.viewPillText,
-              view === "carry" && styles.viewPillTextActive,
-            ]}
+            className={`text-sm font-semibold ${
+              view === "carry" ? "text-accent-foreground" : "text-primary"
+            }`}
           >
             Most Carried
           </Text>
         </Pressable>
         <Pressable
-          style={[styles.viewPill, view === "ink" && styles.viewPillActive]}
+          className={`flex-1 items-center py-2.5 ${
+            view === "ink" ? "bg-accent" : "bg-card"
+          }`}
           onPress={() => setView("ink")}
         >
           <Text
-            style={[
-              styles.viewPillText,
-              view === "ink" && styles.viewPillTextActive,
-            ]}
+            className={`text-sm font-semibold ${
+              view === "ink" ? "text-accent-foreground" : "text-primary"
+            }`}
           >
             Ink Usage
           </Text>
@@ -122,38 +122,52 @@ export default function StatsScreen() {
       </View>
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 32 }} />
+        <ActivityIndicator className="mt-8" />
       ) : view === "carry" ? (
         <>
-          <View style={styles.toggle}>
+          <View className="mx-4 mb-3 flex-row overflow-hidden rounded-lg border border-border">
             <Pressable
-              style={[styles.pill, allTime && styles.pillActive]}
+              className={`flex-1 items-center py-2 ${
+                allTime ? "bg-card" : "bg-sidebar-accent"
+              }`}
               onPress={() => {
                 setAllTime(true);
                 load(true);
               }}
             >
-              <Text style={[styles.pillText, allTime && styles.pillTextActive]}>
+              <Text
+                className={`text-sm ${
+                  allTime
+                    ? "font-bold text-primary"
+                    : "font-medium text-muted-foreground"
+                }`}
+              >
                 All-time
               </Text>
             </Pressable>
             <Pressable
-              style={[styles.pill, !allTime && styles.pillActive]}
+              className={`flex-1 items-center py-2 ${
+                !allTime ? "bg-card" : "bg-sidebar-accent"
+              }`}
               onPress={() => {
                 setAllTime(false);
                 load(false);
               }}
             >
               <Text
-                style={[styles.pillText, !allTime && styles.pillTextActive]}
+                className={`text-sm ${
+                  !allTime
+                    ? "font-bold text-primary"
+                    : "font-medium text-muted-foreground"
+                }`}
               >
                 Last 30 days
               </Text>
             </Pressable>
           </View>
           {rows.length === 0 ? (
-            <View style={styles.centered}>
-              <Text style={styles.empty}>
+            <View className="flex-1 items-center justify-center p-8">
+              <Text className="text-center text-base leading-6 text-muted-foreground">
                 No carry data yet. Start logging!
               </Text>
             </View>
@@ -161,17 +175,26 @@ export default function StatsScreen() {
             <FlatList
               data={rows}
               keyExtractor={(r) => `${r.item_type}-${r.item_id}`}
-              contentContainerStyle={styles.list}
+              contentContainerClassName="px-4 pb-8"
               renderItem={({ item }) => (
-                <View style={styles.row}>
-                  <Text style={styles.rank}>#{item.rank}</Text>
-                  <Text style={styles.rowLabel} numberOfLines={1}>
+                <View className="mb-2.5 flex-row items-center gap-3 rounded-lg border border-border bg-card p-3.5">
+                  <Text className="w-8 text-sm font-bold text-muted-foreground">
+                    #{item.rank}
+                  </Text>
+                  <Text
+                    className="flex-1 text-base font-semibold text-card-foreground"
+                    numberOfLines={1}
+                  >
                     {item.label}
                   </Text>
                   {item.streak > 0 && (
-                    <Text style={styles.streak}>{item.streak}🔥</Text>
+                    <Text className="text-sm font-semibold text-chart-5">
+                      {item.streak}🔥
+                    </Text>
                   )}
-                  <Text style={styles.days}>{item.days_carried}d</Text>
+                  <Text className="text-sm font-semibold text-primary">
+                    {item.days_carried}d
+                  </Text>
                 </View>
               )}
             />
@@ -179,8 +202,8 @@ export default function StatsScreen() {
         </>
       ) : // Ink usage
       inkRows.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={styles.empty}>
+        <View className="flex-1 items-center justify-center p-8">
+          <Text className="text-center text-base leading-6 text-muted-foreground">
             No ink changes logged yet.{"\n"}Add a log entry with type "Ink
             Change" and put the ink name in the notes field.
           </Text>
@@ -189,14 +212,21 @@ export default function StatsScreen() {
         <FlatList
           data={inkRows}
           keyExtractor={(r) => r.ink}
-          contentContainerStyle={styles.list}
+          contentContainerClassName="px-4 pb-8"
           renderItem={({ item, index }) => (
-            <View style={styles.row}>
-              <Text style={styles.rank}>#{index + 1}</Text>
-              <Text style={styles.rowLabel} numberOfLines={1}>
+            <View className="mb-2.5 flex-row items-center gap-3 rounded-lg border border-border bg-card p-3.5">
+              <Text className="w-8 text-sm font-bold text-muted-foreground">
+                #{index + 1}
+              </Text>
+              <Text
+                className="flex-1 text-base font-semibold text-card-foreground"
+                numberOfLines={1}
+              >
                 {item.ink}
               </Text>
-              <Text style={styles.inkCount}>{item.count}×</Text>
+              <Text className="text-sm font-semibold text-chart-1">
+                {item.count}×
+              </Text>
             </View>
           )}
         />
@@ -204,71 +234,3 @@ export default function StatsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  viewToggle: {
-    flexDirection: "row",
-    margin: 16,
-    borderRadius: 10,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: C.accent,
-  },
-  viewPill: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    backgroundColor: C.bgCard,
-  },
-  viewPillActive: { backgroundColor: C.accent },
-  viewPillText: { color: C.accentBright, fontWeight: "600", fontSize: 14 },
-  viewPillTextActive: { color: C.text },
-  toggle: {
-    flexDirection: "row",
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 8,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  pill: {
-    flex: 1,
-    paddingVertical: 7,
-    alignItems: "center",
-    backgroundColor: C.bgMuted,
-  },
-  pillActive: { backgroundColor: C.bgCard },
-  pillText: { color: C.textMuted, fontWeight: "500", fontSize: 13 },
-  pillTextActive: { color: C.accentBright, fontWeight: "700" },
-  list: { paddingHorizontal: 16, paddingBottom: 32 },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 32,
-  },
-  empty: {
-    color: C.textMuted,
-    fontSize: 15,
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: C.border,
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
-  },
-  rank: { fontSize: 14, fontWeight: "700", color: C.textMuted, width: 32 },
-  rowLabel: { flex: 1, fontSize: 16, fontWeight: "600", color: C.text },
-  streak: { fontSize: 13, color: "#f59e0b", fontWeight: "600" },
-  days: { fontSize: 14, color: C.accentBright, fontWeight: "600" },
-  inkCount: { fontSize: 14, color: "#e8943a", fontWeight: "600" },
-});

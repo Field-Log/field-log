@@ -7,12 +7,10 @@ import {
   Modal,
   Pressable,
   SafeAreaView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
 import { type MainTabParamList } from "../navigation/types";
-import { C } from "../theme/colors";
 import { AccountProfileModal } from "./AccountProfileModal";
 import { BetaFeaturesModal } from "./BetaFeaturesModal";
 
@@ -53,18 +51,26 @@ export function AccountMenuButton({
         hitSlop={8}
         onPress={() => setMenuOpen(true)}
         onLongPress={tabBarButtonProps?.onLongPress}
-        style={tabBarButtonProps ? styles.tabTrigger : styles.headerTrigger}
+        className={
+          tabBarButtonProps
+            ? "min-h-12 flex-1 items-center justify-center"
+            : "mr-3 h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar-accent"
+        }
         testID={tabBarButtonProps?.testID}
       >
-        <View style={styles.triggerAvatar}>
+        <View className="h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar-accent">
           {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.avatarImage} />
+            <Image className="h-8 w-8" source={{ uri: imageUrl }} />
           ) : (
-            <Text style={styles.avatarFallback}>{initialsFor(username)}</Text>
+            <Text className="text-sm font-bold text-foreground">
+              {initialsFor(username)}
+            </Text>
           )}
         </View>
         {tabBarButtonProps ? (
-          <Text style={styles.tabLabel}>Account</Text>
+          <Text className="mt-1 text-xs font-semibold text-muted-foreground">
+            Account
+          </Text>
         ) : null}
       </Pressable>
 
@@ -74,40 +80,43 @@ export function AccountMenuButton({
         transparent
         visible={menuOpen}
       >
-        <View style={styles.menuOverlay}>
+        <View className="flex-1 justify-end bg-black/30">
           <Pressable
             accessibilityLabel="Close account menu"
             onPress={closeMenu}
-            style={StyleSheet.absoluteFill}
+            className="absolute inset-0"
           />
-          <SafeAreaView pointerEvents="box-none" style={styles.menuSafeArea}>
-            <View style={styles.menuPanel}>
-              <View style={styles.sheetHandle} />
-              <View style={styles.menuLabel}>
-                <View style={styles.menuAvatar}>
+          <SafeAreaView pointerEvents="box-none" className="flex-1 justify-end">
+            <View className="w-full overflow-hidden rounded-t-lg border border-border bg-card pb-2">
+              <View className="mb-2 mt-2.5 h-1 w-10 self-center rounded-sm bg-sidebar-border" />
+              <View className="flex-row items-center gap-2.5 p-3.5">
+                <View className="h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-sidebar-accent">
                   {imageUrl ? (
-                    <Image
-                      source={{ uri: imageUrl }}
-                      style={styles.menuAvatarImage}
-                    />
+                    <Image className="h-9 w-9" source={{ uri: imageUrl }} />
                   ) : (
-                    <Text style={styles.menuAvatarFallback}>
+                    <Text className="text-sm font-bold text-foreground">
                       {initialsFor(username)}
                     </Text>
                   )}
                 </View>
-                <View style={styles.menuIdentity}>
-                  <Text numberOfLines={1} style={styles.menuName}>
+                <View className="min-w-0 flex-1">
+                  <Text
+                    className="text-sm font-bold text-card-foreground"
+                    numberOfLines={1}
+                  >
                     {username}
                   </Text>
                   {email ? (
-                    <Text numberOfLines={1} style={styles.menuEmail}>
+                    <Text
+                      className="mt-0.5 text-xs text-muted-foreground"
+                      numberOfLines={1}
+                    >
                       {email}
                     </Text>
                   ) : null}
                 </View>
               </View>
-              <View style={styles.separator} />
+              <View className="h-px bg-border" />
               <MenuItem
                 label="Account"
                 onPress={() => {
@@ -129,7 +138,7 @@ export function AccountMenuButton({
                   setBetaFeaturesOpen(true);
                 }}
               />
-              <View style={styles.separator} />
+              <View className="h-px bg-border" />
               <MenuItem label="Sign out" onPress={handleSignOut} />
             </View>
           </SafeAreaView>
@@ -159,9 +168,11 @@ function MenuItem({
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={styles.menuItem}
+      className="min-h-11 justify-center px-3.5"
     >
-      <Text style={styles.menuItemText}>{label}</Text>
+      <Text className="text-base font-semibold text-card-foreground">
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -170,97 +181,3 @@ function initialsFor(value: string | null | undefined): string {
   const first = value?.trim().charAt(0).toUpperCase();
   return first || "U";
 }
-
-const styles = StyleSheet.create({
-  avatarFallback: { color: C.text, fontSize: 13, fontWeight: "700" },
-  avatarImage: { height: 32, width: 32 },
-  menuAvatar: {
-    alignItems: "center",
-    backgroundColor: C.bgMuted,
-    borderColor: C.border,
-    borderRadius: 18,
-    borderWidth: 1,
-    height: 36,
-    justifyContent: "center",
-    overflow: "hidden",
-    width: 36,
-  },
-  menuAvatarFallback: { color: C.text, fontSize: 13, fontWeight: "700" },
-  menuAvatarImage: { height: 36, width: 36 },
-  menuEmail: { color: C.textMuted, fontSize: 12, marginTop: 2 },
-  menuIdentity: { flex: 1, minWidth: 0 },
-  menuItem: {
-    minHeight: 44,
-    justifyContent: "center",
-    paddingHorizontal: 14,
-  },
-  menuItemText: { color: C.text, fontSize: 15, fontWeight: "600" },
-  menuLabel: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 10,
-    padding: 14,
-  },
-  menuName: { color: C.text, fontSize: 14, fontWeight: "700" },
-  menuOverlay: {
-    backgroundColor: "rgba(0,0,0,0.28)",
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  menuPanel: {
-    backgroundColor: C.bgCard,
-    borderColor: C.border,
-    borderWidth: 1,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    overflow: "hidden",
-    paddingBottom: 8,
-    width: "100%",
-  },
-  menuSafeArea: { flex: 1, justifyContent: "flex-end" },
-  separator: { backgroundColor: C.border, height: StyleSheet.hairlineWidth },
-  sheetHandle: {
-    alignSelf: "center",
-    backgroundColor: C.borderStrong,
-    borderRadius: 2,
-    height: 4,
-    marginBottom: 8,
-    marginTop: 10,
-    width: 42,
-  },
-  headerTrigger: {
-    alignItems: "center",
-    backgroundColor: C.bgMuted,
-    borderColor: C.border,
-    borderRadius: 18,
-    borderWidth: 1,
-    height: 36,
-    justifyContent: "center",
-    marginRight: 12,
-    overflow: "hidden",
-    width: 36,
-  },
-  tabLabel: {
-    color: C.textMuted,
-    fontSize: 10,
-    fontWeight: "600",
-    marginTop: 3,
-  },
-  tabTrigger: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 48,
-  },
-  triggerAvatar: {
-    alignItems: "center",
-    backgroundColor: C.bgMuted,
-    borderColor: C.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    height: 32,
-    justifyContent: "center",
-    overflow: "hidden",
-    width: 32,
-  },
-});
