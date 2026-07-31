@@ -26,6 +26,7 @@ env:
   API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
   DB_PREVIEW_COMMENT_MARKER: "<!-- field-log-db-preview -->"
   RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME: "field-log (preview)"
+  RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME: "field-log"
   RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME: "scraper-queue"
 
 jobs:
@@ -1019,6 +1020,141 @@ jobs:
 
       - name: Smoke test production Worker
         run: curl --fail --retry 5 --retry-all-errors --retry-delay 3 https://api.field-log.app/api/v0/health
+
+  railway-production:
+    name: Railway Production
+    needs: production
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve release tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            tag_name="${{ github.ref_name }}"
+          else
+            version="$(jq -r '.version' package.json)"
+            tag_name="v${version}"
+          fi
+
+          if [[ ! "$tag_name" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must match vX.Y.Z. Got: $tag_name" >&2
+            exit 1
+          fi
+
+          echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+
+      - name: Validate Railway configuration
+        shell: bash
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+
+          for name in RAILWAY_API_TOKEN RAILWAY_PROJECT_ID RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "$name is required." >&2
+              exit 1
+            fi
+          done
+
+      - name: Set Railway production metadata
+        shell: bash
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+
+          pnpm dlx @railway/cli variable set APP_ENV=production \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME" \
+            --environment production
+
+          pnpm dlx @railway/cli variable set LOG_DEPLOYMENT_ID=production \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME" \
+            --environment production
+
+          pnpm dlx @railway/cli variable set LOG_DEPLOYMENT_TARGET=railway \
+            --skip-deploys \
+            --project "$RAILWAY_PROJECT_ID" \
+            --service "$RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME" \
+            --environment production
+
+      - name: Deploy Railway production scraper
+        shell: bash
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          pnpm dlx @railway/cli up \
+            --ci \
+            --yes \
+            --project "$RAILWAY_PROJECT_ID" \
+            --environment production \
+            --service "$RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME" \
+            --message "Production release for $RELEASE_TAG"
+
+      - name: Verify Railway production deployment
+        shell: bash
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          latest_deployment="$(
+            pnpm dlx @railway/cli deployment list \
+              --project "$RAILWAY_PROJECT_ID" \
+              --environment production \
+              --service "$RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME" \
+              --limit 1 \
+              --json
+          )"
+          status="$(jq -r '.[0].status // empty' <<< "$latest_deployment")"
+          message="$(jq -r '.[0].meta.message // .[0].meta.commitMessage // empty' <<< "$latest_deployment")"
+
+          if [[ "$status" != "SUCCESS" ]]; then
+            echo "Railway production deployment did not succeed. Status: ${status:-<empty>}" >&2
+            exit 1
+          fi
+
+          expected_message="Production release for $RELEASE_TAG"
+          if [[ "$message" != "$expected_message" ]]; then
+            echo "Railway production deployment message did not match." >&2
+            echo "Expected: $expected_message" >&2
+            echo "Actual: ${message:-<empty>}" >&2
+            exit 1
+          fi
 
   web-production:
     name: Web Production

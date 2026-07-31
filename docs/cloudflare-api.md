@@ -298,6 +298,8 @@ Release tags:
   production `DATABASE_URL` and required Clerk keys.
 - Deploys `field-log-api` to `api.field-log.app`.
 - Smoke-tests `https://api.field-log.app/api/v0/health`.
+- Deploys the production Railway scraper service after production migrations and
+  API smoke tests pass.
 - Validates `@app/web`, pulls the Vercel production environment, builds with
   `vercel build --prod`, deploys with `vercel deploy --prebuilt --prod`, and
   smoke-tests the resulting production deployment URL.
