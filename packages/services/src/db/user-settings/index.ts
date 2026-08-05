@@ -77,7 +77,7 @@ export function createUserSettingsService(
     },
     async patchForClerkId(clerkId, settings) {
       return await logger.operation(
-        loggerMessages.database.userSettings.upsertForClerkId,
+        loggerMessages.database.userSettings.patchForClerkId,
         async () => {
           const existing = await this.getByClerkId(clerkId);
           const mergedSettings: UpsertUserSettingsInput = {

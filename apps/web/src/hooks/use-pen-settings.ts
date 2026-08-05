@@ -1,5 +1,6 @@
 import { loggerMessages } from "@package/logger";
 import * as React from "react";
+import { toast } from "sonner";
 import { compactMediaQuery } from "@/lib/breakpoints";
 import { logger } from "@/lib/logger";
 import {
@@ -13,36 +14,104 @@ import {
 } from "@/lib/pen-formatters";
 import {
   defaultUserSettings,
-  getCurrentUserSettings,
+  getCurrentUserSettingsState,
   patchCurrentUserSettings,
   type UserSettingsPatch,
+  userSettingsSaveFailureMessage,
+  userSettingsStorageKey,
 } from "@/lib/user-settings";
 
 const filtersClosedStorageKey = "field-log.filtersClosed";
 const rateStorageKey = `field-log.fxRates.${baseCurrency}`;
+type PenSettings = Pick<
+  typeof defaultUserSettings,
+  "currencyCode" | "dimensionUnit" | "weightUnit"
+>;
+
+function readStoredPenSettings(): PenSettings {
+  if (typeof window === "undefined") {
+    return {
+      currencyCode: defaultUserSettings.currencyCode,
+      dimensionUnit: defaultUserSettings.dimensionUnit,
+      weightUnit: defaultUserSettings.weightUnit,
+    };
+  }
+
+  try {
+    const stored = JSON.parse(
+      window.localStorage.getItem(userSettingsStorageKey) ?? "null",
+    ) as Partial<PenSettings> | null;
+
+    return {
+      currencyCode:
+        stored?.currencyCode && currencies.includes(stored.currencyCode)
+          ? stored.currencyCode
+          : defaultUserSettings.currencyCode,
+      dimensionUnit:
+        stored?.dimensionUnit === "mm" || stored?.dimensionUnit === "in"
+          ? stored.dimensionUnit
+          : defaultUserSettings.dimensionUnit,
+      weightUnit:
+        stored?.weightUnit === "oz" || stored?.weightUnit === "g"
+          ? stored.weightUnit
+          : defaultUserSettings.weightUnit,
+    };
+  } catch {
+    return {
+      currencyCode: defaultUserSettings.currencyCode,
+      dimensionUnit: defaultUserSettings.dimensionUnit,
+      weightUnit: defaultUserSettings.weightUnit,
+    };
+  }
+}
+
+function writeStoredPenSettings(settings: PenSettings): void {
+  try {
+    window.localStorage.setItem(
+      userSettingsStorageKey,
+      JSON.stringify(settings),
+    );
+  } catch {
+    // Local persistence is best-effort; the save path still reports server errors.
+  }
+}
 
 export function usePenSettings() {
+  const initialSettings = React.useMemo(readStoredPenSettings, []);
   const [units, setUnitsState] = React.useState<DimensionUnit>(
-    defaultUserSettings.dimensionUnit,
+    initialSettings.dimensionUnit,
   );
   const [weight, setWeightState] = React.useState<WeightUnit>(
-    defaultUserSettings.weightUnit,
+    initialSettings.weightUnit,
   );
   const [currency, setCurrencyState] = React.useState<CurrencyCode>(
-    defaultUserSettings.currencyCode,
+    initialSettings.currencyCode,
   );
   const [saving, setSaving] = React.useState(false);
+  const mutationVersionRef = React.useRef(0);
+
+  const applyPenSettings = React.useCallback((settings: PenSettings) => {
+    setUnitsState(settings.dimensionUnit);
+    setWeightState(settings.weightUnit);
+    setCurrencyState(settings.currencyCode);
+    writeStoredPenSettings(settings);
+  }, []);
 
   React.useEffect(() => {
     let cancelled = false;
+    const requestVersion = mutationVersionRef.current;
 
-    getCurrentUserSettings()
-      .then((settings) => {
-        if (cancelled || !settings) return;
+    getCurrentUserSettingsState()
+      .then((settingsState) => {
+        if (
+          cancelled ||
+          !settingsState?.hasSavedSettings ||
+          requestVersion !== mutationVersionRef.current
+        ) {
+          return;
+        }
 
-        setUnitsState(settings.dimensionUnit);
-        setWeightState(settings.weightUnit);
-        setCurrencyState(settings.currencyCode);
+        applyPenSettings(settingsState.settings);
       })
       .catch((error: unknown) => {
         logger.warn(loggerMessages.web.userSettingsFetchFailed, { error });
@@ -51,46 +120,70 @@ export function usePenSettings() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyPenSettings]);
 
-  const saveSettings = React.useCallback((patch: UserSettingsPatch) => {
-    setSaving(true);
-    patchCurrentUserSettings({ data: patch })
-      .then((settings) => {
-        if (!settings) return;
+  const saveSettings = React.useCallback(
+    (patch: UserSettingsPatch, previousSettings: PenSettings) => {
+      const mutationVersion = mutationVersionRef.current + 1;
+      mutationVersionRef.current = mutationVersion;
+      const optimisticSettings = { ...previousSettings, ...patch };
 
-        setUnitsState(settings.dimensionUnit);
-        setWeightState(settings.weightUnit);
-        setCurrencyState(settings.currencyCode);
-      })
-      .catch((error: unknown) => {
-        logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
-      })
-      .finally(() => setSaving(false));
-  }, []);
+      applyPenSettings(optimisticSettings);
+      setSaving(true);
+
+      patchCurrentUserSettings({ data: patch })
+        .then((settings) => {
+          if (!settings || mutationVersion !== mutationVersionRef.current) {
+            return;
+          }
+
+          applyPenSettings(settings);
+        })
+        .catch((error: unknown) => {
+          logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+
+          if (mutationVersion !== mutationVersionRef.current) return;
+
+          applyPenSettings(previousSettings);
+          toast.error(userSettingsSaveFailureMessage);
+        })
+        .finally(() => {
+          if (mutationVersion === mutationVersionRef.current) {
+            setSaving(false);
+          }
+        });
+    },
+    [applyPenSettings],
+  );
 
   const setUnits = React.useCallback(
     (nextUnits: DimensionUnit) => {
-      setUnitsState(nextUnits);
-      saveSettings({ dimensionUnit: nextUnits });
+      saveSettings(
+        { dimensionUnit: nextUnits },
+        { currencyCode: currency, dimensionUnit: units, weightUnit: weight },
+      );
     },
-    [saveSettings],
+    [currency, saveSettings, units, weight],
   );
 
   const setWeight = React.useCallback(
     (nextWeight: WeightUnit) => {
-      setWeightState(nextWeight);
-      saveSettings({ weightUnit: nextWeight });
+      saveSettings(
+        { weightUnit: nextWeight },
+        { currencyCode: currency, dimensionUnit: units, weightUnit: weight },
+      );
     },
-    [saveSettings],
+    [currency, saveSettings, units, weight],
   );
 
   const setCurrency = React.useCallback(
     (nextCurrency: CurrencyCode) => {
-      setCurrencyState(nextCurrency);
-      saveSettings({ currencyCode: nextCurrency });
+      saveSettings(
+        { currencyCode: nextCurrency },
+        { currencyCode: currency, dimensionUnit: units, weightUnit: weight },
+      );
     },
-    [saveSettings],
+    [currency, saveSettings, units, weight],
   );
 
   return {

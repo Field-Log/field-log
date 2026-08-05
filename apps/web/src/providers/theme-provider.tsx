@@ -1,5 +1,6 @@
 import { loggerMessages } from "@package/logger";
 import * as React from "react";
+import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import {
   applyTheme,
@@ -12,6 +13,7 @@ import {
   getCurrentUserSettingsState,
   patchCurrentUserSettings,
   type UserSettingsState,
+  userSettingsSaveFailureMessage,
 } from "@/lib/user-settings";
 
 type ThemeProviderValue = {
@@ -46,6 +48,7 @@ export function ThemeProvider({
     readTheme(initialSettingsState),
   );
   const [saving, setSaving] = React.useState(false);
+  const mutationVersionRef = React.useRef(0);
 
   React.useEffect(() => {
     applyTheme(theme);
@@ -72,6 +75,7 @@ export function ThemeProvider({
 
   React.useEffect(() => {
     let cancelled = false;
+    const requestVersion = mutationVersionRef.current;
 
     if (initialSettingsState) {
       const stored = window.localStorage.getItem(themeStorageKey);
@@ -82,18 +86,25 @@ export function ThemeProvider({
         patchCurrentUserSettings({ data: { theme: next.theme } }).catch(
           (error: unknown) => {
             logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+            toast.error(userSettingsSaveFailureMessage);
           },
         );
-
-        return () => {
-          cancelled = true;
-        };
       }
+
+      return () => {
+        cancelled = true;
+      };
     }
 
     getCurrentUserSettingsState()
       .then((settingsState) => {
-        if (cancelled || !settingsState) return;
+        if (
+          cancelled ||
+          !settingsState ||
+          requestVersion !== mutationVersionRef.current
+        ) {
+          return;
+        }
 
         const stored = window.localStorage.getItem(themeStorageKey);
         const localTheme = isThemeMode(stored) ? stored : null;
@@ -108,6 +119,7 @@ export function ThemeProvider({
         patchCurrentUserSettings({ data: { theme: next.theme } }).catch(
           (error: unknown) => {
             logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+            toast.error(userSettingsSaveFailureMessage);
           },
         );
       })
@@ -120,25 +132,45 @@ export function ThemeProvider({
     };
   }, [initialSettingsState]);
 
-  const setTheme = React.useCallback((nextTheme: ThemeMode) => {
-    setThemeState(nextTheme);
-    window.localStorage.setItem(themeStorageKey, nextTheme);
-    applyTheme(nextTheme);
+  const setTheme = React.useCallback(
+    (nextTheme: ThemeMode) => {
+      const previousTheme = theme;
+      const mutationVersion = mutationVersionRef.current + 1;
+      mutationVersionRef.current = mutationVersion;
 
-    setSaving(true);
-    patchCurrentUserSettings({ data: { theme: nextTheme } })
-      .then((settings) => {
-        if (!settings) return;
+      setThemeState(nextTheme);
+      window.localStorage.setItem(themeStorageKey, nextTheme);
+      applyTheme(nextTheme);
 
-        setThemeState(settings.theme);
-        window.localStorage.setItem(themeStorageKey, settings.theme);
-        applyTheme(settings.theme);
-      })
-      .catch((error: unknown) => {
-        logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
-      })
-      .finally(() => setSaving(false));
-  }, []);
+      setSaving(true);
+      patchCurrentUserSettings({ data: { theme: nextTheme } })
+        .then((settings) => {
+          if (!settings || mutationVersion !== mutationVersionRef.current) {
+            return;
+          }
+
+          setThemeState(settings.theme);
+          window.localStorage.setItem(themeStorageKey, settings.theme);
+          applyTheme(settings.theme);
+        })
+        .catch((error: unknown) => {
+          logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+
+          if (mutationVersion !== mutationVersionRef.current) return;
+
+          setThemeState(previousTheme);
+          window.localStorage.setItem(themeStorageKey, previousTheme);
+          applyTheme(previousTheme);
+          toast.error(userSettingsSaveFailureMessage);
+        })
+        .finally(() => {
+          if (mutationVersion === mutationVersionRef.current) {
+            setSaving(false);
+          }
+        });
+    },
+    [theme],
+  );
 
   const value = React.useMemo(
     () => ({

@@ -1,4 +1,8 @@
 import { auth } from "@clerk/tanstack-react-start/server";
+import {
+  defaultUserSettings as serviceDefaultUserSettings,
+  type UpsertUserSettingsInput,
+} from "@package/services";
 import { createServerFn } from "@tanstack/react-start";
 import {
   type CurrencyCode,
@@ -9,7 +13,7 @@ import {
 import { s } from "@/lib/services";
 import { isThemeMode, type ThemeMode } from "@/lib/theme";
 
-export type UserSettingsPreferences = {
+export type UserSettingsPreferences = UpsertUserSettingsInput & {
   currencyCode: CurrencyCode;
   dimensionUnit: DimensionUnit;
   theme: ThemeMode;
@@ -23,12 +27,12 @@ export type UserSettingsState = {
   settings: UserSettingsPreferences;
 };
 
-export const defaultUserSettings: UserSettingsPreferences = {
-  currencyCode: "USD",
-  dimensionUnit: "in",
-  theme: "system",
-  weightUnit: "g",
-};
+export const defaultUserSettings: UserSettingsPreferences =
+  serviceDefaultUserSettings;
+
+export const userSettingsStorageKey = "field-log.settings";
+export const userSettingsSaveFailureMessage =
+  "We couldn't save your settings. Please try again.";
 
 export const getCurrentUserSettings = createServerFn({ method: "GET" }).handler(
   async (): Promise<UserSettingsPreferences | null> => {

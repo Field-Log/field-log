@@ -4,7 +4,10 @@ import type { ImageStorageConfig } from "@package/images";
 import { createLogger, type Logger, type LoggerConfig } from "@package/logger";
 import { createDbServices, type DbServices } from "./db/index.js";
 
-export type { UserSettingsService } from "./db/index.js";
+export type {
+  UpsertUserSettingsInput,
+  UserSettingsService,
+} from "./db/index.js";
 export { defaultUserSettings } from "./db/index.js";
 
 import {

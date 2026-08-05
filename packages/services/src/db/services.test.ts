@@ -27,17 +27,30 @@ function captureLogger(events: LogEvent[]) {
 function createDbMock(input: {
   insertRows?: unknown[][];
   selectRows?: unknown[][];
-}): Database {
+}): Database & {
+  conflictSets: unknown[];
+  insertValues: unknown[];
+} {
   const insertRows = [...(input.insertRows ?? [])];
   const selectRows = [...(input.selectRows ?? [])];
+  const conflictSets: unknown[] = [];
+  const insertValues: unknown[] = [];
 
-  return {
+  const db = {
     insert: vi.fn(() => ({
-      values: vi.fn(() => ({
-        onConflictDoUpdate: vi.fn(() => ({
-          returning: vi.fn().mockResolvedValue(insertRows.shift() ?? []),
-        })),
-      })),
+      values: vi.fn((value: unknown) => {
+        insertValues.push(value);
+
+        return {
+          onConflictDoUpdate: vi.fn((config: { set: unknown }) => {
+            conflictSets.push(config.set);
+
+            return {
+              returning: vi.fn().mockResolvedValue(insertRows.shift() ?? []),
+            };
+          }),
+        };
+      }),
     })),
     select: vi.fn(() => ({
       from: vi.fn(() => ({
@@ -49,6 +62,8 @@ function createDbMock(input: {
       })),
     })),
   } as unknown as Database;
+
+  return Object.assign(db, { conflictSets, insertValues });
 }
 
 describe("database service logging", () => {
@@ -215,14 +230,27 @@ describe("database service logging", () => {
     expect(events.map((event) => event.message)).toEqual([
       `${loggerMessages.database.userSettings.getByClerkId}.succeeded`,
       `${loggerMessages.database.users.ensure}.succeeded`,
-      `${loggerMessages.database.userSettings.upsertForClerkId}.succeeded`,
+      `${loggerMessages.database.userSettings.patchForClerkId}.succeeded`,
     ]);
     expect(events[2]?.attributes).toMatchObject({
       clerkIdHash: hashLogIdentifier(clerkId),
-      operation: loggerMessages.database.userSettings.upsertForClerkId,
+      operation: loggerMessages.database.userSettings.patchForClerkId,
       outcome: "success",
       settingKeys: ["theme"],
       settings: { theme: "system" },
+    });
+    expect(db.insertValues[1]).toEqual({
+      currencyCode: "CAD",
+      dimensionUnit: "in",
+      theme: "system",
+      userId: user.id,
+      weightUnit: "g",
+    });
+    expect(db.conflictSets[1]).toEqual({
+      currencyCode: "CAD",
+      dimensionUnit: "in",
+      theme: "system",
+      weightUnit: "g",
     });
     expect(JSON.stringify(events)).not.toContain(clerkId);
   });
@@ -257,8 +285,28 @@ describe("database service logging", () => {
     expect(events.map((event) => event.message)).toEqual([
       `${loggerMessages.database.userSettings.getByClerkId}.succeeded`,
       `${loggerMessages.database.users.ensure}.succeeded`,
-      `${loggerMessages.database.userSettings.upsertForClerkId}.succeeded`,
+      `${loggerMessages.database.userSettings.patchForClerkId}.succeeded`,
     ]);
+    expect(events[2]?.attributes).toMatchObject({
+      clerkIdHash: hashLogIdentifier(clerkId),
+      operation: loggerMessages.database.userSettings.patchForClerkId,
+      outcome: "success",
+      settingKeys: ["theme"],
+      settings: { theme: "light" },
+    });
+    expect(db.insertValues[1]).toEqual({
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      theme: "light",
+      userId: user.id,
+      weightUnit: "g",
+    });
+    expect(db.conflictSets[1]).toEqual({
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      theme: "light",
+      weightUnit: "g",
+    });
     expect(JSON.stringify(events)).not.toContain(clerkId);
   });
 });

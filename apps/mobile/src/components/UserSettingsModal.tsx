@@ -1,6 +1,12 @@
 import { useAuth } from "@clerk/expo";
 import { loggerMessages } from "@package/logger";
-import { type ReactElement, useCallback, useEffect, useState } from "react";
+import {
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -46,6 +52,8 @@ const weightOptions: Array<{ label: string; value: MobileWeightUnit }> = [
   { label: "Grams", value: "g" },
   { label: "Ounces", value: "oz" },
 ];
+const settingsSaveFailureMessage =
+  "We couldn't save your settings. Please try again.";
 
 export function UserSettingsModal({
   onClose,
@@ -58,10 +66,12 @@ export function UserSettingsModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const settingsVersionRef = useRef(0);
 
   const loadSettings = useCallback(async () => {
     if (!visible) return;
 
+    const requestVersion = settingsVersionRef.current;
     setLoading(true);
     setError(null);
 
@@ -72,12 +82,19 @@ export function UserSettingsModal({
         throw new Error("Missing session token.");
       }
 
-      setSettings(await fetchUserSettings(token));
+      const nextSettings = await fetchUserSettings(token);
+
+      if (requestVersion === settingsVersionRef.current) {
+        setSettings(nextSettings);
+      }
     } catch (loadError: unknown) {
       logger.warn(loggerMessages.mobile.userSettingsFetchFailed, {
         error: loadError,
       });
-      setError("Settings are unavailable.");
+
+      if (requestVersion === settingsVersionRef.current) {
+        setError("Settings are unavailable.");
+      }
     } finally {
       setLoading(false);
     }
@@ -88,7 +105,11 @@ export function UserSettingsModal({
   }, [loadSettings]);
 
   async function saveSettings(patch: MobileUserSettingsPatch): Promise<void> {
-    setSettings((current) => ({ ...current, ...patch }));
+    const previousSettings = settings;
+    const requestVersion = settingsVersionRef.current + 1;
+    settingsVersionRef.current = requestVersion;
+
+    setSettings({ ...previousSettings, ...patch });
     setSaving(true);
     setError(null);
 
@@ -99,16 +120,28 @@ export function UserSettingsModal({
         throw new Error("Missing session token.");
       }
 
-      setSettings(await patchUserSettings({ settings: patch, token }));
+      const nextSettings = await patchUserSettings({ settings: patch, token });
+
+      if (requestVersion === settingsVersionRef.current) {
+        setSettings(nextSettings);
+      }
     } catch (saveError: unknown) {
       logger.warn(loggerMessages.mobile.userSettingsSaveFailed, {
         error: saveError,
       });
-      setError("Could not save settings.");
+
+      if (requestVersion === settingsVersionRef.current) {
+        setSettings(previousSettings);
+        setError(settingsSaveFailureMessage);
+      }
     } finally {
-      setSaving(false);
+      if (requestVersion === settingsVersionRef.current) {
+        setSaving(false);
+      }
     }
   }
+
+  const controlsDisabled = loading || saving;
 
   return (
     <Modal
@@ -135,7 +168,7 @@ export function UserSettingsModal({
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <SettingsGroup label="Theme">
             <SegmentedControl
-              disabled={saving}
+              disabled={controlsDisabled}
               onChange={(theme) => {
                 saveSettings({ theme: theme as MobileThemeMode });
               }}
@@ -145,7 +178,7 @@ export function UserSettingsModal({
           </SettingsGroup>
           <SettingsGroup label="Dimensions">
             <SegmentedControl
-              disabled={saving}
+              disabled={controlsDisabled}
               onChange={(dimensionUnit) => {
                 saveSettings({
                   dimensionUnit: dimensionUnit as MobileDimensionUnit,
@@ -157,7 +190,7 @@ export function UserSettingsModal({
           </SettingsGroup>
           <SettingsGroup label="Weight">
             <SegmentedControl
-              disabled={saving}
+              disabled={controlsDisabled}
               onChange={(weightUnit) => {
                 saveSettings({ weightUnit: weightUnit as MobileWeightUnit });
               }}
@@ -169,7 +202,7 @@ export function UserSettingsModal({
             <View style={styles.currencyGrid}>
               {mobileCurrencyCodes.map((currencyCode) => (
                 <OptionButton
-                  disabled={saving}
+                  disabled={controlsDisabled}
                   key={currencyCode}
                   label={currencyLabel(currencyCode)}
                   onPress={() => saveSettings({ currencyCode })}

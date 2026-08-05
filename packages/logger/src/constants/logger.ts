@@ -56,6 +56,7 @@ export const loggerMessages = {
     },
     userSettings: {
       getByClerkId: "database.userSettings.getByClerkId",
+      patchForClerkId: "database.userSettings.patchForClerkId",
       upsertForClerkId: "database.userSettings.upsertForClerkId",
     },
     users: {
