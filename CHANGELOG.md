@@ -5,6 +5,20 @@
 
 
 
+
+## 0.1.5
+
+### Patch Changes
+
+- Fix Vercel release builds from the web app root.
+
+## Mobile Release Status
+
+| Platform | Build | Submit | Destination | Review / Live |
+| --- | --- | --- | --- | --- |
+| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
+| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
+
 ## 0.1.4
 
 ### Patch Changes
