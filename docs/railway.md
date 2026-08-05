@@ -30,7 +30,7 @@ Create these Railway services/resources:
 
 | Service | Type | Command | Schedule |
 | --- | --- | --- | --- |
-| `field-log` / `apps-scraper` | Cron service | `pnpm --filter @app/scraper run cron:run` | Railway cron `*/15 * * * *`; runs due source jobs and queue processing, then exits. |
+| `field-log` / `apps-scraper` | Cron service | `pnpm --filter @app/scraper run cron:run` | Railway cron `*/5 * * * *`; runs due source jobs and queue processing, then exits. |
 | `redis` | Redis database | Railway Redis template | Always available to the scraper service. |
 
 Do not create one Railway service per scraped site. Adding Autmog, Grimsmo, FH,
@@ -61,10 +61,10 @@ only for the non-cron server command.
 ## Schedule Behavior
 
 The scraper service uses Railway cron instead of in-process schedules. Railway
-runs the service every 15 minutes with:
+runs the service every 5 minutes with:
 
 ```cron
-*/15 * * * *
+*/5 * * * *
 ```
 
 Each cron execution runs `cron:run`. The queue processor runs every execution.
@@ -74,8 +74,8 @@ The first cron execution after a fresh Redis state runs Autmog immediately.
 `railway.json` sets `deploy.cronSchedule`, so the value applies through
 Railway's config-as-code path. Railway's docs note that config-as-code values do
 not backfill the Settings form; verify the cron value in the deployment details,
-or set the same `*/15 * * * *` value manually in the Railway Settings page if
-you want the form itself populated.
+or set the same `*/5 * * * *` value manually in the Railway Settings page if you
+want the form itself populated.
 
 Railway cron services must exit after the job finishes. If a previous cron
 execution is still active when the next schedule is due, Railway skips the new
@@ -206,8 +206,31 @@ Required groups:
 
 Grimsmo producers run hourly and are staggered by default: Saga at the top of
 the hour, Rask around `:15`, Fjell around `:30`, and Norseman around `:45`.
-Railway still invokes the single cron service every 15 minutes; the scraper
+Railway still invokes the single cron service every 5 minutes; the scraper
 checks Redis state and runs only due producers.
+
+## Production Deploys
+
+Disable Railway's native GitHub auto-deploy for the production `field-log`
+service. Production scraper deploys are owned by the tag-triggered `API Deploy`
+workflow so the scraper cannot run newer code before committed production
+database migrations have been applied.
+
+The production workflow:
+
+1. Runs production Neon migrations in the API production job.
+2. Smoke-tests the production Cloudflare Worker.
+3. Sets Railway production metadata with `--skip-deploys`:
+   `APP_ENV=production`, `LOG_DEPLOYMENT_ID=production`, and
+   `LOG_DEPLOYMENT_TARGET=railway`.
+4. Uploads the checked-out release source to Railway with
+   `railway up --ci --message "Production release for vX.Y.Z"`.
+5. Verifies that the newest Railway production deployment for `field-log`
+   finishes with `SUCCESS`.
+
+Do not move Drizzle migrations into the Railway build, pre-deploy, start, or
+cron command. Railway production deploys must remain downstream of the release
+workflow migration step.
 
 ## Preview Database Sync
 
@@ -262,7 +285,7 @@ from the preview database workflow.
 
 - Keep one Railway service for `apps/scraper`.
 - Run the scheduled service with `pnpm --filter @app/scraper run cron:run`.
-- Set the Railway cron schedule to `*/15 * * * *`.
+- Set the Railway cron schedule to `*/5 * * * *`.
 - Do not configure a Railway healthcheck for the cron service.
 - Set `DATABASE_URL` and `REDIS_URL` before enabling the cron service; cron
   executions validate job dependencies before running.

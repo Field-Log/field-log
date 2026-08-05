@@ -1,5 +1,6 @@
 import { useAuth } from "@clerk/expo";
 import { loggerMessages } from "@package/logger";
+import { nativeDarkColors } from "@package/theme";
 import {
   type ReactElement,
   useCallback,
@@ -30,7 +31,6 @@ import {
   mobileCurrencyCodes,
   patchUserSettings,
 } from "../lib/user-settings";
-import { C } from "../theme/colors";
 
 type UserSettingsModalProps = {
   onClose: () => void;
@@ -54,6 +54,14 @@ const weightOptions: Array<{ label: string; value: MobileWeightUnit }> = [
 ];
 const settingsSaveFailureMessage =
   "We couldn't save your settings. Please try again.";
+const C = {
+  bg: nativeDarkColors.background,
+  bgMuted: nativeDarkColors.secondary,
+  border: nativeDarkColors.border,
+  danger: nativeDarkColors.destructive,
+  text: nativeDarkColors.foreground,
+  textMuted: nativeDarkColors.mutedForeground,
+};
 
 export function UserSettingsModal({
   onClose,

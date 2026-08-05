@@ -1,9 +1,8 @@
 import { useNavigation } from "@react-navigation/native";
-import React from "react";
-import { Pressable, SectionList, StyleSheet, Text, View } from "react-native";
+import { type ReactElement } from "react";
+import { Pressable, SectionList, Text, View } from "react-native";
 import { ITEM_TYPES, type ItemTypeConfig } from "../config/itemTypes";
 import type { FieldLogNavigation } from "../navigation/types";
-import { C } from "../theme/colors";
 
 type Section = {
   title: string;
@@ -59,57 +58,34 @@ const SECTIONS: Section[] = [
   },
 ];
 
-export default function ChooseItemTypeScreen() {
+export default function ChooseItemTypeScreen(): ReactElement {
   const navigation = useNavigation<FieldLogNavigation>();
 
   return (
     <SectionList
       sections={SECTIONS}
       keyExtractor={(item) => item.type}
-      contentContainerStyle={styles.list}
+      contentContainerClassName="bg-background pb-8"
       renderSectionHeader={({ section }) => (
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
+        <View className="bg-sidebar-accent px-4 py-2">
+          <Text className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {section.title}
+          </Text>
         </View>
       )}
       renderItem={({ item }) => (
         <Pressable
-          style={styles.row}
+          className="flex-row items-center border-b border-border bg-card px-4 py-3.5"
           onPress={() =>
             navigation.navigate("AddItem", { item_type: item.type })
           }
         >
-          <Text style={styles.rowLabel}>{item.label}</Text>
-          <Text style={styles.chevron}>›</Text>
+          <Text className="flex-1 text-base text-card-foreground">
+            {item.label}
+          </Text>
+          <Text className="text-xl text-muted-foreground">›</Text>
         </Pressable>
       )}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  list: { paddingBottom: 32, backgroundColor: C.bg },
-  sectionHeader: {
-    backgroundColor: C.bgMuted,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: C.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.bgCard,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-  },
-  rowLabel: { flex: 1, fontSize: 16, color: C.text },
-  chevron: { fontSize: 20, color: C.textMuted },
-});

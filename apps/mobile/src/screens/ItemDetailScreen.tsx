@@ -3,14 +3,13 @@ import {
   useNavigation,
   useRoute,
 } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
+import { type ReactElement, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -44,7 +43,6 @@ import {
   syncCurrentUserLogEntryBestEffort,
 } from "../db/sync";
 import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
-import { C } from "../theme/colors";
 
 const ENTRY_TYPE_LABELS: Record<LogEntryType, string> = {
   carried: "Carried",
@@ -62,6 +60,13 @@ type LogEntry = {
   condition: string | null;
   created_at: string;
 };
+
+const centeredClass = "flex-1 items-center justify-center bg-background";
+const fieldLabelClass = "text-xs text-muted-foreground";
+const fieldRowClass = "mb-3";
+const fieldValueClass = "text-base font-medium text-foreground";
+const sectionHeaderClass =
+  "mb-2.5 mt-6 text-sm font-semibold uppercase tracking-wider text-muted-foreground";
 
 function computeStreak(sortedDates: string[]): {
   current: number;
@@ -108,7 +113,11 @@ function computeStreak(sortedDates: string[]): {
   return { current, longest };
 }
 
-function CarryHeatmap({ carryDates }: { carryDates: Set<string> }) {
+function CarryHeatmap({
+  carryDates,
+}: {
+  carryDates: Set<string>;
+}): ReactElement {
   const WEEKS = 13;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -131,34 +140,29 @@ function CarryHeatmap({ carryDates }: { carryDates: Set<string> }) {
   }
 
   return (
-    <View style={heatStyles.wrap}>
-      <View style={heatStyles.grid}>
+    <View className="mb-5">
+      <View className="flex-row gap-1">
         {cells.map((week) => (
-          <View key={week[0]?.date ?? "empty-week"} style={heatStyles.col}>
+          <View key={week[0]?.date ?? "empty-week"} className="flex-col gap-1">
             {week.map((cell) => (
               <View
                 key={cell.date}
-                style={[heatStyles.cell, cell.carried && heatStyles.cellOn]}
+                className={`h-3.5 w-3.5 rounded-sm ${
+                  cell.carried ? "bg-primary" : "bg-sidebar-accent"
+                }`}
               />
             ))}
           </View>
         ))}
       </View>
-      <Text style={heatStyles.label}>Carry history — last {WEEKS} weeks</Text>
+      <Text className="mt-1.5 text-right text-xs text-muted-foreground">
+        Carry history — last {WEEKS} weeks
+      </Text>
     </View>
   );
 }
 
-const heatStyles = StyleSheet.create({
-  wrap: { marginBottom: 20 },
-  grid: { flexDirection: "row", gap: 3 },
-  col: { flexDirection: "column", gap: 3 },
-  cell: { width: 14, height: 14, borderRadius: 3, backgroundColor: C.heatOff },
-  cellOn: { backgroundColor: C.heatOn },
-  label: { fontSize: 11, color: C.textMuted, marginTop: 6, textAlign: "right" },
-});
-
-export default function ItemDetailScreen() {
+export default function ItemDetailScreen(): ReactElement {
   const route = useRoute<FieldLogRoute<"ItemDetail">>();
   const navigation = useNavigation<FieldLogNavigation>();
   const { itemId, item_type } = route.params;
@@ -283,16 +287,16 @@ export default function ItemDetailScreen() {
   ) => {
     if (value === null || value === undefined || value === "") return null;
     return (
-      <View key={label} style={styles.fieldRow}>
-        <Text style={styles.fieldLabel}>{label}</Text>
-        <Text style={styles.fieldValue}>{String(value)}</Text>
+      <View key={label} className={fieldRowClass}>
+        <Text className={fieldLabelClass}>{label}</Text>
+        <Text className={fieldValueClass}>{String(value)}</Text>
       </View>
     );
   };
 
   if (!item) {
     return (
-      <View style={styles.centered}>
+      <View className={centeredClass}>
         <ActivityIndicator />
       </View>
     );
@@ -304,31 +308,40 @@ export default function ItemDetailScreen() {
       : "Mark Carried Today";
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Pressable style={styles.carryButton} onPress={handleMarkCarried}>
-        <Text style={styles.carryButtonText}>{carryLabel}</Text>
+    <ScrollView contentContainerClassName="bg-background p-5">
+      <Pressable
+        className="mb-3 items-center rounded-lg bg-accent py-3.5"
+        onPress={handleMarkCarried}
+      >
+        <Text className="text-base font-semibold text-accent-foreground">
+          {carryLabel}
+        </Text>
       </Pressable>
 
-      <View style={styles.actionRow}>
+      <View className="mb-6 flex-row gap-2.5">
         <Pressable
-          style={styles.secondaryButton}
+          className="flex-1 items-center rounded-lg border border-border py-2.5"
           onPress={() => navigation.navigate("EditItem", { itemId })}
         >
-          <Text style={styles.secondaryText}>Edit</Text>
+          <Text className="text-sm font-semibold text-card-foreground">
+            Edit
+          </Text>
         </Pressable>
         <Pressable
-          style={styles.secondaryButton}
+          className="flex-1 items-center rounded-lg border border-border py-2.5"
           onPress={() =>
             navigation.navigate("AddLog", { itemId, itemType: item_type })
           }
         >
-          <Text style={styles.secondaryText}>Add log</Text>
+          <Text className="text-sm font-semibold text-card-foreground">
+            Add log
+          </Text>
         </Pressable>
         <Pressable
-          style={[styles.secondaryButton, styles.deleteButton]}
+          className="flex-1 items-center rounded-lg border border-destructive py-2.5"
           onPress={handleDelete}
         >
-          <Text style={[styles.secondaryText, styles.deleteText]}>Delete</Text>
+          <Text className="text-sm font-semibold text-destructive">Delete</Text>
         </Pressable>
       </View>
 
@@ -337,10 +350,14 @@ export default function ItemDetailScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.galleryScroll}
+          className="-mx-5 mb-4"
         >
           {item.gallery.map((uri) => (
-            <Image key={uri} source={{ uri }} style={styles.galleryImage} />
+            <Image
+              key={uri}
+              className="ml-4 h-36 w-52 rounded-lg"
+              source={{ uri }}
+            />
           ))}
         </ScrollView>
       )}
@@ -348,19 +365,29 @@ export default function ItemDetailScreen() {
       <CarryHeatmap carryDates={carryDates} />
 
       {(streak.current > 0 || streak.longest > 0) && (
-        <View style={styles.streakRow}>
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakNum}>{streak.current}</Text>
-            <Text style={styles.streakLabel}>day streak</Text>
+        <View className="mb-5 flex-row gap-3">
+          <View className="flex-1 items-center rounded-lg bg-card p-3.5">
+            <Text className="text-3xl font-extrabold text-primary">
+              {streak.current}
+            </Text>
+            <Text className="mt-0.5 text-xs text-muted-foreground">
+              day streak
+            </Text>
           </View>
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakNum}>{streak.longest}</Text>
-            <Text style={styles.streakLabel}>best streak</Text>
+          <View className="flex-1 items-center rounded-lg bg-card p-3.5">
+            <Text className="text-3xl font-extrabold text-primary">
+              {streak.longest}
+            </Text>
+            <Text className="mt-0.5 text-xs text-muted-foreground">
+              best streak
+            </Text>
           </View>
         </View>
       )}
 
-      <Text style={styles.header}>{config?.label ?? item_type}</Text>
+      <Text className="mb-5 text-2xl font-bold text-foreground">
+        {config?.label ?? item_type}
+      </Text>
 
       {/* Universal fields */}
       {fieldRow("Manufacturer", item.manufacturer)}
@@ -386,7 +413,7 @@ export default function ItemDetailScreen() {
         Array.isArray(item.specs.custom_fields) &&
         item.specs.custom_fields.length > 0 && (
           <View>
-            <Text style={styles.sectionHeader}>Details</Text>
+            <Text className={sectionHeaderClass}>Details</Text>
             {(
               item.specs.custom_fields as { label: string; value: string }[]
             ).map((f) => (f.label ? fieldRow(f.label, f.value) : null))}
@@ -402,7 +429,7 @@ export default function ItemDetailScreen() {
         if (visibleFields.length === 0) return null;
         return (
           <View key={section.title}>
-            <Text style={styles.sectionHeader}>{section.title}</Text>
+            <Text className={sectionHeaderClass}>{section.title}</Text>
             {visibleFields.map((f) => {
               const v = item.specs[f.key];
               let display: string;
@@ -423,25 +450,27 @@ export default function ItemDetailScreen() {
 
       {/* Collections */}
       {allCollections.length > 0 && (
-        <View style={styles.collectionsSection}>
-          <Text style={styles.sectionHeader}>Collections</Text>
-          <View style={styles.collectionChips}>
+        <View className="mt-6">
+          <Text className={sectionHeaderClass}>Collections</Text>
+          <View className="mt-1 flex-row flex-wrap gap-2">
             {allCollections.map((col) => {
               const active = itemCollections.some((c) => c.id === col.id);
               return (
                 <Pressable
                   key={col.id}
-                  style={[
-                    styles.collectionChip,
-                    active && styles.collectionChipActive,
-                  ]}
+                  className={`rounded-full border px-3.5 py-1.5 ${
+                    active
+                      ? "border-accent bg-accent"
+                      : "border-border bg-background"
+                  }`}
                   onPress={() => handleToggleCollection(col.id)}
                 >
                   <Text
-                    style={[
-                      styles.collectionChipText,
-                      active && styles.collectionChipTextActive,
-                    ]}
+                    className={`text-sm ${
+                      active
+                        ? "font-semibold text-accent-foreground"
+                        : "text-card-foreground"
+                    }`}
                   >
                     {col.name}
                   </Text>
@@ -453,22 +482,27 @@ export default function ItemDetailScreen() {
       )}
 
       {/* Tags */}
-      <View style={styles.tagsSection}>
-        <Text style={styles.sectionHeader}>Tags</Text>
-        <View style={styles.tagChips}>
+      <View className="mt-6">
+        <Text className={sectionHeaderClass}>Tags</Text>
+        <View className="mb-3 mt-1 flex-row flex-wrap gap-2">
           {allTags.map((tag) => {
             const active = itemTags.some((t) => t.id === tag.id);
             return (
               <Pressable
                 key={tag.id}
-                style={[styles.tagChip, active && styles.tagChipActive]}
+                className={`rounded-full border px-3 py-1 ${
+                  active
+                    ? "border-chart-2 bg-chart-2"
+                    : "border-border bg-background"
+                }`}
                 onPress={() => handleToggleTag(tag.id)}
               >
                 <Text
-                  style={[
-                    styles.tagChipText,
-                    active && styles.tagChipTextActive,
-                  ]}
+                  className={`text-sm ${
+                    active
+                      ? "font-semibold text-background"
+                      : "text-card-foreground"
+                  }`}
                 >
                   {tag.name}
                 </Text>
@@ -476,40 +510,54 @@ export default function ItemDetailScreen() {
             );
           })}
         </View>
-        <View style={styles.tagInputRow}>
+        <View className="flex-row gap-2">
           <TextInput
-            style={[styles.tagInput]}
+            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
             value={newTag}
             onChangeText={setNewTag}
             placeholder="New tag…"
             onSubmitEditing={handleAddNewTag}
             returnKeyType="done"
           />
-          <Pressable style={styles.tagAddButton} onPress={handleAddNewTag}>
-            <Text style={styles.tagAddText}>Add</Text>
+          <Pressable
+            className="justify-center rounded-lg bg-chart-2 px-4 py-2"
+            onPress={handleAddNewTag}
+          >
+            <Text className="text-sm font-semibold text-background">Add</Text>
           </Pressable>
         </View>
       </View>
 
       {/* Log history */}
-      <View style={styles.logSection}>
-        <Text style={styles.logHeader}>Log history</Text>
+      <View className="mt-7">
+        <Text className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Log history
+        </Text>
         {logEntries.length === 0 ? (
-          <Text style={styles.logEmpty}>No log entries yet.</Text>
+          <Text className="text-sm text-muted-foreground">
+            No log entries yet.
+          </Text>
         ) : (
           logEntries.map((entry) => (
-            <View key={entry.id} style={styles.logCard}>
-              <View style={styles.logCardTop}>
-                <Text style={styles.logType}>
+            <View
+              key={entry.id}
+              className="mb-2.5 rounded-lg border border-border bg-card p-3"
+            >
+              <View className="mb-1 flex-row justify-between">
+                <Text className="text-sm font-semibold text-primary">
                   {ENTRY_TYPE_LABELS[entry.entry_type]}
                 </Text>
-                <Text style={styles.logDate}>{entry.entry_date}</Text>
+                <Text className="text-xs text-muted-foreground">
+                  {entry.entry_date}
+                </Text>
               </View>
               {entry.notes ? (
-                <Text style={styles.logNotes}>{entry.notes}</Text>
+                <Text className="mt-0.5 text-sm text-card-foreground">
+                  {entry.notes}
+                </Text>
               ) : null}
               {entry.condition ? (
-                <Text style={styles.logCondition}>
+                <Text className="mt-1 text-xs text-card-foreground">
                   Condition: {entry.condition}
                 </Text>
               ) : null}
@@ -520,140 +568,3 @@ export default function ItemDetailScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: C.bg },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: C.bg,
-  },
-  carryButton: {
-    backgroundColor: C.accent,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  carryButtonText: { color: C.text, fontSize: 16, fontWeight: "600" },
-  actionRow: { flexDirection: "row", gap: 10, marginBottom: 24 },
-  secondaryButton: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: "center",
-  },
-  secondaryText: { fontSize: 14, fontWeight: "600", color: C.textSub },
-  deleteButton: { borderColor: C.danger },
-  deleteText: { color: C.danger },
-  streakRow: { flexDirection: "row", gap: 12, marginBottom: 20 },
-  streakBadge: {
-    flex: 1,
-    backgroundColor: C.bgCard,
-    borderRadius: 10,
-    padding: 14,
-    alignItems: "center",
-  },
-  streakNum: { fontSize: 28, fontWeight: "800", color: C.streakNum },
-  streakLabel: { fontSize: 11, color: C.textMuted, marginTop: 2 },
-  header: { fontSize: 22, fontWeight: "700", marginBottom: 20, color: C.text },
-  sectionHeader: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: C.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginTop: 24,
-    marginBottom: 10,
-  },
-  fieldRow: { marginBottom: 12 },
-  fieldLabel: { fontSize: 12, color: C.textMuted },
-  fieldValue: { fontSize: 16, fontWeight: "500", color: C.text },
-  galleryScroll: { marginBottom: 16, marginHorizontal: -20 },
-  galleryImage: { width: 200, height: 150, borderRadius: 8, marginLeft: 16 },
-  collectionsSection: { marginTop: 24 },
-  collectionChips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 4,
-  },
-  collectionChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  collectionChipActive: { backgroundColor: C.accent, borderColor: C.accent },
-  collectionChipText: { fontSize: 13, color: C.textSub },
-  collectionChipTextActive: { color: C.text, fontWeight: "600" },
-  tagsSection: { marginTop: 24 },
-  tagChips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  tagChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  tagChipActive: { backgroundColor: C.teal, borderColor: C.teal },
-  tagChipText: { fontSize: 13, color: C.textSub },
-  tagChipTextActive: { color: C.text, fontWeight: "600" },
-  tagInputRow: { flexDirection: "row", gap: 8 },
-  tagInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
-    backgroundColor: C.bgInput,
-    color: C.text,
-  },
-  tagAddButton: {
-    backgroundColor: C.teal,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    justifyContent: "center",
-  },
-  tagAddText: { color: C.text, fontWeight: "600", fontSize: 14 },
-  logSection: { marginTop: 28 },
-  logHeader: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: C.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 12,
-  },
-  logEmpty: { fontSize: 14, color: C.textMuted },
-  logCard: {
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
-    backgroundColor: C.bgCard,
-  },
-  logCardTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 4,
-  },
-  logType: { fontSize: 13, fontWeight: "600", color: C.accentBright },
-  logDate: { fontSize: 12, color: C.textMuted },
-  logNotes: { fontSize: 14, color: C.text, marginTop: 2 },
-  logCondition: { fontSize: 12, color: C.textSub, marginTop: 4 },
-});

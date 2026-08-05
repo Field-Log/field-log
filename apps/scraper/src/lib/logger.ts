@@ -22,7 +22,7 @@ export type ScraperLoggerConfig = {
 
 export function createScraperLogger(config: ScraperLoggerConfig): Logger {
   const hasAxiomConfig = Boolean(config.axiomToken && config.axiomDataset);
-  const environment = config.appEnv ?? "development";
+  const environment = config.axiomDataset ?? config.appEnv ?? "development";
   const deploymentTarget =
     config.deploymentTarget ??
     (config.railwayEnvironmentName ? "railway" : "local");

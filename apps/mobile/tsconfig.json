@@ -1,5 +1,12 @@
 {
   "extends": "@package/tsconfig/react-native.json",
-  "include": ["App.tsx", "index.js", "src", "*.ts", "*.tsx"],
+  "include": [
+    "App.tsx",
+    "index.js",
+    "src",
+    "*.ts",
+    "*.tsx",
+    "nativewind-env.d.ts"
+  ],
   "exclude": ["node_modules"]
 }

@@ -54,7 +54,9 @@ The pushed `v*` tag triggers:
 
 - `API Deploy`: validates, migrates, deploys the production Cloudflare Worker,
   deploys the production Vercel web app, and smoke-tests both production
-  surfaces. Web production waits for API production to pass first.
+  surfaces. It also deploys the production Railway scraper after production
+  database migrations and API smoke tests pass. Web and Railway production wait
+  for API production to pass first.
 - `Mobile Release`: builds and submits `apps/mobile` through fastlane on macOS
   runners. Android and iOS run as separate jobs with runner labels
   `mobile-release, android` and `mobile-release, ios`.
@@ -66,3 +68,11 @@ one prior mobile major version.
 
 Vercel production Git deployment gating is documented in
 [vercel.md](./vercel.md).
+
+Railway production GitHub auto-deploy is disabled in the Railway dashboard.
+Production Railway scraper deploys are owned by the release workflow and use a
+deployment message in this format:
+
+```txt
+Production release for v0.2.0
+```

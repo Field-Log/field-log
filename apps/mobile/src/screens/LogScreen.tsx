@@ -1,11 +1,10 @@
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
+import { type ReactElement, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
@@ -19,7 +18,6 @@ import {
   type Item,
   toggleCarried,
 } from "../db/database";
-import { C } from "../theme/colors";
 
 function todayString() {
   return new Date().toISOString().slice(0, 10);
@@ -34,7 +32,7 @@ function offsetDate(base: string, days: number): string {
 type ItemRow = Item & { carried: boolean };
 type Collection = { id: string; name: string };
 
-export default function LogScreen() {
+export default function LogScreen(): ReactElement {
   const [date, setDate] = useState(todayString());
   const [rows, setRows] = useState<ItemRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,24 +112,32 @@ export default function LogScreen() {
   const carriedCount = visibleRows.filter((r) => r.carried).length;
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1 bg-background">
       {/* Date nav */}
-      <View style={styles.header}>
-        <Pressable onPress={() => handleDateChange(-1)} style={styles.arrow}>
-          <Text style={styles.arrowText}>‹</Text>
+      <View className="flex-row items-center justify-center gap-6 border-b border-border bg-background py-3.5">
+        <Pressable className="p-2" onPress={() => handleDateChange(-1)}>
+          <Text className="text-3xl text-foreground">‹</Text>
         </Pressable>
-        <View style={styles.dateMeta}>
-          <Text style={styles.dateLabel}>{dateLabel}</Text>
+        <View className="min-w-32 items-center">
+          <Text className="text-center text-lg font-semibold text-foreground">
+            {dateLabel}
+          </Text>
           {carriedCount > 0 && (
-            <Text style={styles.carriedCount}>{carriedCount} carried</Text>
+            <Text className="mt-0.5 text-xs text-primary">
+              {carriedCount} carried
+            </Text>
           )}
         </View>
         <Pressable
+          className="p-2"
           onPress={() => handleDateChange(1)}
           disabled={date >= today}
-          style={styles.arrow}
         >
-          <Text style={[styles.arrowText, date >= today && styles.disabled]}>
+          <Text
+            className={`text-3xl ${
+              date >= today ? "text-muted-foreground" : "text-foreground"
+            }`}
+          >
             ›
           </Text>
         </Pressable>
@@ -142,22 +148,24 @@ export default function LogScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterBar}
+          contentContainerClassName="gap-2 px-3 py-2.5"
         >
           {collections.map((col) => (
             <Pressable
               key={col.id}
-              style={[
-                styles.chip,
-                activeCollection === col.id && styles.chipActive,
-              ]}
+              className={`rounded-full border px-3.5 py-1.5 ${
+                activeCollection === col.id
+                  ? "border-chart-4 bg-chart-4"
+                  : "border-chart-4 bg-background"
+              }`}
               onPress={() => handleCollectionPress(col.id)}
             >
               <Text
-                style={[
-                  styles.chipText,
-                  activeCollection === col.id && styles.chipTextActive,
-                ]}
+                className={`text-sm font-semibold ${
+                  activeCollection === col.id
+                    ? "text-background"
+                    : "text-chart-4"
+                }`}
               >
                 {col.name}
               </Text>
@@ -167,10 +175,10 @@ export default function LogScreen() {
       )}
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 32 }} />
+        <ActivityIndicator className="mt-8" />
       ) : visibleRows.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={styles.empty}>
+        <View className="flex-1 items-center justify-center">
+          <Text className="text-base text-muted-foreground">
             {activeCollection
               ? "No items in this collection."
               : "No items in your library yet."}
@@ -180,23 +188,39 @@ export default function LogScreen() {
         <FlatList
           data={visibleRows}
           keyExtractor={(r) => `${r.item_type}-${r.id}`}
-          contentContainerStyle={styles.list}
+          contentContainerClassName="p-4"
           renderItem={({ item }) => (
             <Pressable
-              style={[styles.row, item.carried && styles.rowCarried]}
+              className={`mb-2.5 flex-row items-center gap-3.5 rounded-lg border bg-card p-3.5 ${
+                item.carried ? "border-accent" : "border-border"
+              }`}
               onPress={() => handleToggle(item)}
             >
-              <View style={[styles.checkbox, item.carried && styles.checked]}>
-                {item.carried && <Text style={styles.checkmark}>✓</Text>}
+              <View
+                className={`h-6 w-6 items-center justify-center rounded-md border-2 ${
+                  item.carried
+                    ? "border-accent bg-accent"
+                    : "border-muted-foreground"
+                }`}
+              >
+                {item.carried && (
+                  <Text className="text-sm font-bold text-accent-foreground">
+                    ✓
+                  </Text>
+                )}
               </View>
-              <View style={styles.info}>
-                <Text style={styles.name}>{getItemLabel(item)}</Text>
-                <Text style={styles.type}>
+              <View className="flex-1">
+                <Text className="text-base font-semibold text-card-foreground">
+                  {getItemLabel(item)}
+                </Text>
+                <Text className="mt-0.5 text-xs text-muted-foreground">
                   {ITEM_TYPE_MAP[item.item_type]?.label ?? item.item_type}
                 </Text>
               </View>
               {daysCarriedMap[item.id] != null && (
-                <Text style={styles.streak}>{daysCarriedMap[item.id]}d</Text>
+                <Text className="text-xs text-card-foreground">
+                  {daysCarriedMap[item.id]}d
+                </Text>
               )}
             </Pressable>
           )}
@@ -205,70 +229,3 @@ export default function LogScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderColor: C.border,
-    gap: 24,
-    backgroundColor: C.bg,
-  },
-  arrow: { padding: 8 },
-  arrowText: { fontSize: 28, color: C.text },
-  disabled: { color: C.textMuted },
-  dateMeta: { alignItems: "center", minWidth: 120 },
-  dateLabel: {
-    fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-    color: C.text,
-  },
-  carriedCount: { fontSize: 12, color: C.accentBright, marginTop: 2 },
-  filterBar: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.purple,
-    marginRight: 8,
-  },
-  chipActive: { backgroundColor: C.purple },
-  chipText: { color: C.purple, fontSize: 13, fontWeight: "600" },
-  chipTextActive: { color: C.text },
-  list: { padding: 16 },
-  centered: { flex: 1, alignItems: "center", justifyContent: "center" },
-  empty: { color: C.textMuted, fontSize: 16 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: C.bgCard,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: C.border,
-    padding: 14,
-    marginBottom: 10,
-    gap: 14,
-  },
-  rowCarried: { borderColor: C.accent },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: C.textMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checked: { backgroundColor: C.accent, borderColor: C.accent },
-  checkmark: { color: C.text, fontSize: 14, fontWeight: "700" },
-  info: { flex: 1 },
-  name: { fontSize: 16, fontWeight: "600", color: C.text },
-  type: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  streak: { fontSize: 12, color: C.textSub, fontVariant: ["tabular-nums"] },
-});

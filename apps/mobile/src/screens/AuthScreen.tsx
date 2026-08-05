@@ -1,14 +1,6 @@
 import { AuthView, type AuthViewMode } from "@clerk/expo/native";
 import { type ReactElement, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { C } from "../theme/colors";
+import { Modal, Pressable, SafeAreaView, Text, View } from "react-native";
 
 export default function AuthScreen(): ReactElement {
   const [authMode, setAuthMode] = useState<AuthViewMode>("signInOrUp");
@@ -20,24 +12,32 @@ export default function AuthScreen(): ReactElement {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <View style={styles.shell}>
-        <Text style={styles.appName}>Field Log</Text>
-        <Text style={styles.tagline}>Your EDC, organized.</Text>
-        <View style={styles.actions}>
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-1 items-center justify-center gap-2 p-8">
+        <Text className="text-4xl font-extrabold text-foreground">
+          Field Log
+        </Text>
+        <Text className="mb-7 text-base text-muted-foreground">
+          Your EDC, organized.
+        </Text>
+        <View className="w-full gap-3">
           <Pressable
             accessibilityRole="button"
             onPress={() => openAuth("signIn")}
-            style={styles.primaryButton}
+            className="min-h-12 items-center justify-center rounded-lg bg-accent px-4"
           >
-            <Text style={styles.primaryButtonText}>Sign in</Text>
+            <Text className="text-base font-bold text-accent-foreground">
+              Sign in
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
             onPress={() => openAuth("signUp")}
-            style={styles.secondaryButton}
+            className="min-h-12 items-center justify-center rounded-lg border border-border bg-sidebar-accent px-4"
           >
-            <Text style={styles.secondaryButtonText}>Create account</Text>
+            <Text className="text-base font-bold text-foreground">
+              Create account
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -48,20 +48,20 @@ export default function AuthScreen(): ReactElement {
         presentationStyle="pageSheet"
         visible={authOpen}
       >
-        <SafeAreaView style={styles.modalScreen}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
+        <SafeAreaView className="flex-1 bg-background">
+          <View className="flex-row items-center justify-between border-b border-border px-4 py-3">
+            <Text className="text-lg font-bold text-foreground">
               {authMode === "signUp" ? "Create account" : "Sign in"}
             </Text>
             <Pressable
               accessibilityRole="button"
               onPress={() => setAuthOpen(false)}
-              style={styles.headerButton}
+              className="rounded-lg border border-border bg-sidebar-accent px-3.5 py-2"
             >
-              <Text style={styles.headerButtonText}>Done</Text>
+              <Text className="text-sm font-bold text-foreground">Done</Text>
             </Pressable>
           </View>
-          <View style={styles.authHost}>
+          <View className="flex-1">
             <AuthView
               isDismissible
               mode={authMode}
@@ -73,77 +73,3 @@ export default function AuthScreen(): ReactElement {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  actions: {
-    gap: 12,
-    width: "100%",
-  },
-  appName: {
-    color: C.text,
-    fontSize: 34,
-    fontWeight: "800",
-  },
-  authHost: {
-    flex: 1,
-  },
-  headerButton: {
-    backgroundColor: C.bgMuted,
-    borderColor: C.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  headerButtonText: { color: C.text, fontSize: 13, fontWeight: "700" },
-  modalHeader: {
-    alignItems: "center",
-    borderBottomColor: C.border,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  modalScreen: {
-    backgroundColor: C.bg,
-    flex: 1,
-  },
-  modalTitle: { color: C.text, fontSize: 18, fontWeight: "700" },
-  primaryButton: {
-    alignItems: "center",
-    backgroundColor: C.accent,
-    borderRadius: 8,
-    minHeight: 48,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  primaryButtonText: { color: C.text, fontSize: 15, fontWeight: "700" },
-  screen: {
-    backgroundColor: C.bg,
-    flex: 1,
-  },
-  secondaryButton: {
-    alignItems: "center",
-    backgroundColor: C.bgMuted,
-    borderColor: C.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    minHeight: 48,
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  secondaryButtonText: { color: C.text, fontSize: 15, fontWeight: "700" },
-  shell: {
-    alignItems: "center",
-    flex: 1,
-    gap: 8,
-    justifyContent: "center",
-    padding: 32,
-  },
-  tagline: {
-    color: C.textMuted,
-    fontSize: 15,
-    marginBottom: 28,
-  },
-});

@@ -1,11 +1,10 @@
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import React, { useCallback, useState } from "react";
+import { type ReactElement, useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -21,9 +20,8 @@ import {
   type Item,
 } from "../db/database";
 import type { FieldLogNavigation } from "../navigation/types";
-import { C } from "../theme/colors";
 
-export default function LibraryList() {
+export default function LibraryList(): ReactElement {
   const navigation = useNavigation<FieldLogNavigation>();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +66,7 @@ export default function LibraryList() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View className="flex-1 items-center justify-center bg-background p-8">
         <ActivityIndicator size="large" />
       </View>
     );
@@ -76,8 +74,10 @@ export default function LibraryList() {
 
   if (items.length === 0) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.empty}>No items yet. Tap Add to get started.</Text>
+      <View className="flex-1 items-center justify-center bg-background p-8">
+        <Text className="text-center text-base text-muted-foreground">
+          No items yet. Tap Add to get started.
+        </Text>
       </View>
     );
   }
@@ -136,15 +136,15 @@ export default function LibraryList() {
   });
 
   return (
-    <View style={{ flex: 1 }}>
+    <View className="flex-1 bg-background">
       {/* Search bar */}
-      <View style={styles.searchBar}>
+      <View className="border-b border-border bg-background px-3 pb-1 pt-2.5">
         <TextInput
-          style={styles.searchInput}
+          className="rounded-lg bg-background px-3.5 py-2.5 text-base text-foreground"
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="Search by name, manufacturer, model…"
-          placeholderTextColor={C.textMuted}
+          placeholderClassName="text-muted-foreground"
           clearButtonMode="while-editing"
           autoCorrect={false}
         />
@@ -154,20 +154,20 @@ export default function LibraryList() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterBar}
+        contentContainerClassName="gap-2 px-3 py-2.5"
       >
         <Pressable
-          style={[
-            styles.filterChip,
-            activeFilter === "all" && styles.filterChipActive,
-          ]}
+          className={`rounded-full border px-3.5 py-1.5 ${
+            activeFilter === "all"
+              ? "border-accent bg-accent"
+              : "border-primary bg-background"
+          }`}
           onPress={() => setActiveFilter("all")}
         >
           <Text
-            style={[
-              styles.filterChipText,
-              activeFilter === "all" && styles.filterChipTextActive,
-            ]}
+            className={`text-sm font-semibold ${
+              activeFilter === "all" ? "text-accent-foreground" : "text-primary"
+            }`}
           >
             All
           </Text>
@@ -175,17 +175,19 @@ export default function LibraryList() {
         {presentTypes.map((type) => (
           <Pressable
             key={type}
-            style={[
-              styles.filterChip,
-              activeFilter === type && styles.filterChipActive,
-            ]}
+            className={`rounded-full border px-3.5 py-1.5 ${
+              activeFilter === type
+                ? "border-accent bg-accent"
+                : "border-primary bg-background"
+            }`}
             onPress={() => setActiveFilter(type)}
           >
             <Text
-              style={[
-                styles.filterChipText,
-                activeFilter === type && styles.filterChipTextActive,
-              ]}
+              className={`text-sm font-semibold ${
+                activeFilter === type
+                  ? "text-accent-foreground"
+                  : "text-primary"
+              }`}
             >
               {ITEM_TYPE_MAP[type]?.label ?? type}
             </Text>
@@ -198,23 +200,24 @@ export default function LibraryList() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterBar}
+          contentContainerClassName="gap-2 px-3 py-2.5"
         >
           {collections.map((col) => (
             <Pressable
               key={col.id}
-              style={[
-                styles.collectionChip,
-                activeCollection === col.id && styles.collectionChipActive,
-              ]}
+              className={`rounded-full border px-3.5 py-1.5 ${
+                activeCollection === col.id
+                  ? "border-chart-4 bg-chart-4"
+                  : "border-chart-4 bg-background"
+              }`}
               onPress={() => handleCollectionPress(col.id)}
             >
               <Text
-                style={[
-                  styles.collectionChipText,
-                  activeCollection === col.id &&
-                    styles.collectionChipTextActive,
-                ]}
+                className={`text-sm font-semibold ${
+                  activeCollection === col.id
+                    ? "text-background"
+                    : "text-chart-4"
+                }`}
               >
                 {col.name}
               </Text>
@@ -228,22 +231,22 @@ export default function LibraryList() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterBar}
+          contentContainerClassName="gap-2 px-3 py-2.5"
         >
           {tags.map((tag) => (
             <Pressable
               key={tag.id}
-              style={[
-                styles.tagChip,
-                activeTag === tag.id && styles.tagChipActive,
-              ]}
+              className={`rounded-full border px-3.5 py-1.5 ${
+                activeTag === tag.id
+                  ? "border-chart-2 bg-chart-2"
+                  : "border-chart-2 bg-background"
+              }`}
               onPress={() => handleTagPress(tag.id)}
             >
               <Text
-                style={[
-                  styles.tagChipText,
-                  activeTag === tag.id && styles.tagChipTextActive,
-                ]}
+                className={`text-sm font-semibold ${
+                  activeTag === tag.id ? "text-background" : "text-chart-2"
+                }`}
               >
                 #{tag.name}
               </Text>
@@ -253,18 +256,23 @@ export default function LibraryList() {
       )}
 
       {/* Sort bar */}
-      <View style={styles.sortBar}>
+      <View className="flex-row gap-2 border-b border-border bg-background px-3 py-2">
         {(["name", "date_added", "most_carried"] as const).map((opt) => (
           <Pressable
             key={opt}
-            style={[styles.sortPill, sortBy === opt && styles.sortPillActive]}
+            className={`rounded-full border px-3 py-1 ${
+              sortBy === opt
+                ? "border-accent bg-card"
+                : "border-border bg-sidebar-accent"
+            }`}
             onPress={() => setSortBy(opt)}
           >
             <Text
-              style={[
-                styles.sortPillText,
-                sortBy === opt && styles.sortPillTextActive,
-              ]}
+              className={`text-xs font-medium ${
+                sortBy === opt
+                  ? "font-bold text-primary"
+                  : "text-muted-foreground"
+              }`}
             >
               {opt === "name"
                 ? "Name"
@@ -279,10 +287,10 @@ export default function LibraryList() {
       <FlatList
         data={filteredItems}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerClassName="p-4"
         renderItem={({ item }) => (
           <Pressable
-            style={styles.card}
+            className="mb-3 rounded-lg border border-border bg-card p-4"
             onPress={() =>
               navigation.navigate("ItemDetail", {
                 itemId: item.id,
@@ -290,12 +298,15 @@ export default function LibraryList() {
               })
             }
           >
-            <View style={styles.row}>
-              <Text style={styles.title} numberOfLines={1}>
+            <View className="flex-row items-center justify-between gap-2">
+              <Text
+                className="flex-1 text-base font-semibold text-card-foreground"
+                numberOfLines={1}
+              >
                 {getItemLabel(item)}
               </Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>
+              <View className="shrink-0 rounded-full bg-accent px-2.5 py-1">
+                <Text className="text-xs font-semibold text-accent-foreground">
                   {ITEM_TYPE_MAP[item.item_type]?.label ?? item.item_type}
                 </Text>
               </View>
@@ -306,108 +317,3 @@ export default function LibraryList() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 32,
-    backgroundColor: C.bg,
-  },
-  empty: { fontSize: 16, color: C.textMuted, textAlign: "center" },
-  filterBar: { paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
-  filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.accent,
-    marginRight: 8,
-  },
-  filterChipActive: { backgroundColor: C.accent },
-  filterChipText: { color: C.accentBright, fontSize: 13, fontWeight: "600" },
-  filterChipTextActive: { color: C.text },
-  searchBar: {
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 4,
-    backgroundColor: C.bg,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-  },
-  searchInput: {
-    backgroundColor: C.bgInput,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    fontSize: 15,
-    color: C.text,
-  },
-  collectionChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.purple,
-    marginRight: 8,
-  },
-  collectionChipActive: { backgroundColor: C.purple },
-  collectionChipText: { color: C.purple, fontSize: 13, fontWeight: "600" },
-  collectionChipTextActive: { color: C.text },
-  tagChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.teal,
-    marginRight: 8,
-  },
-  tagChipActive: { backgroundColor: C.teal },
-  tagChipText: { color: C.teal, fontSize: 13, fontWeight: "600" },
-  tagChipTextActive: { color: C.text },
-  sortBar: {
-    flexDirection: "row",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-    backgroundColor: C.bg,
-  },
-  sortPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.bgMuted,
-  },
-  sortPillActive: { borderColor: C.accent, backgroundColor: C.bgCard },
-  sortPillText: { fontSize: 12, color: C.textMuted, fontWeight: "500" },
-  sortPillTextActive: { color: C.accentBright, fontWeight: "700" },
-  list: { padding: 16 },
-  card: {
-    backgroundColor: C.bgCard,
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 8,
-  },
-  title: { fontSize: 16, fontWeight: "600", flex: 1, color: C.text },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: C.accent,
-    flexShrink: 0,
-  },
-  badgeText: { color: C.text, fontSize: 11, fontWeight: "600" },
-});

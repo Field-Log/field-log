@@ -1,6 +1,6 @@
 {
-  "name": "@package/types",
-  "version": "0.1.5",
+  "name": "@package/theme",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -9,7 +9,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./tailwind.css": "./tailwind.css"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

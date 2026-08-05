@@ -1,11 +1,12 @@
 import { ClerkProvider, useAuth as useClerkAuth, useUser } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { loggerMessages } from "@package/logger";
+import { nativeIndicators, nativeNavigationTheme } from "@package/theme";
 import {
   type BottomTabBarButtonProps,
   createBottomTabNavigator,
 } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
+import { DarkTheme, NavigationContainer } from "@react-navigation/native";
 import { type ReactElement, useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,10 +15,10 @@ import {
   Linking,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   View,
 } from "react-native";
+import "./global.css";
 import { AccountMenuButton } from "./src/components/AccountMenuButton";
 import { initDatabase } from "./src/db/database";
 import {
@@ -39,9 +40,16 @@ import CollectionsScreen from "./src/screens/CollectionsScreen";
 import LibraryScreen from "./src/screens/LibraryScreen";
 import LogScreen from "./src/screens/LogScreen";
 import StatsScreen from "./src/screens/StatsScreen";
-import { C } from "./src/theme/colors";
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+const navigationTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    ...nativeNavigationTheme.colors,
+  },
+};
 
 function MainTabs(): ReactElement {
   return (
@@ -72,7 +80,7 @@ function MainTabs(): ReactElement {
 }
 
 function AccountTabPlaceholder(): ReactElement {
-  return <View style={styles.accountTabPlaceholder} />;
+  return <View className="flex-1 bg-background" />;
 }
 
 function isAbortError(error: unknown) {
@@ -96,11 +104,15 @@ function MobileUpdateRequiredScreen({
   const storeUrl = getPlatformStoreUrl(policy);
 
   return (
-    <View style={styles.updateRequiredShell}>
-      <View style={styles.updateRequiredPanel}>
-        <Text style={styles.updateEyebrow}>Update required</Text>
-        <Text style={styles.updateTitle}>Install the latest Field Log</Text>
-        <Text style={styles.updateBody}>
+    <View className="dark flex-1 items-center justify-center bg-background p-6">
+      <View className="w-full max-w-sm rounded-lg border border-border bg-card p-5">
+        <Text className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">
+          Update required
+        </Text>
+        <Text className="mb-2.5 text-center text-2xl font-bold leading-7 text-foreground">
+          Install the latest Field Log
+        </Text>
+        <Text className="mb-5 text-center text-sm leading-5 text-muted-foreground">
           This app version is no longer supported. Update before continuing.
         </Text>
         {storeUrl ? (
@@ -114,9 +126,11 @@ function MobileUpdateRequiredScreen({
                 );
               });
             }}
-            style={styles.primaryButton}
+            className="min-h-11 items-center rounded-lg bg-primary px-4 py-3"
           >
-            <Text style={styles.primaryButtonText}>Open store</Text>
+            <Text className="text-base font-bold text-primary-foreground">
+              Open store
+            </Text>
           </Pressable>
         ) : null}
       </View>
@@ -134,14 +148,16 @@ function MobileUpdateBanner({
   const storeUrl = getPlatformStoreUrl(policy);
 
   return (
-    <View style={styles.updateBanner}>
-      <View style={styles.updateBannerCopy}>
-        <Text style={styles.updateBannerTitle}>Update available</Text>
-        <Text style={styles.updateBannerBody}>
+    <View className="flex-row items-center gap-3 border-b border-border bg-card px-4 py-3">
+      <View className="flex-1">
+        <Text className="text-sm font-bold text-foreground">
+          Update available
+        </Text>
+        <Text className="text-xs leading-4 text-muted-foreground">
           A newer Field Log version is ready.
         </Text>
       </View>
-      <View style={styles.updateBannerActions}>
+      <View className="flex-row gap-2">
         {storeUrl ? (
           <Pressable
             accessibilityRole="button"
@@ -153,17 +169,21 @@ function MobileUpdateBanner({
                 );
               });
             }}
-            style={styles.secondaryButton}
+            className="min-h-9 items-center rounded-lg bg-accent px-3.5 py-2"
           >
-            <Text style={styles.secondaryButtonText}>Update</Text>
+            <Text className="text-sm font-bold text-accent-foreground">
+              Update
+            </Text>
           </Pressable>
         ) : null}
         <Pressable
           accessibilityRole="button"
           onPress={onDismiss}
-          style={styles.dismissButton}
+          className="min-h-9 items-center rounded-lg border border-border px-3.5 py-2"
         >
-          <Text style={styles.dismissButtonText}>Later</Text>
+          <Text className="text-sm font-semibold text-muted-foreground">
+            Later
+          </Text>
         </Pressable>
       </View>
     </View>
@@ -248,8 +268,8 @@ function AppGate(): ReactElement {
 
   if (!authLoaded || !userLoaded || !databaseReady) {
     return (
-      <View style={styles.loadingShell}>
-        <ActivityIndicator size="large" />
+      <View className="dark flex-1 items-center justify-center bg-background">
+        <ActivityIndicator color={nativeIndicators.activity} size="large" />
       </View>
     );
   }
@@ -259,14 +279,14 @@ function AppGate(): ReactElement {
     !recommendedUpdateDismissed;
 
   return (
-    <View style={styles.appShell}>
+    <View className="dark flex-1 bg-background">
       {showRecommendedUpdate ? (
         <MobileUpdateBanner
           onDismiss={() => setRecommendedUpdateDismissed(true)}
           policy={mobileUpdateDecision.policy}
         />
       ) : null}
-      <View style={styles.appContent}>
+      <View className="flex-1">
         {isSignedIn && user ? <MainTabs /> : <AuthScreen />}
       </View>
     </View>
@@ -279,134 +299,9 @@ export default function App(): ReactElement {
       publishableKey={mobileEnv.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
       tokenCache={tokenCache}
     >
-      <NavigationContainer>
+      <NavigationContainer theme={navigationTheme}>
         <AppGate />
       </NavigationContainer>
     </ClerkProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  accountTabPlaceholder: {
-    backgroundColor: C.bg,
-    flex: 1,
-  },
-  appContent: {
-    flex: 1,
-  },
-  appShell: {
-    backgroundColor: C.bg,
-    flex: 1,
-  },
-  dismissButton: {
-    alignItems: "center",
-    borderColor: C.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    minHeight: 36,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  dismissButtonText: {
-    color: C.textSub,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  loadingShell: {
-    alignItems: "center",
-    flex: 1,
-    justifyContent: "center",
-  },
-  primaryButton: {
-    alignItems: "center",
-    backgroundColor: C.accentBright,
-    borderRadius: 8,
-    minHeight: 44,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  primaryButtonText: {
-    color: C.text,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  secondaryButton: {
-    alignItems: "center",
-    backgroundColor: C.accent,
-    borderRadius: 8,
-    minHeight: 36,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  secondaryButtonText: {
-    color: C.text,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  updateBanner: {
-    alignItems: "center",
-    backgroundColor: C.bgCard,
-    borderBottomColor: C.border,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  updateBannerActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  updateBannerBody: {
-    color: C.textSub,
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  updateBannerCopy: {
-    flex: 1,
-  },
-  updateBannerTitle: {
-    color: C.text,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  updateBody: {
-    color: C.textSub,
-    fontSize: 14,
-    lineHeight: 21,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  updateEyebrow: {
-    color: C.accentBright,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-  updateRequiredPanel: {
-    backgroundColor: C.bgCard,
-    borderColor: C.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    maxWidth: 360,
-    padding: 20,
-    width: "100%",
-  },
-  updateRequiredShell: {
-    alignItems: "center",
-    backgroundColor: C.bg,
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  updateTitle: {
-    color: C.text,
-    fontSize: 22,
-    fontWeight: "700",
-    lineHeight: 28,
-    marginBottom: 10,
-    textAlign: "center",
-  },
-});

@@ -1,13 +1,13 @@
 import { Picker } from "@react-native-picker/picker";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
-import React, { useLayoutEffect, useState } from "react";
+import { styled } from "nativewind";
+import { type ReactElement, useLayoutEffect, useState } from "react";
 import {
   Alert,
   Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -20,13 +20,14 @@ import {
 import { insertItem, type SpecValue } from "../db/database";
 import { syncCurrentUserItemBestEffort } from "../db/sync";
 import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
-import { C } from "../theme/colors";
 
 type CustomFieldDraft = {
   id: string;
   label: string;
   value: string;
 };
+
+const StyledPicker = styled(Picker);
 
 function createCustomFieldDraft(): CustomFieldDraft {
   return {
@@ -36,7 +37,24 @@ function createCustomFieldDraft(): CustomFieldDraft {
   };
 }
 
-export default function AddItemScreen() {
+const addFieldButtonClass =
+  "mb-2 items-center rounded-lg border border-dashed border-accent py-2.5";
+const boolRowClass = "mb-3.5 flex-row items-center justify-between py-1";
+const customFieldRowClass = "mb-2.5 flex-row items-center gap-2";
+const errorTextClass = "mt-1 text-xs text-destructive";
+const fieldGroupClass = "mb-3.5";
+const fieldLabelClass = "mb-1 text-sm text-card-foreground";
+const inputClass =
+  "rounded-lg border border-border bg-background p-2.5 text-base text-foreground";
+const inputErrorClass =
+  "rounded-lg border border-destructive bg-background p-2.5 text-base text-foreground";
+const pickerWrapperClass =
+  "overflow-hidden rounded-lg border border-border bg-background";
+const sectionHeaderClass =
+  "mb-3 mt-6 text-sm font-bold uppercase tracking-wider text-muted-foreground";
+const textareaClass = `${inputClass} min-h-20`;
+
+export default function AddItemScreen(): ReactElement {
   const navigation = useNavigation<FieldLogNavigation>();
   const route = useRoute<FieldLogRoute<"AddItem">>();
   const { item_type } = route.params;
@@ -195,13 +213,21 @@ export default function AddItemScreen() {
     if (field.input === "boolean") {
       const boolVal = !!val;
       return (
-        <View key={field.key} style={styles.boolRow}>
-          <Text style={styles.fieldLabel}>{field.label}</Text>
+        <View key={field.key} className={boolRowClass}>
+          <Text className={fieldLabelClass}>{field.label}</Text>
           <Pressable
-            style={[styles.boolToggle, boolVal && styles.boolToggleOn]}
+            className={`h-7 w-11 items-center justify-center rounded-full border-2 ${
+              boolVal
+                ? "border-accent bg-accent"
+                : "border-border bg-sidebar-accent"
+            }`}
             onPress={() => setSpec(field.key, !boolVal)}
           >
-            <View style={[styles.boolInner, boolVal && styles.boolInnerOn]} />
+            <View
+              className={`h-5 w-5 rounded-full ${
+                boolVal ? "bg-accent-foreground" : "bg-muted-foreground"
+              }`}
+            />
           </Pressable>
         </View>
       );
@@ -209,12 +235,13 @@ export default function AddItemScreen() {
 
     if (field.input === "picker" && field.options) {
       return (
-        <View key={field.key} style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>{label}</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
+        <View key={field.key} className={fieldGroupClass}>
+          <Text className={fieldLabelClass}>{label}</Text>
+          <View className={pickerWrapperClass}>
+            <StyledPicker
+              className="bg-background text-foreground"
               selectedValue={val ?? field.options[0]}
-              onValueChange={(v) => setSpec(field.key, v)}
+              onValueChange={(v: string) => setSpec(field.key, v)}
             >
               <Picker.Item label="—" value="" />
               {field.options.map((opt) => (
@@ -224,7 +251,7 @@ export default function AddItemScreen() {
                   value={opt}
                 />
               ))}
-            </Picker>
+            </StyledPicker>
           </View>
         </View>
       );
@@ -232,10 +259,10 @@ export default function AddItemScreen() {
 
     if (field.input === "textarea") {
       return (
-        <View key={field.key} style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>{label}</Text>
+        <View key={field.key} className={fieldGroupClass}>
+          <Text className={fieldLabelClass}>{label}</Text>
           <TextInput
-            style={[styles.input, styles.textarea]}
+            className={textareaClass}
             value={
               typeof val === "string" ? val : val != null ? String(val) : ""
             }
@@ -250,10 +277,10 @@ export default function AddItemScreen() {
     }
 
     return (
-      <View key={field.key} style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>{label}</Text>
+      <View key={field.key} className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>{label}</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={val != null ? String(val) : ""}
           onChangeText={(t) => setSpec(field.key, t)}
           placeholder={field.placeholder}
@@ -265,205 +292,213 @@ export default function AddItemScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerClassName="bg-background p-4 pb-12"
       keyboardShouldPersistTaps="handled"
     >
       {/* Custom type name */}
       {isCustom && (
         <>
-          <Text style={styles.sectionHeader}>Item type</Text>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.fieldLabel}>Type name *</Text>
+          <Text className={sectionHeaderClass}>Item type</Text>
+          <View className={fieldGroupClass}>
+            <Text className={fieldLabelClass}>Type name *</Text>
             <TextInput
-              style={[
-                styles.input,
-                errors.customTypeName ? styles.inputError : null,
-              ]}
+              className={errors.customTypeName ? inputErrorClass : inputClass}
               value={customTypeName}
               onChangeText={setCustomTypeName}
               placeholder="e.g. Zippo, Paracord, Patch"
               autoFocus
             />
             {errors.customTypeName ? (
-              <Text style={styles.errorText}>{errors.customTypeName}</Text>
+              <Text className={errorTextClass}>{errors.customTypeName}</Text>
             ) : null}
           </View>
         </>
       )}
 
       {/* Photos */}
-      <Text style={styles.sectionHeader}>Photos</Text>
-      <View style={styles.photoRow}>
+      <Text className={sectionHeaderClass}>Photos</Text>
+      <View className="mb-2 flex-row flex-wrap gap-2.5">
         {gallery.map((uri) => (
           <Pressable key={uri} onPress={() => removePhoto(uri)}>
-            <Image source={{ uri }} style={styles.photo} />
-            <View style={styles.photoDelete}>
-              <Text style={styles.photoDeleteText}>×</Text>
+            <Image className="h-20 w-20 rounded-lg" source={{ uri }} />
+            <View className="absolute right-0.5 top-0.5 h-5 w-5 items-center justify-center rounded-full bg-black/70">
+              <Text className="text-sm leading-4 text-foreground">×</Text>
             </View>
           </Pressable>
         ))}
-        <Pressable style={styles.photoAdd} onPress={pickPhoto}>
-          <Text style={styles.photoAddText}>+</Text>
+        <Pressable
+          className="h-20 w-20 items-center justify-center rounded-lg border-2 border-dashed border-accent"
+          onPress={pickPhoto}
+        >
+          <Text className="text-3xl leading-9 text-primary">+</Text>
         </Pressable>
       </View>
 
       {/* Required */}
-      <Text style={styles.sectionHeader}>Required</Text>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Manufacturer</Text>
+      <Text className={sectionHeaderClass}>Required</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Manufacturer</Text>
         <TextInput
-          style={[styles.input, errors.manufacturer ? styles.inputError : null]}
+          className={errors.manufacturer ? inputErrorClass : inputClass}
           value={manufacturer}
           onChangeText={setManufacturer}
           placeholder="e.g. Lamy, Spyderco"
         />
         {errors.manufacturer ? (
-          <Text style={styles.errorText}>{errors.manufacturer}</Text>
+          <Text className={errorTextClass}>{errors.manufacturer}</Text>
         ) : null}
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Model</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Model</Text>
         <TextInput
-          style={[styles.input, errors.model ? styles.inputError : null]}
+          className={errors.model ? inputErrorClass : inputClass}
           value={model}
           onChangeText={setModel}
           placeholder="e.g. Safari, Para 3"
         />
         {errors.model ? (
-          <Text style={styles.errorText}>{errors.model}</Text>
+          <Text className={errorTextClass}>{errors.model}</Text>
         ) : null}
       </View>
 
       {/* Identity */}
-      <Text style={styles.sectionHeader}>Identity</Text>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Nickname</Text>
+      <Text className={sectionHeaderClass}>Identity</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Nickname</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={nickname}
           onChangeText={setNickname}
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Variant</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Variant</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={variant}
           onChangeText={setVariant}
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Serial Number</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Serial Number</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={serialNumber}
           onChangeText={setSerialNumber}
         />
       </View>
 
       {/* Ownership */}
-      <Text style={styles.sectionHeader}>Ownership</Text>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Status</Text>
-        <View style={styles.pickerWrapper}>
-          <Picker selectedValue={status} onValueChange={setStatus}>
+      <Text className={sectionHeaderClass}>Ownership</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Status</Text>
+        <View className={pickerWrapperClass}>
+          <StyledPicker
+            className="bg-background text-foreground"
+            selectedValue={status}
+            onValueChange={(v: string) => setStatus(v)}
+          >
             <Picker.Item label="Own" value="own" />
             <Picker.Item label="Wishlist" value="wishlist" />
             <Picker.Item label="Sold" value="sold" />
             <Picker.Item label="Lost" value="lost" />
             <Picker.Item label="Gifted" value="gifted" />
-          </Picker>
+          </StyledPicker>
         </View>
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Purchase Date (YYYY-MM-DD)</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Purchase Date (YYYY-MM-DD)</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={purchaseDate}
           onChangeText={setPurchaseDate}
           placeholder="YYYY-MM-DD"
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Purchase Price</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Purchase Price</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={purchasePrice}
           onChangeText={setPurchasePrice}
           keyboardType="decimal-pad"
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Seller</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Seller</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={seller}
           onChangeText={setSeller}
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Warranty</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Warranty</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={warranty}
           onChangeText={setWarranty}
         />
       </View>
 
       {/* Physical */}
-      <Text style={styles.sectionHeader}>Physical</Text>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Material</Text>
+      <Text className={sectionHeaderClass}>Physical</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Material</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={material}
           onChangeText={setMaterial}
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Finish</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Finish</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={finish}
           onChangeText={setFinish}
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Color</Text>
-        <TextInput style={styles.input} value={color} onChangeText={setColor} />
-      </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Weight (g)</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Color</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
+          value={color}
+          onChangeText={setColor}
+        />
+      </View>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Weight (g)</Text>
+        <TextInput
+          className={inputClass}
           value={weightG}
           onChangeText={setWeightG}
           keyboardType="decimal-pad"
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Dimensions</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Dimensions</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={dimensions}
           onChangeText={setDimensions}
         />
       </View>
 
       {/* Organization */}
-      <Text style={styles.sectionHeader}>Organization</Text>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Storage Location</Text>
+      <Text className={sectionHeaderClass}>Organization</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Storage Location</Text>
         <TextInput
-          style={styles.input}
+          className={inputClass}
           value={storageLocation}
           onChangeText={setStorageLocation}
         />
       </View>
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>Notes</Text>
+      <View className={fieldGroupClass}>
+        <Text className={fieldLabelClass}>Notes</Text>
         <TextInput
-          style={[styles.input, styles.textarea]}
+          className={textareaClass}
           value={notes}
           onChangeText={setNotes}
           multiline
@@ -475,7 +510,7 @@ export default function AddItemScreen() {
       {/* Type-specific spec sections */}
       {config?.specSections.map((section) => (
         <View key={section.title}>
-          <Text style={styles.sectionHeader}>{section.title}</Text>
+          <Text className={sectionHeaderClass}>{section.title}</Text>
           {section.fields.map(renderField)}
         </View>
       ))}
@@ -483,163 +518,43 @@ export default function AddItemScreen() {
       {/* Custom fields (custom item types only) */}
       {isCustom && (
         <>
-          <Text style={styles.sectionHeader}>Custom Fields</Text>
+          <Text className={sectionHeaderClass}>Custom Fields</Text>
           {customFields.map((field, i) => (
-            <View key={field.id} style={styles.customFieldRow}>
+            <View key={field.id} className={customFieldRowClass}>
               <TextInput
-                style={[styles.input, styles.customFieldLabel]}
+                className={`${inputClass} basis-2/5`}
                 value={field.label}
                 onChangeText={(v) => updateCustomField(i, "label", v)}
                 placeholder="Field name"
               />
               <TextInput
-                style={[styles.input, styles.customFieldValue]}
+                className={`${inputClass} basis-3/5`}
                 value={field.value}
                 onChangeText={(v) => updateCustomField(i, "value", v)}
                 placeholder="Value"
               />
               <Pressable
-                style={styles.removeFieldButton}
+                className="h-8 w-8 items-center justify-center rounded-full border border-destructive"
                 onPress={() => removeCustomField(i)}
               >
-                <Text style={styles.removeFieldText}>×</Text>
+                <Text className="text-lg leading-5 text-destructive">×</Text>
               </Pressable>
             </View>
           ))}
-          <Pressable style={styles.addFieldButton} onPress={addCustomField}>
-            <Text style={styles.addFieldText}>+ Add field</Text>
+          <Pressable className={addFieldButtonClass} onPress={addCustomField}>
+            <Text className="text-sm font-semibold text-primary">
+              + Add field
+            </Text>
           </Pressable>
         </>
       )}
 
-      <Pressable style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Save</Text>
+      <Pressable
+        className="mt-8 items-center rounded-lg bg-accent py-4"
+        onPress={handleSave}
+      >
+        <Text className="text-base font-bold text-accent-foreground">Save</Text>
       </Pressable>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48, backgroundColor: C.bg },
-  sectionHeader: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: C.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginTop: 24,
-    marginBottom: 12,
-  },
-  fieldGroup: { marginBottom: 14 },
-  fieldLabel: { fontSize: 13, color: C.textSub, marginBottom: 4 },
-  input: {
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 15,
-    backgroundColor: C.bgInput,
-    color: C.text,
-  },
-  inputError: { borderColor: C.danger },
-  errorText: { color: C.danger, fontSize: 12, marginTop: 3 },
-  textarea: { minHeight: 80, textAlignVertical: "top" },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: C.border,
-    borderRadius: 8,
-    backgroundColor: C.bgInput,
-    overflow: "hidden",
-  },
-  photoRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 8,
-  },
-  photo: { width: 80, height: 80, borderRadius: 8 },
-  photoDelete: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  photoDeleteText: { color: C.text, fontSize: 14, lineHeight: 16 },
-  photoAdd: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: C.accent,
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  photoAddText: { fontSize: 32, color: C.accentBright, lineHeight: 36 },
-  customFieldRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-  },
-  customFieldLabel: { flex: 2 },
-  customFieldValue: { flex: 3 },
-  removeFieldButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.danger,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  removeFieldText: { color: C.danger, fontSize: 18, lineHeight: 20 },
-  addFieldButton: {
-    borderWidth: 1,
-    borderColor: C.accent,
-    borderRadius: 8,
-    borderStyle: "dashed",
-    paddingVertical: 10,
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  addFieldText: { color: C.accentBright, fontSize: 14, fontWeight: "600" },
-  boolRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-    paddingVertical: 4,
-  },
-  boolToggle: {
-    width: 44,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: C.border,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: C.bgMuted,
-  },
-  boolToggleOn: { borderColor: C.accent, backgroundColor: C.accent },
-  boolInner: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: C.textMuted,
-  },
-  boolInnerOn: { backgroundColor: C.text },
-  saveButton: {
-    marginTop: 32,
-    backgroundColor: C.accent,
-    borderRadius: 10,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  saveButtonText: { color: C.text, fontSize: 16, fontWeight: "700" },
-});
