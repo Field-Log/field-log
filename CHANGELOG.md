@@ -7,6 +7,20 @@
 
 
 
+
+## 0.1.7
+
+### Patch Changes
+
+- Added GitHub Token to mobile release workflow
+
+## Mobile Release Status
+
+| Platform | Build | Submit | Destination | Review / Live |
+| --- | --- | --- | --- | --- |
+| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
+| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
+
 ## 0.1.6
 
 ### Patch Changes
