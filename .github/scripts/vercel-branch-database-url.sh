@@ -4,6 +4,8 @@ set -euo pipefail
 
 VERCEL_API_BASE="${VERCEL_API_BASE:-https://api.vercel.com}"
 
+source "$(dirname "${BASH_SOURCE[0]}")/ci-log.sh"
+
 trim_whitespace() {
   local value="$1"
 
@@ -78,37 +80,6 @@ api() {
 
   cat "$response_file"
   rm -f "$response_file"
-}
-
-emit_ci_log() {
-  local level="$1"
-  local message="$2"
-  local attributes="${3:-}"
-  local normalized_attributes
-
-  if [[ -z "$attributes" ]]; then
-    attributes="{}"
-  fi
-
-  if ! normalized_attributes="$(jq -c . <<< "$attributes" 2> /dev/null)"; then
-    normalized_attributes="{}"
-  fi
-
-  jq -cn \
-    --arg app "ci" \
-    --arg environment "${GITHUB_ACTIONS:+github-actions}" \
-    --arg level "$level" \
-    --arg message "$message" \
-    --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-    --argjson attributes "$normalized_attributes" \
-    '{
-      app: $app,
-      environment: (if $environment == "" then "local" else $environment end),
-      level: $level,
-      message: $message,
-      timestamp: $timestamp,
-      attributes: $attributes
-    }'
 }
 
 write_output() {

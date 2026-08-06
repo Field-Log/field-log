@@ -38,6 +38,7 @@ describe("logger", () => {
             changeDetectionCompleted:
               "ci.database.preview.changeDetection.completed",
             migrationsApplied: "ci.database.preview.migrations.applied",
+            migrationsFailed: "ci.database.preview.migrations.failed",
             noPrBranchNeeded: "ci.database.preview.noPrBranch.needed",
             prBranchReused: "ci.database.preview.prBranch.reused",
             databaseSelected: "ci.database.preview.database.selected",
@@ -48,6 +49,7 @@ describe("logger", () => {
           production: {
             databaseSelected: "ci.database.production.database.selected",
             migrationsApplied: "ci.database.production.migrations.applied",
+            migrationsFailed: "ci.database.production.migrations.failed",
           },
         },
         github: {
