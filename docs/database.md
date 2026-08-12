@@ -225,6 +225,52 @@ selected shared `preview` `DATABASE_URL` in that case. The close workflow remain
 the primary cleanup path; Neon branch expiration is the backup path when a close
 event or cleanup run is missed.
 
+ENG-69 operational status: this repo change adds the backup expiration path, but
+`preview-pr-63` was not deleted from this worktree. The blocker is that Neon
+branch cleanup uses GitHub-synced `NEON_API_KEY` and `NEON_PROJECT_ID` secrets
+available to deploy/cleanup workflows, not committed repo configuration. Run the
+`API Preview Cleanup` workflow for PR 63 or run
+`.github/scripts/neon-database-branch.sh cleanup-preview` with `PR_NUMBER=63`
+and the Neon secrets loaded.
+
+## Neon Compute Caps
+
+Compute cap changes are operational Neon API or Console changes, not repo
+configuration. Editing compute size or autoscaling limits restarts the endpoint,
+so production changes need a low-risk execution window.
+
+Use these targets unless current Neon metrics show they are too small:
+
+| Branch class | Autoscaling min CU | Autoscaling max CU | Scale to zero |
+| --- | ---: | ---: | --- |
+| `preview-pr-*` | `0.25` | `0.5` | enabled |
+| `preview` | `0.25` | `0.5` | enabled |
+| `dev-*` | `0.25` | `0.5` | enabled |
+| `production` | `0.25` | `2` | keep current setting unless changed deliberately |
+
+Production rollback value: restore the previous production max CU, currently
+`8`, if API p95 latency or API error rate regresses for two consecutive
+15-minute windows after the resize, or if scraper duration/failure rate regresses
+during the next scheduled scraper run. Use Neon CPU, IO, and cache metrics only
+to confirm cause when API or scraper signals regress.
+
+ENG-70 operational status: this repo does not manage Neon endpoint sizes as code,
+so the production max CU was not changed in git. No Neon metrics export is
+committed here to justify retaining the current production cap. Execute the
+resize through Neon during a low-risk window, then keep the previous cap `8` as
+the rollback value for the monitoring window above.
+
+Resize endpoint API shape:
+
+```json
+{
+  "endpoint": {
+    "autoscaling_limit_min_cu": 0.25,
+    "autoscaling_limit_max_cu": 0.5
+  }
+}
+```
+
 ## Parallel DB PRs
 
 Drizzle migration history is linear. Parallel DB PRs may preview independently,
