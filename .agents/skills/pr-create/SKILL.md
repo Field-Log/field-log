@@ -40,7 +40,7 @@ suggest a branch, create a branch, push, fetch, or create a PR from `main`.
    - If multiple changed Changeset files exist, choose the PR release-impact
      label from the highest bump present: `major` wins over `minor`, and
      `minor` wins over `patch`.
-   - Use `"field-log.app"` as the package name.
+   - Use `"pocket-trash.app"` as the package name.
    - Choose `patch`, `minor`, or `major` from the branch impact. Use `patch`
      for docs, tests, internal tooling, chores, and compatible fixes. Use
      `minor` for new compatible behavior. Use `major` for breaking API,
@@ -138,7 +138,7 @@ Each PR needs one release-impact marker:
 
 ```markdown
 ---
-"field-log.app": patch
+"pocket-trash.app": patch
 ---
 
 Add release automation.

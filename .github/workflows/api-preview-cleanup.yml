@@ -8,8 +8,8 @@ permissions:
   contents: read
 
 env:
-  API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
-  DB_PREVIEW_COMMENT_MARKER: "<!-- field-log-db-preview -->"
+  API_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-api-preview-app -->"
+  DB_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-db-preview -->"
 
 jobs:
   preview-closed:
@@ -103,14 +103,14 @@ jobs:
       - name: Validate PR comment app configuration
         shell: bash
         env:
-          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
-          FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
-          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
-          FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
+          POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
+          POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
+          POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
+          POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
-          for name in FIELD_LOG_API_PREVIEW_APP_CLIENT_ID FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY; do
+          for name in POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY; do
             if [[ -z "${!name:-}" ]]; then
               echo "$name is required." >&2
               exit 1
@@ -121,8 +121,8 @@ jobs:
         id: preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
-          private-key: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           permission-issues: write
@@ -165,8 +165,8 @@ jobs:
         id: db-preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
-          private-key: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           permission-issues: write

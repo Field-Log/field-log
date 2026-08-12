@@ -224,7 +224,7 @@ export const schemaDescriptions = {
       image_url: {
         description: "Optimized uploaded image URL.",
         example:
-          "https://cdn.field-log.app/preview/pr-52/products/1000-1001/image.webp",
+          "https://cdn.pocket-trash.app/preview/pr-52/products/1000-1001/image.webp",
       },
       status: {
         description: "Image upload/delete lifecycle status.",

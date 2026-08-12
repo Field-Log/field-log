@@ -12,11 +12,11 @@ describe("database env", () => {
 
   it("accepts a valid DATABASE_URL", () => {
     const env = createDatabaseEnv({
-      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
     });
 
     expect(env.DATABASE_URL).toBe(
-      "postgres://user:password@example.com:5432/field_log",
+      "postgres://user:password@example.com:5432/pocket_trash",
     );
   });
 

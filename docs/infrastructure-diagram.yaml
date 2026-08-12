@@ -1,4 +1,4 @@
-title: "Field Log Infrastructure"
+title: "Pocket Trash Infrastructure"
 output: "docs/infrastructure-diagram.eraser"
 source: "docs/infrastructure-diagram.yaml"
 generatedBy: "pnpm diagram:infra"
@@ -16,9 +16,9 @@ scope:
     - "@package/logger"
     - "@package/markdown"
     - "@package/services"
+    - "@package/theme"
     - "@package/types"
   excludedApps:
-    - "@app/field-log"
     - "@app/autmog"
   excludedPackages:
     - "@package/eslint"
@@ -93,7 +93,7 @@ environments:
         label: "apps/api\nCloudflare Worker"
         service: "cloudflare"
         group: "API Hosting"
-        notes: "Serves api.field-log.app and runs the hourly cron trigger."
+        notes: "Serves api.pocket-trash.app and runs the hourly cron trigger."
       - id: "prod_mobile"
         label: "apps/mobile\nExpo app"
         service: "expo"

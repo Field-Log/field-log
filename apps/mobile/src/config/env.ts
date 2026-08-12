@@ -1,6 +1,6 @@
 import { mobileEnv } from "../env";
 
-type FieldLogEnvName =
+type FirebasePublicEnvName =
   | "EXPO_PUBLIC_FIREBASE_API_KEY"
   | "EXPO_PUBLIC_FIREBASE_APP_ID"
   | "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN"
@@ -8,7 +8,7 @@ type FieldLogEnvName =
   | "EXPO_PUBLIC_FIREBASE_PROJECT_ID"
   | "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET";
 
-function requiredEnv(name: FieldLogEnvName): string {
+function requiredEnv(name: FirebasePublicEnvName): string {
   const value = mobileEnv[name];
 
   if (!value) {
@@ -18,7 +18,7 @@ function requiredEnv(name: FieldLogEnvName): string {
   return value;
 }
 
-export const fieldLogEnv = {
+export const firebasePublicEnv = {
   EXPO_PUBLIC_FIREBASE_API_KEY: requiredEnv("EXPO_PUBLIC_FIREBASE_API_KEY"),
   EXPO_PUBLIC_FIREBASE_APP_ID: requiredEnv("EXPO_PUBLIC_FIREBASE_APP_ID"),
   EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN: requiredEnv(

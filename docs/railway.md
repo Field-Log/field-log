@@ -20,7 +20,7 @@ Use the root Railway config:
 
 | Service | Config file path |
 | --- | --- |
-| `field-log` / `apps-scraper` | `/railway.json` |
+| `pocket-trash` / `apps-scraper` | `/railway.json` |
 
 The config pins the build and start commands to `@app/scraper`, configures the
 Railway cron schedule, and limits automatic deploy triggers to `apps/scraper`,
@@ -30,7 +30,7 @@ Create these Railway services/resources:
 
 | Service | Type | Command | Schedule |
 | --- | --- | --- | --- |
-| `field-log` / `apps-scraper` | Cron service | `pnpm --filter @app/scraper run cron:run` | Railway cron `*/5 * * * *`; runs due source jobs and queue processing, then exits. |
+| `pocket-trash` / `apps-scraper` | Cron service | `pnpm --filter @app/scraper run cron:run` | Railway cron `*/5 * * * *`; runs due source jobs and queue processing, then exits. |
 | `redis` | Redis database | Railway Redis template | Always available to the scraper service. |
 
 Do not create one Railway service per scraped site. Adding Autmog, Grimsmo, FH,
@@ -211,7 +211,7 @@ checks Redis state and runs only due producers.
 
 ## Production Deploys
 
-Disable Railway's native GitHub auto-deploy for the production `field-log`
+Disable Railway's native GitHub auto-deploy for the production `pocket-trash`
 service. Production scraper deploys are owned by the tag-triggered `API Deploy`
 workflow so the scraper cannot run newer code before committed production
 database migrations have been applied.
@@ -225,7 +225,7 @@ The production workflow:
    `LOG_DEPLOYMENT_TARGET=railway`.
 4. Uploads the checked-out release source to Railway with
    `railway up --ci --message "Production release for vX.Y.Z"`.
-5. Verifies that the newest Railway production deployment for `field-log`
+5. Verifies that the newest Railway production deployment for `pocket-trash`
    finishes with `SUCCESS`.
 
 Do not move Drizzle migrations into the Railway build, pre-deploy, start, or
@@ -256,16 +256,16 @@ GitHub Actions requires:
 | `RAILWAY_PROJECT_ID` | Variable | Railway project ID that owns the scraper PR environments. |
 
 The workflow upserts `DATABASE_URL` into the scraper service variables in the
-Railway preview service named `field-log (preview)` in the Railway environment
-named `field-log-pr-<pull-request-number>`. For example, PR 53 uses
-`field-log-pr-53`. The workflow also upserts `REDIS_URL` as a Railway reference
+Railway preview service named `pocket-trash (preview)` in the Railway environment
+named `pocket-trash-pr-<pull-request-number>`. For example, PR 53 uses
+`pocket-trash-pr-53`. The workflow also upserts `REDIS_URL` as a Railway reference
 to the `scraper-queue` service. It does not call `railway run` or assert
 resolved Redis reference values before deployment because variables set with
 `--skip-deploys` are staged until the next deployment. After the variables are
 set, the workflow deploys the `scraper-queue` Redis service from its configured
 image source so the Redis database is online for the scraper.
 
-Keep Railway's native GitHub auto-deploy enabled for the `field-log (preview)`
+Keep Railway's native GitHub auto-deploy enabled for the `pocket-trash (preview)`
 service and enable Railway's **Wait for CI** setting for that service. The
 native GitHub deploy is the only scraper code deploy path; the API Deploy
 workflow prepares variables and Redis first. Do not add an explicit scraper

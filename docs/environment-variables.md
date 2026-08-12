@@ -106,8 +106,8 @@ values such as Redis connection strings.
 | `GRIMSMO_PROXY_URL` | Optional proxy URL for Grimsmo source fetches. Build without this first; set it only if Railway/direct IPs are blocked. | ? (All) | `S` |
 | `BUNNY_STORAGE_ACCESS_KEY` | Bunny Storage Zone password used by server-side uploads, deletes, and preview cleanup. See [Image CDN](./image-cdn.md). | All | `S` |
 | `BUNNY_STORAGE_ENDPOINT` | Bunny Storage API endpoint, usually `https://ny.storage.bunnycdn.com`. See [Image CDN](./image-cdn.md). | All | `S` |
-| `BUNNY_STORAGE_ZONE_NAME` | Bunny Storage Zone name, suggested `field-log-images`. See [Image CDN](./image-cdn.md). | All | `S` |
-| `IMAGE_CDN_BASE_URL` | Public image CDN base URL, suggested `https://cdn.field-log.app/field-log-images`. See [Image CDN](./image-cdn.md). | All | `C` |
+| `BUNNY_STORAGE_ZONE_NAME` | Bunny Storage Zone name, suggested `pocket-trash-images`. See [Image CDN](./image-cdn.md). | All | `S` |
+| `IMAGE_CDN_BASE_URL` | Public image CDN base URL, suggested `https://cdn.pocket-trash.app/pocket-trash-images`. See [Image CDN](./image-cdn.md). | All | `C` |
 | `IMAGE_FOLDER_PREFIX` | Optional image upload folder namespace. See [Image CDN](./image-cdn.md). | ? (All) | `S` |
 | `IMAGE_STORAGE_PROVIDER` | Optional image storage provider override. Defaults to `bunny` when unset. | ? (All) | `S` |
 | `LOGGER` | Console logger mode. | ? (All) | `S` |
@@ -295,17 +295,17 @@ Discord notifications.
 
 | Secret | What it is for | Required | Important notes |
 | --- | --- | --- | --- |
-| `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for API preview comments. | Preview | `S` |
-| `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Preview | `S` |
-| `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for DB preview comments. | Preview | `S` |
-| `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Preview | `S` |
+| `POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for API preview comments. | Preview | `S` |
+| `POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY` | Private key for the API preview comment GitHub App. | Preview | `S` |
+| `POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID` | GitHub App client ID used for DB preview comments. | Preview | `S` |
+| `POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY` | Private key for the DB preview comment GitHub App. | Preview | `S` |
 | `INFISICAL_CLOUDFLARE_IDENTITY_ID` | Infisical OIDC identity for Cloudflare/API deploy secrets. | Preview, Prod | `S` |
 | `INFISICAL_DISCORD_NOTIFIER_IDENTITY_ID` | Infisical OIDC identity for Discord webhook delivery. | All | `S` |
 | `INFISICAL_DOMAIN` | Infisical API base URL. | ? (All) | `S` |
 | `INFISICAL_ENV_SLUG` | Infisical environment slug. | ? (All) | `S` |
 | `INFISICAL_LOGGER_IDENTITY_ID` | Infisical OIDC identity for live logger tests. | Preview | `S` |
 | `INFISICAL_OIDC_AUDIENCE` | OIDC audience for Infisical auth. | ? (All) | `S` |
-| `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows. | All | `S` |
+| `INFISICAL_PROJECT_SLUG` | Infisical project selected by GitHub workflows, `pocket-trash`. | All | `S` |
 | `NEON_API_KEY` | Authenticates Neon API calls for branch and connection URI management. | Preview, Prod | `S` |
 | `NEON_DATABASE_NAME` | Neon `PGDATABASE` value used for connection URI lookup. | Preview, Prod | `S` |
 | `NEON_DATABASE_USER` | Neon `PGUSER` value used for connection URI lookup. | Preview, Prod | `S` |
@@ -371,13 +371,13 @@ Legend: `S` = server-only. `C` = client-visible.
 
 Use least-privilege credentials where the provider supports scoping.
 
-### `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY`
+### `POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY`
 
 - Repository permissions[^9]:
   - Issues: Read and Write.
   - Pull requests: Read and Write.
 
-### `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY`
+### `POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY`
 
 - Repository permissions[^9]:
   - Issues: Read and Write.
@@ -405,7 +405,7 @@ Use least-privilege credentials where the provider supports scoping.
   - Workers Scripts: Edit.
   - Account Settings: Read.
 - Account scope:
-  - Limit to the account that owns `field-log.app`.
+  - Limit to the account that owns `pocket-trash.app`.
 
 ### `FIGMA_ACCESS_TOKEN`
 

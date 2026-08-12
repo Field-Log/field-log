@@ -25,7 +25,10 @@ import {
   updateItem,
 } from "../db/database";
 import { syncCurrentUserItemBestEffort } from "../db/sync";
-import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
+import type {
+  PocketTrashNavigation,
+  PocketTrashRoute,
+} from "../navigation/types";
 
 type StoredCustomField = { label: string; value: string };
 type CustomFieldDraft = StoredCustomField & { id: string };
@@ -70,8 +73,8 @@ const sectionHeaderClass =
 const textareaClass = `${inputClass} min-h-20`;
 
 export default function EditItemScreen(): ReactElement {
-  const navigation = useNavigation<FieldLogNavigation>();
-  const route = useRoute<FieldLogRoute<"EditItem">>();
+  const navigation = useNavigation<PocketTrashNavigation>();
+  const route = useRoute<PocketTrashRoute<"EditItem">>();
   const { itemId } = route.params;
 
   const [item, setItem] = useState<Item | null>(null);

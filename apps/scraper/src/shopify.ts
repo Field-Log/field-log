@@ -69,7 +69,7 @@ export async function fetchShopifyCollectionProducts({
   requestTimeoutMs = 10_000,
   retries = 1,
   signal,
-  userAgent = "field-log-scraper/1.0",
+  userAgent = "pocket-trash-scraper/1.0",
 }: FetchShopifyCollectionProductsOptions): Promise<ShopifyProduct[]> {
   const products: ShopifyProduct[] = [];
 

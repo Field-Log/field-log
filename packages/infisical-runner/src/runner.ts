@@ -180,7 +180,7 @@ export function assertInfisicalCliAvailable(): void {
         "  infisical login",
         "  infisical init",
         "",
-        "Choose the Field Log project when initializing the repo.",
+        "Choose the Pocket Trash project (`pocket-trash` slug) when initializing the repo.",
       ].join("\n"),
     );
   }
@@ -198,7 +198,7 @@ export function assertInfisicalProjectConfig(repoRoot: string): void {
       "Run this from the monorepo root:",
       "  infisical init",
       "",
-      "Choose the Field Log project. Commit infisical.json only if it contains non-secret project metadata.",
+      "Choose the Pocket Trash project (`pocket-trash` slug). Commit infisical.json only if it contains non-secret project metadata.",
     ].join("\n"),
   );
 }

@@ -19,7 +19,10 @@ import {
 } from "../config/itemTypes";
 import { insertItem, type SpecValue } from "../db/database";
 import { syncCurrentUserItemBestEffort } from "../db/sync";
-import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
+import type {
+  PocketTrashNavigation,
+  PocketTrashRoute,
+} from "../navigation/types";
 
 type CustomFieldDraft = {
   id: string;
@@ -55,8 +58,8 @@ const sectionHeaderClass =
 const textareaClass = `${inputClass} min-h-20`;
 
 export default function AddItemScreen(): ReactElement {
-  const navigation = useNavigation<FieldLogNavigation>();
-  const route = useRoute<FieldLogRoute<"AddItem">>();
+  const navigation = useNavigation<PocketTrashNavigation>();
+  const route = useRoute<PocketTrashRoute<"AddItem">>();
   const { item_type } = route.params;
   const isCustom = item_type === "__custom__";
   const config = ITEM_TYPE_MAP[item_type];

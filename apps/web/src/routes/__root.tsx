@@ -87,7 +87,7 @@ function themeBootstrapScript(themeBootstrap: ThemeBootstrapState) {
     const shouldUseServerTheme = ${JSON.stringify(themeBootstrap.shouldUseServerTheme)};
     const theme = shouldUseServerTheme
       ? serverTheme
-      : localStorage.getItem("field-log.theme") || "system";
+      : localStorage.getItem("pocket-trash.theme") || "system";
     const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", dark);
   } catch {}

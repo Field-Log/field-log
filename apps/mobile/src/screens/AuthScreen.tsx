@@ -15,7 +15,7 @@ export default function AuthScreen(): ReactElement {
     <SafeAreaView className="flex-1 bg-background">
       <View className="flex-1 items-center justify-center gap-2 p-8">
         <Text className="text-4xl font-extrabold text-foreground">
-          Field Log
+          Pocket Trash
         </Text>
         <Text className="mb-7 text-base text-muted-foreground">
           Your EDC, organized.

@@ -1,4 +1,4 @@
-# field-log.app
+# pocket-trash.app
 
 
 
@@ -131,7 +131,7 @@
 - Update PR template AI sections.
 - Align non-production environments around preview.
 - Add Railway scraper production deploys to the release flow.
-- Remove legacy Field Log Expo and Autmog static app workspaces.
+- Remove legacy Pocket Trash Expo and Autmog static app workspaces.
 - Add a pull request template for generated and human-authored sections.
 
 ## Mobile Release Status

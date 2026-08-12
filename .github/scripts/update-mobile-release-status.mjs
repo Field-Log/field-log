@@ -20,7 +20,7 @@ function gh(args) {
   return execFileSync("gh", args, { encoding: "utf8" });
 }
 
-const tempDirectory = mkdtempSync(join(tmpdir(), "field-log-release-"));
+const tempDirectory = mkdtempSync(join(tmpdir(), "pocket-trash-release-"));
 const bodyPath = join(tempDirectory, "body.md");
 
 try {

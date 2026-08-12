@@ -30,7 +30,7 @@ export type UserSettingsState = {
 export const defaultUserSettings: UserSettingsPreferences =
   serviceDefaultUserSettings;
 
-export const userSettingsStorageKey = "field-log.settings";
+export const userSettingsStorageKey = "pocket-trash.settings";
 export const userSettingsSaveFailureMessage =
   "We couldn't save your settings. Please try again.";
 
