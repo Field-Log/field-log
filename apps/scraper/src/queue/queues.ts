@@ -27,6 +27,12 @@ export type ScraperQueues = {
   items: Queue<ScraperItemJob>;
 };
 
+export type ScraperQueueJobCounts = {
+  active: number;
+  delayed: number;
+  waiting: number;
+};
+
 export function createScraperQueues(connection: Redis): ScraperQueues {
   const items = new Queue<ScraperItemJob>(scraperQueueNames.items, {
     connection,
@@ -64,4 +70,41 @@ export async function removeCompletedJobsById<TJobData>(
   }
 
   return removed;
+}
+
+export async function getScraperQueueJobCounts(
+  queues: Pick<ScraperQueues, "images" | "items">,
+) {
+  const [items, images] = await Promise.all([
+    queues.items.getJobCounts("active", "delayed", "waiting"),
+    queues.images.getJobCounts("active", "delayed", "waiting"),
+  ]);
+
+  return {
+    images: normalizeQueueCounts(images),
+    items: normalizeQueueCounts(items),
+  };
+}
+
+export function hasActionableQueueJobs(counts: {
+  images: ScraperQueueJobCounts;
+  items: ScraperQueueJobCounts;
+}) {
+  return (
+    counts.images.active +
+      counts.images.delayed +
+      counts.images.waiting +
+      counts.items.active +
+      counts.items.delayed +
+      counts.items.waiting >
+    0
+  );
+}
+
+function normalizeQueueCounts(counts: Partial<ScraperQueueJobCounts>) {
+  return {
+    active: counts.active ?? 0,
+    delayed: counts.delayed ?? 0,
+    waiting: counts.waiting ?? 0,
+  };
 }

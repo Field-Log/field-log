@@ -271,6 +271,13 @@ Resize endpoint API shape:
 }
 ```
 
+## Scraper Run Retention
+
+`scraper_runs` is operational history, not product data. The scraper prunes
+rows older than 14 days when a real logged scraper command starts. Empty queue
+processor cron ticks skip before creating a `scraper_runs` row, so idle cron
+polling does not grow the table.
+
 ## Parallel DB PRs
 
 Drizzle migration history is linear. Parallel DB PRs may preview independently,

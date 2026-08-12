@@ -5,11 +5,13 @@ import { finishScraperRun, startScraperRun } from "./db/autmog.js";
 import { runGrimsmoProducer } from "./grimsmo/producer.js";
 import {
   runAllSourceProducerJobs,
+  runQueueProcessorJob,
   runSourceProducerJob,
   ScraperCommandInterruptedError,
   type ScraperJobContext,
   scraperSourceKeys,
 } from "./jobs.js";
+import { runQueueProcessor } from "./queue/processor.js";
 import { scraperSources } from "./scraper-types.js";
 
 vi.mock("./autmog/producer.js", () => ({
@@ -29,6 +31,21 @@ vi.mock("./grimsmo/producer.js", () => ({
     inventoryFetchedCount: 0,
     items: [],
     removedCompletedItemJobs: 0,
+  })),
+}));
+
+vi.mock("./queue/processor.js", () => ({
+  runQueueProcessor: vi.fn(async () => ({
+    images: {
+      completed: 0,
+      failed: 0,
+      skipped: 0,
+    },
+    items: {
+      completed: 1,
+      failed: 0,
+      skipped: 0,
+    },
   })),
 }));
 
@@ -69,6 +86,7 @@ describe("scraper jobs", () => {
     vi.mocked(startScraperRun).mockReset();
     vi.mocked(runAutmogProducer).mockReset();
     vi.mocked(runGrimsmoProducer).mockReset();
+    vi.mocked(runQueueProcessor).mockReset();
   });
 
   it("exposes supported source keys", () => {
@@ -160,9 +178,53 @@ describe("scraper jobs", () => {
       }),
     );
   });
+
+  it("skips empty queue processor runs before creating scraper runs", async () => {
+    const context = createContext({
+      images: { active: 0, delayed: 0, waiting: 0 },
+      items: { active: 0, delayed: 0, waiting: 0 },
+    });
+
+    await expect(
+      runQueueProcessorJob({
+        context,
+        env: createQueueEnv(),
+        logger: createNoopLogger(),
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(startScraperRun).not.toHaveBeenCalled();
+    expect(runQueueProcessor).not.toHaveBeenCalled();
+  });
+
+  it("records queue processor runs when actionable jobs exist", async () => {
+    const context = createContext({
+      images: { active: 0, delayed: 0, waiting: 0 },
+      items: { active: 0, delayed: 0, waiting: 1 },
+    });
+
+    await expect(
+      runQueueProcessorJob({
+        context,
+        env: createQueueEnv(),
+        logger: createNoopLogger(),
+      }),
+    ).resolves.toBeUndefined();
+
+    expect(startScraperRun).toHaveBeenCalledWith(expect.anything(), {
+      jobType: "processor",
+      source: "queue",
+    });
+    expect(runQueueProcessor).toHaveBeenCalledOnce();
+  });
 });
 
-function createContext(): ScraperJobContext {
+function createContext(
+  counts = {
+    images: { active: 0, delayed: 0, waiting: 0 },
+    items: { active: 0, delayed: 0, waiting: 0 },
+  },
+): ScraperJobContext {
   return {
     close: vi.fn(),
     db: {} as ScraperJobContext["db"],
@@ -170,9 +232,21 @@ function createContext(): ScraperJobContext {
     imageStorage: {} as ScraperJobContext["imageStorage"],
     queues: {
       close: vi.fn(),
-      images: {} as ScraperJobContext["queues"]["images"],
-      items: {} as ScraperJobContext["queues"]["items"],
+      images: {
+        getJobCounts: vi.fn(async () => counts.images),
+      } as unknown as ScraperJobContext["queues"]["images"],
+      items: {
+        getJobCounts: vi.fn(async () => counts.items),
+      } as unknown as ScraperJobContext["queues"]["items"],
     },
     redis: {} as ScraperJobContext["redis"],
   };
+}
+
+function createQueueEnv() {
+  return {
+    SCRAPER_IMAGE_BATCH_SIZE: 10,
+    SCRAPER_ITEM_BATCH_SIZE: 10,
+    SCRAPER_QUEUE_CONCURRENCY: 1,
+  } as Parameters<typeof runQueueProcessorJob>[0]["env"];
 }

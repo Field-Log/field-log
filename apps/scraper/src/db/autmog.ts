@@ -117,6 +117,8 @@ export async function startScraperRun(
     source: string;
   },
 ) {
+  await pruneScraperRuns(db);
+
   const staleBefore = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
   await db
@@ -167,6 +169,14 @@ export async function startScraperRun(
   }
 
   return run;
+}
+
+export async function pruneScraperRuns(db: Database, now = new Date()) {
+  const cutoff = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  await db
+    .delete(schema.scraperRuns)
+    .where(lt(schema.scraperRuns.startedAt, cutoff));
 }
 
 export async function finishScraperRun(
