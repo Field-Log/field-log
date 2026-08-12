@@ -1,4 +1,4 @@
-# Field Log FigJam Bridge Plugin
+# Pocket Trash FigJam Bridge Plugin
 
 Private Figma/FigJam plugin for applying agent-generated payloads from
 `.figjam/outbox`.
@@ -13,7 +13,7 @@ Private Figma/FigJam plugin for applying agent-generated payloads from
 
 2. In Figma, import this folder as a development plugin.
 3. Open the target FigJam board or Figma design file.
-4. Run `Field Log FigJam Bridge`.
+4. Run `Pocket Trash FigJam Bridge`.
 5. Refresh payloads and apply the intended payload.
 
 The plugin refuses payloads when Figma exposes a file key and that key does not

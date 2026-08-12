@@ -22,7 +22,7 @@ describe("api env", () => {
       AXIOM_TOKEN: "xaat-example",
       CLERK_PUBLISHABLE_KEY: "pk_test_example",
       CLERK_SECRET_KEY: "sk_test_example",
-      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
       LOGGER: "verbose",
       LOG_DEPLOYMENT_ID: "pr-27",
       LOG_DEPLOYMENT_TARGET: "cloudflare-worker",
@@ -36,7 +36,7 @@ describe("api env", () => {
     expect(env.AXIOM_EDGE_DOMAIN).toBe("api.axiom.co");
     expect(env.AXIOM_TOKEN).toBe("xaat-example");
     expect(env.DATABASE_URL).toBe(
-      "postgres://user:password@example.com:5432/field_log",
+      "postgres://user:password@example.com:5432/pocket_trash",
     );
     expect(env.LOGGER).toBe("verbose");
     expect(env.LOG_DEPLOYMENT_ID).toBe("pr-27");
@@ -51,7 +51,7 @@ describe("api env", () => {
     const env = createApiEnv({
       CLERK_PUBLISHABLE_KEY: "pk_test_example",
       CLERK_SECRET_KEY: "sk_test_example",
-      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
       MOBILE_ANDROID_STORE_URL:
         "https://play.google.com/store/apps/details?id=com.example.app",
       MOBILE_IOS_STORE_URL: "https://apps.apple.com/app/example/id123456789",
@@ -75,7 +75,7 @@ describe("api env", () => {
     const env = createApiEnv({
       CLERK_PUBLISHABLE_KEY: "pk_test_example",
       CLERK_SECRET_KEY: "sk_test_example",
-      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
     });
 
     expect(env.PORT).toBe(4006);
@@ -86,7 +86,7 @@ describe("api env", () => {
       createApiEnv({
         CLERK_PUBLISHABLE_KEY: "pk_test_example",
         CLERK_SECRET_KEY: "sk_test_example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
         PORT: "70000",
       }),
     ).toThrow("Invalid environment variables");
@@ -97,7 +97,7 @@ describe("api env", () => {
       createApiEnv({
         CLERK_PUBLISHABLE_KEY: "pk_test_example",
         CLERK_SECRET_KEY: "sk_test_example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
         LOG_LEVEL: "loud",
       }),
     ).toThrow("Invalid environment variables: LOG_LEVEL");
@@ -106,7 +106,7 @@ describe("api env", () => {
       createApiEnv({
         CLERK_PUBLISHABLE_KEY: "pk_test_example",
         CLERK_SECRET_KEY: "sk_test_example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
         LOGGER: "pretty",
       }),
     ).toThrow("Invalid environment variables: LOGGER");
@@ -117,7 +117,7 @@ describe("api env", () => {
       createApiEnv({
         CLERK_PUBLISHABLE_KEY: "pk_test_example",
         CLERK_SECRET_KEY: "sk_test_example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
         MOBILE_UPDATE_SEVERITY: "critical",
       }),
     ).toThrow("Invalid environment variables");
@@ -126,7 +126,7 @@ describe("api env", () => {
       createApiEnv({
         CLERK_PUBLISHABLE_KEY: "pk_test_example",
         CLERK_SECRET_KEY: "sk_test_example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
         MOBILE_IOS_STORE_URL: "not a url",
       }),
     ).toThrow("Invalid environment variables");
@@ -145,7 +145,7 @@ describe("api env", () => {
   it("rejects missing Clerk environment variables", () => {
     expect(() =>
       createApiEnv({
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
       }),
     ).toThrow(
       "Invalid environment variables: CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY",

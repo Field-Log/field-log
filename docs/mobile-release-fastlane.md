@@ -100,7 +100,7 @@ Prefer least-privilege service accounts:
 
 - App Store Connect API key: app-management permissions for this app only when
   possible.
-- Google Play service account: access only to the Field Log app and the tracks
+- Google Play service account: access only to the Pocket Trash app and the tracks
   fastlane needs to upload to.
 - Match repository credentials: read/write access only to the signing-assets
   repository.

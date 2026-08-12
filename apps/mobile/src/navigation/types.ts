@@ -1,6 +1,6 @@
 import type { RouteProp } from "@react-navigation/native";
 
-export type FieldLogParamList = {
+export type PocketTrashParamList = {
   AddItem: { item_type: string };
   AddLog: { itemId: string; itemType: string };
   EditItem: { itemId: string };
@@ -17,7 +17,7 @@ export type MainTabParamList = {
   Stats: undefined;
 };
 
-export type FieldLogNavigation = {
+export type PocketTrashNavigation = {
   getParent: () =>
     | {
         navigate: (
@@ -27,14 +27,14 @@ export type FieldLogNavigation = {
       }
     | undefined;
   goBack: () => void;
-  navigate: <RouteName extends keyof FieldLogParamList>(
+  navigate: <RouteName extends keyof PocketTrashParamList>(
     routeName: RouteName,
-    ...args: FieldLogParamList[RouteName] extends undefined
-      ? [params?: FieldLogParamList[RouteName]]
-      : [params: FieldLogParamList[RouteName]]
+    ...args: PocketTrashParamList[RouteName] extends undefined
+      ? [params?: PocketTrashParamList[RouteName]]
+      : [params: PocketTrashParamList[RouteName]]
   ) => void;
   setOptions: (options: { title: string }) => void;
 };
 
-export type FieldLogRoute<RouteName extends keyof FieldLogParamList> =
-  RouteProp<FieldLogParamList, RouteName>;
+export type PocketTrashRoute<RouteName extends keyof PocketTrashParamList> =
+  RouteProp<PocketTrashParamList, RouteName>;

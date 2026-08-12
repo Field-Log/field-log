@@ -2,7 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import { type ReactElement } from "react";
 import { Pressable, SectionList, Text, View } from "react-native";
 import { ITEM_TYPES, type ItemTypeConfig } from "../config/itemTypes";
-import type { FieldLogNavigation } from "../navigation/types";
+import type { PocketTrashNavigation } from "../navigation/types";
 
 type Section = {
   title: string;
@@ -59,7 +59,7 @@ const SECTIONS: Section[] = [
 ];
 
 export default function ChooseItemTypeScreen(): ReactElement {
-  const navigation = useNavigation<FieldLogNavigation>();
+  const navigation = useNavigation<PocketTrashNavigation>();
 
   return (
     <SectionList

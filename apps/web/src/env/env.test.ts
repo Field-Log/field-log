@@ -123,7 +123,7 @@ describe("web client env aliases", () => {
 describe("Vercel preview API env", () => {
   it("derives PR-specific API URLs for Vercel previews", async () => {
     const runtimeEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
+      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
       VERCEL_ENV: "preview",
       VERCEL_GIT_PULL_REQUEST_ID: "27",
     };
@@ -131,7 +131,7 @@ describe("Vercel preview API env", () => {
     await applyVercelPreviewApiEnv(runtimeEnv);
 
     expect(runtimeEnv.VITE_API_URL).toBe(
-      "https://pr-27-field-log-api-preview.23242.workers.dev",
+      "https://pr-27-pocket-trash-api-preview.23242.workers.dev",
     );
     expect(runtimeEnv.VITE_LOG_DEPLOYMENT_ID).toBe("pr-27");
     expect(runtimeEnv.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
@@ -146,7 +146,7 @@ describe("Vercel preview API env", () => {
   it("normalizes preview Worker hosts that include a protocol or path", async () => {
     const runtimeEnv: Record<string, string | undefined> = {
       API_PREVIEW_WORKER_HOST:
-        "https://field-log-api-preview.23242.workers.dev/",
+        "https://pocket-trash-api-preview.23242.workers.dev/",
       VERCEL_ENV: "preview",
       VERCEL_GIT_PULL_REQUEST_ID: "123",
     };
@@ -154,28 +154,28 @@ describe("Vercel preview API env", () => {
     await applyVercelPreviewApiEnv(runtimeEnv);
 
     expect(runtimeEnv.VITE_API_URL).toBe(
-      "https://pr-123-field-log-api-preview.23242.workers.dev",
+      "https://pr-123-pocket-trash-api-preview.23242.workers.dev",
     );
   });
 
   it("overrides shared preview API values only for Vercel PR previews", async () => {
     const runtimeEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
+      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
       VERCEL_ENV: "preview",
       VERCEL_GIT_PULL_REQUEST_ID: "42",
-      VITE_API_URL: "https://api.preview.field-log.app",
+      VITE_API_URL: "https://api.preview.pocket-trash.app",
     };
 
     await applyVercelPreviewApiEnv(runtimeEnv);
 
     expect(runtimeEnv.VITE_API_URL).toBe(
-      "https://pr-42-field-log-api-preview.23242.workers.dev",
+      "https://pr-42-pocket-trash-api-preview.23242.workers.dev",
     );
   });
 
   it("flushes the deployment log event", async () => {
     const runtimeEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
+      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
       VERCEL_ENV: "preview",
       VERCEL_GIT_PULL_REQUEST_ID: "27",
     };
@@ -200,7 +200,7 @@ describe("Vercel preview API env", () => {
       expect.objectContaining({
         attributes: expect.objectContaining({
           pullRequestId: "27",
-          workerHost: "field-log-api-preview.23242.workers.dev",
+          workerHost: "pocket-trash-api-preview.23242.workers.dev",
         }),
         console: {
           mode: "verbose",
@@ -212,23 +212,23 @@ describe("Vercel preview API env", () => {
 
   it("leaves non-preview and non-PR deployments unchanged", async () => {
     const productionEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
+      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
       VERCEL_ENV: "production",
       VERCEL_GIT_PULL_REQUEST_ID: "27",
-      VITE_API_URL: "https://api.field-log.app",
+      VITE_API_URL: "https://api.pocket-trash.app",
     };
     const branchPreviewEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "field-log-api-preview.23242.workers.dev",
+      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
       VERCEL_ENV: "preview",
-      VITE_API_URL: "https://api.preview.field-log.app",
+      VITE_API_URL: "https://api.preview.pocket-trash.app",
     };
 
     await applyVercelPreviewApiEnv(productionEnv);
     await applyVercelPreviewApiEnv(branchPreviewEnv);
 
-    expect(productionEnv.VITE_API_URL).toBe("https://api.field-log.app");
+    expect(productionEnv.VITE_API_URL).toBe("https://api.pocket-trash.app");
     expect(branchPreviewEnv.VITE_API_URL).toBe(
-      "https://api.preview.field-log.app",
+      "https://api.preview.pocket-trash.app",
     );
   });
 });
@@ -240,7 +240,7 @@ describe("web server env", () => {
       AXIOM_EDGE_DOMAIN: "api.axiom.co",
       AXIOM_TOKEN: "xaat-example",
       CLERK_SECRET_KEY: "sk_test_example",
-      DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+      DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
       IMAGE_FOLDER_PREFIX: "preview/pr-52",
       LOGGER: "verbose",
       LOG_DEPLOYMENT_ID: "pr-52",
@@ -253,7 +253,7 @@ describe("web server env", () => {
     expect(env.AXIOM_TOKEN).toBe("xaat-example");
     expect(env.CLERK_SECRET_KEY).toBe("sk_test_example");
     expect(env.DATABASE_URL).toBe(
-      "postgres://user:password@example.com:5432/field_log",
+      "postgres://user:password@example.com:5432/pocket_trash",
     );
     expect(env.IMAGE_FOLDER_PREFIX).toBe("preview/pr-52");
     expect(env.LOGGER).toBe("verbose");
@@ -274,7 +274,7 @@ describe("web server env", () => {
     expect(() =>
       createWebServerEnv({
         CLERK_SECRET_KEY: "sk_test_example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
         LOG_LEVEL: "loud",
       }),
     ).toThrow("Invalid environment variables");
@@ -282,7 +282,7 @@ describe("web server env", () => {
     expect(() =>
       createWebServerEnv({
         CLERK_SECRET_KEY: "sk_test_example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
         LOGGER: "pretty",
       }),
     ).toThrow("Invalid environment variables");

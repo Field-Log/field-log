@@ -21,8 +21,8 @@ import {
   userSettingsStorageKey,
 } from "@/lib/user-settings";
 
-const filtersClosedStorageKey = "field-log.filtersClosed";
-const rateStorageKey = `field-log.fxRates.${baseCurrency}`;
+const filtersClosedStorageKey = "pocket-trash.filtersClosed";
+const rateStorageKey = `pocket-trash.fxRates.${baseCurrency}`;
 type PenSettings = Pick<
   typeof defaultUserSettings,
   "currencyCode" | "dimensionUnit" | "weightUnit"

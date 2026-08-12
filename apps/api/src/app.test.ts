@@ -41,7 +41,7 @@ describe("api", () => {
 
     expect(document.openapi).toBe("3.1.0");
     expect(document.info).toMatchObject({
-      title: "Field Log API",
+      title: "Pocket Trash API",
       version: "0.0.0",
     });
     expect(document.paths["/api/v0/health"]).toBeDefined();
@@ -55,7 +55,9 @@ describe("api", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
-    await expect(response.text()).resolves.toContain("Field Log API Reference");
+    await expect(response.text()).resolves.toContain(
+      "Pocket Trash API Reference",
+    );
   });
 
   it("does not expose previous major version routes", async () => {

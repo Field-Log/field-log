@@ -230,7 +230,7 @@ function formatBullets(changesets, bump) {
 function updateChangelog(version, changesets) {
   const existing = existsSync(changelogPath)
     ? readFileSync(changelogPath, "utf8").trim()
-    : "# field-log.app";
+    : "# pocket-trash.app";
   const entry = createChangelogEntry(version, changesets);
   const nextChangelog = existing.includes("\n## ")
     ? existing.replace(/\n## /, `\n\n${entry}\n\n## `)
@@ -294,7 +294,7 @@ function createInitialRelease(changesets) {
   updatePackageVersions(initialVersion);
   writeFileSync(
     changelogPath,
-    `# field-log.app\n\n${createChangelogEntry(initialVersion, changesets)}\n`,
+    `# pocket-trash.app\n\n${createChangelogEntry(initialVersion, changesets)}\n`,
   );
 
   for (const changeset of changesets) {

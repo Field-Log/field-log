@@ -8,13 +8,13 @@ export const apiDocsPath = "/api/v0/docs";
 export const openApiDocumentConfig = {
   openapi: "3.1.0",
   info: {
-    title: "Field Log API",
+    title: "Pocket Trash API",
     version: "0.0.0",
-    description: "API documentation for Field Log services.",
+    description: "API documentation for Pocket Trash services.",
   },
   servers: [
     {
-      url: "https://api.field-log.app",
+      url: "https://api.pocket-trash.app",
       description: "Production",
     },
     {

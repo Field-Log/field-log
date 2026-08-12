@@ -116,11 +116,11 @@ Import the local plugin:
 After import, the plugin name should be:
 
 ```text
-Field Log FigJam Bridge
+Pocket Trash FigJam Bridge
 ```
 
 Run the plugin from the same development plugin area, or open quick actions and
-search for `Field Log FigJam Bridge`.
+search for `Pocket Trash FigJam Bridge`.
 
 ## Load And Apply A Payload
 

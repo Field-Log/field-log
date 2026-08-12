@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 
-export const scraperRedisContainerName = "field-log-scraper-redis";
+export const scraperRedisContainerName = "pocket-trash-scraper-redis";
 
 export function getScraperRedisPort(env = process.env) {
   return env.SCRAPER_REDIS_PORT ?? "4008";

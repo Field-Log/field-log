@@ -23,8 +23,8 @@ permissions:
   contents: read
 
 env:
-  API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
-  DB_PREVIEW_COMMENT_MARKER: "<!-- field-log-db-preview -->"
+  API_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-api-preview-app -->"
+  DB_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-db-preview -->"
   RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME: "pocket-trash (preview)"
   RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME: "pocket-trash"
   RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME: "scraper-queue"
@@ -609,14 +609,14 @@ jobs:
       - name: Validate PR comment app configuration
         shell: bash
         env:
-          FIELD_LOG_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
-          FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
-          FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
-          FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
+          POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
+          POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
+          POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
+          POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
 
-          for name in FIELD_LOG_API_PREVIEW_APP_CLIENT_ID FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY; do
+          for name in POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY; do
             if [[ -z "${!name:-}" ]]; then
               echo "$name is required." >&2
               exit 1
@@ -628,8 +628,8 @@ jobs:
         id: preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_CLIENT_ID }}
-          private-key: ${{ secrets.FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           permission-issues: write
@@ -658,7 +658,7 @@ jobs:
               "",
               "| Project | Deployment | Actions | Database |",
               "| --- | --- | --- | --- |",
-              `| field-log-api | Ready | [Preview](${previewUrl}), [Health](${healthUrl}) | ${databaseScope} |`,
+              `| pocket-trash-api | Ready | [Preview](${previewUrl}), [Health](${healthUrl}) | ${databaseScope} |`,
               "",
               `Alias: \`${process.env.PREVIEW_ALIAS}\``,
             ].join("\n");
@@ -693,8 +693,8 @@ jobs:
         id: db-preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID }}
-          private-key: ${{ secrets.FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY }}
+          client-id: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           permission-issues: write
@@ -1029,7 +1029,7 @@ jobs:
             --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
 
       - name: Smoke test production Worker
-        run: curl --fail-with-body --retry 12 --retry-all-errors --retry-delay 5 https://api.field-log.app/api/v0/health
+        run: curl --fail-with-body --retry 12 --retry-all-errors --retry-delay 5 https://api.pocket-trash.app/api/v0/health
 
   railway-production:
     name: Railway Production

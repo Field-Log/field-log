@@ -200,7 +200,7 @@ if (failed.length > 0) {
     console.error("");
     console.error("Create a runnable Android virtual device:");
     console.error(
-      '  avdmanager create avd --name field-log-pixel --package "system-images;android-36.1;google_apis;arm64-v8a" --device "pixel_9"',
+      '  avdmanager create avd --name pocket-trash-pixel --package "system-images;android-36.1;google_apis;arm64-v8a" --device "pixel_9"',
     );
   }
   process.exit(1);

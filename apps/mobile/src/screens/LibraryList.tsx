@@ -19,10 +19,10 @@ import {
   fetchMostCarried,
   type Item,
 } from "../db/database";
-import type { FieldLogNavigation } from "../navigation/types";
+import type { PocketTrashNavigation } from "../navigation/types";
 
 export default function LibraryList(): ReactElement {
-  const navigation = useNavigation<FieldLogNavigation>();
+  const navigation = useNavigation<PocketTrashNavigation>();
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("all");

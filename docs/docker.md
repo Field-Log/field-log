@@ -25,7 +25,7 @@ pnpm dev:scraper
 ```
 
 That command starts or reuses a Redis container named
-`field-log-scraper-redis`, maps host port `4008` to the container Redis port, and
+`pocket-trash-scraper-redis`, maps host port `4008` to the container Redis port, and
 runs `apps/scraper` with:
 
 ```dotenv
@@ -49,10 +49,10 @@ The helper does not delete Redis data. To remove the local scraper Redis
 container and its data:
 
 ```sh
-docker rm -f field-log-scraper-redis
+docker rm -f pocket-trash-scraper-redis
 ```
 
 Docker does not allow changing published ports on an existing container. If
-`field-log-scraper-redis` was created before the scraper Redis port moved to
+`pocket-trash-scraper-redis` was created before the scraper Redis port moved to
 `4008`, remove it once with the command above and rerun `pnpm dev:scraper` or
 `pnpm scraper:scrape -- autmog`.

@@ -34,7 +34,7 @@ describe("api worker", () => {
         APP_ENV: "preview",
         AXIOM_DATASET: "preview",
         AXIOM_TOKEN: "xaat-example",
-        DATABASE_URL: "postgres://user:password@example.com:5432/field_log",
+        DATABASE_URL: "postgres://user:password@example.com:5432/pocket_trash",
       },
     );
 
@@ -102,7 +102,7 @@ describe("api worker", () => {
     );
 
     const response = await worker.fetch(
-      new Request("https://api.field-log.app/api/v0/logs", {
+      new Request("https://api.pocket-trash.app/api/v0/logs", {
         body: JSON.stringify({
           app: "web",
           environment: "production",

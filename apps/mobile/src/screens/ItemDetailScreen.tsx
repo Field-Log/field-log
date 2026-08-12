@@ -42,7 +42,10 @@ import {
   deleteSyncedCurrentUserLogEntryBestEffort,
   syncCurrentUserLogEntryBestEffort,
 } from "../db/sync";
-import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
+import type {
+  PocketTrashNavigation,
+  PocketTrashRoute,
+} from "../navigation/types";
 
 const ENTRY_TYPE_LABELS: Record<LogEntryType, string> = {
   carried: "Carried",
@@ -163,8 +166,8 @@ function CarryHeatmap({
 }
 
 export default function ItemDetailScreen(): ReactElement {
-  const route = useRoute<FieldLogRoute<"ItemDetail">>();
-  const navigation = useNavigation<FieldLogNavigation>();
+  const route = useRoute<PocketTrashRoute<"ItemDetail">>();
+  const navigation = useNavigation<PocketTrashNavigation>();
   const { itemId, item_type } = route.params;
 
   const [item, setItem] = useState<Item | null>(null);

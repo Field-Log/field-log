@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 
-const dbPromise = SQLite.openDatabaseAsync("fieldlog.db");
+const dbPromise = SQLite.openDatabaseAsync("pockettrash.db");
 
 const db = {
   async execAsync(source: string): Promise<void> {
