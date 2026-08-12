@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import type * as React from "react";
 import { SITE_NAME } from "@/lib/constants";
+import { themeStorageKey } from "@/lib/theme";
 import type { ThemeBootstrapState } from "@/lib/theme-bootstrap";
 import { resolveServerThemeBootstrap } from "@/lib/theme-bootstrap";
 import { getCurrentUserSettingsState } from "@/lib/user-settings";
@@ -87,7 +88,7 @@ function themeBootstrapScript(themeBootstrap: ThemeBootstrapState) {
     const shouldUseServerTheme = ${JSON.stringify(themeBootstrap.shouldUseServerTheme)};
     const theme = shouldUseServerTheme
       ? serverTheme
-      : localStorage.getItem("pocket-trash.theme") || "system";
+      : localStorage.getItem(${JSON.stringify(themeStorageKey)}) || "system";
     const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", dark);
   } catch {}
