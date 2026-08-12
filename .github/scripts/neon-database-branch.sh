@@ -7,6 +7,8 @@ MAX_NEON_BRANCHES="${MAX_NEON_BRANCHES:-10}"
 PRODUCTION_BRANCH_NAME="${PRODUCTION_BRANCH_NAME:-production}"
 PREVIEW_BRANCH_NAME="${PREVIEW_BRANCH_NAME:-preview}"
 
+source "$(dirname "${BASH_SOURCE[0]}")/ci-log.sh"
+
 require_env() {
   local name="$1"
 
@@ -45,37 +47,6 @@ api() {
 
 url_encode() {
   jq -rn --arg value "$1" '$value | @uri'
-}
-
-emit_ci_log() {
-  local level="$1"
-  local message="$2"
-  local attributes="${3:-}"
-  local normalized_attributes
-
-  if [[ -z "$attributes" ]]; then
-    attributes="{}"
-  fi
-
-  if ! normalized_attributes="$(jq -c . <<< "$attributes" 2> /dev/null)"; then
-    normalized_attributes="{}"
-  fi
-
-  jq -cn \
-    --arg app "ci" \
-    --arg environment "${GITHUB_ACTIONS:+github-actions}" \
-    --arg level "$level" \
-    --arg message "$message" \
-    --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-    --argjson attributes "$normalized_attributes" \
-    '{
-      app: $app,
-      environment: (if $environment == "" then "local" else $environment end),
-      level: $level,
-      message: $message,
-      timestamp: $timestamp,
-      attributes: $attributes
-    }'
 }
 
 write_output() {

@@ -13,6 +13,11 @@ jobs:
   refresh:
     name: Refresh Preview
     runs-on: ubuntu-latest
+    env:
+      AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PREVIEW }}
+      AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
+      AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PREVIEW }}
+      CI_JOB_NAME: Refresh Preview
 
     steps:
       - name: Check out repository
@@ -47,27 +52,32 @@ jobs:
         run: |
           set -euo pipefail
 
+          set +e
           pnpm exec drizzle-kit migrate --config=drizzle.config.ts
+          migration_status=$?
+          set -e
 
-          jq -cn \
-            --arg app "ci" \
-            --arg environment "github-actions" \
-            --arg level "info" \
-            --arg message "ci.database.preview.migrations.applied" \
-            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+          source ../../.github/scripts/ci-log.sh
+          if [[ "$migration_status" -ne 0 ]]; then
+            emit_ci_log error "ci.database.preview.migrations.failed" "$(jq -n \
+              --arg branch_name "${{ steps.preview_db.outputs.branch_name }}" \
+              --arg branch_id "${{ steps.preview_db.outputs.branch_id }}" \
+              --arg failure_step "drizzle-kit migrate" \
+              '{
+                branchName: $branch_name,
+                branchId: $branch_id,
+                failureStep: $failure_step
+              }')"
+            exit "$migration_status"
+          fi
+
+          emit_ci_log info "ci.database.preview.migrations.applied" "$(jq -n \
             --arg branch_name "${{ steps.preview_db.outputs.branch_name }}" \
             --arg branch_id "${{ steps.preview_db.outputs.branch_id }}" \
             '{
-              app: $app,
-              environment: $environment,
-              level: $level,
-              message: $message,
-              timestamp: $timestamp,
-              attributes: {
-                branchName: $branch_name,
-                branchId: $branch_id
-              }
-            }'
+              branchName: $branch_name,
+              branchId: $branch_id
+            }')"
 
       - name: Build Worker dependencies
         run: pnpm exec turbo run build --filter=@app/api

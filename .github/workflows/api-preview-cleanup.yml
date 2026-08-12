@@ -20,6 +20,12 @@ jobs:
       contents: read
       issues: write
       pull-requests: write
+    env:
+      AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PREVIEW }}
+      AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
+      AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PREVIEW }}
+      CI_JOB_NAME: API Preview Closed
+      PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
       - name: Check out repository

@@ -200,8 +200,17 @@ Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
 Use `loggerValues` for logger app identifiers and log proxy protocol values.
 
 CI workflows and helper scripts emit compact JSON log events with `app: "ci"`.
-These are written to GitHub Actions logs rather than Axiom unless the workflow
-runner output is collected elsewhere. Current CI event namespaces include:
+They always remain visible in GitHub Actions logs. Workflows map the dataset
+specific GitHub Actions secrets back to `AXIOM_TOKEN` and `AXIOM_DATASET` for
+`.github/scripts/ci-log.sh`, which forwards the same redacted event to Axiom.
+CI Axiom ingest failures are non-fatal and print a warning in Actions logs.
+
+PR, preview cleanup, and scheduled preview database events use
+`AXIOM_TOKEN_PREVIEW` and `AXIOM_DATASET_PREVIEW`. Production release and main
+workflow dispatch database events use `AXIOM_TOKEN_PRODUCTION` and
+`AXIOM_DATASET_PRODUCTION`. `AXIOM_EDGE_DOMAIN` is optional and shared.
+
+Current CI event namespaces include:
 
 - `ci.database.preview.*`: PR database change detection, shared preview branch
   selection, preview branch creation/recreation/deletion, branch-limit blocking,
@@ -211,6 +220,41 @@ runner output is collected elsewhere. Current CI event namespaces include:
 - `ci.github.*`: GitHub-side metadata updates such as the `db-change` label.
 - `ci.vercel.preview.*`: branch-specific Preview `DATABASE_URL` override set,
   removal, missing cleanup target, and latest preview deployment lookup.
+
+Preview database events include filterable attributes for GitHub workflow
+metadata (`workflowName`, `runId`, `jobName`, `pullRequestNumber`, `gitBranch`,
+`commitSha`) and database metadata (`branchName`, `branchId`). Migration
+failures also include `failureStep`.
+
+Search the `preview` dataset for all CI database events:
+
+```apl
+['preview']
+| where app == "ci"
+| where startswith(message, "ci.database.")
+| order by ['_time'] desc
+```
+
+Search for failed preview migrations:
+
+```apl
+['preview']
+| where app == "ci"
+| where message == "ci.database.preview.migrations.failed"
+| project ['_time'], workflowName=attributes.workflowName, runId=attributes.runId, jobName=attributes.jobName, pullRequestNumber=attributes.pullRequestNumber, gitBranch=attributes.gitBranch, branchName=attributes.branchName, branchId=attributes.branchId, failureStep=attributes.failureStep
+| order by ['_time'] desc
+```
+
+Search one pull request's preview database lifecycle:
+
+```apl
+['preview']
+| where app == "ci"
+| where startswith(message, "ci.database.preview.")
+| where attributes.pullRequestNumber == "63"
+| project ['_time'], level, message, gitBranch=attributes.gitBranch, branchName=attributes.branchName, branchId=attributes.branchId, failureStep=attributes.failureStep
+| order by ['_time'] asc
+```
 
 ## Biome Audit
 

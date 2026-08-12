@@ -39,6 +39,12 @@ jobs:
       id-token: write
       issues: write
       pull-requests: write
+    env:
+      AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PREVIEW }}
+      AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
+      AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PREVIEW }}
+      CI_JOB_NAME: API Preview
+      PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
       - name: Check out repository
@@ -69,25 +75,14 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-          jq -cn \
-            --arg app "ci" \
-            --arg environment "github-actions" \
-            --arg level "info" \
-            --arg message "ci.database.preview.changeDetection.completed" \
-            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+          source .github/scripts/ci-log.sh
+          emit_ci_log info "ci.database.preview.changeDetection.completed" "$(jq -n \
             --argjson database "$database" \
             --arg changed_files "$changed_files" \
             '{
-              app: $app,
-              environment: $environment,
-              level: $level,
-              message: $message,
-              timestamp: $timestamp,
-              attributes: {
-                databaseChanged: $database,
-                changedFiles: ($changed_files | split("\n") | map(select(. != "")))
-              }
-            }'
+              databaseChanged: $database,
+              changedFiles: ($changed_files | split("\n") | map(select(. != "")))
+            }')"
 
       - name: Sync db-change label
         uses: actions/github-script@v8
@@ -253,27 +248,32 @@ jobs:
         run: |
           set -euo pipefail
 
+          set +e
           pnpm exec drizzle-kit migrate --config=drizzle.config.ts
+          migration_status=$?
+          set -e
 
-          jq -cn \
-            --arg app "ci" \
-            --arg environment "github-actions" \
-            --arg level "info" \
-            --arg message "ci.database.preview.migrations.applied" \
-            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+          source ../../.github/scripts/ci-log.sh
+          if [[ "$migration_status" -ne 0 ]]; then
+            emit_ci_log error "ci.database.preview.migrations.failed" "$(jq -n \
+              --arg branch_name "${{ steps.db.outputs.branch_name }}" \
+              --arg branch_id "${{ steps.db.outputs.branch_id }}" \
+              --arg failure_step "drizzle-kit migrate" \
+              '{
+                branchName: $branch_name,
+                branchId: $branch_id,
+                failureStep: $failure_step
+              }')"
+            exit "$migration_status"
+          fi
+
+          emit_ci_log info "ci.database.preview.migrations.applied" "$(jq -n \
             --arg branch_name "${{ steps.db.outputs.branch_name }}" \
             --arg branch_id "${{ steps.db.outputs.branch_id }}" \
             '{
-              app: $app,
-              environment: $environment,
-              level: $level,
-              message: $message,
-              timestamp: $timestamp,
-              attributes: {
-                branchName: $branch_name,
-                branchId: $branch_id
-              }
-          }'
+              branchName: $branch_name,
+              branchId: $branch_id
+            }')"
 
       - name: Verify Neon PR branch
         if: steps.db.outputs.can_deploy == 'true' && steps.db_changes.outputs.database == 'true'
@@ -854,6 +854,11 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    env:
+      AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PRODUCTION }}
+      AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
+      AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PRODUCTION }}
+      CI_JOB_NAME: API Production
 
     steps:
       - name: Check out repository
@@ -895,27 +900,32 @@ jobs:
         run: |
           set -euo pipefail
 
+          set +e
           pnpm exec drizzle-kit migrate --config=drizzle.config.ts
+          migration_status=$?
+          set -e
 
-          jq -cn \
-            --arg app "ci" \
-            --arg environment "github-actions" \
-            --arg level "info" \
-            --arg message "ci.database.production.migrations.applied" \
-            --arg timestamp "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+          source ../../.github/scripts/ci-log.sh
+          if [[ "$migration_status" -ne 0 ]]; then
+            emit_ci_log error "ci.database.production.migrations.failed" "$(jq -n \
+              --arg branch_name "${{ steps.production_db.outputs.branch_name }}" \
+              --arg branch_id "${{ steps.production_db.outputs.branch_id }}" \
+              --arg failure_step "drizzle-kit migrate" \
+              '{
+                branchName: $branch_name,
+                branchId: $branch_id,
+                failureStep: $failure_step
+              }')"
+            exit "$migration_status"
+          fi
+
+          emit_ci_log info "ci.database.production.migrations.applied" "$(jq -n \
             --arg branch_name "${{ steps.production_db.outputs.branch_name }}" \
             --arg branch_id "${{ steps.production_db.outputs.branch_id }}" \
             '{
-              app: $app,
-              environment: $environment,
-              level: $level,
-              message: $message,
-              timestamp: $timestamp,
-              attributes: {
-                branchName: $branch_name,
-                branchId: $branch_id
-              }
-            }'
+              branchName: $branch_name,
+              branchId: $branch_id
+            }')"
 
       - name: Build Worker dependencies
         run: pnpm exec turbo run build --filter=@app/api
