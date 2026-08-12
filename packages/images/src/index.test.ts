@@ -9,8 +9,8 @@ import {
 const bunnyConfig = {
   bunnyStorageAccessKey: "storage-key",
   bunnyStorageEndpoint: "https://ny.storage.bunnycdn.com",
-  bunnyStorageZoneName: "field-log-images",
-  cdnBaseUrl: "https://cdn.field-log.app/field-log-images",
+  bunnyStorageZoneName: "pocket-trash-images",
+  cdnBaseUrl: "https://cdn.pocket-trash.app/pocket-trash-images",
 };
 
 describe("createImageStorage", () => {
@@ -71,7 +71,8 @@ describe("createImageStorage", () => {
       }
 
       if (
-        url.pathname === "/field-log-images/products/pens/123/source-image.webp"
+        url.pathname ===
+        "/pocket-trash-images/products/pens/123/source-image.webp"
       ) {
         if (init?.body) {
           uploadedBodies.push(init.body);
@@ -99,8 +100,8 @@ describe("createImageStorage", () => {
       height: 300,
       provider: "bunny",
       thumbnailUrl:
-        "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
-      url: "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp",
+        "https://cdn.pocket-trash.app/pocket-trash-images/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
+      url: "https://cdn.pocket-trash.app/pocket-trash-images/products/pens/123/source-image.webp",
       width: 400,
     });
     expect(uploadedBodies).toHaveLength(1);
@@ -128,12 +129,13 @@ describe("createImageStorage", () => {
         });
       }
 
-      if (url.pathname === "/field-log-images/products/pens/123/") {
+      if (url.pathname === "/pocket-trash-images/products/pens/123/") {
         return jsonResponse([]);
       }
 
       if (
-        url.pathname === "/field-log-images/products/pens/123/source-image.webp"
+        url.pathname ===
+        "/pocket-trash-images/products/pens/123/source-image.webp"
       ) {
         expect(init?.method).toBe("PUT");
         expect(init?.headers).toMatchObject({
@@ -166,8 +168,8 @@ describe("createImageStorage", () => {
       height: 1500,
       provider: "bunny",
       thumbnailUrl:
-        "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
-      url: "https://cdn.field-log.app/field-log-images/products/pens/123/source-image.webp",
+        "https://cdn.pocket-trash.app/pocket-trash-images/products/pens/123/source-image.webp?format=webp&quality=85&width=500",
+      url: "https://cdn.pocket-trash.app/pocket-trash-images/products/pens/123/source-image.webp",
       width: 2000,
     });
     expect(uploadedBodies).toHaveLength(1);
@@ -176,7 +178,7 @@ describe("createImageStorage", () => {
   it("preserves the Bunny zone when the CDN base URL includes it", async () => {
     const storage = createImageStorage({
       ...bunnyConfig,
-      cdnBaseUrl: "https://cdn.field-log.app/field-log-images/",
+      cdnBaseUrl: "https://cdn.pocket-trash.app/pocket-trash-images/",
       fetch: vi.fn<typeof fetch>(),
     });
 
@@ -184,8 +186,8 @@ describe("createImageStorage", () => {
       storage.updateFile("/dev/products/1000/42143344591035.webp", {}),
     ).resolves.toMatchObject({
       thumbnailUrl:
-        "https://cdn.field-log.app/field-log-images/dev/products/1000/42143344591035.webp?format=webp&quality=85&width=500",
-      url: "https://cdn.field-log.app/field-log-images/dev/products/1000/42143344591035.webp",
+        "https://cdn.pocket-trash.app/pocket-trash-images/dev/products/1000/42143344591035.webp?format=webp&quality=85&width=500",
+      url: "https://cdn.pocket-trash.app/pocket-trash-images/dev/products/1000/42143344591035.webp",
     });
   });
 
@@ -194,7 +196,7 @@ describe("createImageStorage", () => {
     const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
       const url = toUrl(input);
 
-      if (url.pathname === "/field-log-images/preview/pr-52/") {
+      if (url.pathname === "/pocket-trash-images/preview/pr-52/") {
         return jsonResponse([
           {
             IsDirectory: true,
@@ -203,7 +205,7 @@ describe("createImageStorage", () => {
         ]);
       }
 
-      if (url.pathname === "/field-log-images/preview/pr-52/products/") {
+      if (url.pathname === "/pocket-trash-images/preview/pr-52/products/") {
         return jsonResponse([
           {
             IsDirectory: false,
@@ -213,7 +215,8 @@ describe("createImageStorage", () => {
       }
 
       if (
-        url.pathname === "/field-log-images/preview/pr-52/products/image.webp"
+        url.pathname ===
+        "/pocket-trash-images/preview/pr-52/products/image.webp"
       ) {
         expect(init?.method).toBe("DELETE");
         deletedPaths.push(url.pathname);
@@ -235,7 +238,7 @@ describe("createImageStorage", () => {
       status: "deleted",
     });
     expect(deletedPaths).toEqual([
-      "/field-log-images/preview/pr-52/products/image.webp",
+      "/pocket-trash-images/preview/pr-52/products/image.webp",
     ]);
   });
 
@@ -243,7 +246,7 @@ describe("createImageStorage", () => {
     const fetchMock = vi.fn<typeof fetch>(async (input) => {
       const url = toUrl(input);
 
-      if (url.pathname === "/field-log-images/preview/pr-52/") {
+      if (url.pathname === "/pocket-trash-images/preview/pr-52/") {
         return jsonResponse({ message: "Not Found" }, 404);
       }
 
@@ -266,7 +269,7 @@ describe("createImageStorage", () => {
     const fetchMock = vi.fn<typeof fetch>(async (input) => {
       const url = toUrl(input);
 
-      if (url.pathname === "/field-log-images/preview/pr-52/") {
+      if (url.pathname === "/pocket-trash-images/preview/pr-52/") {
         return jsonResponse([]);
       }
 
@@ -289,7 +292,9 @@ describe("createImageStorage", () => {
     const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
       const url = toUrl(input);
 
-      if (url.pathname === "/field-log-images/products/pens/123/image.webp") {
+      if (
+        url.pathname === "/pocket-trash-images/products/pens/123/image.webp"
+      ) {
         expect(init?.method).toBe("DELETE");
 
         return jsonResponse({ message: "Not Found" }, 404);

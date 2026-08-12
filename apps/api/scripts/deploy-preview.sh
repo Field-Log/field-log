@@ -46,7 +46,7 @@ prepare_secrets_args() {
   fi
 
   local secrets_copy
-  secrets_copy="$(mktemp "${TMPDIR:-/tmp}/field-log-api-preview-secrets.XXXXXX.json")"
+  secrets_copy="$(mktemp "${TMPDIR:-/tmp}/pocket-trash-api-preview-secrets.XXXXXX.json")"
   cp "$secrets_file" "$secrets_copy"
   secrets_copies+=("$secrets_copy")
   secrets_args=("--secrets-file" "$secrets_copy")

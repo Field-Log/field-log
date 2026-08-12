@@ -1,6 +1,6 @@
-# field-log.app
+# pocket-trash.app
 
-Monorepo for the field-log.app apps and shared packages.
+Monorepo for the pocket-trash.app apps and shared packages.
 
 ## Getting started
 
@@ -9,11 +9,11 @@ Monorepo for the field-log.app apps and shared packages.
 - Node.js 22
 - Corepack, enabled with `corepack enable`
 - pnpm 10.33.2, provided by the repo `packageManager` setting
-- Infisical CLI access to the `Field Log` project
+- Infisical CLI access to the `Pocket Trash` project (`pocket-trash` slug)
 
 ### Installing and configuring Infisical
 
-This repo uses the Infisical project `Field Log` for local Development secrets.
+This repo uses the Infisical project `Pocket Trash` (`pocket-trash` slug) for local Development secrets.
 Production and preview host secrets are synced from Infisical into the hosting
 platform where possible.
 

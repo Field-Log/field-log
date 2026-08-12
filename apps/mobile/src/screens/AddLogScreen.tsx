@@ -3,7 +3,10 @@ import { type ReactElement, useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { insertLogEntry, type LogEntryType } from "../db/database";
 import { syncCurrentUserLogEntryBestEffort } from "../db/sync";
-import type { FieldLogNavigation, FieldLogRoute } from "../navigation/types";
+import type {
+  PocketTrashNavigation,
+  PocketTrashRoute,
+} from "../navigation/types";
 
 const ENTRY_TYPES: { value: LogEntryType; label: string }[] = [
   { value: "note", label: "Note" },
@@ -13,8 +16,8 @@ const ENTRY_TYPES: { value: LogEntryType; label: string }[] = [
 ];
 
 export default function AddLogScreen(): ReactElement {
-  const route = useRoute<FieldLogRoute<"AddLog">>();
-  const navigation = useNavigation<FieldLogNavigation>();
+  const route = useRoute<PocketTrashRoute<"AddLog">>();
+  const navigation = useNavigation<PocketTrashNavigation>();
   const { itemId, itemType } = route.params;
 
   const [entryType, setEntryType] = useState<LogEntryType>("note");

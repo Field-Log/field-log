@@ -110,7 +110,7 @@ function MobileUpdateRequiredScreen({
           Update required
         </Text>
         <Text className="mb-2.5 text-center text-2xl font-bold leading-7 text-foreground">
-          Install the latest Field Log
+          Install the latest Pocket Trash
         </Text>
         <Text className="mb-5 text-center text-sm leading-5 text-muted-foreground">
           This app version is no longer supported. Update before continuing.
@@ -154,7 +154,7 @@ function MobileUpdateBanner({
           Update available
         </Text>
         <Text className="text-xs leading-4 text-muted-foreground">
-          A newer Field Log version is ready.
+          A newer Pocket Trash version is ready.
         </Text>
       </View>
       <View className="flex-row gap-2">

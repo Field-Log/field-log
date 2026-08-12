@@ -19,34 +19,34 @@ Configure these Cloudflare services:
 - Workers: hosts the API Worker scripts.
 - Cron Triggers: invokes the hourly API scheduled handler.
 - Custom Domains: routes owned hostnames to the production Worker.
-- Workers Preview URLs: hosts per-PR preview aliases for `field-log-api-preview`.
+- Workers Preview URLs: hosts per-PR preview aliases for `pocket-trash-api-preview`.
 - Worker Secrets: receives filtered API runtime secrets from the deployment
   workflows.
 
-Cloudflare must manage the `field-log.app` DNS zone before custom domains can
-serve `api.field-log.app`.
+Cloudflare must manage the `pocket-trash.app` DNS zone before custom domains can
+serve `api.pocket-trash.app`.
 
 ## Worker Names And Domains
 
 Production:
 
-- Worker: `field-log-api`
-- Domain: `api.field-log.app`
+- Worker: `pocket-trash-api`
+- Domain: `api.pocket-trash.app`
 - Infisical app secrets: environment `prod`, path `/apps/api`
 - Infisical deploy credentials: environment `prod`, path `/tools/cloudflare`
 
 Previews:
 
-- Worker: `field-log-api-preview`
+- Worker: `pocket-trash-api-preview`
 - Domain: Cloudflare preview URL with a PR alias
 - Infisical app secrets: environment `preview`, path `/apps/api`
 - Infisical deploy credentials: environment `preview`, path `/tools/cloudflare`
 
 Preview deployments use Cloudflare preview URLs rather than
-`api.preview.field-log.app`. A PR alias URL uses this shape:
+`api.preview.pocket-trash.app`. A PR alias URL uses this shape:
 
 ```txt
-https://pr-123-field-log-api-preview.<account-subdomain>.workers.dev
+https://pr-123-pocket-trash-api-preview.<account-subdomain>.workers.dev
 ```
 
 ## Wrangler Configuration
@@ -55,7 +55,7 @@ The Worker config lives at `apps/api/wrangler.jsonc`.
 
 Important settings:
 
-- `name`: `field-log-api`
+- `name`: `pocket-trash-api`
 - `main`: `src/worker.ts`
 - `compatibility_flags`: includes `nodejs_compat` because workspace
   dependencies currently import Node built-ins.
@@ -175,7 +175,7 @@ non-secret variable.
 
 ## Cloudflare Initial Setup
 
-1. Confirm the `field-log.app` zone exists in Cloudflare and is active.
+1. Confirm the `pocket-trash.app` zone exists in Cloudflare and is active.
 2. Create the Worker scripts once by deploying them or by letting the first
    Wrangler deploy create them:
 
@@ -186,9 +186,9 @@ non-secret variable.
 
 3. In Cloudflare Dashboard, confirm the Workers appear under
    `Workers & Pages`.
-4. Confirm the `field-log-api` custom domain trigger exists for
-   `api.field-log.app`.
-5. Confirm preview URLs are enabled for `field-log-api-preview`.
+4. Confirm the `pocket-trash-api` custom domain trigger exists for
+   `api.pocket-trash.app`.
+5. Confirm preview URLs are enabled for `pocket-trash-api-preview`.
 
 ## Deploy Credentials In Infisical
 
@@ -269,16 +269,16 @@ Pull requests:
 - Writes a filtered API runtime secret file for Wrangler, including the
   PR-specific `DATABASE_URL` and required Clerk keys.
 - Uploads a preview Worker version with alias `pr-<number>`.
-- If `field-log-api-preview` does not exist yet, bootstraps it with
+- If `pocket-trash-api-preview` does not exist yet, bootstraps it with
   `wrangler deploy --env preview`, then retries the aliased version upload.
 - Deploys a preview Worker anchor version after the aliased upload so
   Cloudflare's latest Worker version is deployed while existing preview aliases
   remain available.
 - Smoke-tests the preview health endpoint.
 - Posts or updates a pull request comment with the preview and health URLs
-  using the installed `Field Log API Preview` GitHub App.
+  using the installed `Pocket Trash API Preview` GitHub App.
 - Posts or updates a separate DB preview comment with marker
-  `<!-- field-log-db-preview -->` using the installed `Field Log DB Preview`
+  `<!-- pocket-trash-db-preview -->` using the installed `Pocket Trash DB Preview`
   GitHub App.
 - A separate `API Preview Cleanup` workflow runs for every same-repository
   `closed` pull request without path filters.
@@ -296,8 +296,8 @@ Release tags:
   `/apps/api`.
 - Writes a filtered API runtime secret file for Wrangler, including the
   production `DATABASE_URL` and required Clerk keys.
-- Deploys `field-log-api` to `api.field-log.app`.
-- Smoke-tests `https://api.field-log.app/api/v0/health`.
+- Deploys `pocket-trash-api` to `api.pocket-trash.app`.
+- Smoke-tests `https://api.pocket-trash.app/api/v0/health`.
 - Deploys the production Railway scraper service after production migrations and
   API smoke tests pass.
 - Validates `@app/web`, pulls the Vercel production environment, builds with
@@ -311,8 +311,8 @@ recovery, but normal production deploys should come from an annotated `v*` tag.
 Configure these values in Infisical Production at `/tools/github/secrets`; they
 sync to GitHub repository secrets:
 
-- `FIELD_LOG_API_PREVIEW_APP_CLIENT_ID`
-- `FIELD_LOG_DB_PREVIEW_APP_CLIENT_ID`
+- `POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID`
+- `POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID`
 - `INFISICAL_CLOUDFLARE_IDENTITY_ID`
 - `INFISICAL_PROJECT_SLUG`
 - `NEON_DATABASE_NAME`
@@ -324,25 +324,25 @@ sync to GitHub repository secrets:
 - optional `INFISICAL_OIDC_AUDIENCE`, defaults to
   `https://github.com/{repository_owner}`
 
-- `FIELD_LOG_API_PREVIEW_APP_PRIVATE_KEY`
-- `FIELD_LOG_DB_PREVIEW_APP_PRIVATE_KEY`
+- `POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY`
+- `POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY`
 - `NEON_API_KEY`
 - `RAILWAY_API_TOKEN`
 - `RAILWAY_PROJECT_ID`
 - `VERCEL_TOKEN`
 
-The `Field Log API Preview` GitHub App must be installed on this repository
+The `Pocket Trash API Preview` GitHub App must be installed on this repository
 with these repository permissions:
 
 - `Issues: Read and write`
 - `Pull requests: Read and write`
 
-The `Field Log DB Preview` GitHub App needs the same repository permissions.
+The `Pocket Trash DB Preview` GitHub App needs the same repository permissions.
 
 Pull request comments use GitHub issue comments, but GitHub may accept either
 the Issues or Pull requests write permission for pull request comment endpoints.
 After changing app permissions, approve the updated installation permissions in
-the GitHub App installation settings for `Field-Log/field-log`.
+the GitHub App installation settings for `Pocket-Trash/pocket-trash`.
 
 The GitHub App uses its own pull request comment marker. If the workflow
 previously commented as `github-actions[bot]`, delete that old comment manually
@@ -370,13 +370,13 @@ builds.
 Store this stable value in the web preview environment:
 
 ```dotenv
-API_PREVIEW_WORKER_HOST=field-log-api-preview.<account-subdomain>.workers.dev
+API_PREVIEW_WORKER_HOST=pocket-trash-api-preview.<account-subdomain>.workers.dev
 ```
 
 During Vercel PR previews, `apps/web` derives the API URLs from the PR number:
 
 ```dotenv
-VITE_API_URL=https://pr-123-field-log-api-preview.23242.workers.dev
+VITE_API_URL=https://pr-123-pocket-trash-api-preview.23242.workers.dev
 ```
 
 This avoids shared Infisical `preview /apps/web` values that only support one PR
@@ -404,7 +404,7 @@ redeploy the Vercel preview.
 
 The `Preview Refresh` workflow runs on a nightly schedule and by manual
 `workflow_dispatch`. It resets Neon `preview` from `production`, runs committed
-Drizzle migrations against `preview`, deploys `field-log-api-preview` with an
+Drizzle migrations against `preview`, deploys `pocket-trash-api-preview` with an
 explicit preview `DATABASE_URL`, creates or updates the `refresh-smoke` preview
 alias, and smoke-tests that alias.
 
@@ -418,7 +418,7 @@ Run these checks after production or preview deploys.
 Health:
 
 ```sh
-curl --fail https://api.field-log.app/api/v0/health
+curl --fail https://api.pocket-trash.app/api/v0/health
 ```
 
 Log proxy with a configured client key:
@@ -429,7 +429,7 @@ curl --fail \
   --header "content-type: application/json" \
   --header "x-log-client-key: $LOG_PROXY_CLIENT_KEY" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/api/v0/logs
+  https://api.pocket-trash.app/api/v0/logs
 ```
 
 Log proxy rejection when a client key is configured:
@@ -439,7 +439,7 @@ curl --silent --output /dev/null --write-out "%{http_code}\n" \
   --request POST \
   --header "content-type: application/json" \
   --data '{"app":"web","environment":"smoke","level":"info","message":"api.smoke.log"}' \
-  https://api.field-log.app/api/v0/logs
+  https://api.pocket-trash.app/api/v0/logs
 ```
 
 The unauthenticated log proxy check should return `401` when
@@ -457,7 +457,7 @@ Rollback through Cloudflare Workers deployments or versions.
 
 Production:
 
-1. Open Cloudflare Dashboard -> Workers & Pages -> `field-log-api`.
+1. Open Cloudflare Dashboard -> Workers & Pages -> `pocket-trash-api`.
 2. Select Deployments or Versions.
 3. Promote or roll back to the last known good version.
 4. Run the production smoke tests.

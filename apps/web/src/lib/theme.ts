@@ -1,6 +1,6 @@
 export type ThemeMode = "light" | "dark" | "system";
 
-export const themeStorageKey = "field-log.theme";
+export const themeStorageKey = "pocket-trash.theme";
 
 export function isThemeMode(value: string | null): value is ThemeMode {
   return value === "light" || value === "dark" || value === "system";

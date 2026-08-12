@@ -13,7 +13,7 @@ Use this shape:
 
 ```md
 ---
-"field-log.app": patch
+"pocket-trash.app": patch
 ---
 
 Add release automation.

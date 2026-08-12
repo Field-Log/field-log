@@ -50,7 +50,7 @@ const expoLoggingAliases = [
   },
 ] as const satisfies readonly EnvironmentAlias[];
 
-const expoFieldLogAliases = [
+const expoFirebaseGoogleAliases = [
   {
     from: "FIREBASE_API_KEY",
     to: "EXPO_PUBLIC_FIREBASE_API_KEY",
@@ -85,8 +85,8 @@ const expoFieldLogAliases = [
   },
 ] as const satisfies readonly EnvironmentAlias[];
 
-const fieldLogExpoAliases = [
-  ...expoFieldLogAliases,
+const mobileExpoAliases = [
+  ...expoFirebaseGoogleAliases,
   ...expoClerkAliases,
   ...expoLoggingAliases,
 ] as const satisfies readonly EnvironmentAlias[];
@@ -156,35 +156,35 @@ export const commandSecrets = {
   mobile: {
     start: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
     build: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
     "build:preview": {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       environmentSlug: "preview",
       paths: [mobileSecretPath],
     },
     "build:prod": {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       environmentSlug: "prod",
       paths: [mobileSecretPath],
     },
     "fastlane:build:preview": {
       allowServerSecrets: true,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       environmentSlug: "preview",
       paths: [fastlaneToolsSecretPath, mobileSecretPath],
     },
     "fastlane:build:prod": {
       allowServerSecrets: true,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       environmentSlug: "prod",
       paths: [fastlaneToolsSecretPath, mobileSecretPath],
     },
@@ -195,38 +195,38 @@ export const commandSecrets = {
     },
     "fastlane:release:prod": {
       allowServerSecrets: true,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       environmentSlug: "prod",
       paths: [fastlaneToolsSecretPath, mobileSecretPath],
     },
     dev: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
     android: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
     ios: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
     web: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
     test: {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
     "test:watch": {
       allowServerSecrets: false,
-      envAliases: fieldLogExpoAliases,
+      envAliases: mobileExpoAliases,
       paths: [mobileSecretPath],
     },
   },

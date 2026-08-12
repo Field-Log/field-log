@@ -427,7 +427,7 @@ describe("transports", () => {
     await transport.log({
       app: "web",
       attributes: {
-        apiBaseUrl: "https://pr-27-field-log-api-preview.example.test",
+        apiBaseUrl: "https://pr-27-pocket-trash-api-preview.example.test",
         pullRequestId: "27",
       },
       console: {
@@ -443,7 +443,7 @@ describe("transports", () => {
     expect(JSON.parse(String(writer.log.mock.calls[0]?.[0]))).toEqual({
       app: "web",
       attributes: {
-        apiBaseUrl: "https://pr-27-field-log-api-preview.example.test",
+        apiBaseUrl: "https://pr-27-pocket-trash-api-preview.example.test",
         pullRequestId: "27",
       },
       environment: "preview",

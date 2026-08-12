@@ -10,7 +10,7 @@ export function createApiDocsRouter() {
   router.get(
     apiDocsRoutePath,
     Scalar({
-      pageTitle: "Field Log API Reference",
+      pageTitle: "Pocket Trash API Reference",
       url: openApiJsonPath,
     }),
   );

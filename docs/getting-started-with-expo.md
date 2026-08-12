@@ -29,8 +29,8 @@ The app uses Clerk through `@clerk/expo` and stores tokens with
 ```
 
 Configure Google OAuth in Clerk for the iOS bundle identifier
-`com.dsabh.fieldlog`, the Android package `com.dsabh.fieldlog`, and the mobile
-redirect scheme `fieldlog`.
+`com.dsabh.pockettrash`, the Android package `com.dsabh.pockettrash`, and the mobile
+redirect scheme `pockettrash`.
 
 ## iOS Setup
 
@@ -145,7 +145,7 @@ Apple Silicon system image and create an AVD:
 
 ```sh
 sdkmanager "system-images;android-36.1;google_apis;arm64-v8a"
-avdmanager create avd --name field-log-pixel --package "system-images;android-36.1;google_apis;arm64-v8a" --device "pixel_9"
+avdmanager create avd --name pocket-trash-pixel --package "system-images;android-36.1;google_apis;arm64-v8a" --device "pixel_9"
 ```
 
 You can also create an emulator from Android Studio > More Actions > Virtual
@@ -193,7 +193,7 @@ If the error persists, uninstall the old simulator app, then rebuild and launch
 the development client again:
 
 ```sh
-xcrun simctl uninstall booted com.dsabh.fieldlog
+xcrun simctl uninstall booted com.dsabh.pockettrash
 pnpm dev:ios:no-api
 pnpm dev:ios
 ```

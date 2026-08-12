@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "field-log-api",
+  "name": "pocket-trash-api",
   "main": "src/worker.ts",
   "compatibility_date": "2026-07-07",
   "compatibility_flags": ["nodejs_compat"],
@@ -23,7 +23,7 @@
   },
   "routes": [
     {
-      "pattern": "api.field-log.app",
+      "pattern": "api.pocket-trash.app",
       "custom_domain": true
     }
   ],
@@ -35,7 +35,7 @@
   },
   "env": {
     "preview": {
-      "name": "field-log-api-preview",
+      "name": "pocket-trash-api-preview",
       "preview_urls": true,
       "routes": [],
       "workers_dev": false,

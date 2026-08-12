@@ -195,7 +195,7 @@ Use Tailwind v4 CSS-first tokens. The app must apply `.dark` on the document roo
 - Opens over a dark scrim with blur.
 - Uses segmented controls for theme (`Light`, `Dark`, `System`), dimensions, and weight; select menu for currency.
 - Gear button rotates when drawer is open.
-- Theme mode persists in `localStorage` under `field-log.theme`; units and weight persist under `field-log.settings`; currency persists separately.
+- Theme mode persists in `localStorage` under `pocket-trash.theme`; units and weight persist under `pocket-trash.settings`; currency persists separately.
 
 ### Lightbox
 - Full-screen dialog with dark blurred overlay.
@@ -215,7 +215,7 @@ Use Tailwind v4 CSS-first tokens. The app must apply `.dark` on the document roo
 - **Hover States:** Accent border/color is the standard hover affordance for cards, chips, buttons, links, and controls.
 - **Search:** Debounced at `150ms`; multi-token AND search across title, tags, price, and body text.
 - **Sorting:** Supports date, price, weight, diameter, and title.
-- **Persistence:** Theme mode (`light`, `dark`, `system`) persists as `field-log.theme`; units, weight, currency, and desktop filter collapsed state persist locally.
+- **Persistence:** Theme mode (`light`, `dark`, `system`) persists as `pocket-trash.theme`; units, weight, currency, and desktop filter collapsed state persist locally.
 
 ## 6. Content & Data Rules
 - **Catalog Model:** Products are pens or accessories with titles, dates, price range, archived state, specs, local images, body text, and tag arrays.
