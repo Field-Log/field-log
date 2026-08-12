@@ -25,8 +25,8 @@ permissions:
 env:
   API_PREVIEW_COMMENT_MARKER: "<!-- field-log-api-preview-app -->"
   DB_PREVIEW_COMMENT_MARKER: "<!-- field-log-db-preview -->"
-  RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME: "field-log (preview)"
-  RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME: "field-log"
+  RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME: "pocket-trash (preview)"
+  RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME: "pocket-trash"
   RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME: "scraper-queue"
 
 jobs:
@@ -300,7 +300,7 @@ jobs:
 
           printf '::add-mask::%s\n' "$DATABASE_URL"
 
-          railway_environment="field-log-pr-${PR_NUMBER}"
+          railway_environment="pocket-trash-pr-${PR_NUMBER}"
           if [[ "$DB_CHANGING" == "true" ]]; then
             image_folder_prefix="preview/pr-${PR_NUMBER}"
             scraper_cron_enabled="true"
@@ -420,7 +420,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          railway_environment="field-log-pr-${PR_NUMBER}"
+          railway_environment="pocket-trash-pr-${PR_NUMBER}"
 
           jq -cn \
             --arg app "ci" \
