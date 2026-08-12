@@ -544,18 +544,26 @@ async function ensureAutmogMaker(db: Database) {
   const [maker] = await db
     .insert(schema.makers)
     .values(autmogMaker)
-    .onConflictDoUpdate({
-      set: {
-        name: autmogMaker.name,
-        updatedAt: new Date(),
-      },
+    .onConflictDoNothing({
       target: schema.makers.rootUrl,
     })
     .returning();
 
-  if (!maker) {
+  const row = maker ?? (await getMakerByRootUrl(db, autmogMaker.rootUrl));
+
+  if (!row) {
     throw new Error("Failed to ensure Autmog maker.");
   }
+
+  return row;
+}
+
+async function getMakerByRootUrl(db: Database, rootUrl: string) {
+  const [maker] = await db
+    .select()
+    .from(schema.makers)
+    .where(eq(schema.makers.rootUrl, rootUrl))
+    .limit(1);
 
   return maker;
 }
