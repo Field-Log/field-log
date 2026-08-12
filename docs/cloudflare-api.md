@@ -256,6 +256,8 @@ Pull requests:
   later PR updates no longer contain DB changes.
 - Creates or reuses an isolated Neon branch named `preview-pr-<number>` only for
   DB-changing PRs before committed Drizzle migrations are applied.
+- Sets or refreshes `preview-pr-*` branch expiration, defaulting to 14 days via
+  `NEON_PREVIEW_BRANCH_EXPIRES_DAYS`.
 - Blocks DB-isolated preview creation instead of falling back to the shared
   `preview` branch when the Neon project is at the configured branch limit and no
   existing PR branch can be reused.
@@ -284,7 +286,8 @@ Pull requests:
   `closed` pull request without path filters.
 - The cleanup workflow marks the preview comments inactive, deletes
   `preview-pr-<number>`, and removes branch-specific Vercel `DATABASE_URL` when
-  the pull request closes.
+  the pull request closes. Neon branch expiration remains a backup cleanup path
+  for stale `preview-pr-*` branches if the close cleanup is missed.
 
 Release tags:
 
@@ -387,9 +390,11 @@ existed, redeploy that Vercel preview after the pull request exists so
 For DB-changing PRs, the API deploy workflow also creates or replaces a
 branch-specific Vercel Preview `DATABASE_URL` scoped to the PR Git branch. That
 override points the web preview server runtime at the matching
-`preview-pr-<number>` Neon branch. The workflow also applies the image preview folder namespace from
-[Image CDN](./image-cdn.md). When DB changes are
-removed or the PR closes, the workflow removes the branch-specific
+`preview-pr-<number>` Neon branch. The workflow sets or refreshes the Neon branch
+expiration when it creates or reuses that PR branch, so branch expiration backs
+up the PR-close cleanup workflow. The workflow also applies the image preview
+folder namespace from [Image CDN](./image-cdn.md). When DB changes are removed or
+the PR closes, the workflow removes the branch-specific
 `DATABASE_URL` so the web preview falls back to the shared Preview
 `DATABASE_URL`, which should point at Neon `preview`; PR close also removes the
 branch-specific image folder prefix. The Cloudflare preview Worker always uses

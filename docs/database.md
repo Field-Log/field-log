@@ -205,8 +205,11 @@ a PR with schema changes, generate committed migrations with `pnpm db:generate`.
 PR branches are disposable, but DB-changing PR updates reuse the existing
 `preview-pr-<number>` branch when it already exists. The API deploy workflow
 creates the branch from `production` only when missing, so the preview branch is
-data-backed from production at branch creation time. It then runs committed
-migrations against it, deploys the API preview with that `DATABASE_URL`, and sets a
+data-backed from production at branch creation time. Isolated PR branches get a
+Neon expiration timestamp, defaulting to 14 days and configurable with
+`NEON_PREVIEW_BRANCH_EXPIRES_DAYS`. Reused PR branches have that expiration
+refreshed on each DB-changing deploy. It then runs committed migrations against
+the branch, deploys the API preview with that `DATABASE_URL`, and sets a
 branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
 same selected `DATABASE_URL` is also pushed into the Railway scraper preview
 environment so scraper cron executions use the same database branch as the API
@@ -218,7 +221,9 @@ managed by Infisical Secrets Sync; the workflow does not write PR-specific
 When a PR has no DB changes, the API preview uses the shared `preview` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch
 database overrides. The Railway scraper preview environment is updated to the
-selected shared `preview` `DATABASE_URL` in that case.
+selected shared `preview` `DATABASE_URL` in that case. The close workflow remains
+the primary cleanup path; Neon branch expiration is the backup path when a close
+event or cleanup run is missed.
 
 ## Parallel DB PRs
 
