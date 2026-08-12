@@ -4,7 +4,10 @@ import {
   type LogEvent,
   loggerValues,
 } from "@package/logger";
-import type { FeatureFlagsService } from "@package/services";
+import type {
+  FeatureFlagsService,
+  UserSettingsService,
+} from "@package/services";
 import { describe, expect, it, vi } from "vitest";
 import app, { createApp } from "./app.js";
 import { apiDocsPath, openApiJsonPath } from "./openapi.js";
@@ -44,6 +47,7 @@ describe("api", () => {
     expect(document.paths["/api/v0/health"]).toBeDefined();
     expect(document.paths["/api/v0/feature-flags/beta"]).toBeDefined();
     expect(document.paths["/api/v0/logs"]).toBeDefined();
+    expect(document.paths["/api/v0/user/settings"]).toBeDefined();
   });
 
   it("serves the Scalar API reference", async () => {
@@ -430,6 +434,92 @@ describe("api", () => {
     expect(response.status).toBe(400);
     expect(evaluateMany).not.toHaveBeenCalled();
   });
+
+  it("returns default user settings for authenticated users without saved settings", async () => {
+    const userSettings = createUserSettingsServiceMock({
+      getByClerkId: async () => null,
+    });
+    const testApp = createApp({
+      getUserSettingsAuth: () => ({ clerkId: "user_123" }),
+      getUserSettingsService: () => userSettings,
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/api/v0/user/settings");
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      theme: "system",
+      weightUnit: "g",
+    });
+  });
+
+  it("requires auth for user settings routes", async () => {
+    const testApp = createApp({
+      getUserSettingsAuth: () => null,
+      getUserSettingsService: () => createUserSettingsServiceMock(),
+      logger: createNoopLogger(),
+    });
+
+    await expect(
+      testApp.request("/api/v0/user/settings"),
+    ).resolves.toMatchObject({ status: 401 });
+  });
+
+  it("patches user settings for authenticated users", async () => {
+    const patchForClerkId = vi.fn(async () => ({
+      currencyCode: "CAD" as const,
+      dimensionUnit: "mm" as const,
+      theme: "system" as const,
+      userId: 1000,
+      weightUnit: "oz" as const,
+    }));
+    const testApp = createApp({
+      getUserSettingsAuth: () => ({ clerkId: "user_123" }),
+      getUserSettingsService: () =>
+        createUserSettingsServiceMock({ patchForClerkId }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/api/v0/user/settings", {
+      body: JSON.stringify({ currencyCode: "CAD", theme: "system" }),
+      method: "PATCH",
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      currencyCode: "CAD",
+      dimensionUnit: "mm",
+      theme: "system",
+      weightUnit: "oz",
+    });
+    expect(patchForClerkId).toHaveBeenCalledWith("user_123", {
+      currencyCode: "CAD",
+      theme: "system",
+    });
+  });
+
+  it("rejects invalid user settings patch bodies", async () => {
+    const patchForClerkId = vi.fn(async () => {
+      throw new Error("Should not patch.");
+    });
+    const testApp = createApp({
+      getUserSettingsAuth: () => ({ clerkId: "user_123" }),
+      getUserSettingsService: () =>
+        createUserSettingsServiceMock({ patchForClerkId }),
+      logger: createNoopLogger(),
+    });
+
+    const response = await testApp.request("/api/v0/user/settings", {
+      body: JSON.stringify({ theme: "dim" }),
+      method: "PATCH",
+    });
+
+    expect(response.status).toBe(400);
+    expect(patchForClerkId).not.toHaveBeenCalled();
+  });
 });
 
 function createFeatureFlagsServiceMock(
@@ -450,6 +540,35 @@ function createFeatureFlagsServiceMock(
     update: async () => {
       throw new Error("Not implemented.");
     },
+    ...overrides,
+  };
+}
+
+function createUserSettingsServiceMock(
+  overrides: Partial<UserSettingsService> = {},
+): UserSettingsService {
+  return {
+    getByClerkId: async () => ({
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      theme: "system",
+      userId: 1000,
+      weightUnit: "g",
+    }),
+    patchForClerkId: async () => ({
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      theme: "system",
+      userId: 1000,
+      weightUnit: "g",
+    }),
+    upsertForClerkId: async () => ({
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      theme: "system",
+      userId: 1000,
+      weightUnit: "g",
+    }),
     ...overrides,
   };
 }

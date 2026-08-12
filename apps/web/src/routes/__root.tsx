@@ -6,12 +6,23 @@ import {
 } from "@tanstack/react-router";
 import type * as React from "react";
 import { SITE_NAME } from "@/lib/constants";
+import type { ThemeBootstrapState } from "@/lib/theme-bootstrap";
+import { resolveServerThemeBootstrap } from "@/lib/theme-bootstrap";
+import { getCurrentUserSettingsState } from "@/lib/user-settings";
 import { NotFoundPage } from "@/pages/not-found-page";
 import { AppProviders } from "@/providers/app-providers";
 import "../styles.css";
 
 export const Route = createRootRoute({
   component: RootDocument,
+  loader: async () => {
+    const settingsState = await getCurrentUserSettingsState();
+
+    return {
+      settingsState,
+      themeBootstrap: resolveServerThemeBootstrap(settingsState),
+    };
+  },
   notFoundComponent: RootNotFoundDocument,
   head: () => ({
     meta: [
@@ -30,27 +41,29 @@ export const Route = createRootRoute({
 });
 
 function RootDocument({ children }: { children?: React.ReactNode }) {
+  const loaderData = Route.useLoaderData();
+  const themeBootstrap = loaderData?.themeBootstrap ?? {
+    serverTheme: null,
+    shouldUseServerTheme: false,
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-(() => {
-  try {
-    const theme = localStorage.getItem("field-log.theme") || "system";
-    const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-    document.documentElement.classList.toggle("dark", dark);
-  } catch {}
-})();
-`,
+            __html: themeBootstrapScript(themeBootstrap),
           }}
         />
       </head>
       <body>
         <div className="root">
-          <AppProviders>{children ?? <Outlet />}</AppProviders>
+          <AppProviders
+            initialSettingsState={loaderData?.settingsState ?? null}
+          >
+            {children ?? <Outlet />}
+          </AppProviders>
         </div>
         <Scripts />
       </body>
@@ -64,4 +77,20 @@ function RootNotFoundDocument() {
       <NotFoundPage />
     </RootDocument>
   );
+}
+
+function themeBootstrapScript(themeBootstrap: ThemeBootstrapState) {
+  return `
+(() => {
+  try {
+    const serverTheme = ${JSON.stringify(themeBootstrap.serverTheme)};
+    const shouldUseServerTheme = ${JSON.stringify(themeBootstrap.shouldUseServerTheme)};
+    const theme = shouldUseServerTheme
+      ? serverTheme
+      : localStorage.getItem("field-log.theme") || "system";
+    const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.classList.toggle("dark", dark);
+  } catch {}
+})();
+`;
 }

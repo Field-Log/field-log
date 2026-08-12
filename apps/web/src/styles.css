@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@clerk/ui/themes/shadcn.css";
+@import "sonner/dist/styles.css";
 @import "@package/theme/tailwind.css";
 
 * {

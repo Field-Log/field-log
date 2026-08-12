@@ -14,3 +14,4 @@ API documentation for Field Log services.
 - [POST /api/v0/feature-flags/evaluate](api/v0/feature-flags/evaluate.md)
 - [GET /api/v0/health](api/v0/health.md)
 - [POST /api/v0/logs](api/v0/logs.md)
+- [GET, PATCH /api/v0/user/settings](api/v0/user/settings.md)

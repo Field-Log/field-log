@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -107,20 +108,22 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         className="w-64"
         side={compact ? "bottom" : "top"}
       >
-        <DropdownMenuLabel className="flex items-center gap-3">
-          <Avatar size="sm">
-            <AvatarImage alt={username} src={user.imageUrl} />
-            <AvatarFallback>{initialsFor(username)}</AvatarFallback>
-          </Avatar>
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-medium">
-              {username}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex items-center gap-3">
+            <Avatar size="sm">
+              <AvatarImage alt={username} src={user.imageUrl} />
+              <AvatarFallback>{initialsFor(username)}</AvatarFallback>
+            </Avatar>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium">
+                {username}
+              </span>
+              <span className="block truncate text-xs font-normal text-muted-foreground">
+                {user.primaryEmailAddress?.emailAddress}
+              </span>
             </span>
-            <span className="block truncate text-xs font-normal text-muted-foreground">
-              {user.primaryEmailAddress?.emailAddress}
-            </span>
-          </span>
-        </DropdownMenuLabel>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<Link to="/user/account" />}>
           <User />

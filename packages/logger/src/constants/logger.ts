@@ -56,6 +56,7 @@ export const loggerMessages = {
     },
     userSettings: {
       getByClerkId: "database.userSettings.getByClerkId",
+      patchForClerkId: "database.userSettings.patchForClerkId",
       upsertForClerkId: "database.userSettings.upsertForClerkId",
     },
     users: {
@@ -77,6 +78,8 @@ export const loggerMessages = {
     exportFailed: "mobile.export.failed",
     featureFlagsFetchFailed: "mobile.featureFlags.fetch.failed",
     screenViewed: "mobile.screen.viewed",
+    userSettingsFetchFailed: "mobile.userSettings.fetch.failed",
+    userSettingsSaveFailed: "mobile.userSettings.save.failed",
     syncUploadFailed: "mobile.sync.upload.failed",
     versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",
     versionPolicyStoreOpenFailed: "mobile.versionPolicy.storeOpen.failed",
@@ -158,6 +161,8 @@ export const loggerMessages = {
     accountLoaded: "web.account.loaded",
     fxRatesFetchFailed: "web.fxRates.fetch.failed",
     previewApiDerived: "web.previewApi.derived",
+    userSettingsFetchFailed: "web.userSettings.fetch.failed",
+    userSettingsSaveFailed: "web.userSettings.save.failed",
   },
 } as const;
 

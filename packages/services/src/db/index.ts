@@ -2,6 +2,8 @@ import type { Database } from "@package/database";
 import type { Logger } from "@package/logger";
 import {
   createUserSettingsService,
+  defaultUserSettings,
+  type UpsertUserSettingsInput,
   type UserSettingsService,
 } from "./user-settings/index.js";
 import { createUsersService, type UsersService } from "./users/index.js";
@@ -19,3 +21,6 @@ export function createDbServices(db: Database, logger: Logger): DbServices {
     users,
   };
 }
+
+export type { UpsertUserSettingsInput, UserSettingsService };
+export { defaultUserSettings };

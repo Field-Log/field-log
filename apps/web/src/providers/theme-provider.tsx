@@ -1,27 +1,54 @@
+import { loggerMessages } from "@package/logger";
 import * as React from "react";
+import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import {
   applyTheme,
   isThemeMode,
   type ThemeMode,
   themeStorageKey,
 } from "@/lib/theme";
+import { resolveThemeBootstrap } from "@/lib/theme-bootstrap";
+import {
+  getCurrentUserSettingsState,
+  patchCurrentUserSettings,
+  type UserSettingsState,
+  userSettingsSaveFailureMessage,
+} from "@/lib/user-settings";
 
 type ThemeProviderValue = {
+  saving: boolean;
   setTheme: (theme: ThemeMode) => void;
   theme: ThemeMode;
 };
 
 const ThemeContext = React.createContext<ThemeProviderValue | null>(null);
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? React.useEffect : React.useLayoutEffect;
 
-function readTheme(): ThemeMode {
+function readTheme(initialSettingsState: UserSettingsState | null): ThemeMode {
+  if (initialSettingsState?.hasSavedSettings) {
+    return initialSettingsState.settings.theme;
+  }
+
   if (typeof window === "undefined") return "system";
 
   const stored = window.localStorage.getItem(themeStorageKey);
   return isThemeMode(stored) ? stored : "system";
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<ThemeMode>(readTheme);
+export function ThemeProvider({
+  children,
+  initialSettingsState,
+}: {
+  children: React.ReactNode;
+  initialSettingsState: UserSettingsState | null;
+}) {
+  const [theme, setThemeState] = React.useState<ThemeMode>(() =>
+    readTheme(initialSettingsState),
+  );
+  const [saving, setSaving] = React.useState(false);
+  const mutationVersionRef = React.useRef(0);
 
   React.useEffect(() => {
     applyTheme(theme);
@@ -34,18 +61,124 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => media.removeEventListener("change", onChange);
   }, [theme]);
 
-  const setTheme = React.useCallback((nextTheme: ThemeMode) => {
-    setThemeState(nextTheme);
-    window.localStorage.setItem(themeStorageKey, nextTheme);
-    applyTheme(nextTheme);
-  }, []);
+  useIsomorphicLayoutEffect(() => {
+    if (!initialSettingsState) return;
+
+    const stored = window.localStorage.getItem(themeStorageKey);
+    const localTheme = isThemeMode(stored) ? stored : null;
+    const next = resolveThemeBootstrap(initialSettingsState, localTheme);
+
+    setThemeState(next.theme);
+    window.localStorage.setItem(themeStorageKey, next.theme);
+    applyTheme(next.theme);
+  }, [initialSettingsState]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const requestVersion = mutationVersionRef.current;
+
+    if (initialSettingsState) {
+      const stored = window.localStorage.getItem(themeStorageKey);
+      const localTheme = isThemeMode(stored) ? stored : null;
+      const next = resolveThemeBootstrap(initialSettingsState, localTheme);
+
+      if (next.shouldPersist) {
+        patchCurrentUserSettings({ data: { theme: next.theme } }).catch(
+          (error: unknown) => {
+            logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+            toast.error(userSettingsSaveFailureMessage);
+          },
+        );
+      }
+
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    getCurrentUserSettingsState()
+      .then((settingsState) => {
+        if (
+          cancelled ||
+          !settingsState ||
+          requestVersion !== mutationVersionRef.current
+        ) {
+          return;
+        }
+
+        const stored = window.localStorage.getItem(themeStorageKey);
+        const localTheme = isThemeMode(stored) ? stored : null;
+        const next = resolveThemeBootstrap(settingsState, localTheme);
+
+        setThemeState(next.theme);
+        window.localStorage.setItem(themeStorageKey, next.theme);
+        applyTheme(next.theme);
+
+        if (!next.shouldPersist) return;
+
+        patchCurrentUserSettings({ data: { theme: next.theme } }).catch(
+          (error: unknown) => {
+            logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+            toast.error(userSettingsSaveFailureMessage);
+          },
+        );
+      })
+      .catch((error: unknown) => {
+        logger.warn(loggerMessages.web.userSettingsFetchFailed, { error });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialSettingsState]);
+
+  const setTheme = React.useCallback(
+    (nextTheme: ThemeMode) => {
+      const previousTheme = theme;
+      const mutationVersion = mutationVersionRef.current + 1;
+      mutationVersionRef.current = mutationVersion;
+
+      setThemeState(nextTheme);
+      window.localStorage.setItem(themeStorageKey, nextTheme);
+      applyTheme(nextTheme);
+
+      setSaving(true);
+      patchCurrentUserSettings({ data: { theme: nextTheme } })
+        .then((settings) => {
+          if (!settings || mutationVersion !== mutationVersionRef.current) {
+            return;
+          }
+
+          setThemeState(settings.theme);
+          window.localStorage.setItem(themeStorageKey, settings.theme);
+          applyTheme(settings.theme);
+        })
+        .catch((error: unknown) => {
+          logger.warn(loggerMessages.web.userSettingsSaveFailed, { error });
+
+          if (mutationVersion !== mutationVersionRef.current) return;
+
+          setThemeState(previousTheme);
+          window.localStorage.setItem(themeStorageKey, previousTheme);
+          applyTheme(previousTheme);
+          toast.error(userSettingsSaveFailureMessage);
+        })
+        .finally(() => {
+          if (mutationVersion === mutationVersionRef.current) {
+            setSaving(false);
+          }
+        });
+    },
+    [theme],
+  );
 
   const value = React.useMemo(
     () => ({
+      saving,
       setTheme,
       theme,
     }),
-    [setTheme, theme],
+    [saving, setTheme, theme],
   );
 
   return (

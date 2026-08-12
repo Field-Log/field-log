@@ -19,12 +19,25 @@ export type UpsertUserSettingsInput = {
   weightUnit: WeightUnit;
 };
 
+export type PatchUserSettingsInput = Partial<UpsertUserSettingsInput>;
+
 export type UserSettingsService = {
   getByClerkId(clerkId: string): Promise<UserSettings | null>;
+  patchForClerkId(
+    clerkId: string,
+    settings: PatchUserSettingsInput,
+  ): Promise<UserSettings>;
   upsertForClerkId(
     clerkId: string,
     settings: UpsertUserSettingsInput,
   ): Promise<UserSettings>;
+};
+
+export const defaultUserSettings: UpsertUserSettingsInput = {
+  currencyCode: "USD",
+  dimensionUnit: "in",
+  theme: "system",
+  weightUnit: "g",
 };
 
 export function createUserSettingsService(
@@ -58,6 +71,57 @@ export function createUserSettingsService(
         {
           attributes: {
             clerkIdHash: hashLogIdentifier(clerkId),
+          },
+        },
+      );
+    },
+    async patchForClerkId(clerkId, settings) {
+      return await logger.operation(
+        loggerMessages.database.userSettings.patchForClerkId,
+        async () => {
+          const existing = await this.getByClerkId(clerkId);
+          const mergedSettings: UpsertUserSettingsInput = {
+            currencyCode:
+              settings.currencyCode ??
+              existing?.currencyCode ??
+              defaultUserSettings.currencyCode,
+            dimensionUnit:
+              settings.dimensionUnit ??
+              existing?.dimensionUnit ??
+              defaultUserSettings.dimensionUnit,
+            theme:
+              settings.theme ?? existing?.theme ?? defaultUserSettings.theme,
+            weightUnit:
+              settings.weightUnit ??
+              existing?.weightUnit ??
+              defaultUserSettings.weightUnit,
+          };
+
+          const user = await usersService.ensure({ clerkId });
+
+          const [userSettings] = await db
+            .insert(schema.userSettings)
+            .values({
+              ...mergedSettings,
+              userId: user.id,
+            })
+            .onConflictDoUpdate({
+              set: mergedSettings,
+              target: schema.userSettings.userId,
+            })
+            .returning();
+
+          if (!userSettings) {
+            throw new Error("Failed to patch user settings.");
+          }
+
+          return userSettings;
+        },
+        {
+          attributes: {
+            clerkIdHash: hashLogIdentifier(clerkId),
+            settingKeys: Object.keys(settings),
+            settings,
           },
         },
       );

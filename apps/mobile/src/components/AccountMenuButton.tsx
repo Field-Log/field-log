@@ -13,6 +13,7 @@ import {
 import { type MainTabParamList } from "../navigation/types";
 import { AccountProfileModal } from "./AccountProfileModal";
 import { BetaFeaturesModal } from "./BetaFeaturesModal";
+import { UserSettingsModal } from "./UserSettingsModal";
 
 type AccountMenuButtonProps = {
   tabBarButtonProps?: BottomTabBarButtonProps;
@@ -27,6 +28,7 @@ export function AccountMenuButton({
   const [menuOpen, setMenuOpen] = useState(false);
   const [betaFeaturesOpen, setBetaFeaturesOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const username = clerkUser?.username ?? clerkUser?.fullName ?? "User";
   const email = clerkUser?.primaryEmailAddress?.emailAddress;
@@ -138,6 +140,13 @@ export function AccountMenuButton({
                   setBetaFeaturesOpen(true);
                 }}
               />
+              <MenuItem
+                label="Settings"
+                onPress={() => {
+                  closeMenu();
+                  setSettingsOpen(true);
+                }}
+              />
               <View className="h-px bg-border" />
               <MenuItem label="Sign out" onPress={handleSignOut} />
             </View>
@@ -152,6 +161,10 @@ export function AccountMenuButton({
       <BetaFeaturesModal
         onClose={() => setBetaFeaturesOpen(false)}
         visible={betaFeaturesOpen}
+      />
+      <UserSettingsModal
+        onClose={() => setSettingsOpen(false)}
+        visible={settingsOpen}
       />
     </>
   );

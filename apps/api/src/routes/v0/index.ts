@@ -6,6 +6,7 @@ import { createHealthRouter } from "./health/index.js";
 import { createLogsRouter } from "./logs/index.js";
 import { createMobileVersionRouter } from "./mobile-version/index.js";
 import { createOpenApiRouter, getOpenApiDocument } from "./openapi/index.js";
+import { createUserSettingsRouter } from "./user/settings/index.js";
 
 export const apiV0Prefix = "/api/v0";
 
@@ -16,6 +17,7 @@ export function createApiV0Router(dependencies: AppDependencies = {}) {
   router.route("/", createFeatureFlagsRouter(dependencies));
   router.route("/", createLogsRouter(dependencies));
   router.route("/", createMobileVersionRouter(dependencies));
+  router.route("/", createUserSettingsRouter(dependencies));
 
   return router;
 }
