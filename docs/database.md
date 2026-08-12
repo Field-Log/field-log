@@ -205,8 +205,11 @@ a PR with schema changes, generate committed migrations with `pnpm db:generate`.
 PR branches are disposable, but DB-changing PR updates reuse the existing
 `preview-pr-<number>` branch when it already exists. The API deploy workflow
 creates the branch from `production` only when missing, so the preview branch is
-data-backed from production at branch creation time. It then runs committed
-migrations against it, deploys the API preview with that `DATABASE_URL`, and sets a
+data-backed from production at branch creation time. Isolated PR branches get a
+Neon expiration timestamp, defaulting to 14 days and configurable with
+`NEON_PREVIEW_BRANCH_EXPIRES_DAYS`. Reused PR branches have that expiration
+refreshed on each DB-changing deploy. It then runs committed migrations against
+the branch, deploys the API preview with that `DATABASE_URL`, and sets a
 branch-specific Vercel Preview `DATABASE_URL` for the web preview branch. The
 same selected `DATABASE_URL` is also pushed into the Railway scraper preview
 environment so scraper cron executions use the same database branch as the API
@@ -218,7 +221,62 @@ managed by Infisical Secrets Sync; the workflow does not write PR-specific
 When a PR has no DB changes, the API preview uses the shared `preview` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch
 database overrides. The Railway scraper preview environment is updated to the
-selected shared `preview` `DATABASE_URL` in that case.
+selected shared `preview` `DATABASE_URL` in that case. The close workflow remains
+the primary cleanup path; Neon branch expiration is the backup path when a close
+event or cleanup run is missed.
+
+ENG-69 operational status: this repo change adds the backup expiration path, but
+`preview-pr-63` was not deleted from this worktree. The blocker is that Neon
+branch cleanup uses GitHub-synced `NEON_API_KEY` and `NEON_PROJECT_ID` secrets
+available to deploy/cleanup workflows, not committed repo configuration. Run the
+`API Preview Cleanup` workflow for PR 63 or run
+`.github/scripts/neon-database-branch.sh cleanup-preview` with `PR_NUMBER=63`
+and the Neon secrets loaded.
+
+## Neon Compute Caps
+
+Compute cap changes are operational Neon API or Console changes, not repo
+configuration. Editing compute size or autoscaling limits restarts the endpoint,
+so production changes need a low-risk execution window.
+
+Use these targets unless current Neon metrics show they are too small:
+
+| Branch class | Autoscaling min CU | Autoscaling max CU | Scale to zero |
+| --- | ---: | ---: | --- |
+| `preview-pr-*` | `0.25` | `0.5` | enabled |
+| `preview` | `0.25` | `0.5` | enabled |
+| `dev-*` | `0.25` | `0.5` | enabled |
+| `production` | `0.25` | `2` | keep current setting unless changed deliberately |
+
+Production rollback value: restore the previous production max CU, currently
+`8`, if API p95 latency or API error rate regresses for two consecutive
+15-minute windows after the resize, or if scraper duration/failure rate regresses
+during the next scheduled scraper run. Use Neon CPU, IO, and cache metrics only
+to confirm cause when API or scraper signals regress.
+
+ENG-70 operational status: this repo does not manage Neon endpoint sizes as code,
+so the production max CU was not changed in git. No Neon metrics export is
+committed here to justify retaining the current production cap. Execute the
+resize through Neon during a low-risk window, then keep the previous cap `8` as
+the rollback value for the monitoring window above.
+
+Resize endpoint API shape:
+
+```json
+{
+  "endpoint": {
+    "autoscaling_limit_min_cu": 0.25,
+    "autoscaling_limit_max_cu": 0.5
+  }
+}
+```
+
+## Scraper Run Retention
+
+`scraper_runs` is operational history, not product data. The scraper prunes
+rows older than 14 days when a real logged scraper command starts. Empty queue
+processor cron ticks skip before creating a `scraper_runs` row, so idle cron
+polling does not grow the table.
 
 ## Parallel DB PRs
 

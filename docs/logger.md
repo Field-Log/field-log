@@ -214,7 +214,7 @@ Current CI event namespaces include:
 
 - `ci.database.preview.*`: PR database change detection, shared preview branch
   selection, preview branch creation/recreation/deletion, branch-limit blocking,
-  preview refresh, and preview migration completion.
+  preview branch expiration, preview refresh, and preview migration completion.
 - `ci.database.production.*`: production database selection and migration
   completion.
 - `ci.github.*`: GitHub-side metadata updates such as the `db-change` label.

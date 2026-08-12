@@ -13,7 +13,12 @@ import {
   runQueueDeadLetterProcessor,
   runQueueProcessor,
 } from "./queue/processor.js";
-import { createScraperQueues, type ScraperQueues } from "./queue/queues.js";
+import {
+  createScraperQueues,
+  getScraperQueueJobCounts,
+  hasActionableQueueJobs,
+  type ScraperQueues,
+} from "./queue/queues.js";
 import { createRedisConnection } from "./queue/redis.js";
 import {
   type GrimsmoSourceName,
@@ -226,6 +231,20 @@ export async function runQueueProcessorJob({
   env: ScraperJobEnv;
   logger: Logger;
 }) {
+  const queueJobCounts = await getScraperQueueJobCounts(context.queues);
+
+  if (!hasActionableQueueJobs(queueJobCounts)) {
+    logger.info(loggerMessages.scraper.cron.taskSkipped, {
+      attributes: {
+        images: queueJobCounts.images,
+        items: queueJobCounts.items,
+        reason: "empty-queue",
+        task: "process:queue",
+      },
+    });
+    return;
+  }
+
   await runLoggedCommand({
     command: "process:queue",
     db: context.db,

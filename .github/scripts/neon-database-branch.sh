@@ -4,6 +4,7 @@ set -euo pipefail
 
 NEON_API_BASE="${NEON_API_BASE:-https://console.neon.tech/api/v2}"
 MAX_NEON_BRANCHES="${MAX_NEON_BRANCHES:-10}"
+NEON_PREVIEW_BRANCH_EXPIRES_DAYS="${NEON_PREVIEW_BRANCH_EXPIRES_DAYS:-14}"
 PRODUCTION_BRANCH_NAME="${PRODUCTION_BRANCH_NAME:-production}"
 PREVIEW_BRANCH_NAME="${PREVIEW_BRANCH_NAME:-preview}"
 
@@ -101,6 +102,20 @@ branch_names_from_list() {
   jq -r '.branches[].name' <<< "$branches_json"
 }
 
+preview_branch_expires_at() {
+  if ! [[ "$NEON_PREVIEW_BRANCH_EXPIRES_DAYS" =~ ^[0-9]+$ ]] || [[ "$NEON_PREVIEW_BRANCH_EXPIRES_DAYS" -lt 1 || "$NEON_PREVIEW_BRANCH_EXPIRES_DAYS" -gt 30 ]]; then
+    echo "NEON_PREVIEW_BRANCH_EXPIRES_DAYS must be an integer from 1 to 30." >&2
+    exit 1
+  fi
+
+  if date -u -d "+${NEON_PREVIEW_BRANCH_EXPIRES_DAYS} days" +"%Y-%m-%dT%H:%M:%SZ" > /dev/null 2>&1; then
+    date -u -d "+${NEON_PREVIEW_BRANCH_EXPIRES_DAYS} days" +"%Y-%m-%dT%H:%M:%SZ"
+    return
+  fi
+
+  date -u -v+"${NEON_PREVIEW_BRANCH_EXPIRES_DAYS}"d +"%Y-%m-%dT%H:%M:%SZ"
+}
+
 connection_uri() {
   local branch_id="$1"
   local database_name
@@ -193,15 +208,33 @@ delete_branch_if_exists() {
 create_branch_from_parent() {
   local branch_name="$1"
   local parent_branch_id="$2"
+  local expires_at="$3"
 
   local body
   body="$(jq -n \
     --arg name "$branch_name" \
     --arg parent_id "$parent_branch_id" \
-    '{endpoints: [{type: "read_write"}], branch: {name: $name, parent_id: $parent_id}}')"
+    --arg expires_at "$expires_at" \
+    '{endpoints: [{type: "read_write"}], branch: {name: $name, parent_id: $parent_id, expires_at: $expires_at}}')"
 
   api POST "/projects/${NEON_PROJECT_ID}/branches" "$body" > /dev/null
   wait_for_branch_ready "$branch_name"
+}
+
+set_branch_expiration() {
+  local branch_name="$1"
+  local branch_id="$2"
+  local expires_at="$3"
+
+  local body
+  body="$(jq -n --arg expires_at "$expires_at" '{branch: {expires_at: $expires_at}}')"
+
+  api PATCH "/projects/${NEON_PROJECT_ID}/branches/${branch_id}" "$body" > /dev/null
+  emit_ci_log info "ci.database.preview.branch.expiration.set" "$(jq -n \
+    --arg branch_name "$branch_name" \
+    --arg branch_id "$branch_id" \
+    --arg expires_at "$expires_at" \
+    '{branchName: $branch_name, branchId: $branch_id, expiresAt: $expires_at}')"
 }
 
 write_branch_metadata() {
@@ -285,6 +318,9 @@ prepare_preview() {
   fi
 
   write_output isolated true
+  local target_branch_expires_at
+  target_branch_expires_at="$(preview_branch_expires_at)"
+  write_output branch_expires_at "$target_branch_expires_at"
 
   if [[ -z "$target_branch_id" && "$branch_count" -ge "$MAX_NEON_BRANCHES" ]]; then
     write_output can_deploy false
@@ -307,6 +343,7 @@ prepare_preview() {
 
   if [[ -n "$target_branch_id" ]]; then
     local preview_uri
+    set_branch_expiration "$target_branch" "$target_branch_id" "$target_branch_expires_at"
     preview_uri="$(connection_uri "$target_branch_id")"
     write_output can_deploy true
     write_output cleanup_performed false
@@ -341,7 +378,7 @@ prepare_preview() {
   trap cleanup_target_branch_on_error ERR
 
   local created_branch_id
-  created_branch_id="$(create_branch_from_parent "$target_branch" "$production_branch_id")"
+  created_branch_id="$(create_branch_from_parent "$target_branch" "$production_branch_id" "$target_branch_expires_at")"
   local preview_uri
   preview_uri="$(connection_uri "$created_branch_id")"
   cleanup_target_on_error=false

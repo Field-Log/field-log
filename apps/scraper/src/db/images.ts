@@ -57,17 +57,13 @@ export async function ensureTmpProductVariation(
     sourceKey: string;
   },
 ) {
-  const now = new Date();
   const [variation] = await db
     .insert(schema.tmpProductVariations)
     .values({
       productId: input.productId,
       sourceKey: input.sourceKey,
     })
-    .onConflictDoUpdate({
-      set: {
-        updatedAt: now,
-      },
+    .onConflictDoNothing({
       target: [
         schema.tmpProductVariations.productId,
         schema.tmpProductVariations.sourceKey,
@@ -75,13 +71,17 @@ export async function ensureTmpProductVariation(
     })
     .returning();
 
-  if (!variation) {
+  const row =
+    variation ??
+    (await getTmpProductVariation(db, input.productId, input.sourceKey));
+
+  if (!row) {
     throw new Error(
       `Failed to ensure tmp product variation ${input.productId}:${input.sourceKey}.`,
     );
   }
 
-  return variation;
+  return row;
 }
 
 export async function syncTmpImages(
@@ -114,39 +114,24 @@ export async function syncTmpImages(
       existingImage.status === "deleted" ||
       existingImage.status === "pending_delete" ||
       existingImage.status === "upload_failed";
-
-    const values = {
-      altText: image.altText,
-      deletedAt: null,
-      height: image.height,
-      lastSeenAt: input.now,
-      pendingDeleteAt: null,
-      position: image.position,
+    const values = getTmpImageSyncValues({
+      image,
+      now: input.now,
       productId: input.productId,
       productVariationId: input.productVariationId,
-      sourceHash: image.sourceHash,
-      sourceImageId: image.sourceImageId,
-      sourceUrl: image.sourceUrl,
-      status: shouldUpload
-        ? "pending_upload"
-        : (existingImage?.status ?? "pending_upload"),
-      updatedAt: input.now,
-      width: image.width,
-    };
+      shouldUpload,
+      status: existingImage?.status,
+    });
 
     const [row] = existingImage
-      ? await db
-          .update(schema.tmpImages)
-          .set(values)
-          .where(eq(schema.tmpImages.id, existingImage.id))
-          .returning()
-      : await db
-          .insert(schema.tmpImages)
-          .values({
-            ...values,
-            lastSeenAt: input.now,
-          })
-          .returning();
+      ? isTmpImageSyncNoop(existingImage, values)
+        ? [existingImage]
+        : await db
+            .update(schema.tmpImages)
+            .set(values)
+            .where(eq(schema.tmpImages.id, existingImage.id))
+            .returning()
+      : await db.insert(schema.tmpImages).values(values).returning();
 
     if (!row) {
       throw new Error(`Failed to upsert tmp image ${image.sourceUrl}.`);
@@ -311,4 +296,89 @@ function getTmpImagesScopeWhere(
         eq(schema.tmpImages.productId, productId),
         eq(schema.tmpImages.productVariationId, productVariationId),
       );
+}
+
+async function getTmpProductVariation(
+  db: Database,
+  productId: number,
+  sourceKey: string,
+) {
+  const [variation] = await db
+    .select()
+    .from(schema.tmpProductVariations)
+    .where(
+      and(
+        eq(schema.tmpProductVariations.productId, productId),
+        eq(schema.tmpProductVariations.sourceKey, sourceKey),
+      ),
+    )
+    .limit(1);
+
+  return variation;
+}
+
+export function getTmpImageSyncValues({
+  image,
+  now,
+  productId,
+  productVariationId,
+  shouldUpload,
+  status,
+}: {
+  image: TmpImageInput;
+  now: Date;
+  productId: number;
+  productVariationId: number | null;
+  shouldUpload: boolean;
+  status?: string;
+}) {
+  return {
+    altText: image.altText,
+    deletedAt: null,
+    height: image.height,
+    lastSeenAt: now,
+    pendingDeleteAt: null,
+    position: image.position,
+    productId,
+    productVariationId,
+    sourceHash: image.sourceHash,
+    sourceImageId: image.sourceImageId,
+    sourceUrl: image.sourceUrl,
+    status: shouldUpload ? "pending_upload" : (status ?? "pending_upload"),
+    updatedAt: now,
+    width: image.width,
+  };
+}
+
+export function isTmpImageSyncNoop(
+  existingImage: {
+    altText: string | null;
+    deletedAt: Date | null;
+    height: number | null;
+    pendingDeleteAt: Date | null;
+    position: number;
+    productId: number;
+    productVariationId: number | null;
+    sourceHash: string;
+    sourceImageId: string | null;
+    sourceUrl: string;
+    status: string;
+    width: number | null;
+  },
+  values: ReturnType<typeof getTmpImageSyncValues>,
+) {
+  return (
+    existingImage.altText === values.altText &&
+    existingImage.deletedAt === null &&
+    existingImage.height === values.height &&
+    existingImage.pendingDeleteAt === null &&
+    existingImage.position === values.position &&
+    existingImage.productId === values.productId &&
+    existingImage.productVariationId === values.productVariationId &&
+    existingImage.sourceHash === values.sourceHash &&
+    existingImage.sourceImageId === values.sourceImageId &&
+    existingImage.sourceUrl === values.sourceUrl &&
+    existingImage.status === values.status &&
+    existingImage.width === values.width
+  );
 }
