@@ -5,11 +5,11 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/ci-log.sh"
 
 export GITHUB_ACTIONS=true
-export GITHUB_WORKFLOW="API Deploy"
+export GITHUB_WORKFLOW="Deploy"
 export GITHUB_RUN_ID="123"
 export GITHUB_HEAD_REF="feature/test"
 export GITHUB_SHA="abc123"
-export CI_JOB_NAME="API Preview"
+export CI_JOB_NAME="Preview"
 export PR_NUMBER="42"
 unset AXIOM_TOKEN
 unset AXIOM_DATASET
@@ -25,9 +25,9 @@ jq -e '
   .environment == "github-actions" and
   .level == "info" and
   .message == "ci.database.preview.branch.created" and
-  .attributes.workflowName == "API Deploy" and
+  .attributes.workflowName == "Deploy" and
   .attributes.runId == "123" and
-  .attributes.jobName == "API Preview" and
+  .attributes.jobName == "Preview" and
   .attributes.pullRequestNumber == "42" and
   .attributes.gitBranch == "feature/test" and
   .attributes.commitSha == "abc123" and

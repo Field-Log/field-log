@@ -1,14 +1,13 @@
-name: API Deploy
+name: Deploy
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - apps/api/**
       - apps/scraper/**
       - packages/**
       - .github/scripts/**
-      - .github/workflows/api-deploy.yml
+      - .github/workflows/deploy.yml
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
@@ -23,7 +22,6 @@ permissions:
   contents: read
 
 env:
-  API_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-api-preview-app -->"
   DB_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-db-preview -->"
   RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME: "pocket-trash (preview)"
   RAILWAY_SCRAPER_PRODUCTION_SERVICE_NAME: "pocket-trash"
@@ -31,7 +29,7 @@ env:
 
 jobs:
   preview:
-    name: API Preview
+    name: Preview
     if: github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
@@ -43,7 +41,7 @@ jobs:
       AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PREVIEW }}
       AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
       AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PREVIEW }}
-      CI_JOB_NAME: API Preview
+      CI_JOB_NAME: Preview
       PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
@@ -463,232 +461,6 @@ jobs:
             --service "$RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME" \
             --environment "$railway_environment"
 
-      - name: Build Worker dependencies
-        if: steps.db.outputs.can_deploy == 'true'
-        run: pnpm exec turbo run build --filter=@app/api
-
-      - name: Validate Infisical OIDC configuration
-        if: steps.db.outputs.can_deploy == 'true'
-        shell: bash
-        env:
-          INFISICAL_CLOUDFLARE_IDENTITY_ID: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          INFISICAL_PROJECT_SLUG: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-        run: |
-          set -euo pipefail
-
-          if [[ -z "${INFISICAL_CLOUDFLARE_IDENTITY_ID:-}" ]]; then
-            echo "GitHub secret INFISICAL_CLOUDFLARE_IDENTITY_ID is required." >&2
-            exit 1
-          fi
-
-          if [[ -z "${INFISICAL_PROJECT_SLUG:-}" ]]; then
-            echo "GitHub secret INFISICAL_PROJECT_SLUG is required." >&2
-            exit 1
-          fi
-
-      - name: Fetch Cloudflare deploy secrets from Infisical
-        if: steps.db.outputs.can_deploy == 'true'
-        uses: Infisical/secrets-action@v1.0.16
-        with:
-          method: oidc
-          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-          env-slug: preview
-          secret-path: /tools/cloudflare
-
-      - name: Fetch API runtime secrets from Infisical
-        if: steps.db.outputs.can_deploy == 'true'
-        uses: Infisical/secrets-action@v1.0.16
-        with:
-          method: oidc
-          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-          env-slug: preview
-          secret-path: /apps/api
-
-      - name: Write API preview secrets file
-        if: steps.db.outputs.can_deploy == 'true'
-        shell: bash
-        env:
-          PREVIEW_DATABASE_URL: ${{ steps.db.outputs.database_url }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-
-          for name in CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "$name is required in Infisical /apps/api." >&2
-              exit 1
-            fi
-          done
-
-          jq -n \
-            --arg DATABASE_URL "$PREVIEW_DATABASE_URL" \
-            --arg CLERK_PUBLISHABLE_KEY "${CLERK_PUBLISHABLE_KEY:-}" \
-            --arg CLERK_SECRET_KEY "${CLERK_SECRET_KEY:-}" \
-            --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
-            --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
-            --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
-            --arg LOG_LEVEL "${LOG_LEVEL:-}" \
-            --arg LOG_DEPLOYMENT_ID "${LOG_DEPLOYMENT_ID:-pr-${PR_NUMBER}}" \
-            --arg LOG_DEPLOYMENT_TARGET "${LOG_DEPLOYMENT_TARGET:-cloudflare-worker}" \
-            --arg LOGGER "${LOGGER:-}" \
-            --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
-            --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
-            --arg MOBILE_IOS_STORE_URL "${MOBILE_IOS_STORE_URL:-}" \
-            --arg MOBILE_LATEST_VERSION "${MOBILE_LATEST_VERSION:-}" \
-            --arg MOBILE_MIN_SUPPORTED_VERSION "${MOBILE_MIN_SUPPORTED_VERSION:-}" \
-            --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
-            '{
-              DATABASE_URL: $DATABASE_URL,
-              CLERK_PUBLISHABLE_KEY: $CLERK_PUBLISHABLE_KEY,
-              CLERK_SECRET_KEY: $CLERK_SECRET_KEY,
-              AXIOM_TOKEN: $AXIOM_TOKEN,
-              AXIOM_DATASET: $AXIOM_DATASET,
-              AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
-              LOG_LEVEL: $LOG_LEVEL,
-              LOG_DEPLOYMENT_ID: $LOG_DEPLOYMENT_ID,
-              LOG_DEPLOYMENT_TARGET: $LOG_DEPLOYMENT_TARGET,
-              LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
-              MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
-              MOBILE_IOS_STORE_URL: $MOBILE_IOS_STORE_URL,
-              MOBILE_LATEST_VERSION: $MOBILE_LATEST_VERSION,
-              MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
-              MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
-            } | with_entries(select(.value != ""))' \
-            > "$RUNNER_TEMP/api-preview-secrets.json"
-
-      - name: Deploy PR preview Worker
-        if: steps.db.outputs.can_deploy == 'true'
-        id: deploy
-        shell: bash
-        working-directory: apps/api
-        env:
-          PREVIEW_ALIAS: pr-${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-
-          set +e
-          deploy_output="$(bash scripts/deploy-preview.sh \
-            --preview-alias "$PREVIEW_ALIAS" \
-            --secrets-file "$RUNNER_TEMP/api-preview-secrets.json" 2>&1)"
-          deploy_status=$?
-          set -e
-
-          printf '%s\n' "$deploy_output"
-
-          if [[ "$deploy_status" -ne 0 ]]; then
-            exit "$deploy_status"
-          fi
-
-          if [[ "$deploy_output" =~ Version[[:space:]]Preview[[:space:]]Alias[[:space:]]URL:[[:space:]](https://[^[:space:]]+) ]]; then
-            preview_url="${BASH_REMATCH[1]}"
-          else
-            echo "Wrangler did not print a Version Preview Alias URL for $PREVIEW_ALIAS." >&2
-            exit 1
-          fi
-
-          echo "preview_alias=$PREVIEW_ALIAS" >> "$GITHUB_OUTPUT"
-          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
-
-      - name: Smoke test PR preview Worker
-        if: steps.db.outputs.can_deploy == 'true'
-        shell: bash
-        env:
-          PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
-        run: |
-          set -euo pipefail
-
-          curl --fail-with-body --retry 12 --retry-all-errors --retry-delay 5 "$PREVIEW_URL/api/v0/health"
-
-      - name: Validate PR comment app configuration
-        shell: bash
-        env:
-          POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
-          POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
-          POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
-          POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
-        run: |
-          set -euo pipefail
-
-          for name in POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "$name is required." >&2
-              exit 1
-            fi
-          done
-
-      - name: Create API preview comment app token
-        if: steps.db.outputs.can_deploy == 'true'
-        id: preview-comment-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
-          private-key: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-issues: write
-          permission-pull-requests: write
-
-      - name: Comment on API preview
-        if: steps.db.outputs.can_deploy == 'true'
-        uses: actions/github-script@v8
-        env:
-          DATABASE_BRANCH_NAME: ${{ steps.db.outputs.branch_name }}
-          DATABASE_ISOLATED: ${{ steps.db.outputs.isolated }}
-          PREVIEW_ALIAS: ${{ steps.deploy.outputs.preview_alias }}
-          PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
-        with:
-          github-token: ${{ steps.preview-comment-token.outputs.token }}
-          script: |
-            const marker = process.env.API_PREVIEW_COMMENT_MARKER;
-            const previewUrl = process.env.PREVIEW_URL;
-            const healthUrl = `${previewUrl}/api/v0/health`;
-            const databaseScope = process.env.DATABASE_ISOLATED === "true"
-              ? `Neon branch \`${process.env.DATABASE_BRANCH_NAME}\``
-              : "shared Neon preview branch";
-            const body = [
-              marker,
-              "The latest API preview deployment for this pull request:",
-              "",
-              "| Project | Deployment | Actions | Database |",
-              "| --- | --- | --- | --- |",
-              `| pocket-trash-api | Ready | [Preview](${previewUrl}), [Health](${healthUrl}) | ${databaseScope} |`,
-              "",
-              `Alias: \`${process.env.PREVIEW_ALIAS}\``,
-            ].join("\n");
-
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner,
-              repo,
-              issue_number,
-              per_page: 100,
-            });
-            const existing = comments.find((comment) => comment.body?.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number,
-                body,
-              });
-            }
-
       - name: Create DB preview comment app token
         id: db-preview-comment-token
         uses: actions/create-github-app-token@v3
@@ -716,7 +488,7 @@ jobs:
               .filter(Boolean)
               .map((name) => `- \`${name}\``)
               .join("\n");
-            const retryUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/workflows/api-deploy.yml`;
+            const retryUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/workflows/deploy.yml`;
             const body = [
               marker,
               "DB-isolated preview creation is blocked because the Neon branch limit has been reached.",
@@ -727,7 +499,7 @@ jobs:
               "Active Neon branches:",
               branchNames || "- none reported",
               "",
-              "Close stale DB-changing PRs or delete stale `preview-pr-*` branches, then push a new commit or rerun the API Deploy workflow.",
+              "Close stale DB-changing PRs or delete stale `preview-pr-*` branches, then push a new commit or rerun the Deploy workflow.",
               "",
               `[Retry workflow](${retryUrl})`,
             ].join("\n");
@@ -762,7 +534,6 @@ jobs:
         if: steps.db_changes.outputs.database == 'true' && steps.db.outputs.can_deploy == 'true'
         uses: actions/github-script@v8
         env:
-          API_PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
           BRANCH_NAME: ${{ steps.db.outputs.branch_name }}
           BRANCH_URL: ${{ steps.db.outputs.branch_url }}
           PARENT_BRANCH: ${{ steps.db.outputs.parent_branch }}
@@ -784,7 +555,6 @@ jobs:
               `| Neon branch | [\`${process.env.BRANCH_NAME}\`](${process.env.BRANCH_URL}) |`,
               `| Parent branch | \`${process.env.PARENT_BRANCH}\` |`,
               "| Migration status | Committed Drizzle migrations applied |",
-              `| API preview | [Preview](${process.env.API_PREVIEW_URL}) |`,
               `| Web preview | ${webPreview} |`,
               "",
               "The `preview-pr-*` branch and branch-specific Vercel `DATABASE_URL` and `IMAGE_FOLDER_PREFIX` are deleted when the PR closes or no longer contains DB changes.",
@@ -848,7 +618,7 @@ jobs:
           exit 0
 
   production:
-    name: API Production
+    name: Production
     if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
@@ -858,7 +628,7 @@ jobs:
       AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PRODUCTION }}
       AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
       AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PRODUCTION }}
-      CI_JOB_NAME: API Production
+      CI_JOB_NAME: Production
 
     steps:
       - name: Check out repository
@@ -875,12 +645,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Validate API app
-        run: |
-          pnpm exec turbo run test:ci --filter=@app/api
-          pnpm --filter @app/api run lint
-          pnpm exec turbo run typecheck --filter=@app/api
 
       - name: Resolve production database URL
         id: production_db
@@ -926,110 +690,6 @@ jobs:
               branchName: $branch_name,
               branchId: $branch_id
             }')"
-
-      - name: Build Worker dependencies
-        run: pnpm exec turbo run build --filter=@app/api
-
-      - name: Validate Infisical OIDC configuration
-        shell: bash
-        env:
-          INFISICAL_CLOUDFLARE_IDENTITY_ID: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          INFISICAL_PROJECT_SLUG: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-        run: |
-          set -euo pipefail
-
-          if [[ -z "${INFISICAL_CLOUDFLARE_IDENTITY_ID:-}" ]]; then
-            echo "GitHub secret INFISICAL_CLOUDFLARE_IDENTITY_ID is required." >&2
-            exit 1
-          fi
-
-          if [[ -z "${INFISICAL_PROJECT_SLUG:-}" ]]; then
-            echo "GitHub secret INFISICAL_PROJECT_SLUG is required." >&2
-            exit 1
-          fi
-
-      - name: Fetch Cloudflare deploy secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.16
-        with:
-          method: oidc
-          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-          env-slug: prod
-          secret-path: /tools/cloudflare
-
-      - name: Fetch API runtime secrets from Infisical
-        uses: Infisical/secrets-action@v1.0.16
-        with:
-          method: oidc
-          identity-id: ${{ secrets.INFISICAL_CLOUDFLARE_IDENTITY_ID }}
-          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
-          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
-          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-          env-slug: prod
-          secret-path: /apps/api
-
-      - name: Write production API secrets file
-        shell: bash
-        env:
-          PRODUCTION_DATABASE_URL: ${{ steps.production_db.outputs.database_url }}
-        run: |
-          set -euo pipefail
-
-          for name in CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "$name is required in Infisical /apps/api." >&2
-              exit 1
-            fi
-          done
-
-          jq -n \
-            --arg DATABASE_URL "$PRODUCTION_DATABASE_URL" \
-            --arg CLERK_PUBLISHABLE_KEY "${CLERK_PUBLISHABLE_KEY:-}" \
-            --arg CLERK_SECRET_KEY "${CLERK_SECRET_KEY:-}" \
-            --arg AXIOM_TOKEN "${AXIOM_TOKEN:-}" \
-            --arg AXIOM_DATASET "${AXIOM_DATASET:-}" \
-            --arg AXIOM_EDGE_DOMAIN "${AXIOM_EDGE_DOMAIN:-}" \
-            --arg LOG_LEVEL "${LOG_LEVEL:-}" \
-            --arg LOG_DEPLOYMENT_ID "${LOG_DEPLOYMENT_ID:-production}" \
-            --arg LOG_DEPLOYMENT_TARGET "${LOG_DEPLOYMENT_TARGET:-cloudflare-worker}" \
-            --arg LOGGER "${LOGGER:-}" \
-            --arg LOG_PROXY_CLIENT_KEY "${LOG_PROXY_CLIENT_KEY:-}" \
-            --arg MOBILE_ANDROID_STORE_URL "${MOBILE_ANDROID_STORE_URL:-}" \
-            --arg MOBILE_IOS_STORE_URL "${MOBILE_IOS_STORE_URL:-}" \
-            --arg MOBILE_LATEST_VERSION "${MOBILE_LATEST_VERSION:-}" \
-            --arg MOBILE_MIN_SUPPORTED_VERSION "${MOBILE_MIN_SUPPORTED_VERSION:-}" \
-            --arg MOBILE_UPDATE_SEVERITY "${MOBILE_UPDATE_SEVERITY:-}" \
-            '{
-              DATABASE_URL: $DATABASE_URL,
-              CLERK_PUBLISHABLE_KEY: $CLERK_PUBLISHABLE_KEY,
-              CLERK_SECRET_KEY: $CLERK_SECRET_KEY,
-              AXIOM_TOKEN: $AXIOM_TOKEN,
-              AXIOM_DATASET: $AXIOM_DATASET,
-              AXIOM_EDGE_DOMAIN: $AXIOM_EDGE_DOMAIN,
-              LOG_LEVEL: $LOG_LEVEL,
-              LOG_DEPLOYMENT_ID: $LOG_DEPLOYMENT_ID,
-              LOG_DEPLOYMENT_TARGET: $LOG_DEPLOYMENT_TARGET,
-              LOGGER: $LOGGER,
-              LOG_PROXY_CLIENT_KEY: $LOG_PROXY_CLIENT_KEY,
-              MOBILE_ANDROID_STORE_URL: $MOBILE_ANDROID_STORE_URL,
-              MOBILE_IOS_STORE_URL: $MOBILE_IOS_STORE_URL,
-              MOBILE_LATEST_VERSION: $MOBILE_LATEST_VERSION,
-              MOBILE_MIN_SUPPORTED_VERSION: $MOBILE_MIN_SUPPORTED_VERSION,
-              MOBILE_UPDATE_SEVERITY: $MOBILE_UPDATE_SEVERITY
-            } | with_entries(select(.value != ""))' \
-            > "$RUNNER_TEMP/api-production-secrets.json"
-
-      - name: Deploy production Worker
-        run: |
-          pnpm dlx wrangler deploy \
-            --config apps/api/wrangler.jsonc \
-            --env="" \
-            --secrets-file "$RUNNER_TEMP/api-production-secrets.json"
-
-      - name: Smoke test production Worker
-        run: curl --fail-with-body --retry 12 --retry-all-errors --retry-delay 5 https://api.pocket-trash.app/api/v0/health
 
   railway-production:
     name: Railway Production

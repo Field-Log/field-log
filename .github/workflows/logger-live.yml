@@ -44,9 +44,8 @@ jobs:
           is_logger_path() {
             case "$1" in
               packages/logger/*) return 0 ;;
-              apps/api/src/app.ts) return 0 ;;
-              apps/api/src/routes/*) return 0 ;;
-              apps/api/src/lib/services.ts) return 0 ;;
+              apps/web/src/server.tsx) return 0 ;;
+              apps/web/src/lib/log-ingestion.ts) return 0 ;;
               packages/services/*) return 0 ;;
               packages/infisical-runner/*) return 0 ;;
               .github/workflows/logger-live.yml) return 0 ;;
@@ -97,7 +96,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build logger live dependencies
-        run: pnpm exec turbo run build --filter=@app/api
+        run: pnpm exec turbo run build --filter=@package/logger
 
       - name: Validate Infisical OIDC configuration
         shell: bash
