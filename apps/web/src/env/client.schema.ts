@@ -2,7 +2,6 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
 export type WebClientRuntimeEnv = {
-  VITE_API_URL?: string;
   VITE_CLERK_PUBLISHABLE_KEY?: string;
   VITE_CLERK_SIGN_IN_URL?: string;
   VITE_CLERK_SIGN_UP_URL?: string;
@@ -11,28 +10,9 @@ export type WebClientRuntimeEnv = {
   VITE_LOG_PROXY_CLIENT_KEY?: string;
 };
 
-function normalizeUrl(value: string) {
-  if (/^https?:\/\//.test(value)) {
-    return value;
-  }
-
-  const protocol = /^(localhost|127\.0\.0\.1|\[::1\])(?::|$)/.test(value)
-    ? "http"
-    : "https";
-
-  return `${protocol}://${value}`;
-}
-
-const urlSchema = z
-  .string()
-  .min(1)
-  .transform(normalizeUrl)
-  .pipe(z.string().url());
-
 export function createWebClientEnv(runtimeEnv: WebClientRuntimeEnv) {
   return createEnv({
     client: {
-      VITE_API_URL: urlSchema.optional(),
       VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1),
       VITE_CLERK_SIGN_IN_URL: z.string().min(1),
       VITE_CLERK_SIGN_UP_URL: z.string().min(1),
@@ -43,7 +23,6 @@ export function createWebClientEnv(runtimeEnv: WebClientRuntimeEnv) {
     clientPrefix: "VITE_",
     emptyStringAsUndefined: true,
     runtimeEnvStrict: {
-      VITE_API_URL: runtimeEnv.VITE_API_URL,
       VITE_CLERK_PUBLISHABLE_KEY: runtimeEnv.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: runtimeEnv.VITE_CLERK_SIGN_IN_URL,
       VITE_CLERK_SIGN_UP_URL: runtimeEnv.VITE_CLERK_SIGN_UP_URL,

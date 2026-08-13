@@ -1,15 +1,17 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
-import { createApp } from "../../../apps/api/src/app.js";
 import {
   createAxiomTransport,
   createLogger,
   createProxyTransport,
   type FetchLike,
   isLogLevel,
+  type Logger,
   type LogLevel,
+  loggerValues,
   logLevels,
+  parseClientLogEvents,
 } from "../src/index.js";
 
 type QueryRow = Record<string, unknown>;
@@ -139,36 +141,26 @@ async function main(): Promise<void> {
   filteredLogger.info(filteredInfoMessage);
   filteredLogger.warn(filteredWarnMessage);
 
-  const apiLogger = createLogger({
-    app: "api",
+  const proxyServerLogger = createLogger({
+    app: "web",
     context: {
       path: "proxy-server",
       suite: "logger-axiom-live",
       testRunId: runId,
     },
     deploymentId: runId,
-    deploymentTarget: "cloudflare-worker",
+    deploymentTarget: "web-server",
     environment: "automated-tests",
     level: config.logLevel,
     transports: [axiomTransport],
   });
-  const apiApp = createApp({
-    clientLogKey: config.logProxyClientKey,
-    logger: apiLogger,
-  });
-  const proxyFetch: FetchLike = async (_input, init) => {
-    const response = await apiApp.request("/api/v0/logs", {
+  const proxyFetch: FetchLike = async (_input, init) =>
+    handleLogProxyRequest({
       body: init?.body,
+      clientLogKey: config.logProxyClientKey,
       headers: init?.headers,
-      method: init?.method ?? "POST",
+      logger: proxyServerLogger,
     });
-
-    return {
-      ok: response.ok,
-      status: response.status,
-      text: () => response.text(),
-    };
-  };
   const proxyLogger = createLogger({
     app: "web",
     context: {
@@ -221,7 +213,7 @@ async function main(): Promise<void> {
   await directLogger.flush();
   await filteredLogger.flush();
   await proxyLogger.flush();
-  await apiLogger.flush();
+  await proxyServerLogger.flush();
 
   console.log(`logger live test run: ${runId}`);
   console.log(`waiting for ${expectedMessages.length} events in Axiom`);
@@ -242,6 +234,63 @@ async function main(): Promise<void> {
   });
 
   console.log(`received ${rows.length} matching Axiom events`);
+}
+
+async function handleLogProxyRequest({
+  body,
+  clientLogKey,
+  headers,
+  logger,
+}: {
+  body?: string;
+  clientLogKey: string;
+  headers?: Record<string, string>;
+  logger: Logger;
+}): Promise<{ ok: boolean; status: number; text: () => Promise<string> }> {
+  if (headers?.[loggerValues.logProxy.clientKeyHeader] !== clientLogKey) {
+    return jsonResponse({ error: "Invalid log client key." }, 401);
+  }
+
+  let parsedBody: unknown;
+
+  try {
+    parsedBody = JSON.parse(body ?? "");
+  } catch {
+    return jsonResponse({ error: "Expected a JSON request body." }, 400);
+  }
+
+  const events = parseClientLogEvents(parsedBody);
+
+  if (!events.ok) {
+    return jsonResponse({ error: events.error }, 400);
+  }
+
+  const receivedAt = new Date().toISOString();
+
+  for (const event of events.value) {
+    logger.forward(event, {
+      attributes: {
+        originalTimestamp: event.timestamp,
+        receivedAt,
+        source: loggerValues.logProxy.source,
+      },
+    });
+  }
+
+  await logger.flush();
+
+  return jsonResponse({ accepted: events.value.length }, 200);
+}
+
+function jsonResponse(
+  body: unknown,
+  status: number,
+): { ok: boolean; status: number; text: () => Promise<string> } {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    text: async () => JSON.stringify(body),
+  };
 }
 
 function readConfig(): {
