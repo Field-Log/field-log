@@ -82,89 +82,105 @@ export async function syncGrimsmoPenVariation(
     });
   }
 
-  const [variation] = await db
-    .insert(schema.tmpGrimsmoPenVariations)
-    .values({
-      archivedAt: item.sourceCollection === "archive" ? now : null,
-      availableForSale: item.availableForSale,
-      bodyColors: item.bodyColors,
-      bodyFinishes: item.bodyFinishes,
-      bodyMaterials: item.bodyMaterials,
-      bodyText: item.bodyText,
-      book: item.book,
-      bullets: item.bullets,
-      bulletsByCategory: item.bulletsByCategory,
-      case: item.case,
-      currencyCode: item.currencyCode,
-      description: item.description,
+  const nextNormalizedData = getPenVariationNormalizedData(item);
+  const nextArchivedAt =
+    item.sourceCollection === "archive" ? (existing?.archivedAt ?? now) : null;
+  const shouldUpdateVariation = shouldUpdateGrimsmoVariation({
+    existing,
+    next: {
+      archivedAt: nextArchivedAt,
       detailsHash: item.detailsHash,
-      engraving: item.engraving,
       imageSetHash: item.imageSetHash,
-      normalizedData: getPenVariationNormalizedData(item),
-      penId: pen.id,
-      priceMaxCents: item.priceMaxCents,
-      priceMinCents: item.priceMinCents,
-      productVariationId: productVariation.id,
-      productUrl: item.productUrl,
-      refill: item.refill,
-      sagaNumber: item.sagaNumber,
-      sliderColors: item.sliderColors,
-      sliderMaterials: item.sliderMaterials,
-      sliderStyle: item.sliderStyle,
       sourceCollection: item.sourceCollection,
-      sourceHandle: item.sourceHandle,
-      sourceProductId: item.sourceProductId,
-      tags: item.tags,
-      tipLogo: item.tipLogo,
-      title: item.title,
-      titleFull: item.titleFull,
-      variants: item.variants,
-      visibleBullets: item.visibleBullets,
-    })
-    .onConflictDoUpdate({
-      set: {
-        archivedAt: item.sourceCollection === "archive" ? now : null,
-        availableForSale: item.availableForSale,
-        bodyColors: item.bodyColors,
-        bodyFinishes: item.bodyFinishes,
-        bodyMaterials: item.bodyMaterials,
-        bodyText: item.bodyText,
-        book: item.book,
-        bullets: item.bullets,
-        bulletsByCategory: item.bulletsByCategory,
-        case: item.case,
-        currencyCode: item.currencyCode,
-        description: item.description,
-        detailsHash: item.detailsHash,
-        engraving: item.engraving,
-        imageSetHash: item.imageSetHash,
-        normalizedData: getPenVariationNormalizedData(item),
-        priceMaxCents: item.priceMaxCents,
-        priceMinCents: item.priceMinCents,
-        productVariationId: productVariation.id,
-        productUrl: item.productUrl,
-        refill: item.refill,
-        sagaNumber: item.sagaNumber,
-        sliderColors: item.sliderColors,
-        sliderMaterials: item.sliderMaterials,
-        sliderStyle: item.sliderStyle,
-        sourceCollection: item.sourceCollection,
-        sourceProductId: item.sourceProductId,
-        tags: item.tags,
-        tipLogo: item.tipLogo,
-        title: item.title,
-        titleFull: item.titleFull,
-        updatedAt: now,
-        variants: item.variants,
-        visibleBullets: item.visibleBullets,
-      },
-      target: [
-        schema.tmpGrimsmoPenVariations.penId,
-        schema.tmpGrimsmoPenVariations.sourceHandle,
-      ],
-    })
-    .returning();
-
+    },
+  });
+  const variation =
+    existing && !shouldUpdateVariation
+      ? existing
+      : (
+          await db
+            .insert(schema.tmpGrimsmoPenVariations)
+            .values({
+              archivedAt: nextArchivedAt,
+              availableForSale: item.availableForSale,
+              bodyColors: item.bodyColors,
+              bodyFinishes: item.bodyFinishes,
+              bodyMaterials: item.bodyMaterials,
+              bodyText: item.bodyText,
+              book: item.book,
+              bullets: item.bullets,
+              bulletsByCategory: item.bulletsByCategory,
+              case: item.case,
+              currencyCode: item.currencyCode,
+              description: item.description,
+              detailsHash: item.detailsHash,
+              engraving: item.engraving,
+              imageSetHash: item.imageSetHash,
+              normalizedData: nextNormalizedData,
+              penId: pen.id,
+              priceMaxCents: item.priceMaxCents,
+              priceMinCents: item.priceMinCents,
+              productVariationId: productVariation.id,
+              productUrl: item.productUrl,
+              refill: item.refill,
+              sagaNumber: item.sagaNumber,
+              sliderColors: item.sliderColors,
+              sliderMaterials: item.sliderMaterials,
+              sliderStyle: item.sliderStyle,
+              sourceCollection: item.sourceCollection,
+              sourceHandle: item.sourceHandle,
+              sourceProductId: item.sourceProductId,
+              tags: item.tags,
+              tipLogo: item.tipLogo,
+              title: item.title,
+              titleFull: item.titleFull,
+              variants: item.variants,
+              visibleBullets: item.visibleBullets,
+            })
+            .onConflictDoUpdate({
+              set: {
+                archivedAt: nextArchivedAt,
+                availableForSale: item.availableForSale,
+                bodyColors: item.bodyColors,
+                bodyFinishes: item.bodyFinishes,
+                bodyMaterials: item.bodyMaterials,
+                bodyText: item.bodyText,
+                book: item.book,
+                bullets: item.bullets,
+                bulletsByCategory: item.bulletsByCategory,
+                case: item.case,
+                currencyCode: item.currencyCode,
+                description: item.description,
+                detailsHash: item.detailsHash,
+                engraving: item.engraving,
+                imageSetHash: item.imageSetHash,
+                normalizedData: nextNormalizedData,
+                priceMaxCents: item.priceMaxCents,
+                priceMinCents: item.priceMinCents,
+                productVariationId: productVariation.id,
+                productUrl: item.productUrl,
+                refill: item.refill,
+                sagaNumber: item.sagaNumber,
+                sliderColors: item.sliderColors,
+                sliderMaterials: item.sliderMaterials,
+                sliderStyle: item.sliderStyle,
+                sourceCollection: item.sourceCollection,
+                sourceProductId: item.sourceProductId,
+                tags: item.tags,
+                tipLogo: item.tipLogo,
+                title: item.title,
+                titleFull: item.titleFull,
+                updatedAt: now,
+                variants: item.variants,
+                visibleBullets: item.visibleBullets,
+              },
+              target: [
+                schema.tmpGrimsmoPenVariations.penId,
+                schema.tmpGrimsmoPenVariations.sourceHandle,
+              ],
+            })
+            .returning()
+        )[0];
   if (!variation) {
     throw new Error(`Failed to upsert Grimsmo pen ${item.sourceHandle}.`);
   }
@@ -224,84 +240,101 @@ export async function syncGrimsmoKnifeVariation(
     });
   }
 
-  const [variation] = await db
-    .insert(schema.tmpGrimsmoKnifeVariations)
-    .values({
-      archivedAt: item.sourceCollection === "archive" ? now : null,
-      availableForSale: item.availableForSale,
-      bladeFinishes: item.bladeFinishes,
-      bladeSteels: item.bladeSteels,
-      bodyText: item.bodyText,
-      bullets: item.bullets,
-      bulletsByCategory: item.bulletsByCategory,
-      case: item.case,
-      currencyCode: item.currencyCode,
-      description: item.description,
+  const nextNormalizedData = getKnifeVariationNormalizedData(item);
+  const nextArchivedAt =
+    item.sourceCollection === "archive" ? (existing?.archivedAt ?? now) : null;
+  const shouldUpdateVariation = shouldUpdateGrimsmoVariation({
+    existing,
+    next: {
+      archivedAt: nextArchivedAt,
       detailsHash: item.detailsHash,
-      handleColors: item.handleColors,
-      handleFinishes: item.handleFinishes,
-      handleMaterials: item.handleMaterials,
-      hardwareColors: item.hardwareColors,
       imageSetHash: item.imageSetHash,
-      knifeId: knife.id,
-      knifeNumber: item.knifeNumber,
-      knifeType: item.knifeType,
-      mechanisms: item.mechanisms,
-      normalizedData: getKnifeVariationNormalizedData(item),
-      patterns: item.patterns,
-      priceMaxCents: item.priceMaxCents,
-      priceMinCents: item.priceMinCents,
-      productVariationId: productVariation.id,
-      productUrl: item.productUrl,
       sourceCollection: item.sourceCollection,
-      sourceHandle: item.sourceHandle,
-      sourceProductId: item.sourceProductId,
-      tags: item.tags,
-      title: item.title,
-      titleFull: item.titleFull,
-      variants: item.variants,
-    })
-    .onConflictDoUpdate({
-      set: {
-        archivedAt: item.sourceCollection === "archive" ? now : null,
-        availableForSale: item.availableForSale,
-        bladeFinishes: item.bladeFinishes,
-        bladeSteels: item.bladeSteels,
-        bodyText: item.bodyText,
-        bullets: item.bullets,
-        bulletsByCategory: item.bulletsByCategory,
-        case: item.case,
-        currencyCode: item.currencyCode,
-        description: item.description,
-        detailsHash: item.detailsHash,
-        handleColors: item.handleColors,
-        handleFinishes: item.handleFinishes,
-        handleMaterials: item.handleMaterials,
-        hardwareColors: item.hardwareColors,
-        imageSetHash: item.imageSetHash,
-        knifeNumber: item.knifeNumber,
-        knifeType: item.knifeType,
-        mechanisms: item.mechanisms,
-        normalizedData: getKnifeVariationNormalizedData(item),
-        patterns: item.patterns,
-        priceMaxCents: item.priceMaxCents,
-        priceMinCents: item.priceMinCents,
-        productVariationId: productVariation.id,
-        productUrl: item.productUrl,
-        sourceCollection: item.sourceCollection,
-        sourceProductId: item.sourceProductId,
-        tags: item.tags,
-        title: item.title,
-        titleFull: item.titleFull,
-        updatedAt: now,
-        variants: item.variants,
-      },
-      target: [
-        schema.tmpGrimsmoKnifeVariations.knifeId,
-        schema.tmpGrimsmoKnifeVariations.sourceHandle,
-      ],
-    })
-    .returning();
+    },
+  });
+  const variation =
+    existing && !shouldUpdateVariation
+      ? existing
+      : (
+          await db
+            .insert(schema.tmpGrimsmoKnifeVariations)
+            .values({
+              archivedAt: nextArchivedAt,
+              availableForSale: item.availableForSale,
+              bladeFinishes: item.bladeFinishes,
+              bladeSteels: item.bladeSteels,
+              bodyText: item.bodyText,
+              bullets: item.bullets,
+              bulletsByCategory: item.bulletsByCategory,
+              case: item.case,
+              currencyCode: item.currencyCode,
+              description: item.description,
+              detailsHash: item.detailsHash,
+              handleColors: item.handleColors,
+              handleFinishes: item.handleFinishes,
+              handleMaterials: item.handleMaterials,
+              hardwareColors: item.hardwareColors,
+              imageSetHash: item.imageSetHash,
+              knifeId: knife.id,
+              knifeNumber: item.knifeNumber,
+              knifeType: item.knifeType,
+              mechanisms: item.mechanisms,
+              normalizedData: nextNormalizedData,
+              patterns: item.patterns,
+              priceMaxCents: item.priceMaxCents,
+              priceMinCents: item.priceMinCents,
+              productVariationId: productVariation.id,
+              productUrl: item.productUrl,
+              sourceCollection: item.sourceCollection,
+              sourceHandle: item.sourceHandle,
+              sourceProductId: item.sourceProductId,
+              tags: item.tags,
+              title: item.title,
+              titleFull: item.titleFull,
+              variants: item.variants,
+            })
+            .onConflictDoUpdate({
+              set: {
+                archivedAt: nextArchivedAt,
+                availableForSale: item.availableForSale,
+                bladeFinishes: item.bladeFinishes,
+                bladeSteels: item.bladeSteels,
+                bodyText: item.bodyText,
+                bullets: item.bullets,
+                bulletsByCategory: item.bulletsByCategory,
+                case: item.case,
+                currencyCode: item.currencyCode,
+                description: item.description,
+                detailsHash: item.detailsHash,
+                handleColors: item.handleColors,
+                handleFinishes: item.handleFinishes,
+                handleMaterials: item.handleMaterials,
+                hardwareColors: item.hardwareColors,
+                imageSetHash: item.imageSetHash,
+                knifeNumber: item.knifeNumber,
+                knifeType: item.knifeType,
+                mechanisms: item.mechanisms,
+                normalizedData: nextNormalizedData,
+                patterns: item.patterns,
+                priceMaxCents: item.priceMaxCents,
+                priceMinCents: item.priceMinCents,
+                productVariationId: productVariation.id,
+                productUrl: item.productUrl,
+                sourceCollection: item.sourceCollection,
+                sourceProductId: item.sourceProductId,
+                tags: item.tags,
+                title: item.title,
+                titleFull: item.titleFull,
+                updatedAt: now,
+                variants: item.variants,
+              },
+              target: [
+                schema.tmpGrimsmoKnifeVariations.knifeId,
+                schema.tmpGrimsmoKnifeVariations.sourceHandle,
+              ],
+            })
+            .returning()
+        )[0];
 
   if (!variation) {
     throw new Error(`Failed to upsert Grimsmo knife ${item.sourceHandle}.`);
@@ -383,18 +416,26 @@ async function ensureGrimsmoMaker(db: Database) {
   const [maker] = await db
     .insert(schema.makers)
     .values(grimsmoMaker)
-    .onConflictDoUpdate({
-      set: {
-        name: grimsmoMaker.name,
-        updatedAt: new Date(),
-      },
+    .onConflictDoNothing({
       target: schema.makers.rootUrl,
     })
     .returning();
 
-  if (!maker) {
+  const row = maker ?? (await getMakerByRootUrl(db, grimsmoMaker.rootUrl));
+
+  if (!row) {
     throw new Error("Failed to ensure Grimsmo maker.");
   }
+
+  return row;
+}
+
+async function getMakerByRootUrl(db: Database, rootUrl: string) {
+  const [maker] = await db
+    .select()
+    .from(schema.makers)
+    .where(eq(schema.makers.rootUrl, rootUrl))
+    .limit(1);
 
   return maker;
 }
@@ -435,6 +476,10 @@ async function ensureGrimsmoPen(
       productHandle: existing.productHandle,
       snapshot: existing.normalizedData,
     });
+  }
+
+  if (existing && existing.detailsHash === detailsHash) {
+    return existing;
   }
 
   const [pen] = await db
@@ -506,6 +551,10 @@ async function ensureGrimsmoKnife(
       previousDetailsHash: existing.detailsHash,
       snapshot: existing.normalizedData,
     });
+  }
+
+  if (existing && existing.detailsHash === detailsHash) {
+    return existing;
   }
 
   const [knife] = await db
@@ -703,4 +752,32 @@ function getVariationChangeReason(
   }
 
   return "images";
+}
+
+export function shouldUpdateGrimsmoVariation({
+  existing,
+  next,
+}: {
+  existing:
+    | {
+        archivedAt: Date | null;
+        detailsHash: string;
+        imageSetHash: string;
+        sourceCollection: string;
+      }
+    | undefined;
+  next: {
+    archivedAt: Date | null;
+    detailsHash: string;
+    imageSetHash: string;
+    sourceCollection: string;
+  };
+}) {
+  return (
+    !existing ||
+    existing.detailsHash !== next.detailsHash ||
+    existing.imageSetHash !== next.imageSetHash ||
+    existing.sourceCollection !== next.sourceCollection ||
+    existing.archivedAt?.getTime() !== next.archivedAt?.getTime()
+  );
 }

@@ -117,6 +117,8 @@ export async function startScraperRun(
     source: string;
   },
 ) {
+  await pruneScraperRuns(db);
+
   const staleBefore = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
   await db
@@ -167,6 +169,14 @@ export async function startScraperRun(
   }
 
   return run;
+}
+
+export async function pruneScraperRuns(db: Database, now = new Date()) {
+  const cutoff = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+  await db
+    .delete(schema.scraperRuns)
+    .where(lt(schema.scraperRuns.startedAt, cutoff));
 }
 
 export async function finishScraperRun(
@@ -544,18 +554,26 @@ async function ensureAutmogMaker(db: Database) {
   const [maker] = await db
     .insert(schema.makers)
     .values(autmogMaker)
-    .onConflictDoUpdate({
-      set: {
-        name: autmogMaker.name,
-        updatedAt: new Date(),
-      },
+    .onConflictDoNothing({
       target: schema.makers.rootUrl,
     })
     .returning();
 
-  if (!maker) {
+  const row = maker ?? (await getMakerByRootUrl(db, autmogMaker.rootUrl));
+
+  if (!row) {
     throw new Error("Failed to ensure Autmog maker.");
   }
+
+  return row;
+}
+
+async function getMakerByRootUrl(db: Database, rootUrl: string) {
+  const [maker] = await db
+    .select()
+    .from(schema.makers)
+    .where(eq(schema.makers.rootUrl, rootUrl))
+    .limit(1);
 
   return maker;
 }

@@ -35,6 +35,7 @@ describe("logger", () => {
             branchCleanupSkipped: "ci.database.preview.branchCleanup.skipped",
             branchCreated: "ci.database.preview.branch.created",
             branchDeleted: "ci.database.preview.branch.deleted",
+            branchExpirationSet: "ci.database.preview.branch.expiration.set",
             branchLimitReached: "ci.database.preview.branchLimit.reached",
             changeDetectionCompleted:
               "ci.database.preview.changeDetection.completed",
