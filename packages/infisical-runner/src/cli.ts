@@ -13,7 +13,7 @@ function printHelp(): void {
       "",
       "Examples:",
       "  tsx ../../packages/infisical-runner/src/cli.ts web dev -- vite dev",
-      "  tsx ../../packages/infisical-runner/src/cli.ts api test -- vitest run",
+      "  tsx ../../packages/infisical-runner/src/cli.ts scraper scrape -- tsx apps/scraper/src/cli.ts scrape",
     ].join("\n"),
   );
 }
