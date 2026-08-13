@@ -30,8 +30,8 @@ The command:
 2. Fetches `origin/main` and tags only after local `HEAD` matches it.
 3. Runs `pnpm format`, `pnpm test`, `pnpm lint`, and `pnpm typecheck`.
 4. Reads pending Changesets and chooses the highest bump.
-5. Updates package versions, `apps/mobile/app.json`, and
-   `apps/mobile/src/lib/app-version.ts`.
+5. Updates package versions, `apps/web/app.json`, and
+   `apps/web/src/lib/app-version.ts`.
 6. Adds Changeset descriptions to `CHANGELOG.md`.
 7. Commits the release metadata, pushes `main`, creates and pushes the
    annotated `v*` tag, then creates the matching GitHub Release.
@@ -52,14 +52,14 @@ That creates `v0.0.1` and the matching GitHub Release from the baseline commit.
 
 The pushed `v*` tag triggers:
 
-- `API Deploy`: validates, migrates, deploys the production Cloudflare Worker,
+- `API Deploy`: validates, migrates, deploys the production web server,
   deploys the production Vercel web app, and smoke-tests both production
   surfaces. It also deploys the production Railway scraper after production
   database migrations and API smoke tests pass. Web and Railway production wait
   for API production to pass first.
-- `Mobile Release`: builds and submits `apps/mobile` through fastlane on macOS
+- `Mobile Release`: builds and submits `apps/web` through fastlane on macOS
   runners. Android and iOS run as separate jobs with runner labels
-  `mobile-release, android` and `mobile-release, ios`.
+  `deploy, android` and `deploy, ios`.
 
 Mobile store approval can lag behind the web/API deployment. Patch and minor
 releases must remain backward-compatible with the currently available mobile

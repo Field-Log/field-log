@@ -50,8 +50,7 @@ const db = createDb({
 });
 ```
 
-`DATABASE_URL` is stored in Infisical at `/apps/api` for API and migration
-commands. The web app keeps its deploy copy in `/apps/web`. The Railway scraper
+`DATABASE_URL` is stored in Infisical at `/apps/web` for web and migration commands. The web app keeps its deploy copy in `/apps/web`. The Railway scraper
 app keeps its runtime copy in `/apps/scraper`, or receives the equivalent value
 through Railway service configuration.
 
@@ -72,7 +71,7 @@ pnpm db:migrate
 ```
 
 `pnpm db:migrate` runs through the Infisical runner so `DATABASE_URL` is loaded
-from `/apps/api`. Personal developer overrides such as `DATABASE_URL_RA` are
+from `/apps/web`. Personal developer overrides such as `DATABASE_URL_RA` are
 looked up only from `/local/database`.
 
 Generated migration files are committed under `packages/database/drizzle/`. Schema source of truth remains in `packages/database/src/schema/`.
@@ -213,7 +212,7 @@ environment so scraper cron executions use the same database branch as the API
 and web previews. See [Image CDN](./image-cdn.md) for the matching preview image
 folder namespace. The API preview Worker uses the preview runtime secrets
 managed by Infisical Secrets Sync; the workflow does not write PR-specific
-`DATABASE_URL` values to Cloudflare Worker secrets.
+`DATABASE_URL` values to web server secrets.
 
 When a PR has no DB changes, the API preview uses the shared `preview` branch and
 the workflow removes stale `preview-pr-*` branches and stale Vercel branch

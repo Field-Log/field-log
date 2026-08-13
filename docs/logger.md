@@ -59,7 +59,7 @@ database mutations.
 Server targets that send directly to Axiom keep their Axiom settings in their
 own runtime folders:
 
-- `/apps/api`
+- `/apps/web`
 - `/apps/scraper`
 - `/apps/web`
 
@@ -100,46 +100,17 @@ LOG_LEVEL=info
 Omit `AXIOM_EDGE_DOMAIN` unless Axiom has given the project a custom edge
 domain.
 
-Client runtime folders provide their platform-specific API and proxy settings:
+Browser log forwarding is same-origin through the web server:
 
-- `/apps/web`: `API_URL`, `LOG_PROXY_CLIENT_KEY`, optional. The web build
-  aliases these to `VITE_API_URL` and `VITE_LOG_PROXY_CLIENT_KEY` when the
-  `VITE_*` names are absent. It also aliases optional `LOG_DEPLOYMENT_ID` and
-  `LOG_DEPLOYMENT_TARGET` to `VITE_LOG_DEPLOYMENT_ID` and
-  `VITE_LOG_DEPLOYMENT_TARGET` for browser logs.
-- `/apps/mobile`: `API_URL`, `EXPO_PUBLIC_API_URL`,
-  `EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY`, optional. The mobile Infisical runner
-  aliases `API_URL` to `EXPO_PUBLIC_API_URL` when the public name is absent. It
-  also aliases optional `LOG_DEPLOYMENT_ID` and `LOG_DEPLOYMENT_TARGET` to
-  `EXPO_PUBLIC_LOG_DEPLOYMENT_ID` and `EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET`.
-- `/apps/api`: `LOG_PROXY_CLIENT_KEY`, optional
+- Browser code posts to `POST /api/v0/logs`.
+- `LOG_PROXY_CLIENT_KEY` is optional on the server.
+- `VITE_LOG_PROXY_CLIENT_KEY` is optional in the browser and is aliased from
+  `LOG_PROXY_CLIENT_KEY` during web builds when absent.
+- Optional `LOG_DEPLOYMENT_ID` and `LOG_DEPLOYMENT_TARGET` are aliased to their
+  `VITE_` counterparts for browser logs.
 
-Web and mobile derive the client log proxy URL by appending `/api/v0/logs` to
-the API URL.
-
-Local development:
-
-```dotenv
-# /apps/web
-API_URL=http://localhost:4006
-
-# /apps/mobile
-EXPO_PUBLIC_API_URL=http://localhost:4006
-```
-
-Production:
-
-```dotenv
-# /apps/web
-API_URL=https://<api-domain>
-
-# /apps/mobile
-EXPO_PUBLIC_API_URL=https://<api-domain>
-```
-
-If `LOG_PROXY_CLIENT_KEY` is configured, `/apps/api` and each public client
-runtime folder must receive matching values under the names that runtime
-consumes.
+Local development and production use the same path; no separate API origin is
+configured for browser logging.
 
 ## Package Build
 
@@ -260,7 +231,7 @@ Search one pull request's preview database lifecycle:
 
 Root `biome.json` enforces the mechanical logger audit rules:
 
-- `console.*` is rejected in `apps/api/src`, `apps/mobile/src`,
+- `console.*` is rejected in `apps/web/src`, `apps/web/src`,
   `apps/web/src`, `packages/services/src`, and `packages/database/src`.
 - `@package/logger` imports are rejected in `packages/database/src` so the
   database package stays storage-only. Log database behavior from
@@ -456,7 +427,7 @@ The app-local module owns the browser proxy configuration:
 ```ts
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = import.meta.env.same-origin /api/v0/logs;
 const logProxyUrl = apiUrl
   ? `${apiUrl.replace(/\/+$/, "")}/api/v0/logs`
   : undefined;
@@ -480,49 +451,34 @@ export const logger = createLogger({
 });
 ```
 
-## Expo Client Usage
+## Web Client Usage
 
-Expo code imports the app-local logger from `apps/mobile/src/lib/logger.ts`:
+Browser code imports the app-local logger from `apps/web/src/lib/logger.ts`:
 
 ```ts
-import { logger } from "./src/lib/logger";
-import { loggerMessages } from "@package/logger";
+import { logger } from "@/lib/logger";
 
-logger.info(loggerMessages.mobile.screenViewed, {
+logger.info("web.interaction", {
   attributes: {
-    screen: "Library",
+    source: "browser",
   },
 });
 ```
 
-The Expo app-local module owns the proxy configuration:
+The app-local logger posts to the same-origin web ingestion route:
 
 ```ts
 import { createLogger, createProxyTransport, loggerValues } from "@package/logger";
 
-const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-const logProxyUrl = apiUrl
-  ? `${apiUrl.replace(/\/+$/, "")}/api/v0/logs`
-  : undefined;
-
-const transports = logProxyUrl
-  ? [
-      createProxyTransport({
-        clientKey: process.env.EXPO_PUBLIC_LOG_PROXY_CLIENT_KEY,
-        url: logProxyUrl,
-      }),
-    ]
-  : [];
-
 export const logger = createLogger({
-  app: loggerValues.apps.mobile,
-  deploymentId:
-    process.env.EXPO_PUBLIC_LOG_DEPLOYMENT_ID ??
-    (__DEV__ ? "development" : "production"),
-  deploymentTarget:
-    process.env.EXPO_PUBLIC_LOG_DEPLOYMENT_TARGET ?? "expo-client",
-  environment: __DEV__ ? "development" : "production",
-  transports,
+  app: loggerValues.apps.web,
+  environment: import.meta.env.MODE,
+  transports: [
+    createProxyTransport({
+      clientKey: import.meta.env.VITE_LOG_PROXY_CLIENT_KEY,
+      url: "/api/v0/logs",
+    }),
+  ],
 });
 ```
 

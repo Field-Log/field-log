@@ -12,15 +12,8 @@ import { fileURLToPath } from "node:url";
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const changesetDirectory = join(repoRoot, ".changeset");
 const changelogPath = join(repoRoot, "CHANGELOG.md");
-const mobileAppJsonPath = join(repoRoot, "apps/mobile/app.json");
-const mobileAppVersionPath = join(
-  repoRoot,
-  "apps/mobile/src/lib/app-version.ts",
-);
 const versionPackagePaths = [
   "package.json",
-  "apps/mobile/package.json",
-  "apps/api/package.json",
   "apps/web/package.json",
   "packages/database/package.json",
   "packages/eslint/package.json",
@@ -31,16 +24,9 @@ const versionPackagePaths = [
   "packages/logger/package.json",
   "packages/services/package.json",
   "packages/tsconfig/package.json",
-  "packages/types/package.json",
 ].map((path) => join(repoRoot, path));
 const bumpOrder = ["patch", "minor", "major"];
 const initialVersion = "0.0.1";
-const releaseTable = `## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |`;
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -182,15 +168,6 @@ function updatePackageVersions(version) {
     packageJson.version = version;
     writeJson(path, packageJson);
   }
-
-  const appJson = readJson(mobileAppJsonPath);
-  appJson.expo.version = version;
-  writeJson(mobileAppJsonPath, appJson);
-
-  writeFileSync(
-    mobileAppVersionPath,
-    `export const mobileAppVersion = "${version}";\n`,
-  );
 }
 
 function createChangelogEntry(version, changesets) {
@@ -202,7 +179,7 @@ function createChangelogEntry(version, changesets) {
           .join("\n\n")
       : "### Patch Changes\n\n- Establish the initial release baseline.";
 
-  return `## ${version}\n\n${sections}\n\n${releaseTable}`;
+  return `## ${version}\n\n${sections}`;
 }
 
 function formatBullets(changesets, bump) {
@@ -305,8 +282,6 @@ function createInitialRelease(changesets) {
     "add",
     "CHANGELOG.md",
     ".changeset",
-    "apps/mobile/app.json",
-    "apps/mobile/src/lib/app-version.ts",
     ...versionPackagePaths.map((path) => path.replace(`${repoRoot}/`, "")),
   ]);
 
@@ -343,15 +318,9 @@ function createChangesetRelease(changesets) {
     "CHANGELOG.md",
     ".changeset",
     "package.json",
-    "apps/mobile/package.json",
-    "apps/mobile/app.json",
-    "apps/mobile/src/lib/app-version.ts",
     ...versionPackagePaths
       .map((path) => path.replace(`${repoRoot}/`, ""))
-      .filter(
-        (path) =>
-          path !== "package.json" && path !== "apps/mobile/package.json",
-      ),
+      .filter((path) => path !== "package.json"),
   ]);
   git(["commit", "-m", `chore(release): ${tagName}`]);
   git(["push", "origin", "main"]);

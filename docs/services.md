@@ -31,7 +31,7 @@ s.logger.info("api.health.checked", {
 
 Configure services once in each server app.
 
-`apps/api/src/lib/services.ts`
+`apps/web/src/lib/services.ts`
 
 ```ts
 import {
@@ -164,7 +164,7 @@ export { services as s };
 
 ## Import Guidance
 
-In `apps/api`, source files are TypeScript but emitted as Node ESM. Relative imports should use the emitted `.js` extension:
+In `apps/web`, source files are TypeScript but emitted as Node ESM. Relative imports should use the emitted `.js` extension:
 
 ```ts
 import { s } from "./lib/services.js";
@@ -180,12 +180,12 @@ Only import the web services module from SSR code, server functions, loaders, or
 
 ## Boundaries
 
-- `apps/api` can use services directly.
+- `apps/web` can use services directly.
 - `apps/scraper` can use services directly from the Railway service. Its
   scraper-specific persistence currently uses `@package/database` directly
   because the schema and queue processor are source-specific.
 - `apps/web` can use services from SSR/server-side tasks.
-- `apps/mobile` must not receive `DATABASE_URL` and must not use database services directly. Mobile should call `apps/api` for persisted user or settings behavior.
+- `apps/web` must not receive `DATABASE_URL` and must not use database services directly. Mobile should call `apps/web` for persisted user or settings behavior.
 
 If code uses `@package/services` before app-local configuration runs, it throws a clear initialization error.
 Apps may configure `s.logger` without `DATABASE_URL`; `s.db` will throw only if database services are actually used. If `db` is configured, `logger` must be configured in the same call so database service methods can emit operation logs through `s.logger`.
