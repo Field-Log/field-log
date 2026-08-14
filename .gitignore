@@ -7,16 +7,9 @@ dist/
 build/
 .output/
 .vercel/
-.wrangler/
 .tanstack/
 .turbo/
 coverage/
-
-# Expo / React Native
-.expo/
-.expo-shared/
-android/
-ios/
 
 # Logs
 *.log
@@ -42,8 +35,6 @@ yarn-error.log*
 .figjam/outbox/
 .figjam/payload-input/
 assets/
-!apps/mobile/assets/
-!apps/mobile/assets/**
 /bunny-audit/
 plans/
 pr-summarys/

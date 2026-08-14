@@ -219,7 +219,7 @@ database migrations have been applied.
 The production workflow:
 
 1. Runs production Neon migrations in the API production job.
-2. Smoke-tests the production Cloudflare Worker.
+2. Smoke-tests the production web server.
 3. Sets Railway production metadata with `--skip-deploys`:
    `APP_ENV=production`, `LOG_DEPLOYMENT_ID=production`, and
    `LOG_DEPLOYMENT_TARGET=railway`.

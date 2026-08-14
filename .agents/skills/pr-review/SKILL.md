@@ -43,10 +43,7 @@ pnpm exec biome check --linter-enabled=false .   # format check without rewritin
 - The shell is zsh: `${PIPESTATUS[0]}` does not work. Judge pass/fail from the
   actual command output (`Tasks: N successful`, `problems`, `FAIL`), not a
   wrapper exit code.
-- A red check may be a build artifact, not a PR defect. Clean generated output
-  before blaming source — e.g. `.wrangler/tmp/**` (left by `wrangler dev`) makes
-  ESLint flag a huge bundle, and a stale `packages/*/dist` with old imports
-  fails a downstream build until rebuilt (`pnpm --filter <pkg> build`).
+- A red check may be a build artifact, not a PR defect. Clean generated output before blaming source; stale `packages/*/dist` with old imports can fail a downstream build until rebuilt (`pnpm --filter <pkg> build`).
 
 ## Review the diff
 
@@ -87,9 +84,7 @@ branch, and confirm any CI cleanup (such as a preview database branch) ran.
 
 Before finishing, leave the environment as you found it:
 
-- Stop any dev servers you started (Metro, `wrangler dev`, the API) and confirm
-  their ports are free — a backgrounded server left running blocks the user's
-  next run.
+- Stop any dev servers you started and confirm their ports are free; a backgrounded server left running blocks the user's next run.
 - Restore the working tree and remove throwaway branches.
 - Report exactly what passed, what failed, and what you skipped.
 

@@ -12,4 +12,5 @@ export const serverEnv = createWebServerEnv({
   LOG_DEPLOYMENT_ID: process.env.LOG_DEPLOYMENT_ID,
   LOG_DEPLOYMENT_TARGET: process.env.LOG_DEPLOYMENT_TARGET,
   LOG_LEVEL: process.env.LOG_LEVEL,
+  LOG_PROXY_CLIENT_KEY: process.env.LOG_PROXY_CLIENT_KEY,
 });

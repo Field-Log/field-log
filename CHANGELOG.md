@@ -14,12 +14,6 @@
 
 - Added GitHub Token to mobile release workflow
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.1.6
 
@@ -27,12 +21,6 @@
 
 - Fix Vercel release workflow
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.1.5
 
@@ -40,12 +28,6 @@
 
 - Fix Vercel release builds from the web app root.
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.1.4
 
@@ -53,12 +35,6 @@
 
 - Fix Vercel production build output detection.
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.1.3
 
@@ -66,12 +42,6 @@
 
 - Fix Vercel production build output detection.
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.1.2
 
@@ -79,12 +49,6 @@
 
 - Harden production API health checks.
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.1.1
 
@@ -93,12 +57,6 @@
 - Fix scraper Axiom environment labels.
 - Fix release validation for clean GitHub runners.
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.1.0
 
@@ -134,12 +92,6 @@
 - Remove legacy Field Log Expo and Autmog static app workspaces.
 - Add a pull request template for generated and human-authored sections.
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |
 
 ## 0.0.1
 
@@ -147,9 +99,3 @@
 
 - Add release automation and API versioning.
 
-## Mobile Release Status
-
-| Platform | Build | Submit | Destination | Review / Live |
-| --- | --- | --- | --- | --- |
-| iOS | Pending | Pending | App Store Connect / TestFlight | Manual update required |
-| Android | Pending | Pending | Google Play track from /tools/fastlane | Manual update required |

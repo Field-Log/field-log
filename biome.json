@@ -35,8 +35,6 @@
   "overrides": [
     {
       "includes": [
-        "apps/api/src/**/*.{js,jsx,ts,tsx}",
-        "apps/mobile/src/**/*.{js,jsx,ts,tsx}",
         "apps/web/src/**/*.{js,jsx,ts,tsx}",
         "packages/database/src/**/*.{js,jsx,ts,tsx}",
         "packages/services/src/**/*.{js,jsx,ts,tsx}"

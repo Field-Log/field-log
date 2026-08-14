@@ -9,6 +9,7 @@ import {
   loggerMessages,
   loggerValues,
   normalizeConsoleTransportMode,
+  parseClientLogEvents,
   redactValue,
 } from "./index.js";
 
@@ -79,18 +80,6 @@ describe("logger", () => {
           ensure: "database.users.ensure",
         },
       },
-      mobile: {
-        authSignInFailed: "mobile.auth.signIn.failed",
-        databaseInitFailed: "mobile.database.init.failed",
-        exportFailed: "mobile.export.failed",
-        featureFlagsFetchFailed: "mobile.featureFlags.fetch.failed",
-        screenViewed: "mobile.screen.viewed",
-        syncUploadFailed: "mobile.sync.upload.failed",
-        userSettingsFetchFailed: "mobile.userSettings.fetch.failed",
-        userSettingsSaveFailed: "mobile.userSettings.save.failed",
-        versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",
-        versionPolicyStoreOpenFailed: "mobile.versionPolicy.storeOpen.failed",
-      },
       scraper: {
         cron: {
           completed: "scraper.cron.completed",
@@ -114,7 +103,6 @@ describe("logger", () => {
       web: {
         accountLoaded: "web.account.loaded",
         fxRatesFetchFailed: "web.fxRates.fetch.failed",
-        previewApiDerived: "web.previewApi.derived",
         userSettingsFetchFailed: "web.userSettings.fetch.failed",
         userSettingsSaveFailed: "web.userSettings.save.failed",
       },
@@ -123,7 +111,6 @@ describe("logger", () => {
       apps: {
         api: "api",
         ci: "ci",
-        mobile: "expo",
         web: "web",
       },
       logProxy: {
@@ -245,6 +232,43 @@ describe("logger", () => {
         visible: true,
       },
       timestamp: "2026-01-01T00:00:00.000Z",
+    });
+  });
+
+  it("parses client log batches", () => {
+    const result = parseClientLogEvents({
+      events: [
+        {
+          app: "web",
+          environment: "test",
+          level: "info",
+          message: "client.clicked",
+        },
+      ],
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      value: [
+        {
+          app: "web",
+          environment: "test",
+          level: "info",
+          message: "client.clicked",
+        },
+      ],
+    });
+    expect(result.ok && result.value[0]?.timestamp).toEqual(expect.any(String));
+  });
+
+  it("rejects invalid client log events", () => {
+    expect(parseClientLogEvents({ events: [] })).toEqual({
+      error: "Expected at least one log event.",
+      ok: false,
+    });
+    expect(parseClientLogEvents({ level: "loud" })).toEqual({
+      error: "Log event app must be a string.",
+      ok: false,
     });
   });
 
@@ -428,7 +452,7 @@ describe("transports", () => {
     await transport.log({
       app: "web",
       attributes: {
-        apiBaseUrl: "https://pr-27-pocket-trash-api-preview.example.test",
+        previewUrl: "https://pr-27-pocket-trash.example.test",
         pullRequestId: "27",
       },
       console: {
@@ -436,7 +460,7 @@ describe("transports", () => {
       },
       environment: "preview",
       level: "info",
-      message: "web.previewApi.derived",
+      message: "web.preview.derived",
       timestamp: "2026-01-01T00:00:00.000Z",
     });
 
@@ -444,13 +468,13 @@ describe("transports", () => {
     expect(JSON.parse(String(writer.log.mock.calls[0]?.[0]))).toEqual({
       app: "web",
       attributes: {
-        apiBaseUrl: "https://pr-27-pocket-trash-api-preview.example.test",
+        previewUrl: "https://pr-27-pocket-trash.example.test",
         pullRequestId: "27",
       },
       environment: "preview",
       level: "info",
       levelWeight: 40,
-      message: "web.previewApi.derived",
+      message: "web.preview.derived",
       timestamp: "2026-01-01T00:00:00.000Z",
     });
   });

@@ -1,4 +1,4 @@
-name: API Preview Cleanup
+name: Preview Infrastructure Cleanup
 
 on:
   pull_request:
@@ -8,12 +8,11 @@ permissions:
   contents: read
 
 env:
-  API_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-api-preview-app -->"
   DB_PREVIEW_COMMENT_MARKER: "<!-- pocket-trash-db-preview -->"
 
 jobs:
   preview-closed:
-    name: API Preview Closed
+    name: Preview Infrastructure Closed
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
@@ -24,7 +23,7 @@ jobs:
       AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PREVIEW }}
       AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
       AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PREVIEW }}
-      CI_JOB_NAME: API Preview Closed
+      CI_JOB_NAME: Preview Infrastructure Closed
       PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
@@ -98,67 +97,6 @@ jobs:
               if (error.status !== 404) {
                 throw error;
               }
-            }
-
-      - name: Validate PR comment app configuration
-        shell: bash
-        env:
-          POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
-          POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
-          POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
-          POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
-        run: |
-          set -euo pipefail
-
-          for name in POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY; do
-            if [[ -z "${!name:-}" ]]; then
-              echo "$name is required." >&2
-              exit 1
-            fi
-          done
-
-      - name: Create API preview comment app token
-        id: preview-comment-token
-        uses: actions/create-github-app-token@v3
-        with:
-          client-id: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_CLIENT_ID }}
-          private-key: ${{ secrets.POCKET_TRASH_API_PREVIEW_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.event.repository.name }}
-          permission-issues: write
-          permission-pull-requests: write
-
-      - name: Mark API preview comment closed
-        uses: actions/github-script@v8
-        with:
-          github-token: ${{ steps.preview-comment-token.outputs.token }}
-          script: |
-            const marker = process.env.API_PREVIEW_COMMENT_MARKER;
-            const alias = `pr-${context.issue.number}`;
-            const body = [
-              marker,
-              "The API preview for this pull request is no longer current because the pull request is closed.",
-              "",
-              `Alias: \`${alias}\``,
-            ].join("\n");
-
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner,
-              repo,
-              issue_number,
-              per_page: 100,
-            });
-            const existing = comments.find((comment) => comment.body?.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existing.id,
-                body,
-              });
             }
 
       - name: Create DB preview comment app token

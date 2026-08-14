@@ -18,8 +18,7 @@ Production and preview host secrets are synced from Infisical into the hosting
 platform where possible.
 
 See [Environment Variables](docs/environment-variables.md) for app-specific
-runtime variables and [Cloudflare API Deployment](docs/cloudflare-api.md) for
-Worker deployment setup.
+runtime variables.
 
 1. Install the official Infisical CLI for your OS:
    <https://infisical.com/docs/cli/overview>
@@ -53,10 +52,8 @@ Worker deployment setup.
 
 6. Confirm the app secret folders you need exist in Infisical:
 
-   - `/apps/api` in `dev`, `preview`, and `prod`
    - `/apps/web` in `dev`, `preview`, and `prod`
-   - `/apps/mobile` in `dev`, `preview`, and `prod`
-   - `/tools/cloudflare` in `dev`, `preview`, and `prod`, if deploying the API
+   - `/apps/scraper` in `dev`
    - `/tools/logger-axiom-test` in `dev`, if running the live Axiom logger test
 
 ### Install deps and set up the repo after Infisical
@@ -77,33 +74,13 @@ pnpm lint
 pnpm typecheck
 ```
 
-### Developing mobile apps with Expo
+### Developing the web app
 
-The mobile app uses `expo-dev-client`, so Expo Go is not the target runtime. See
-[Getting started with Expo](docs/getting-started-with-expo.md) to install Xcode,
-Android Studio, SDK tools, local simulators/emulators, and the development
-client.
-
-After setup, run the mobile app from the repo root:
-
-```sh
-pnpm dev:ios
-pnpm dev:android
-```
-
-For web-only work, use:
+Run the TanStack Start web app from the repo root:
 
 ```sh
 pnpm dev:web
 ```
-
-### Cloudflare API setup
-
-`apps/api` runs as a Cloudflare Worker. Local API development uses
-`wrangler dev` through Infisical so the local runtime matches the deployed
-Worker runtime.
-
-For deployment setup, see [Cloudflare API Deployment](docs/cloudflare-api.md).
 
 ## AI commands
 
@@ -122,16 +99,9 @@ Local app dev commands use Infisical to load Development secrets. Configure the 
 
 | Command | What it does |
 | --- | --- |
-| `pnpm dev` | Starts every app dev server: API, scraper, Expo mobile, and TanStack Start web. |
-| `pnpm dev:web` | Starts the Hono API and the TanStack Start web app. |
-| `pnpm dev:ios` | Starts the Hono API and launches the Expo app for iOS. |
-| `pnpm dev:android` | Starts the Hono API and launches the Expo app for Android. |
-| `pnpm dev:expo` | Starts the Hono API and the interactive Expo dev-client Metro server. |
-| `pnpm dev:ios:no-api` | Builds, installs, and launches the iOS development build with the local native toolchain, without starting the API. |
-| `pnpm dev:android:no-api` | Builds, installs, and launches the Android development build with the local native toolchain, without starting the API. |
-| `pnpm dev:eas:android` | Starts an EAS Android development build using the `development` profile. |
-| `pnpm dev:eas:ios` | Starts an EAS iOS Simulator development build using the `development-simulator` profile. |
-| `pnpm --filter @app/api dev:node` | Starts the legacy local Node Hono server for API debugging outside the Worker runtime. |
+| `pnpm dev` | Starts app dev servers through Turborepo. |
+| `pnpm dev:web` | Starts the TanStack Start web app. |
+| `pnpm dev:scraper` | Runs scraper development commands. |
 
 
 ## Running tools
@@ -142,11 +112,8 @@ Infisical.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm build` | Builds all apps and packages through Turborepo, using Infisical-backed app commands where configured. The Expo mobile build reads `dev` secrets from `/apps/mobile`. |
+| `pnpm build` | Builds all apps and packages through Turborepo. |
 | `pnpm build:ci` | Builds all apps and packages through Turborepo with environment variables already provided. |
-| `pnpm dev:doctor:android` | Checks that JDK 17, Android Studio, Android SDK tools, an emulator image, and a runnable Android target are available. |
-| `pnpm build:mobile:preview` | Builds the Expo mobile app with `preview` secrets from `/apps/mobile`. |
-| `pnpm build:mobile:prod` | Builds the Expo mobile app with `prod` secrets from `/apps/mobile`. |
 | `pnpm figjam read` | Reads the configured FigJam/Figma file into `.figjam/cache`; run through `infisical run --env=dev --path=/local/figma -- pnpm figjam read`. |
 | `pnpm figjam serve-outbox` | Serves validated `.figjam/outbox` payloads to the private local FigJam plugin bridge. |
 | `pnpm lint` | Runs Biome linting project-wide, then package-level lint tasks. |

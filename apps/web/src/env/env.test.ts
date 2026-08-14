@@ -1,27 +1,18 @@
-import type { Logger } from "@package/logger";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  applyVercelPreviewApiEnv,
-  applyWebClientEnvAliases,
-} from "../../vite.config";
+import { applyWebClientEnvAliases } from "../../vite.config";
 import { createWebClientEnv } from "./client.schema";
 import { createWebServerEnv } from "./server.schema";
 
-let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
-  consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
-
 describe("web client env", () => {
   it("validates required Vite client variables", () => {
     const env = createWebClientEnv({
-      VITE_API_URL: "https://api.preview.example.com",
       VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
       VITE_CLERK_SIGN_IN_URL: "/sign-in",
       VITE_CLERK_SIGN_UP_URL: "/sign-up",
@@ -30,7 +21,6 @@ describe("web client env", () => {
       VITE_LOG_PROXY_CLIENT_KEY: "client-key",
     });
 
-    expect(env.VITE_API_URL).toBe("https://api.preview.example.com");
     expect(env.VITE_CLERK_PUBLISHABLE_KEY).toBe("pk_test_example");
     expect(env.VITE_CLERK_SIGN_IN_URL).toBe("/sign-in");
     expect(env.VITE_CLERK_SIGN_UP_URL).toBe("/sign-up");
@@ -48,34 +38,11 @@ describe("web client env", () => {
       }),
     ).toThrow("Invalid environment variables");
   });
-
-  it("normalizes bare localhost API URLs", () => {
-    const env = createWebClientEnv({
-      VITE_API_URL: "localhost:4006",
-      VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
-      VITE_CLERK_SIGN_IN_URL: "/sign-in",
-      VITE_CLERK_SIGN_UP_URL: "/sign-up",
-    });
-
-    expect(env.VITE_API_URL).toBe("http://localhost:4006");
-  });
-
-  it("rejects malformed client API URLs", () => {
-    expect(() =>
-      createWebClientEnv({
-        VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
-        VITE_CLERK_SIGN_IN_URL: "/sign-in",
-        VITE_CLERK_SIGN_UP_URL: "/sign-up",
-        VITE_API_URL: "not a url",
-      }),
-    ).toThrow("Invalid environment variables");
-  });
 });
 
 describe("web client env aliases", () => {
-  it("maps unprefixed API and log proxy variables to their Vite client names", () => {
+  it("maps unprefixed log variables to their Vite client names", () => {
     const runtimeEnv: Record<string, string | undefined> = {
-      API_URL: "localhost:4006",
       LOG_DEPLOYMENT_ID: "development",
       LOG_DEPLOYMENT_TARGET: "web-client",
       LOG_PROXY_CLIENT_KEY: "client-key",
@@ -84,7 +51,6 @@ describe("web client env aliases", () => {
     applyWebClientEnvAliases(runtimeEnv);
 
     const env = createWebClientEnv({
-      VITE_API_URL: runtimeEnv.VITE_API_URL,
       VITE_CLERK_PUBLISHABLE_KEY: "pk_test_example",
       VITE_CLERK_SIGN_IN_URL: "/sign-in",
       VITE_CLERK_SIGN_UP_URL: "/sign-up",
@@ -93,7 +59,6 @@ describe("web client env aliases", () => {
       VITE_LOG_PROXY_CLIENT_KEY: runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY,
     });
 
-    expect(env.VITE_API_URL).toBe("http://localhost:4006");
     expect(env.VITE_LOG_DEPLOYMENT_ID).toBe("development");
     expect(env.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
     expect(env.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
@@ -101,11 +66,9 @@ describe("web client env aliases", () => {
 
   it("keeps explicit Vite logging variables over unprefixed aliases", () => {
     const runtimeEnv: Record<string, string | undefined> = {
-      API_URL: "https://api.example.com/fallback",
       LOG_DEPLOYMENT_ID: "fallback",
       LOG_DEPLOYMENT_TARGET: "fallback-target",
       LOG_PROXY_CLIENT_KEY: "fallback-client-key",
-      VITE_API_URL: "https://api.example.com",
       VITE_LOG_DEPLOYMENT_ID: "pr-27",
       VITE_LOG_DEPLOYMENT_TARGET: "web-client",
       VITE_LOG_PROXY_CLIENT_KEY: "client-key",
@@ -113,123 +76,9 @@ describe("web client env aliases", () => {
 
     applyWebClientEnvAliases(runtimeEnv);
 
-    expect(runtimeEnv.VITE_API_URL).toBe("https://api.example.com");
     expect(runtimeEnv.VITE_LOG_DEPLOYMENT_ID).toBe("pr-27");
     expect(runtimeEnv.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
     expect(runtimeEnv.VITE_LOG_PROXY_CLIENT_KEY).toBe("client-key");
-  });
-});
-
-describe("Vercel preview API env", () => {
-  it("derives PR-specific API URLs for Vercel previews", async () => {
-    const runtimeEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
-      VERCEL_ENV: "preview",
-      VERCEL_GIT_PULL_REQUEST_ID: "27",
-    };
-
-    await applyVercelPreviewApiEnv(runtimeEnv);
-
-    expect(runtimeEnv.VITE_API_URL).toBe(
-      "https://pr-27-pocket-trash-api-preview.23242.workers.dev",
-    );
-    expect(runtimeEnv.VITE_LOG_DEPLOYMENT_ID).toBe("pr-27");
-    expect(runtimeEnv.VITE_LOG_DEPLOYMENT_TARGET).toBe("web-client");
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining("web.previewApi.derived"),
-    );
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      expect.stringContaining('"pullRequestId":"27"'),
-    );
-  });
-
-  it("normalizes preview Worker hosts that include a protocol or path", async () => {
-    const runtimeEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST:
-        "https://pocket-trash-api-preview.23242.workers.dev/",
-      VERCEL_ENV: "preview",
-      VERCEL_GIT_PULL_REQUEST_ID: "123",
-    };
-
-    await applyVercelPreviewApiEnv(runtimeEnv);
-
-    expect(runtimeEnv.VITE_API_URL).toBe(
-      "https://pr-123-pocket-trash-api-preview.23242.workers.dev",
-    );
-  });
-
-  it("overrides shared preview API values only for Vercel PR previews", async () => {
-    const runtimeEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
-      VERCEL_ENV: "preview",
-      VERCEL_GIT_PULL_REQUEST_ID: "42",
-      VITE_API_URL: "https://api.preview.pocket-trash.app",
-    };
-
-    await applyVercelPreviewApiEnv(runtimeEnv);
-
-    expect(runtimeEnv.VITE_API_URL).toBe(
-      "https://pr-42-pocket-trash-api-preview.23242.workers.dev",
-    );
-  });
-
-  it("flushes the deployment log event", async () => {
-    const runtimeEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
-      VERCEL_ENV: "preview",
-      VERCEL_GIT_PULL_REQUEST_ID: "27",
-    };
-    const logger: Logger = {
-      child: vi.fn(() => logger),
-      debug: vi.fn(),
-      error: vi.fn(),
-      fatal: vi.fn(),
-      flush: vi.fn().mockResolvedValue(undefined),
-      forward: vi.fn(),
-      info: vi.fn(),
-      operation: vi.fn(async (_name, action) => action()),
-      trace: vi.fn(),
-      verbose: vi.fn(),
-      warn: vi.fn(),
-    };
-
-    await applyVercelPreviewApiEnv(runtimeEnv, logger);
-
-    expect(logger.info).toHaveBeenCalledWith(
-      "web.previewApi.derived",
-      expect.objectContaining({
-        attributes: expect.objectContaining({
-          pullRequestId: "27",
-          workerHost: "pocket-trash-api-preview.23242.workers.dev",
-        }),
-        console: {
-          mode: "verbose",
-        },
-      }),
-    );
-    expect(logger.flush).toHaveBeenCalledOnce();
-  });
-
-  it("leaves non-preview and non-PR deployments unchanged", async () => {
-    const productionEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
-      VERCEL_ENV: "production",
-      VERCEL_GIT_PULL_REQUEST_ID: "27",
-      VITE_API_URL: "https://api.pocket-trash.app",
-    };
-    const branchPreviewEnv: Record<string, string | undefined> = {
-      API_PREVIEW_WORKER_HOST: "pocket-trash-api-preview.23242.workers.dev",
-      VERCEL_ENV: "preview",
-      VITE_API_URL: "https://api.preview.pocket-trash.app",
-    };
-
-    await applyVercelPreviewApiEnv(productionEnv);
-    await applyVercelPreviewApiEnv(branchPreviewEnv);
-
-    expect(productionEnv.VITE_API_URL).toBe("https://api.pocket-trash.app");
-    expect(branchPreviewEnv.VITE_API_URL).toBe(
-      "https://api.preview.pocket-trash.app",
-    );
   });
 });
 
@@ -246,6 +95,7 @@ describe("web server env", () => {
       LOG_DEPLOYMENT_ID: "pr-52",
       LOG_DEPLOYMENT_TARGET: "web-server",
       LOG_LEVEL: "debug",
+      LOG_PROXY_CLIENT_KEY: "client-key",
     });
 
     expect(env.AXIOM_DATASET).toBe("development");
@@ -260,6 +110,7 @@ describe("web server env", () => {
     expect(env.LOG_DEPLOYMENT_ID).toBe("pr-52");
     expect(env.LOG_DEPLOYMENT_TARGET).toBe("web-server");
     expect(env.LOG_LEVEL).toBe("debug");
+    expect(env.LOG_PROXY_CLIENT_KEY).toBe("client-key");
   });
 
   it("rejects missing server values", () => {

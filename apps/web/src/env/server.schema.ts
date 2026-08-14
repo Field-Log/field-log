@@ -12,6 +12,7 @@ export type WebServerRuntimeEnv = {
   LOG_DEPLOYMENT_ID?: string;
   LOG_DEPLOYMENT_TARGET?: string;
   LOG_LEVEL?: string;
+  LOG_PROXY_CLIENT_KEY?: string;
 };
 
 export function createWebServerEnv(runtimeEnv: WebServerRuntimeEnv) {
@@ -29,6 +30,7 @@ export function createWebServerEnv(runtimeEnv: WebServerRuntimeEnv) {
       LOG_DEPLOYMENT_ID: runtimeEnv.LOG_DEPLOYMENT_ID,
       LOG_DEPLOYMENT_TARGET: runtimeEnv.LOG_DEPLOYMENT_TARGET,
       LOG_LEVEL: runtimeEnv.LOG_LEVEL,
+      LOG_PROXY_CLIENT_KEY: runtimeEnv.LOG_PROXY_CLIENT_KEY,
     },
     server: {
       AXIOM_DATASET: z.string().min(1).optional(),
@@ -43,6 +45,7 @@ export function createWebServerEnv(runtimeEnv: WebServerRuntimeEnv) {
       LOG_LEVEL: z
         .enum(["trace", "debug", "verbose", "info", "warn", "error", "fatal"])
         .optional(),
+      LOG_PROXY_CLIENT_KEY: z.string().min(1).optional(),
     },
   });
 }

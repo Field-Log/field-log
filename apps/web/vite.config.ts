@@ -1,14 +1,4 @@
 import process from "node:process";
-import {
-  createAxiomTransport,
-  createConsoleTransport,
-  createLogger,
-  type Logger,
-  loggerMessages,
-  loggerValues,
-  normalizeConsoleTransportMode,
-  normalizeLogLevel,
-} from "@package/logger";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -25,49 +15,10 @@ function envValue(env: MutableEnv, key: string) {
   return value === "" ? undefined : value;
 }
 
-function createWebBuildLogger(env: MutableEnv): Logger {
-  const axiomDataset = envValue(env, "AXIOM_DATASET");
-  const axiomToken = envValue(env, "AXIOM_TOKEN");
-  const environment =
-    envValue(env, "VERCEL_ENV") ?? envValue(env, "NODE_ENV") ?? "build";
-  const pullRequestId = envValue(env, "VERCEL_GIT_PULL_REQUEST_ID");
-
-  return createLogger({
-    app: loggerValues.apps.web,
-    deploymentId:
-      envValue(env, "LOG_DEPLOYMENT_ID") ??
-      (pullRequestId ? `pr-${pullRequestId}` : environment),
-    deploymentTarget:
-      envValue(env, "LOG_DEPLOYMENT_TARGET") ??
-      (envValue(env, "VERCEL_ENV") ? "vercel" : "local"),
-    environment,
-    level: normalizeLogLevel(envValue(env, "LOG_LEVEL")),
-    transports: [
-      ...(axiomDataset !== undefined && axiomToken !== undefined
-        ? [
-            createAxiomTransport({
-              dataset: axiomDataset,
-              edgeDomain: envValue(env, "AXIOM_EDGE_DOMAIN"),
-              token: axiomToken,
-            }),
-          ]
-        : []),
-      createConsoleTransport({
-        mode: normalizeConsoleTransportMode(envValue(env, "LOGGER")),
-      }),
-    ],
-  });
-}
-
 export function applyWebClientEnvAliases(env: MutableEnv = process.env) {
-  const apiUrl = envValue(env, "API_URL");
   const logDeploymentId = envValue(env, "LOG_DEPLOYMENT_ID");
   const logDeploymentTarget = envValue(env, "LOG_DEPLOYMENT_TARGET");
   const logProxyClientKey = envValue(env, "LOG_PROXY_CLIENT_KEY");
-
-  if (envValue(env, "VITE_API_URL") === undefined && apiUrl !== undefined) {
-    env.VITE_API_URL = apiUrl;
-  }
 
   if (
     envValue(env, "VITE_LOG_DEPLOYMENT_ID") === undefined &&
@@ -91,63 +42,13 @@ export function applyWebClientEnvAliases(env: MutableEnv = process.env) {
   }
 }
 
-function normalizePreviewWorkerHost(value: string | undefined) {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  const host = value.replace(/^https?:\/\//, "").split("/")[0];
-
-  return host === "" ? undefined : host;
-}
-
-export async function applyVercelPreviewApiEnv(
-  env: MutableEnv = process.env,
-  logger?: Logger,
-) {
-  if (envValue(env, "VERCEL_ENV") !== "preview") {
-    return;
-  }
-
-  const pullRequestId = envValue(env, "VERCEL_GIT_PULL_REQUEST_ID");
-  const workerHost = normalizePreviewWorkerHost(
-    envValue(env, "API_PREVIEW_WORKER_HOST"),
-  );
-
-  if (pullRequestId === undefined || workerHost === undefined) {
-    return;
-  }
-
-  const apiUrl = `https://pr-${pullRequestId}-${workerHost}`;
-
-  env.VITE_API_URL = apiUrl;
-  env.VITE_LOG_DEPLOYMENT_ID = `pr-${pullRequestId}`;
-  env.VITE_LOG_DEPLOYMENT_TARGET ??= "web-client";
-
-  const buildLogger = logger ?? createWebBuildLogger(env);
-
-  buildLogger.info(loggerMessages.web.previewApiDerived, {
-    attributes: {
-      apiUrl,
-      pullRequestId,
-      workerHost,
-    },
-    console: {
-      mode: "verbose",
-    },
-  });
-  await buildLogger.flush();
-}
-
 export default defineConfig(async ({ mode }) => {
   const isTest = mode === "test";
 
   if (!isTest) {
     applyWebClientEnvAliases();
-    await applyVercelPreviewApiEnv();
 
     createWebClientEnv({
-      VITE_API_URL: process.env.VITE_API_URL,
       VITE_CLERK_PUBLISHABLE_KEY: process.env.VITE_CLERK_PUBLISHABLE_KEY,
       VITE_CLERK_SIGN_IN_URL: process.env.VITE_CLERK_SIGN_IN_URL,
       VITE_CLERK_SIGN_UP_URL: process.env.VITE_CLERK_SIGN_UP_URL,
@@ -165,6 +66,7 @@ export default defineConfig(async ({ mode }) => {
       LOG_DEPLOYMENT_ID: process.env.LOG_DEPLOYMENT_ID,
       LOG_DEPLOYMENT_TARGET: process.env.LOG_DEPLOYMENT_TARGET,
       LOG_LEVEL: process.env.LOG_LEVEL,
+      LOG_PROXY_CLIENT_KEY: process.env.LOG_PROXY_CLIENT_KEY,
     });
   }
 

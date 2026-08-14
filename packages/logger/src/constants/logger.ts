@@ -75,18 +75,6 @@ export const loggerMessages = {
     update: "images.update",
     upload: "images.upload",
   },
-  mobile: {
-    authSignInFailed: "mobile.auth.signIn.failed",
-    databaseInitFailed: "mobile.database.init.failed",
-    exportFailed: "mobile.export.failed",
-    featureFlagsFetchFailed: "mobile.featureFlags.fetch.failed",
-    screenViewed: "mobile.screen.viewed",
-    userSettingsFetchFailed: "mobile.userSettings.fetch.failed",
-    userSettingsSaveFailed: "mobile.userSettings.save.failed",
-    syncUploadFailed: "mobile.sync.upload.failed",
-    versionPolicyFetchFailed: "mobile.versionPolicy.fetch.failed",
-    versionPolicyStoreOpenFailed: "mobile.versionPolicy.storeOpen.failed",
-  },
   scraper: {
     autmog: {
       fetchCompleted: "scraper.autmog.fetch.completed",
@@ -163,7 +151,6 @@ export const loggerMessages = {
   web: {
     accountLoaded: "web.account.loaded",
     fxRatesFetchFailed: "web.fxRates.fetch.failed",
-    previewApiDerived: "web.previewApi.derived",
     userSettingsFetchFailed: "web.userSettings.fetch.failed",
     userSettingsSaveFailed: "web.userSettings.save.failed",
   },
@@ -173,7 +160,6 @@ export const loggerValues = {
   apps: {
     api: "api",
     ci: "ci",
-    mobile: "expo",
     scraper: "scraper",
     web: "web",
   },

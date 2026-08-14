@@ -34,9 +34,7 @@ request titles only, not the individual commits already present on the branch.
 | Scope | Covers |
 |---|---|
 | `web` | `apps/web/` |
-| `api` | `apps/api/` |
 | `scraper` | `apps/scraper/` |
-| `mobile` | `apps/mobile/` |
 | `packages` | Multiple packages or the `packages/` root |
 | `database` | `packages/database/` |
 | `eslint` | `packages/eslint/` |
@@ -47,7 +45,6 @@ request titles only, not the individual commits already present on the branch.
 | `logger` | `packages/logger/` |
 | `services` | `packages/services/` |
 | `tsconfig` | `packages/tsconfig/` |
-| `types` | `packages/types/` |
 | `config` | Root config files such as Biome, Turbo, pnpm workspace, and TypeScript config |
 | `docs` | `README.md`, `CLAUDE.md`, `AGENTS.md`, and `docs/` |
 | `ci` | `.github/workflows/` and `.githooks/` |
