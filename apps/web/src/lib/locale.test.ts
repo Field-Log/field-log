@@ -7,6 +7,10 @@ describe("resolveWebLocale", () => {
   });
 
   it("falls back to English for unsupported browser languages", () => {
-    expect(resolveWebLocale(null, ["fr-CA"])).toBe("en");
+    expect(resolveWebLocale(null, ["fr-CA"])).toBe("en-US");
+  });
+
+  it("normalizes legacy saved English before browser preferences", () => {
+    expect(resolveWebLocale("en", ["es-MX"])).toBe("en-US");
   });
 });

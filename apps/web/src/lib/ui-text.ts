@@ -1,7 +1,7 @@
 import type { SupportedLocale } from "@pocket-trash/localizations";
 
 export const webUiMessages = {
-  en: {
+  "en-US": {
     Account: "Account",
     "Account menu": "Account menu",
     Actions: "Actions",
@@ -218,7 +218,7 @@ export const webUiMessages = {
   },
 } as const satisfies Record<SupportedLocale, Record<string, string>>;
 
-export type WebUiMessageKey = keyof typeof webUiMessages.en;
+export type WebUiMessageKey = keyof (typeof webUiMessages)["en-US"];
 
 export function webText(locale: SupportedLocale, key: WebUiMessageKey) {
   return webUiMessages[locale][key];
@@ -227,7 +227,7 @@ export function webText(locale: SupportedLocale, key: WebUiMessageKey) {
 assertCompleteCatalogs();
 
 function assertCompleteCatalogs() {
-  const expected = Object.keys(webUiMessages.en);
+  const expected = Object.keys(webUiMessages["en-US"]);
 
   for (const [locale, messages] of Object.entries(webUiMessages)) {
     const missing = expected.filter((key) => !(key in messages));

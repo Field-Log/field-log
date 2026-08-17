@@ -137,8 +137,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/services
       '@pocket-trash/localizations':
-        specifier: ^0.0.3
-        version: 0.0.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^0.1.0
+        version: 0.1.0
       '@t3-oss/env-core':
         specifier: ^0.13.11
         version: 0.13.11(typescript@6.0.3)(zod@4.4.3)
@@ -366,8 +366,8 @@ importers:
         specifier: workspace:*
         version: link:../logger
       '@pocket-trash/localizations':
-        specifier: ^0.0.3
-        version: 0.0.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: ^0.1.0
+        version: 0.1.0
       drizzle-orm:
         specifier: latest
         version: 0.45.2(@neondatabase/serverless@1.1.0)(expo-sqlite@57.0.0(expo@57.0.4)(react-native@0.86.0(@babel/core@7.29.7)(@react-native/jest-preset@0.86.0(@babel/core@7.29.7)(react@19.2.7))(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.7)(utf-8-validate@5.0.10))(react@19.2.7))
@@ -2207,8 +2207,8 @@ packages:
   '@oxc-project/types@0.137.0':
     resolution: {integrity: sha512-WT+Gb24i8hmvo85AIv2oEYouEXkRlKAlT9WaCa3TfLgNCN+GhrJOGZuIlMouAh38Qe4QOx26eUOVsq70qXrywA==}
 
-  '@pocket-trash/localizations@0.0.3':
-    resolution: {integrity: sha512-3VjE3acOt1kiP3ct6E2yV9gXPASYQIZpnwKZEFPXuB1HR/pIZBqxqLuuz0ArV9CAoYp9kGzKZ7psKD+deNYbBg==}
+  '@pocket-trash/localizations@0.1.0':
+    resolution: {integrity: sha512-YSnuDE+b+olBOy3rUIxglm/qDYQgiYlDIxXCwPsmFpo6LMFsSIAhYOUkuCL7qMwat6Wsl7LDzuHzm5an3GRxdw==}
     engines: {node: '>=20'}
 
   '@radix-ui/primitive@1.1.5':
@@ -10130,13 +10130,10 @@ snapshots:
 
   '@oxc-project/types@0.137.0': {}
 
-  '@pocket-trash/localizations@0.0.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
+  '@pocket-trash/localizations@0.1.0':
     dependencies:
-      '@clerk/localizations': 4.15.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       lts: 2.0.0
     transitivePeerDependencies:
-      - react
-      - react-dom
       - supports-color
 
   '@radix-ui/primitive@1.1.5': {}
@@ -12652,11 +12649,11 @@ snapshots:
 
   d3-brush@1.0.3:
     dependencies:
-      d3-dispatch: 1.0.2
-      d3-drag: 1.0.2
-      d3-interpolate: 1.1.2
-      d3-selection: 1.0.3
-      d3-transition: 1.0.3
+      d3-dispatch: 1.0.3
+      d3-drag: 1.0.4
+      d3-interpolate: 1.1.4
+      d3-selection: 1.0.5
+      d3-transition: 1.0.4
 
   d3-brush@1.0.4:
     dependencies:
@@ -12668,8 +12665,8 @@ snapshots:
 
   d3-chord@1.0.3:
     dependencies:
-      d3-array: 1.0.2
-      d3-path: 1.0.3
+      d3-array: 1.1.1
+      d3-path: 1.0.5
 
   d3-chord@1.0.4:
     dependencies:
@@ -12690,8 +12687,8 @@ snapshots:
 
   d3-drag@1.0.2:
     dependencies:
-      d3-dispatch: 1.0.2
-      d3-selection: 1.0.3
+      d3-dispatch: 1.0.3
+      d3-selection: 1.0.5
 
   d3-drag@1.0.4:
     dependencies:
@@ -12716,10 +12713,10 @@ snapshots:
 
   d3-force@1.0.4:
     dependencies:
-      d3-collection: 1.0.2
-      d3-dispatch: 1.0.2
-      d3-quadtree: 1.0.2
-      d3-timer: 1.0.3
+      d3-collection: 1.0.3
+      d3-dispatch: 1.0.3
+      d3-quadtree: 1.0.3
+      d3-timer: 1.0.5
 
   d3-force@1.0.6:
     dependencies:
@@ -12734,7 +12731,7 @@ snapshots:
 
   d3-geo@1.4.0:
     dependencies:
-      d3-array: 1.0.2
+      d3-array: 1.1.1
 
   d3-geo@1.6.3:
     dependencies:
@@ -12746,7 +12743,7 @@ snapshots:
 
   d3-interpolate@1.1.2:
     dependencies:
-      d3-color: 1.0.2
+      d3-color: 1.0.3
 
   d3-interpolate@1.1.4:
     dependencies:
@@ -12779,9 +12776,9 @@ snapshots:
 
   d3-request@1.0.3:
     dependencies:
-      d3-collection: 1.0.2
-      d3-dispatch: 1.0.2
-      d3-dsv: 1.0.3
+      d3-collection: 1.0.3
+      d3-dispatch: 1.0.3
+      d3-dsv: 1.0.5
       xmlhttprequest: 1.8.0
 
   d3-request@1.0.5:
@@ -12793,13 +12790,13 @@ snapshots:
 
   d3-scale@1.0.4:
     dependencies:
-      d3-array: 1.0.2
-      d3-collection: 1.0.2
-      d3-color: 1.0.2
-      d3-format: 1.0.2
-      d3-interpolate: 1.1.2
-      d3-time: 1.0.4
-      d3-time-format: 2.0.3
+      d3-array: 1.1.1
+      d3-collection: 1.0.3
+      d3-color: 1.0.3
+      d3-format: 1.1.1
+      d3-interpolate: 1.1.4
+      d3-time: 1.0.6
+      d3-time-format: 2.0.5
 
   d3-scale@1.0.5:
     dependencies:
@@ -12817,7 +12814,7 @@ snapshots:
 
   d3-shape@1.0.4:
     dependencies:
-      d3-path: 1.0.3
+      d3-path: 1.0.5
 
   d3-shape@1.0.6:
     dependencies:
@@ -12825,7 +12822,7 @@ snapshots:
 
   d3-time-format@2.0.3:
     dependencies:
-      d3-time: 1.0.4
+      d3-time: 1.0.6
 
   d3-time-format@2.0.5:
     dependencies:
@@ -12841,12 +12838,12 @@ snapshots:
 
   d3-transition@1.0.3:
     dependencies:
-      d3-color: 1.0.2
-      d3-dispatch: 1.0.2
-      d3-ease: 1.0.2
-      d3-interpolate: 1.1.2
-      d3-selection: 1.0.3
-      d3-timer: 1.0.3
+      d3-color: 1.0.3
+      d3-dispatch: 1.0.3
+      d3-ease: 1.0.3
+      d3-interpolate: 1.1.4
+      d3-selection: 1.0.5
+      d3-timer: 1.0.5
 
   d3-transition@1.0.4:
     dependencies:
@@ -12863,11 +12860,11 @@ snapshots:
 
   d3-zoom@1.1.0:
     dependencies:
-      d3-dispatch: 1.0.2
-      d3-drag: 1.0.2
-      d3-interpolate: 1.1.2
-      d3-selection: 1.0.3
-      d3-transition: 1.0.3
+      d3-dispatch: 1.0.3
+      d3-drag: 1.0.4
+      d3-interpolate: 1.1.4
+      d3-selection: 1.0.5
+      d3-transition: 1.0.4
 
   d3-zoom@1.1.4:
     dependencies:

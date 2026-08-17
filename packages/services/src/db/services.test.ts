@@ -365,4 +365,33 @@ describe("database service logging", () => {
     });
     expect(JSON.stringify(events)).not.toContain(clerkId);
   });
+
+  it("treats a legacy saved English locale as English", async () => {
+    const events: LogEvent[] = [];
+    const clerkId = "clerk-locale-legacy-1";
+    const logger = captureLogger(events);
+    const existingSettings = {
+      currencyCode: "USD",
+      dimensionUnit: "in",
+      locale: "en",
+      theme: "system",
+      userId: 1000,
+      weightUnit: "g",
+    };
+    const db = createDbMock({
+      selectRows: [[existingSettings]],
+    });
+    const users = createUsersService(db, logger);
+    const service = createUserSettingsService(db, users, logger);
+
+    await expect(
+      service.resolveLocaleForClerkId(clerkId, ["es-MX"]),
+    ).resolves.toBe("en-US");
+    await logger.flush();
+
+    expect(events.map((event) => event.message)).toEqual([
+      `${loggerMessages.database.userSettings.getByClerkId}.succeeded`,
+    ]);
+    expect(db.insertValues).toEqual([]);
+  });
 });

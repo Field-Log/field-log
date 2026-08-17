@@ -1,21 +1,21 @@
 import {
-  formatMessage,
-  type MessageKey,
+  formatTranslation,
   type SupportedLocale,
+  type TranslationKey,
 } from "@pocket-trash/localizations";
 
 export class LocalizedServerError extends Error {
-  readonly key: MessageKey;
+  readonly key: TranslationKey;
 
-  constructor(key: MessageKey, locale?: SupportedLocale | null) {
-    super(formatMessage(key, {}, locale));
+  constructor(key: TranslationKey, locale?: SupportedLocale | null) {
+    super(formatTranslation(key, {}, locale));
     this.name = "LocalizedServerError";
     this.key = key;
   }
 }
 
 export function localizedServerError(
-  key: MessageKey,
+  key: TranslationKey,
   locale?: SupportedLocale | null,
 ) {
   return new LocalizedServerError(key, locale);

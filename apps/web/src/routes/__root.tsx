@@ -102,7 +102,7 @@ function bootstrapScript(
     const dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.classList.toggle("dark", dark);
     const storedLocale = localStorage.getItem("field-log.locale");
-    const locale = serverLocale || (storedLocale === "es-MX" ? "es-MX" : "en");
+    const locale = serverLocale || (storedLocale === "en" || storedLocale === "en-US" ? "en-US" : storedLocale === "es-MX" ? "es-MX" : "en-US");
     document.documentElement.lang = locale;
   } catch {}
 })();

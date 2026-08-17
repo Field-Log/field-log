@@ -69,6 +69,7 @@ function mergeLocaleSettings(
 }
 
 function normalizeSavedLocale(locale: string | null | undefined) {
+  if (locale === "en") return "en-US";
   return locale ? resolveLocale(locale) : null;
 }
 
@@ -166,9 +167,10 @@ export function createUserSettingsService(
     },
     async resolveLocaleForClerkId(clerkId, preferences) {
       const settings = await this.getByClerkId(clerkId);
-      const locale = resolveLocale(settings?.locale, ...preferences);
+      const savedLocale = normalizeSavedLocale(settings?.locale);
+      const locale = savedLocale ?? resolveLocale(...preferences);
 
-      if (settings?.locale === locale) {
+      if (savedLocale === locale) {
         return locale;
       }
 

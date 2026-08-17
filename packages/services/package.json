@@ -28,7 +28,7 @@
     "@package/images": "workspace:*",
     "@package/logger": "workspace:*",
     "drizzle-orm": "latest",
-    "@pocket-trash/localizations": "^0.0.3"
+    "@pocket-trash/localizations": "^0.1.0"
   },
   "devDependencies": {
     "@package/eslint": "workspace:*",
