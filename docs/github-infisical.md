@@ -32,6 +32,7 @@ logger, and Discord jobs. Use `prod` for release and manual main deploy jobs.
 | `BUNNY_STORAGE_ZONE_NAME` | Required | - |
 | `DISCORD_GITHUB_WEBHOOK_URL` | Required | - |
 | `IMAGE_CDN_BASE_URL` | Required | - |
+| `LOG_PROXY_CLIENT_KEY` | Required | - |
 | `NEON_API_KEY` | Required | Required |
 | `NEON_DATABASE_NAME` | Required | Required |
 | `NEON_DATABASE_USER` | Required | Required |

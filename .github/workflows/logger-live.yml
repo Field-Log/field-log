@@ -112,6 +112,7 @@ jobs:
       - name: Run logger live Axiom test
         env:
           LOGGER_AXIOM_EXPECTED_DATASET: preview
+          LOG_LEVEL: trace
         run: pnpm exec tsx packages/logger/integration/axiom-live.ts
 
   logger-live-required:

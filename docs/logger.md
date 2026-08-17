@@ -249,15 +249,21 @@ Run it only when intentionally validating the real Axiom integration:
 pnpm test:logger:axiom
 ```
 
-Local runs load secrets from Infisical environment `dev` through the Infisical
-runner. CI loads secrets from Infisical environment `preview`.
-`/tools/logger-axiom-test` must provide:
+Local runs load secrets from Infisical environment `dev` path
+`/tools/logger-axiom-test` through the Infisical runner. CI loads secrets from
+Infisical environment `preview` path `tools/github/secrets`.
+
+Local `/tools/logger-axiom-test` must provide:
 
 - `LOG_LEVEL`, currently `trace`
 - `LOG_PROXY_CLIENT_KEY`
 - `AXIOM_TOKEN`, with ingest and query access to the configured dataset
 - `AXIOM_DATASET=development` for local runs, or `AXIOM_DATASET=preview` for CI
 - optional `AXIOM_EDGE_DOMAIN`
+
+CI `tools/github/secrets` must provide `LOG_PROXY_CLIENT_KEY`, `AXIOM_TOKEN`,
+`AXIOM_DATASET=preview`, and optional `AXIOM_EDGE_DOMAIN`. The workflow sets
+`LOG_LEVEL=trace` directly because it is test configuration, not a secret.
 
 The test hard-fails unless `AXIOM_DATASET` matches the expected dataset and
 `LOG_LEVEL` is `trace`. Local runs default to the `development` dataset. CI sets
