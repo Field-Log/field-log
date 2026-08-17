@@ -17,18 +17,27 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
       issues: write
       pull-requests: write
     env:
-      AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PREVIEW }}
-      AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
-      AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PREVIEW }}
       CI_JOB_NAME: Preview Infrastructure Closed
       PR_NUMBER: ${{ github.event.pull_request.number }}
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Fetch GitHub secrets from Infisical
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ secrets.INFISICAL_GITHUB_IDENTITY_ID }}
+          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
+          env-slug: preview
+          secret-path: tools/github/secrets
 
       - name: Enable Corepack
         run: corepack enable
@@ -46,10 +55,6 @@ jobs:
         id: neon_cleanup
         shell: bash
         env:
-          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
-          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
-          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: bash .github/scripts/neon-database-branch.sh cleanup-preview
 
@@ -58,27 +63,17 @@ jobs:
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove
 
       - name: Remove Vercel branch image folder prefix
         shell: bash
         env:
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
-          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: bash .github/scripts/vercel-branch-database-url.sh remove-image-folder-prefix
 
       - name: Delete image PR preview folder
         id: image_cleanup
         env:
-          BUNNY_STORAGE_ACCESS_KEY: ${{ secrets.BUNNY_STORAGE_ACCESS_KEY }}
-          BUNNY_STORAGE_ENDPOINT: ${{ vars.BUNNY_STORAGE_ENDPOINT }}
-          BUNNY_STORAGE_ZONE_NAME: ${{ vars.BUNNY_STORAGE_ZONE_NAME }}
-          IMAGE_CDN_BASE_URL: ${{ vars.IMAGE_CDN_BASE_URL }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: pnpm --filter @package/images run cleanup:preview-folder
 
@@ -103,8 +98,8 @@ jobs:
         id: db-preview-comment-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
-          private-key: ${{ secrets.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
+          client-id: ${{ env.POCKET_TRASH_DB_PREVIEW_APP_CLIENT_ID }}
+          private-key: ${{ env.POCKET_TRASH_DB_PREVIEW_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           permission-issues: write

@@ -6,7 +6,7 @@ tag-triggered GitHub release workflow, not by automatic Vercel deploys from
 
 ## Production Deploys
 
-The `API Deploy` workflow deploys production web on pushed `v*` tags:
+The `Deploy` workflow deploys production web on pushed `v*` tags:
 
 1. Validates `@app/web`.
 2. Pulls the Vercel production environment.

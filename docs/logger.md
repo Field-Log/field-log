@@ -48,8 +48,6 @@ The script reads optional `AXIOM_EDGE_DOMAIN` and otherwise uses
 create map fields named exactly `attributes`, `context`, `error`, and
 `rawPayload`.
 
-The Cloudflare API Worker emits `api.cron.hourly` from its hourly Cron Trigger.
-Use that event to confirm scheduled Worker execution and Axiom ingestion.
 Railway scraper jobs emit `scraper.*` events for run lifecycle, source fetches,
 queue enqueue/drain, item and image processing, image storage operations, and
 database mutations.
@@ -171,15 +169,14 @@ Use stable event IDs from `loggerMessages`; put dynamic values in `attributes`.
 Use `loggerValues` for logger app identifiers and log proxy protocol values.
 
 CI workflows and helper scripts emit compact JSON log events with `app: "ci"`.
-They always remain visible in GitHub Actions logs. Workflows map the dataset
-specific GitHub Actions secrets back to `AXIOM_TOKEN` and `AXIOM_DATASET` for
-`.github/scripts/ci-log.sh`, which forwards the same redacted event to Axiom.
-CI Axiom ingest failures are non-fatal and print a warning in Actions logs.
+They always remain visible in GitHub Actions logs. Workflows fetch `AXIOM_TOKEN`
+and `AXIOM_DATASET` from Infisical `tools/github/secrets` before
+`.github/scripts/ci-log.sh` forwards the same redacted event to Axiom. CI Axiom
+ingest failures are non-fatal and print a warning in Actions logs.
 
-PR, preview cleanup, and scheduled preview database events use
-`AXIOM_TOKEN_PREVIEW` and `AXIOM_DATASET_PREVIEW`. Production release and main
-workflow dispatch database events use `AXIOM_TOKEN_PRODUCTION` and
-`AXIOM_DATASET_PRODUCTION`. `AXIOM_EDGE_DOMAIN` is optional and shared.
+PR, preview cleanup, and scheduled preview database events read the Infisical
+`preview` environment. Production release and main workflow dispatch database
+events read the Infisical `prod` environment. `AXIOM_EDGE_DOMAIN` is optional.
 
 Current CI event namespaces include:
 
@@ -252,15 +249,21 @@ Run it only when intentionally validating the real Axiom integration:
 pnpm test:logger:axiom
 ```
 
-Local runs load secrets from Infisical environment `dev` through the Infisical
-runner. CI loads secrets from Infisical environment `preview`.
-`/tools/logger-axiom-test` must provide:
+Local runs load secrets from Infisical environment `dev` path
+`/tools/logger-axiom-test` through the Infisical runner. CI loads secrets from
+Infisical environment `preview` path `tools/github/secrets`.
+
+Local `/tools/logger-axiom-test` must provide:
 
 - `LOG_LEVEL`, currently `trace`
 - `LOG_PROXY_CLIENT_KEY`
 - `AXIOM_TOKEN`, with ingest and query access to the configured dataset
 - `AXIOM_DATASET=development` for local runs, or `AXIOM_DATASET=preview` for CI
 - optional `AXIOM_EDGE_DOMAIN`
+
+CI `tools/github/secrets` must provide `LOG_PROXY_CLIENT_KEY`, `AXIOM_TOKEN`,
+`AXIOM_DATASET=preview`, and optional `AXIOM_EDGE_DOMAIN`. The workflow sets
+`LOG_LEVEL=trace` directly because it is test configuration, not a secret.
 
 The test hard-fails unless `AXIOM_DATASET` matches the expected dataset and
 `LOG_LEVEL` is `trace`. Local runs default to the `development` dataset. CI sets
@@ -275,14 +278,9 @@ The dedicated GitHub Actions workflow is `.github/workflows/logger-live.yml`.
 It runs the live check for same-repository pull requests that touch
 logger-relevant files and can also be run manually with `workflow_dispatch`.
 In CI, the workflow authenticates to Infisical with OIDC, fetches
-`/tools/logger-axiom-test`, then runs the live script directly.
-Configure these values in Infisical Production at `/tools/github/secrets`; they
-sync to GitHub repository secrets:
-
-- `INFISICAL_LOGGER_IDENTITY_ID`
-- `INFISICAL_PROJECT_SLUG`
-- optional `INFISICAL_DOMAIN`
-- optional `INFISICAL_OIDC_AUDIENCE`
+`tools/github/secrets` from the `preview` environment, then runs the live script
+directly. See [GitHub Infisical OIDC](./github-infisical.md) for the bootstrap
+secrets and runtime inventory.
 
 See `plans/configure-repo-for-logger.md` for the Infisical identity setup.
 

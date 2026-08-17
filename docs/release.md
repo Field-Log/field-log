@@ -50,21 +50,9 @@ That creates `v0.0.1` and the matching GitHub Release from the baseline commit.
 
 ## Deployment
 
-The pushed `v*` tag triggers:
-
-- `API Deploy`: validates, migrates, deploys the production web server,
-  deploys the production Vercel web app, and smoke-tests both production
-  surfaces. It also deploys the production Railway scraper after production
-  database migrations and API smoke tests pass. Web and Railway production wait
-  for API production to pass first.
-- `Mobile Release`: builds and submits `apps/web` through fastlane on macOS
-  runners. Android and iOS run as separate jobs with runner labels
-  `deploy, android` and `deploy, ios`.
-
-Mobile store approval can lag behind the web/API deployment. Patch and minor
-releases must remain backward-compatible with the currently available mobile
-app. Major releases must keep API and database behavior compatible for at least
-one prior mobile major version.
+The pushed `v*` tag triggers `Deploy`, which runs production migrations, deploys
+the production Railway scraper, deploys the production Vercel web app, and
+smoke-tests the web deployment.
 
 Vercel production Git deployment gating is documented in
 [vercel.md](./vercel.md).
