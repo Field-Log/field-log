@@ -3,7 +3,7 @@ export const defaultEnvironmentSlug = "dev";
 const bunnyLocalSecretPath = "/local/bunny";
 const scraperSecretPath = "/apps/scraper";
 const webSecretPath = "/apps/web";
-const githubDiscordNotifierSecretPath = "/tools/github-discord-notifier";
+const githubSecretsPath = "tools/github/secrets";
 const loggerAxiomTestSecretPath = "/tools/logger-axiom-test";
 export const databaseUrlUserOverrideSecretPath = "/local/database";
 
@@ -48,7 +48,7 @@ export const commandSecrets = {
   github: {
     "discord-notify": {
       allowServerSecrets: true,
-      paths: [githubDiscordNotifierSecretPath],
+      paths: [githubSecretsPath],
     },
   },
   logger: {

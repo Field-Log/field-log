@@ -98,34 +98,16 @@ jobs:
       - name: Build logger live dependencies
         run: pnpm exec turbo run build --filter=@package/logger
 
-      - name: Validate Infisical OIDC configuration
-        shell: bash
-        env:
-          INFISICAL_LOGGER_IDENTITY_ID: ${{ secrets.INFISICAL_LOGGER_IDENTITY_ID }}
-          INFISICAL_PROJECT_SLUG: ${{ secrets.INFISICAL_PROJECT_SLUG }}
-        run: |
-          set -euo pipefail
-
-          if [[ -z "${INFISICAL_LOGGER_IDENTITY_ID:-}" ]]; then
-            echo "GitHub secret INFISICAL_LOGGER_IDENTITY_ID is required." >&2
-            exit 1
-          fi
-
-          if [[ -z "${INFISICAL_PROJECT_SLUG:-}" ]]; then
-            echo "GitHub secret INFISICAL_PROJECT_SLUG is required." >&2
-            exit 1
-          fi
-
-      - name: Fetch logger Axiom test secrets
+      - name: Fetch GitHub secrets from Infisical
         uses: Infisical/secrets-action@v1.0.16
         with:
           method: oidc
-          identity-id: ${{ secrets.INFISICAL_LOGGER_IDENTITY_ID }}
+          identity-id: ${{ secrets.INFISICAL_GITHUB_IDENTITY_ID }}
           oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
           domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
           project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
           env-slug: preview
-          secret-path: /tools/logger-axiom-test
+          secret-path: tools/github/secrets
 
       - name: Run logger live Axiom test
         env:
