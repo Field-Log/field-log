@@ -212,7 +212,7 @@ describe("buildInfisicalRunArgs", () => {
       "run",
       "--project-config-dir=/repo",
       "--env=dev",
-      "--path=/tools/github-discord-notifier",
+      "--path=tools/github/secrets",
       "--",
       "pnpm",
       "--filter",

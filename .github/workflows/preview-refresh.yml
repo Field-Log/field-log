@@ -14,14 +14,22 @@ jobs:
     name: Refresh Preview
     runs-on: ubuntu-latest
     env:
-      AXIOM_DATASET: ${{ secrets.AXIOM_DATASET_PREVIEW }}
-      AXIOM_EDGE_DOMAIN: ${{ secrets.AXIOM_EDGE_DOMAIN }}
-      AXIOM_TOKEN: ${{ secrets.AXIOM_TOKEN_PREVIEW }}
       CI_JOB_NAME: Refresh Preview
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Fetch GitHub secrets from Infisical
+        uses: Infisical/secrets-action@v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ secrets.INFISICAL_GITHUB_IDENTITY_ID }}
+          oidc-audience: ${{ secrets.INFISICAL_OIDC_AUDIENCE || format('https://github.com/{0}', github.repository_owner) }}
+          domain: ${{ secrets.INFISICAL_DOMAIN || 'https://app.infisical.com' }}
+          project-slug: ${{ secrets.INFISICAL_PROJECT_SLUG }}
+          env-slug: preview
+          secret-path: tools/github/secrets
 
       - name: Enable Corepack
         run: corepack enable
@@ -38,11 +46,6 @@ jobs:
       - name: Reset preview from production
         id: preview_db
         shell: bash
-        env:
-          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
-          NEON_DATABASE_NAME: ${{ secrets.NEON_DATABASE_NAME }}
-          NEON_DATABASE_USER: ${{ secrets.NEON_DATABASE_USER }}
         run: bash .github/scripts/neon-database-branch.sh refresh-preview
 
       - name: Run preview migrations
@@ -78,4 +81,3 @@ jobs:
               branchName: $branch_name,
               branchId: $branch_id
             }')"
-

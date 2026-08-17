@@ -2,8 +2,8 @@
 
 `apps/scraper` runs as one TypeScript cron service on Railway. Railway starts the
 service on a cron schedule, the scraper runs due source and queue jobs, then the
-process exits. The scraper is separate from the Cloudflare API Worker because
-scraper runs may exceed Worker Cron wall-time limits.
+process exits. The scraper is separate from the web app because scraper runs may
+exceed web request time limits.
 
 Railway hosts the scheduled scraper service and Redis. Postgres remains the
 durable source of truth for scraped rows, image state, run records, and version
@@ -212,13 +212,13 @@ checks Redis state and runs only due producers.
 ## Production Deploys
 
 Disable Railway's native GitHub auto-deploy for the production `pocket-trash`
-service. Production scraper deploys are owned by the tag-triggered `API Deploy`
+service. Production scraper deploys are owned by the tag-triggered `Deploy`
 workflow so the scraper cannot run newer code before committed production
 database migrations have been applied.
 
 The production workflow:
 
-1. Runs production Neon migrations in the API production job.
+1. Runs production Neon migrations.
 2. Smoke-tests the production web server.
 3. Sets Railway production metadata with `--skip-deploys`:
    `APP_ENV=production`, `LOG_DEPLOYMENT_ID=production`, and
@@ -235,12 +235,11 @@ workflow migration step.
 ## Preview Database Sync
 
 The Railway scraper preview service must use the same Neon branch selected for
-the API and web previews. Branch code running against the shared preview
-database can fail with misleading type errors when the PR contains database
-schema changes.
+web previews. Branch code running against the shared preview database can fail
+with misleading type errors when the PR contains database schema changes.
 
-The API Deploy workflow configures this handoff after it prepares the Neon
-preview database:
+The Deploy workflow configures this handoff after it prepares the Neon preview
+database:
 
 - DB-changing PRs use the isolated `preview-pr-<number>` branch after committed
   migrations are applied.
@@ -248,12 +247,8 @@ preview database:
 - The selected `DATABASE_URL` is upserted into the Railway scraper preview
   service through the Railway CLI.
 
-GitHub Actions requires:
-
-| Name | Type | Purpose |
-| --- | --- | --- |
-| `RAILWAY_API_TOKEN` | Secret | Railway account or workspace token that can edit service variables in PR environments. |
-| `RAILWAY_PROJECT_ID` | Variable | Railway project ID that owns the scraper PR environments. |
+GitHub Actions reads `RAILWAY_API_TOKEN` and `RAILWAY_PROJECT_ID` from
+Infisical `tools/github/secrets`.
 
 The workflow upserts `DATABASE_URL` into the scraper service variables in the
 Railway preview service named `pocket-trash (preview)` in the Railway environment
@@ -267,7 +262,7 @@ image source so the Redis database is online for the scraper.
 
 Keep Railway's native GitHub auto-deploy enabled for the `pocket-trash (preview)`
 service and enable Railway's **Wait for CI** setting for that service. The
-native GitHub deploy is the only scraper code deploy path; the API Deploy
+native GitHub deploy is the only scraper code deploy path; the Deploy
 workflow prepares variables and Redis first. Do not add an explicit scraper
 `railway service redeploy --from-source` step to the workflow while native
 auto-deploy is enabled, or each push will produce two builds for the same

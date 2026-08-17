@@ -13,7 +13,8 @@ server at same-origin `POST /api/v0/logs`.
 | `/local/database` | Optional developer-specific `DATABASE_URL_<INITIALS>` overrides. |
 | `/local/bunny` | Bunny account audits. |
 | `/tools/logger-axiom-test` | Live logger integration test. |
-| `/tools/github-discord-notifier` | GitHub-to-Discord notifications. |
+| `tools/github/secrets` | GitHub Actions runtime values fetched with OIDC. |
+| `tools/github/infisical-connection` | GitHub repository bootstrap secrets synced from Infisical. |
 
 ## Web
 
@@ -49,9 +50,6 @@ server at same-origin `POST /api/v0/logs`.
 
 ## Hosting
 
-| Variable | Used by |
-| --- | --- |
-| `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_PROJECT_ID` | Vercel preview and production deployments. |
-| `NEON_API_KEY`, `NEON_PROJECT_ID`, `NEON_DATABASE_NAME`, `NEON_DATABASE_USER` | Preview database branches and production database URL resolution. |
-| `RAILWAY_API_TOKEN`, `RAILWAY_PROJECT_ID` | Railway scraper preview and production deployments. |
-| `BUNNY_STORAGE_ACCESS_KEY`, `BUNNY_STORAGE_ENDPOINT`, `BUNNY_STORAGE_ZONE_NAME`, `IMAGE_CDN_BASE_URL` | Preview image cleanup. |
+GitHub Actions hosting credentials are stored in Infisical. See
+[GitHub Infisical OIDC](./github-infisical.md) for the exact paths and
+inventory.
