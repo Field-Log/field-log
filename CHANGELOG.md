@@ -10,6 +10,13 @@
 
 
 
+
+## 0.2.2
+
+### Patch Changes
+
+- Removed mutation output directory in release workflow
+
 ## 0.2.1
 
 ### Patch Changes
