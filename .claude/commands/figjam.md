@@ -1,1 +1,1 @@
-../../.agents/skills/figjam/SKILL.md
+Use the `pocket-trash-skills:figjam` plugin skill for this request.

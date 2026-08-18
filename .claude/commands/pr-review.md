@@ -1,1 +1,1 @@
-../../.agents/skills/pr-review/SKILL.md
+Use the `pocket-trash-skills:pr-review` plugin skill for this request.
