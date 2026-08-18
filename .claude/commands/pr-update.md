@@ -1,1 +1,1 @@
-../../.agents/skills/pr-update/SKILL.md
+Use the `pocket-trash-skills:pr-update` plugin skill for this request.

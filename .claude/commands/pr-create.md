@@ -1,1 +1,1 @@
-../../.agents/skills/pr-create/SKILL.md
+Use the `pocket-trash-skills:pr-create` plugin skill for this request.

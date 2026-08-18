@@ -1,1 +1,1 @@
-../../.agents/skills/commit/SKILL.md
+Use the `pocket-trash-skills:commit` plugin skill for this request.

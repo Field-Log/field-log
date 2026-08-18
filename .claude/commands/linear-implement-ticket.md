@@ -1,1 +1,1 @@
-../../.agents/skills/linear-implement-ticket/SKILL.md
+Use the `pocket-trash-skills:linear-implement-ticket` plugin skill for this request.
