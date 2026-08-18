@@ -172,7 +172,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_USER VERCEL_TEAM_ID VERCEL_PROJECT_ID VERCEL_TOKEN RAILWAY_API_TOKEN RAILWAY_PROJECT_ID RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME; do
+          for name in NEON_API_KEY NEON_PROJECT_ID NEON_DATABASE_NAME NEON_DATABASE_USER VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN RAILWAY_API_TOKEN RAILWAY_PROJECT_ID RAILWAY_SCRAPER_PREVIEW_SERVICE_NAME RAILWAY_SCRAPER_QUEUE_PREVIEW_SERVICE_NAME; do
             if [[ -z "${!name:-}" ]]; then
               echo "$name is required." >&2
               exit 1
@@ -844,7 +844,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          for name in VERCEL_PROJECT_ID VERCEL_TEAM_ID VERCEL_TOKEN; do
+          for name in VERCEL_PROJECT_ID VERCEL_ORG_ID VERCEL_TOKEN; do
             if [[ -z "${!name:-}" ]]; then
               echo "$name is required." >&2
               exit 1
@@ -864,19 +864,19 @@ jobs:
           pnpm dlx vercel project update "$VERCEL_PROJECT_ID" \
             --framework tanstack-start \
             --auto-detect output-directory \
-            --scope "$VERCEL_TEAM_ID" \
+            --scope "$VERCEL_ORG_ID" \
             --token "$VERCEL_TOKEN" \
             --non-interactive
 
       - name: Pull Vercel production environment
         env:
           NO_COLOR: "1"
-        run: pnpm dlx vercel pull --cwd apps/web --yes --environment=production --scope "$VERCEL_TEAM_ID"
+        run: pnpm dlx vercel pull --cwd apps/web --yes --environment=production --scope "$VERCEL_ORG_ID"
 
       - name: Build Vercel production output
         env:
           NO_COLOR: "1"
-        run: pnpm dlx vercel build --cwd apps/web --prod --scope "$VERCEL_TEAM_ID"
+        run: pnpm dlx vercel build --cwd apps/web --prod --scope "$VERCEL_ORG_ID"
 
       - name: Deploy Vercel production
         id: vercel_deploy
@@ -886,7 +886,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          deployment_url="$(pnpm dlx vercel deploy --cwd apps/web --prebuilt --archive=tgz --prod --scope "$VERCEL_TEAM_ID")"
+          deployment_url="$(pnpm dlx vercel deploy --cwd apps/web --prebuilt --archive=tgz --prod --scope "$VERCEL_ORG_ID")"
           echo "deployment_url=$deployment_url" >> "$GITHUB_OUTPUT"
           printf 'Vercel production deployment: %s\n' "$deployment_url"
 
