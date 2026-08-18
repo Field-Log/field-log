@@ -9,6 +9,13 @@
 
 
 
+
+## 0.2.1
+
+### Patch Changes
+
+- Use Vercel org IDs in release automation.
+
 ## 0.2.0
 
 ### Minor Changes
