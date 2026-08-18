@@ -11,6 +11,13 @@
 
 
 
+
+## 0.2.3
+
+### Patch Changes
+
+- Move repo agent skills to the shared skills repo.
+
 ## 0.2.2
 
 ### Patch Changes
