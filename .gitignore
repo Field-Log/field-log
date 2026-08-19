@@ -38,3 +38,6 @@ assets/
 /bunny-audit/
 plans/
 pr-summarys/
+
+# Local tool config
+.linear.toml
