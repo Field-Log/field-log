@@ -12,6 +12,13 @@
 
 
 
+
+## 0.2.4
+
+### Patch Changes
+
+- Fix Vercel release build output.
+
 ## 0.2.3
 
 ### Patch Changes
