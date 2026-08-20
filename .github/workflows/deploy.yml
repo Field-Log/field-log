@@ -875,6 +875,7 @@ jobs:
       - name: Build Vercel production output
         shell: bash
         env:
+          NITRO_PRESET: vercel
           NO_COLOR: "1"
         run: |
           set -euo pipefail
