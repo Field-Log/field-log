@@ -13,6 +13,13 @@
 
 
 
+
+## 0.2.5
+
+### Patch Changes
+
+- Fix Vercel release output handling.
+
 ## 0.2.4
 
 ### Patch Changes
