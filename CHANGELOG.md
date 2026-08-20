@@ -14,6 +14,13 @@
 
 
 
+
+## 0.2.6
+
+### Patch Changes
+
+- Continue Vercel release output fixes.
+
 ## 0.2.5
 
 ### Patch Changes
