@@ -27,6 +27,7 @@ const versionPackagePaths = [
 ].map((path) => join(repoRoot, path));
 const bumpOrder = ["patch", "minor", "major"];
 const initialVersion = "0.0.1";
+const branchReleaseEnv = "POCKET_TRASH_RELEASE_FROM_BRANCH";
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -58,7 +59,9 @@ function assertMainMatchesOrigin() {
   const branch = git(["branch", "--show-current"], { capture: true });
 
   if (branch !== "main") {
-    throw new Error("Release must be run from main.");
+    throw new Error(
+      `Release must be run from main. Set ${branchReleaseEnv}=1 for temporary branch release testing.`,
+    );
   }
 
   git(["fetch", "origin", "main", "--tags"]);
@@ -69,6 +72,34 @@ function assertMainMatchesOrigin() {
   if (headSha !== originMainSha) {
     throw new Error("Release requires HEAD to match origin/main.");
   }
+
+  return branch;
+}
+
+function assertBranchMatchesUpstream() {
+  const branch = git(["branch", "--show-current"], { capture: true });
+
+  if (!branch || branch === "main") {
+    throw new Error(`${branchReleaseEnv}=1 requires a non-main branch.`);
+  }
+
+  const upstream = git(
+    ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"],
+    {
+      capture: true,
+    },
+  );
+
+  git(["fetch", "origin", branch, "--tags"]);
+
+  const headSha = git(["rev-parse", "HEAD"], { capture: true });
+  const upstreamSha = git(["rev-parse", upstream], { capture: true });
+
+  if (headSha !== upstreamSha) {
+    throw new Error(`Branch release requires HEAD to match ${upstream}.`);
+  }
+
+  return branch;
 }
 
 function readJson(path) {
@@ -261,7 +292,7 @@ function createGitHubRelease(tagName, notes) {
   }
 }
 
-function createInitialRelease(changesets) {
+function createInitialRelease(changesets, releaseBranch) {
   const tagName = `v${initialVersion}`;
 
   if (tagExists(tagName)) {
@@ -287,7 +318,7 @@ function createInitialRelease(changesets) {
 
   if (git(["status", "--porcelain"], { capture: true })) {
     git(["commit", "-m", `chore(release): ${tagName}`]);
-    git(["push", "origin", "main"]);
+    git(["push", "origin", releaseBranch]);
   }
 
   git(["tag", "-a", tagName, "-m", tagName]);
@@ -295,7 +326,7 @@ function createInitialRelease(changesets) {
   createGitHubRelease(tagName, createReleaseNotes(initialVersion));
 }
 
-function createChangesetRelease(changesets) {
+function createChangesetRelease(changesets, releaseBranch) {
   const nextVersion = bumpVersion(
     getLatestReleaseVersion(),
     getHighestBump(changesets),
@@ -323,7 +354,7 @@ function createChangesetRelease(changesets) {
       .filter((path) => path !== "package.json"),
   ]);
   git(["commit", "-m", `chore(release): ${tagName}`]);
-  git(["push", "origin", "main"]);
+  git(["push", "origin", releaseBranch]);
   git(["tag", "-a", tagName, "-m", tagName]);
   git(["push", "origin", tagName]);
   createGitHubRelease(tagName, createReleaseNotes(nextVersion));
@@ -333,7 +364,11 @@ function main() {
   const initial = process.argv.includes("--initial");
 
   assertCleanWorktree();
-  assertMainMatchesOrigin();
+
+  const releaseBranch =
+    process.env[branchReleaseEnv] === "1"
+      ? assertBranchMatchesUpstream()
+      : assertMainMatchesOrigin();
 
   run("pnpm", ["format"]);
   run("pnpm", ["test"]);
@@ -345,7 +380,7 @@ function main() {
   const changesets = readChangesets();
 
   if (initial) {
-    createInitialRelease(changesets);
+    createInitialRelease(changesets, releaseBranch);
     return;
   }
 
@@ -355,7 +390,7 @@ function main() {
     );
   }
 
-  createChangesetRelease(changesets);
+  createChangesetRelease(changesets, releaseBranch);
 }
 
 try {
